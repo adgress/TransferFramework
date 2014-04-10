@@ -1,11 +1,12 @@
 function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
     close all
     setPaths;
-    showPostTransferMeasure = 1;
-    showRelativePerformance = 1;
+    showPostTransferMeasures = 1;
+    showRelativePerformance = 0;
     showCorrelations = 0;
     measuresToShow = containers.Map();
     measuresToShow('NNTransferMeasure') = 1;
+    %measuresToShow('ECTTransferMeasure') = 1;
     methodsToShow = containers.Map();
     methodsToShow('NearestNeighborMethod') = 1;
     %methodsToShow('HFMethod') = 1;
@@ -18,11 +19,11 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
     if nargin < 3
         showBaselines = 1;
         showAdvanced10 = 0;
-        showAdvanced20 = 1;
+        showAdvanced20 = 0;
         showMeasures = 0;
         fileNames = {};       
         if showBaselines
-            %fileNames{end+1} = 'TO.mat';
+            fileNames{end+1} = 'TO.mat';
             %fileNames{end+1} = 'SO.mat';
             fileNames{end+1} = 'S+T.mat';
         end
@@ -75,7 +76,7 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
             options.showLegend = showLegend;
             options.showTrain = showTrain;
             options.dataSet = dataSet;            
-            options.showPostTransferMeasure = showPostTransferMeasure;
+            options.showPostTransferMeasures = showPostTransferMeasures;
             options.showRelativePerformance = showRelativePerformance;
             options.measuresToShow = measuresToShow;
             options.methodsToShow = methodsToShow;

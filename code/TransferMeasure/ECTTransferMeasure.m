@@ -32,17 +32,35 @@ classdef ECTTransferMeasure < TransferMeasure
             L = D - W;
             isD = inv(D).^.5;
             NL = isD*L*isD;
-            invL = pinv(L);
+            %invL = pinvs(L);
+            invL = inv(L + 1/size(L,1)) - 1/size(L,1);
             Wmat = double(W);
             volG = sum(Wmat(:));
             ECT = volG*Kernel.ComputeKernelDistance(invL);
             
-            T2L = ECT(W.isTarget(),W.isLabeled());
-            minT2L = min(T2L,[],2);
-            T2LT = ECT(W.isTarget(),W.isLabeledTarget());
-            minT2LT = min(T2LT,[],2);
-            
-            val = mean(minT2LT)/mean(minT2L);
+            useUnlabeled = 0;
+            if useUnlabeled
+                T2L = ECT(W.isTarget(),W.isLabeled());
+                minT2L = min(T2L,[],2);
+                T2LT = ECT(W.isTarget(),W.isLabeledTarget());
+                minT2LT = min(T2LT,[],2);            
+                val = mean(minT2LT)/mean(minT2L);            
+            else
+                labeledTargetY = W.Y(W.isLabeledTarget());
+                labeledY = W.Y(W.isLabeled());
+                
+                LT2L = ECT(W.isLabeledTarget(),W.isLabeled());
+                l1 = repmat(labeledTargetY,1,size(LT2L,2)) ;
+                l2 = repmat(labeledY',size(LT2L,1),1); 
+                LT2L(l1 ~= l2) = Inf;
+                minLT2L = sort(LT2L,2);
+                
+                LT2LT = ECT(W.isLabeledTarget(),W.isLabeledTarget());
+                l1 = repmat(labeledTargetY',size(LT2LT,1),1);
+                LT2LT(l1 ~= l1') = Inf;
+                minLT2LT = sort(LT2LT,2);
+                val = mean(minLT2LT(:,2))/mean(minLT2L(:,2));
+            end
             obj.displayMeasure(val);
             metadata = struct();
         end
