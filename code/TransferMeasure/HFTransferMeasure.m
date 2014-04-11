@@ -27,23 +27,67 @@ classdef HFTransferMeasure < TransferMeasure
                 W = options.distanceMatrix.getRBFKernel(sigma);
             else                
                 Xall = [source.X ; target.X];
+                %{
+                [COEFF, SCORE,LATENT] = princomp(Xall);
+                dim = 2;
+                display(['Percent Variance:' num2str(sum(LATENT(1:dim)/sum(LATENT)))]);
+                C1 = [1 0 0];
+                C2 = [0 0 1];
+                Call = [repmat(C1,length(source.Y),1) ; ...
+                    repmat(C2,length(target.Y),1)];
+                scatter(SCORE(:,1),SCORE(:,2),4,Call);
+                %}
+                
+                sigma = sum(var(Xall));
+                display(['Empirical sigma: ' num2str(sigma)]);                
                 Y = [source.Y ; target.Y];
                 type = [ones(numel(source.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
                     ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
                 W = Kernel.RBFKernel(Xall,sigma);
                 W = DistanceMatrix(W,Y,type);
-            end
-            display('HFTransferMeasure: Use labeled target for training?');
+            end            
             [W,Ys,Yt] = W.prepareForSourceHF();
-            YsLabelMatrix = Helpers.createLabelMatrix(Ys);
-            addpath(genpath('libraryCode'));
-            [fu, fu_CMN] = harmonic_function(W, YsLabelMatrix);
-            [~,predicted] = max(fu,[],2);
-            
             isLabeledTarget = find(Yt > 0);
-            
-            val = sum(Yt(isLabeledTarget) == predicted(isLabeledTarget))/...
-                numel(isLabeledTarget);
+            addpath(genpath('libraryCode'));
+            useTraining = 1;            
+            if useTraining
+                numCorrect = 0;
+                for i=1:numel(isLabeledTarget)
+                    isLabeledTargetToUse = logical(ones(size(Yt)));
+                    isLabeledTargetToUse(Yt < 0) = false;
+                    isLabeledTargetToUse(i) = false;
+                    iInd = i + length(Ys);                              
+                    indsLabeled = [ones(size(Ys)); isLabeledTargetToUse];
+                    indsUnlabeled = ~indsLabeled;
+                    indsUnlabeled(iInd) = [];
+                    newPerm = [find(indsLabeled); iInd; find(indsUnlabeled)];
+                    Wl = W(newPerm,newPerm);
+                    
+                    Yl = [Ys ; Yt(isLabeledTargetToUse)];
+                    YlLabelMatrix = Helpers.createLabelMatrix(Yl);
+                    [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);
+                    [~,predicted] = max(fu,[],2);
+                    [~,predictedCMN] = max(fu_CMN,[],2);
+                    Ypred = predicted(1);
+                    Yact = Yt(isLabeledTarget(i));                    
+                    numCorrect = numCorrect + (Ypred == Yact);
+                end
+                val = numCorrect / length(isLabeledTarget);
+            else
+                display('HFTransferMeasure: Not using labeled target for measure');
+                YsLabelMatrix = Helpers.createLabelMatrix(Ys);
+                
+                [fu, fu_CMN] = harmonic_function(W, YsLabelMatrix);
+                [~,predicted] = max(fu,[],2);
+                [~,predictedCMN] = max(fu_CMN,[],2);
+                Ypred = predicted(isLabeledTarget);
+                Yact = Yt(isLabeledTarget);
+                val = sum(Ypred == Yact)/numel(isLabeledTarget);            
+            end
+            mostCommon = mode(predicted);            
+            percentMostCommon = sum(mostCommon == predicted)/numel(predicted);
+            display(['percentMostCommon: ' num2str(percentMostCommon)]);
+            display(['num NaN: ' num2str(sum(isnan(predicted)))]);
             obj.displayMeasure(val);
         end
                      

@@ -9,15 +9,15 @@ function [] = runBatchExperiment(multithread, configFile)
                 
         
         if runAdvanced
-            configFiles{end+1} = 'config/batch/batchGFK.cfg';
             configFiles{end+1} = 'config/batch/batchSA.cfg';
+            configFiles{end+1} = 'config/batch/batchGFK.cfg';
             %configFiles{end+1} = 'config/batch/batchDAML.cfg';
         end
         
         if runBaseline
-            %configFiles{end+1} = 'config/batch/batchFuse.cfg';
-            configFiles{end+1} = 'config/batch/batchTransfer.cfg';
-            configFiles{end+1} = 'config/batch/batchSource.cfg';            
+            configFiles{end+1} = 'config/batch/batchFuse.cfg';
+            %configFiles{end+1} = 'config/batch/batchTransfer.cfg';
+            %configFiles{end+1} = 'config/batch/batchSource.cfg';            
         end
         
         

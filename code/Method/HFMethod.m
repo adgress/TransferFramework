@@ -28,6 +28,8 @@ classdef HFMethod < Method
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];
+                sigma = sum(var(Xall));
+                display(['Empirical sigma: ' num2str(sigma)]);
                 Y = [train.Y(trainLabeled) ; ...
                     train.Y(~trainLabeled) ; ...
                     test.Y];
