@@ -22,7 +22,7 @@ classdef DistanceMatrix < double
         end
         
         function [W] = getRBFKernel(obj,sigma)
-            W = exp(-2*double(obj)./(sigma^2));
+            W = exp(-2*double(obj)./(sigma));
             W = DistanceMatrix(W,obj.Y,obj.type);
         end
         

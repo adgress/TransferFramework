@@ -47,9 +47,19 @@ n = size(W, 1); % total number of points
 L = diag(sum(W)) - W;
 
 % the harmonic function.
-warning off;
+%warning off;
+%{
+L2 = L(l+1:n, l+1:n);
+min(eig(L2))
+L3 = L2 + 1e-10*eye(size(L2,1));
+min(eig(L3))
+L4 = - inv(L(l+1:n, l+1:n)) * L(l+1:n, 1:l);
+min(svd(L4))
+max(svd(L4))
+%}
+
 fu = - inv(L(l+1:n, l+1:n)) * L(l+1:n, 1:l) * fl;
-warning on;
+%warning on;
 % compute the CMN solution
 q = sum(fl)+1; % the unnormalized class proportion estimate from labeled data, with Laplace smoothing
 fu_CMN = fu .* repmat(q./sum(fu), n-l, 1);

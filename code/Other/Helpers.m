@@ -131,6 +131,23 @@ classdef Helpers < handle
                 end
             end
         end
+        function [m] = getMode(vals)
+            [m,freq] = mode(vals,2);
+            k = size(vals,2);
+            majority = floor(k/2 + 1);
+            notMajority = find(freq < majority);
+            for i=1:length(notMajority)
+                ind = notMajority(i);
+                v = vals(ind,:);
+                [mNew,freqNew] = mode(v(v ~= m(ind)));
+                if freqNew == freq(ind)
+                    indices1 = find(m(ind) == v);
+                    indices2 = find(mNew == v);
+                    minInd = min([indices1(1) indices2(1)]);
+                    m(ind) = v(minInd);
+                end
+            end
+        end
     end
     
 end

@@ -58,7 +58,7 @@ classdef ConfigLoader < handle
                 var = C{1};
                 val = '';
                 if length(C) > 1
-                    val = C{2}; 
+                    val = [C{2:end}];                    
                 end
                 assert(~isempty(val))
                 val = eval(val);

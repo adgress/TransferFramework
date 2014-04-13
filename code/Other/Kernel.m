@@ -39,7 +39,7 @@ classdef Kernel < handle
             norm(K2-K3,Inf)
             %}
             K = pdist2(X,X).^2;
-            K = K./(-2*sigma^2);
+            K = K./(-2*sigma);
             K = exp(K);
         end       
         function [D] = ComputeKernelDistance(K)

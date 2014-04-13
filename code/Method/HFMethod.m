@@ -43,12 +43,17 @@ classdef HFMethod < Method
             assert(min(YTrainLabeled) > 0);
             assert(min(YTest) > 0);
             assert(length(YTest) == length(test.Y));
-            YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
-            addpath(genpath('libraryCode'));
-            [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);
-            [~,predicted] = max(fu,[],2);
-            isTest = isTest(size(YTrainLabeled,1)+1:end);
-            
+            usellgc = 0;
+            if usellgc
+                YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
+                [fu,fu_CMN] = llgc(W,YLabelMatrix)
+            else                
+                YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
+                addpath(genpath('libraryCode'));
+                [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);                                
+                [~,predicted] = max(fu,[],2);
+                isTest = isTest(size(YTrainLabeled,1)+1:end);
+            end
             
             val = sum(predicted(isTest) == YTest)/...
                 length(YTest);

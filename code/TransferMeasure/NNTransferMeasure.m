@@ -24,6 +24,7 @@ classdef NNTransferMeasure < TransferMeasure
             if isfield(options,'distanceMatrix')
                 W = options.distanceMatrix;
                 [Yactual, Ynn] = W.getLabeledTrainToSourceNN(k);
+                assert(size(Ynn,2) == k);
             else
                 if includeTarget
                     X = [target.X(targetWithLabels,:) ; source.X(sourceWithLabels,:)];

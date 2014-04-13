@@ -39,7 +39,8 @@ classdef HFTransferMeasure < TransferMeasure
                 %}
                 
                 sigma = sum(var(Xall));
-                display(['Empirical sigma: ' num2str(sigma)]);                
+                display(['Empirical sigma: ' num2str(sigma)]);   
+                sigma = .001
                 Y = [source.Y ; target.Y];
                 type = [ones(numel(source.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
                     ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
@@ -52,6 +53,7 @@ classdef HFTransferMeasure < TransferMeasure
             useTraining = 1;            
             if useTraining
                 numCorrect = 0;
+                score = 0;
                 for i=1:numel(isLabeledTarget)
                     isLabeledTargetToUse = logical(ones(size(Yt)));
                     isLabeledTargetToUse(Yt < 0) = false;
@@ -68,11 +70,14 @@ classdef HFTransferMeasure < TransferMeasure
                     [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);
                     [~,predicted] = max(fu,[],2);
                     [~,predictedCMN] = max(fu_CMN,[],2);
+                    
                     Ypred = predicted(1);
                     Yact = Yt(isLabeledTarget(i));                    
                     numCorrect = numCorrect + (Ypred == Yact);
+                    score = score + fu_CMN(Yact);
                 end
-                val = numCorrect / length(isLabeledTarget);
+                %val = numCorrect / length(isLabeledTarget);
+                val = score / length(isLabeledTarget);
             else
                 display('HFTransferMeasure: Not using labeled target for measure');
                 YsLabelMatrix = Helpers.createLabelMatrix(Ys);
@@ -80,9 +85,16 @@ classdef HFTransferMeasure < TransferMeasure
                 [fu, fu_CMN] = harmonic_function(W, YsLabelMatrix);
                 [~,predicted] = max(fu,[],2);
                 [~,predictedCMN] = max(fu_CMN,[],2);
+                fu2 = fu(isLabeledTarget,:);
+                fu_CMN2 = fu_CMN(isLabeledTarget,:);
+                classPriors = histc(Ys,1:10)./length(Ys);
+                
                 Ypred = predicted(isLabeledTarget);
                 Yact = Yt(isLabeledTarget);
-                val = sum(Ypred == Yact)/numel(isLabeledTarget);            
+                YactLabelMatrix = Helpers.createLabelMatrix(Yact);
+                Yvals = fu_CMN2.*YactLabelMatrix;
+                %val = sum(Ypred == Yact)/numel(isLabeledTarget);                
+                val = sum(Yvals(:))/length(isLabeledTarget);
             end
             mostCommon = mode(predicted);            
             percentMostCommon = sum(mostCommon == predicted)/numel(predicted);

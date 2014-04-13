@@ -18,7 +18,7 @@ classdef NearestNeighborMethod < Method
             metadata = input.metadata;           
             numTest = numel(test.Y);
             k = experiment.k;
-            assert(k == 1);
+            %assert(k == 1);
             trainX = train.X;
             trainY = train.Y;
             testX = test.X;
@@ -37,7 +37,7 @@ classdef NearestNeighborMethod < Method
                 testResults.testPredicted = labeledY(minIDX);
                 %}
                 testResults.testPredicted = ...
-                    metadata.distanceMatrix.getTestToLabeledNN(1);
+                    metadata.distanceMatrix.getTestToLabeledNN(k);
                 testResults.trainPredicted = trainY;
             else
                 withLabels = train.Y > 0;
@@ -57,6 +57,8 @@ classdef NearestNeighborMethod < Method
             assert(~isempty(testResults.trainPredicted));
             testResults.testActual = testY;
             testResults.trainActual = trainY;
+            testResults.testPredicted = Helpers.getMode(testResults.testPredicted);
+            testResults.trainPredicted = Helpers.getMode(testResults.trainPredicted);
             val = sum(testResults.testActual == testResults.testPredicted)/...
                 length(testResults.testActual);
             display(['NN Acc: ' num2str(val)]);
