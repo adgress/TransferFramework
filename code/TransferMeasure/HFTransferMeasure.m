@@ -74,7 +74,7 @@ classdef HFTransferMeasure < TransferMeasure
                     Ypred = predicted(1);
                     Yact = Yt(isLabeledTarget(i));                    
                     numCorrect = numCorrect + (Ypred == Yact);
-                    score = score + fu_CMN(Yact);
+                    score = score + fu_CMN(i,Yact);
                 end
                 %val = numCorrect / length(isLabeledTarget);
                 val = score / length(isLabeledTarget);
@@ -101,6 +101,9 @@ classdef HFTransferMeasure < TransferMeasure
             display(['percentMostCommon: ' num2str(percentMostCommon)]);
             display(['num NaN: ' num2str(sum(isnan(predicted)))]);
             obj.displayMeasure(val);
+            if val > .8
+                display('');
+            end
         end
                      
         function [ri] = calculateRandIndex(obj,C,Y,isTarget)
