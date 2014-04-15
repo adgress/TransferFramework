@@ -21,10 +21,9 @@ classdef HFTransferMeasure < TransferMeasure
                 return;
             end
             %includeTarget = 1;
-            numLabels = max(target.Y);            
-            sigma = obj.configs('sigma');
+            numLabels = max(target.Y);                        
             if nargin >= 4 && isfield(options,'distanceMatrix')
-                W = options.distanceMatrix.getRBFKernel(sigma);
+                W = options.distanceMatrix;
             else                
                 Xall = [source.X ; target.X];
                 %{
@@ -37,47 +36,52 @@ classdef HFTransferMeasure < TransferMeasure
                     repmat(C2,length(target.Y),1)];
                 scatter(SCORE(:,1),SCORE(:,2),4,Call);
                 %}
-                
-                sigma = sum(var(Xall));
-                display(['Empirical sigma: ' num2str(sigma)]);   
-                sigma = .001
+                                
                 Y = [source.Y ; target.Y];
                 type = [ones(numel(source.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
                     ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
-                W = Kernel.RBFKernel(Xall,sigma);
+                W = Kernel.Distance(Xall);
                 W = DistanceMatrix(W,Y,type);
             end            
-            [W,Ys,Yt] = W.prepareForSourceHF();
+            [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
+            sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true);
+            %sigma = obj.configs('sigma');
+            %sigma = sum(var(Xall));
+            %display(['Empirical sigma: ' num2str(sigma)]);
+            W = Helpers.distance2RBF(W,sigma);
             isLabeledTarget = find(Yt > 0);
             addpath(genpath('libraryCode'));
             useTraining = 1;            
             if useTraining
                 numCorrect = 0;
+                Ypred = zeros(length(isLabeledTarget),1);
                 score = 0;
                 for i=1:numel(isLabeledTarget)
                     isLabeledTargetToUse = logical(ones(size(Yt)));
                     isLabeledTargetToUse(Yt < 0) = false;
-                    isLabeledTargetToUse(i) = false;
-                    iInd = i + length(Ys);                              
+                    isLabeledTargetToUse(isLabeledTarget(i)) = false;
+                    iInd = isLabeledTarget(i) + length(Ys);                              
                     indsLabeled = [ones(size(Ys)); isLabeledTargetToUse];
                     indsUnlabeled = ~indsLabeled;
-                    indsUnlabeled(iInd) = [];
+                    indsUnlabeled(iInd) = 0;
                     newPerm = [find(indsLabeled); iInd; find(indsUnlabeled)];
                     Wl = W(newPerm,newPerm);
                     
                     Yl = [Ys ; Yt(isLabeledTargetToUse)];
                     YlLabelMatrix = Helpers.createLabelMatrix(Yl);
                     [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);
+                    fu = Helpers.normRows(fu);
+                    fu_CMN = Helpers.normRows(fu_CMN);
                     [~,predicted] = max(fu,[],2);
                     [~,predictedCMN] = max(fu_CMN,[],2);
                     
-                    Ypred = predicted(1);
+                    Ypred(i) = predictedCMN(1);
                     Yact = Yt(isLabeledTarget(i));                    
-                    numCorrect = numCorrect + (Ypred == Yact);
+                    numCorrect = numCorrect + (Ypred(i) == Yact);
                     score = score + fu_CMN(i,Yact);
                 end
-                %val = numCorrect / length(isLabeledTarget);
-                val = score / length(isLabeledTarget);
+                val = numCorrect / length(isLabeledTarget);
+                %val = score / length(isLabeledTarget);
             else
                 display('HFTransferMeasure: Not using labeled target for measure');
                 YsLabelMatrix = Helpers.createLabelMatrix(Ys);

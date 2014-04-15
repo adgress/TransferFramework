@@ -41,7 +41,10 @@ classdef Kernel < handle
             K = pdist2(X,X).^2;
             K = K./(-2*sigma);
             K = exp(K);
-        end       
+        end 
+        function [K] = Distance(X)
+            K = pdist2(X,X);
+        end
         function [D] = ComputeKernelDistance(K)
             DK = repmat(diag(K),1,size(K,2));
             D = DK + DK' - 2*K;

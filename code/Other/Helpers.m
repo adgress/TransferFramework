@@ -148,6 +148,66 @@ classdef Helpers < handle
                 end
             end
         end
+        
+        function [sigma] = selectBestSigma(W,Ytrain,Ytest,sigmas)
+            scores = zeros(1,length(sigmas));
+            percCorrect = scores;
+            YtrainMat = Helpers.createLabelMatrix(Ytrain);
+            for i=1:length(sigmas)                
+                s = sigmas(i);
+                K = Helpers.distance2RBF(W,s);                                
+                warning off;                
+                [fu, fu_CMN] = harmonic_function(K, YtrainMat);
+                warning on;
+                fuCV = fu(1:length(Ytest),:);
+                fuCMNCV = fu_CMN(1:length(Ytest),:);
+                [percCorrect(i),scores(i)] = Helpers.getAccuracy(fuCMNCV,...
+                    Ytest);
+            end
+            [bestAcc,bestAccInd] = max(percCorrect);
+            [bestScore,bestScoreInd] = max(scores);
+            [bestAcc bestScore]
+            %assert(bestAccInd == bestScoreInd);
+            percCorrect
+            sigma = sigmas(bestAccInd);
+        end
+        
+        function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV)
+            sigmas = [.1 .05 .01 .005 .001 .0005 .0001];
+            percentageArray = [.9 .1 0];
+            if useCV
+                [split] = DataSet.generateSplitForLabels(percentageArray,Ytrain);
+                trainInds = split == 1;
+                cvInds = split == 2;            
+                YtestTrain = Ytrain(trainInds);
+                YtestTest = Ytrain(cvInds);
+                newPerm = [find(trainInds) ; find(cvInds)];
+                newPerm = [newPerm ; find(~isTrain)];
+                Wperm = W(newPerm,newPerm);            
+                sigma = Helpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas)
+            else
+                isLabeledTest = Ytest > 0;
+            end
+        end
+        
+        function [percCorrect,score] = getAccuracy(predMat,Yactual)
+            YactualMat = Helpers.createLabelMatrix(Yactual);
+            [~,predicted] = max(predMat,[],2);
+            predMat = Helpers.normRows(predMat);
+            percCorrect = sum(predicted == Yactual)/length(predicted);
+            score = sum(sum(YactualMat.*predMat))/length(predicted);
+        end
+        
+        function [W] = normRows(W)
+            v = sum(W');
+            W = W ./ repmat(v',1,size(W,2));
+        end
+        
+        function [W] = distance2RBF(W,sigma)
+            W = W.^2;
+            W = W./(-2*sigma);
+            W = exp(W);
+        end
     end
     
 end

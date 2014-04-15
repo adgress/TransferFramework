@@ -76,6 +76,13 @@ classdef DataSet < handle
             Yu(:) = -1;
         end
     end
+    
+    methods(Static)
+        function [split] = generateSplitForLabels(percentageArray,Y)
+            split = DataSet.generateSplit(percentageArray,Y);
+        end
+    end
+    
     methods(Access=private,Static)
         function [split] = generateSplit(percentageArray,Y)
             assert(sum(percentageArray) == 1,'Split doesn''t sum to one');
@@ -89,19 +96,20 @@ classdef DataSet < handle
                 thisClassRandomized = thisClass(perm);
                 numEach = [1 ceil(numThisClass*percentageArray)];
                 
-                for j=1:numel(percentageArray)
+                for j=1:numel(percentageArray)       
+                    if numEach(j) == numEach(j+1)
+                        display('TODO: Potential off by one error');
+                        continue;
+                    end
                     indices = thisClassRandomized(numEach(j):numEach(j+1));
                     split(indices) = j;
                 end
-            end
-            if sum(split==2) < 100 && numel(split) > 200
-                display([num2str(sum(split==1)) ' ' num2str(sum(split==2))]);
-            end
+            end            
         end
         
         function [allSplits] = splitMatrix(mat,splits)
             allSplits = cell(max(splits),1);
-            for i=1:max(splits)
+            for i=1:3
                 allSplits{i} = mat(splits == i,:);
             end
         end

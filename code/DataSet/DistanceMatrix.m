@@ -100,7 +100,7 @@ classdef DistanceMatrix < double
             YTest = obj.Y(isTest);
         end
         
-        function [W,Ys,Yt] = prepareForSourceHF(obj)
+        function [W,Ys,Yt,isTarget] = prepareForSourceHF(obj)
             W = double(obj);            
             sourceInds = find(obj.type == DistanceMatrix.TYPE_SOURCE);
             targetInds = find(obj.type ~= DistanceMatrix.TYPE_SOURCE);
@@ -108,6 +108,7 @@ classdef DistanceMatrix < double
             Ys = obj.Y(sourceInds);
             Yt = obj.Y(targetInds);
             W = W(allInds,allInds);
+            isTarget = obj.type ~= DistanceMatrix.TYPE_SOURCE;
         end
         
         function [I] = isTarget(obj)
