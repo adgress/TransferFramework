@@ -1,5 +1,5 @@
 function [] = runExperiment(configFile,commonConfigFile,configs)    
-    tic    
+          
     setPaths;
     if nargin < 2
         commonConfigFile = 'config/experiment/experimentCommon.cfg';
@@ -24,7 +24,12 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         experimentLoader = experimentConfigClass(configs,'');
     end   
     
-    
+    outputFile = experimentLoader.getOutputFileName();
+    if exist(outputFile,'file') && ~configs('rerunExperiments')
+        display(['Skipping: ' outputFile]);
+        return;
+    end
+    tic
     multithread = experimentLoader.configs('multithread');    
     if multithread
         %Fix for laptop
@@ -116,8 +121,7 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         %}
     end
     allResults.aggregateMeasureResults();
-    
-    outputFile = experimentLoader.getOutputFileName();
+        
     allResults.saveResults(outputFile);
     toc
 end

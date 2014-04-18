@@ -86,17 +86,16 @@ function [f] = visualizeResults(options,f)
                 if isfield(results{1}.aggregatedResults,'testResults')
                     vars = getVariances(results,'testResults',-1);
                     means = getMeans(results,'testResults',-1);
-                else
-                    vars = getVariances(results,'PTMResults',1);
-                    means = getMeans(results,'PTMResults',1);
-                end
-                errorbar(sizes,means,vars,'color',colors(index,:));            
+                    errorbar(sizes,means,vars,'color',colors(index,:));
+                    if options.showTrain
+                        learnerName = [learnerName ', Test'];
+                    end
+                    leg{index} = learnerName;
+                    index = index+1;
+                end                
 
-                if options.showTrain
-                    learnerName = [learnerName ', Test'];
-                end
-                leg{index} = learnerName;
-                index = index+1;
+                
+                
                 if options.showTrain
                     vars = getVariances(results,'trainResults');
                     means = getMeans(results,'trainResults');
@@ -105,23 +104,14 @@ function [f] = visualizeResults(options,f)
                     index = index+1;
                 end      
                 if options.showPostTransferMeasures && isKey(configs,'postTransferMeasures')
-                    %error('Update for multiple measures');
-                    measures = configs('postTransferMeasures');
-                    for i=1:numel(measures)
-                        if ~isKey(options.measuresToShow,measures{i})
-                            continue;
-                        end
-                        dispName = TransferMeasure.GetDisplayName(measures{i},configs);
-                        
-                        tranferMeans = getMeans(results,'PTMResults',i);
-                        tranferVars = getVariances(results,'PTMResults',i);
-                        errorbar(sizes,tranferMeans,tranferVars,'color',colors(index,:));
-                        
-                        leg{index} = [learnerName ':' dispName];
-                        index = index+1;
-                    end
-                    
-                    
+                    [leg,index] = plotMeasureResults(options,configs,results,sizes,...
+                        'postTransferMeasures','PostTMResults','PostTM',...
+                        learnerName,leg,index,colors);
+                end
+                if options.showPreTransferMeasures && isKey(configs,'preTransferMeasures')
+                    [leg,index] = plotMeasureResults(options,configs,results,sizes,...
+                        'preTransferMeasures','PreTMResults','PreTM',...
+                        learnerName,leg,index,colors);
                 end
             end
         end
@@ -139,6 +129,24 @@ function [f] = visualizeResults(options,f)
     xlabel(xAxisLabel,'FontSize',8);
     ylabel(options.yAxisDisplay,'FontSize',8);
     hold off;    
+end
+
+function [leg,index] = plotMeasureResults(options,configs,results,sizes,field,...
+    resultField,displayName,learnerName,leg,index,colors)
+    measures = configs(field);
+    for k=1:numel(measures)
+        if ~isKey(options.measuresToShow,measures{k})
+            continue;
+        end
+        dispName = TransferMeasure.GetDisplayName(measures{k},configs);
+        
+        tranferMeans = getMeans(results,resultField,k);
+        tranferVars = getVariances(results,resultField,k);
+        errorbar(sizes,tranferMeans,tranferVars,'color',colors(index,:));
+        
+        leg{index} = [displayName ':' learnerName ':' dispName];
+        index = index+1;
+    end
 end
 
 function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,index,options)

@@ -16,6 +16,7 @@ classdef Results < handle
             obj.numSplits = numSplits;
             obj.splitResults = cell(numSplits,1);
             obj.splitMetadata = cell(numSplits,1);
+            obj.aggregatedResults = struct();
         end
         
         function [] = setSplitResults(obj,results,index)            
@@ -38,24 +39,28 @@ classdef Results < handle
             obj.aggregatedResults.metadata = ...
                 obj.splitResults{1}.metadata;
         end        
-        function [] = aggregateMeasureResults(obj)
-            if ~isfield(obj.splitResults{1},'postTransferMeasureVal')
+        function [] = aggregateMeasureResults(obj)            
+            aggregateMeasureResultsForField(obj,'postTransferMeasureVal',...
+                'PostTMResults');
+            aggregateMeasureResultsForField(obj,'preTransferMeasureVal',...
+                'PreTMResults');
+        end
+        
+        function [] = aggregateMeasureResultsForField(obj,field,saveField)
+            if ~isfield(obj.splitResults{1},field)
                 return;
             end
             measures = Helpers.getValuesOfField(obj.splitResults, ...
-                'postTransferMeasureVal');
-            if ~isfield(obj,'aggregatedResults')
-                obj.aggregatedResults = struct();
-                obj.aggregatedResults.metadata = ...
-                    obj.splitResults{1}.metadata;
-            end
-            obj.aggregatedResults.PTMResults = {};
+                field);
+            obj.aggregatedResults.metadata = ...
+                obj.splitResults{1}.metadata;
+            obj.aggregatedResults.(saveField) = {};
             for i=1:numel(measures{1})
                 vals = [];
                 for j=1:numel(measures)
                     vals(j) = measures{j}{i};
                 end
-                obj.aggregatedResults.PTMResults{i} = ...
+                obj.aggregatedResults.(saveField){i} = ...
                     ResultsVector(vals);
             end
         end

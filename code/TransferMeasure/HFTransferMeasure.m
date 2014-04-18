@@ -15,49 +15,53 @@ classdef HFTransferMeasure < TransferMeasure
             metadata = {};                        
             
             targetWithLabels = target.Y > 0;
-            %sourceWithLabels = source.Y > 0;            
-            if sum(targetWithLabels) == 0
+            if sum(targetWithLabels) == 0 || ...
+                sum(targetWithLabels) <= max(target.Y)
                 val = nan;
                 return;
-            end
-            %includeTarget = 1;
-            numLabels = max(target.Y);                        
+            end            
             if nargin >= 4 && isfield(options,'distanceMatrix')
                 W = options.distanceMatrix;
             else                
-                Xall = [source.X ; target.X];
-                %{
-                [COEFF, SCORE,LATENT] = princomp(Xall);
-                dim = 2;
-                display(['Percent Variance:' num2str(sum(LATENT(1:dim)/sum(LATENT)))]);
-                C1 = [1 0 0];
-                C2 = [0 0 1];
-                Call = [repmat(C1,length(source.Y),1) ; ...
-                    repmat(C2,length(target.Y),1)];
-                scatter(SCORE(:,1),SCORE(:,2),4,Call);
-                %}
-                                
+                Xall = [source.X ; target.X];                                
                 Y = [source.Y ; target.Y];
                 type = [ones(numel(source.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
                     ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
                 W = Kernel.Distance(Xall);
                 W = DistanceMatrix(W,Y,type);
+                clear type;
             end            
             [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
-            sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true);
-            %sigma = obj.configs('sigma');
-            %sigma = sum(var(Xall));
-            %display(['Empirical sigma: ' num2str(sigma)]);
+            sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true);            
+            if ~obj.configs('useSourceForTransfer')
+                %{
+                sourceDataSet = DataSet('','','',...
+                    zeros(0,size(target.X,2)),...
+                    zeros(0,size(target.Y,2)));
+                Xall = [target.X];  
+                Y = [sourceDataSet.Y ; target.Y];
+                type = [ones(numel(sourceDataSet.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
+                    ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
+                W = Kernel.Distance(Xall);
+                W = DistanceMatrix(W,Y,type);
+                [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
+                %}
+                W = W(isTarget,isTarget);
+                Ys = zeros(0,size(Ys,2));
+                isTarget = isTarget(isTarget);
+            end
+
             W = Helpers.distance2RBF(W,sigma);
             isLabeledTarget = find(Yt > 0);
             addpath(genpath('libraryCode'));
-            useTraining = 1;            
+            useTraining = 1;                              
+            
             if useTraining
                 numCorrect = 0;
                 Ypred = zeros(length(isLabeledTarget),1);
                 score = 0;
                 for i=1:numel(isLabeledTarget)
-                    isLabeledTargetToUse = logical(ones(size(Yt)));
+                    isLabeledTargetToUse = true(size(Yt));
                     isLabeledTargetToUse(Yt < 0) = false;
                     isLabeledTargetToUse(isLabeledTarget(i)) = false;
                     iInd = isLabeledTarget(i) + length(Ys);                              

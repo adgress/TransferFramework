@@ -25,28 +25,30 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             metadata.configs = savedData.configs;
             metadata.metadata = savedData.metadata{experimentIndex,splitIndex};
                         
-            %{
-            if ~isempty(obj.configs('preTransferMeasure'))
-                preTransferMeasure = str2func(obj.configs('preTransferMeasure'));
-                measureObj = preTransferMeasure(obj.configs);
+            configsCopy = obj.configs;
+            if ~isempty(obj.configs('preTransferMeasures'))
+                configsCopy('useSourceForTransfer') = 0;
+                preTransferMeasures = obj.configs('postTransferMeasures');
+                measureFunc = str2func(preTransferMeasures{1});                
+                measureObj = measureFunc(configsCopy);
                 target = DataSet('','','',[sampledTrain.X ; test.X],...
-                    [sampledTrain.Y ; zeros(size(test.Y,1),1)]);
+                    [sampledTrain.Y ; -1*ones(size(test.Y))]);                
                 m.preTransferMeasure = ...
-                    measureObj.computeMeasure(sources{1},target,obj.configs);
-
-                results.preTransferMeasureVal = m.preTransferMeasure;
-                %results.trainPerformance = metadata.preTransferMeasure;
-                %results.testPerformance = metadata.preTransferMeasure;
+                    measureObj.computeMeasure(sources{1},...
+                    target,obj.configs);
+                results.preTransferMeasureVal = {};
+                results.preTransferMeasureVal{1} = m.preTransferMeasure;
             end
-            %}
-            if ~isempty(obj.configs('postTransferMeasures'))                
+            
+            if ~isempty(obj.configs('postTransferMeasures'))
+                configsCopy('useSourceForTransfer') = 1;
                 [transferOutput,~] = ...
                     obj.performTransfer(sampledTrain,test,sources,validate,metadata,...
-                    experiment);
-                results.postTransferMeasureVal = {};
+                    experiment);                
                 postTransferMeasures = obj.configs('postTransferMeasures');
                 measureFunc = str2func(postTransferMeasures{1});
-                measureObject = measureFunc(obj.configs);                                
+                measureObject = measureFunc(configsCopy);                                
+                results.postTransferMeasureVal = {};
                 results.postTransferMeasureVal{1} = ...
                     measureObject.computeMeasure(transferOutput.tSource,...
                     transferOutput.tTarget,transferOutput.metadata);                                                

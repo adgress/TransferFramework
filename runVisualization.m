@@ -2,6 +2,7 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
     close all
     setPaths;
     showPostTransferMeasures = 1;
+    showPreTransferMeasures = 1;
     showRelativePerformance = 0;
     showCorrelations = 0;
     measuresToShow = containers.Map();
@@ -41,7 +42,8 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
             %fileNames{end+1} = 'HDH.mat';
             %fileNames{end+1} = 'ROD_d=10_usePLS=0.mat';
             %fileNames{end+1} = 'NN_k=10.mat';
-            fileNames{end+1} = 'HF_useCMN=0_S+T.mat';
+            %fileNames{end+1} = 'HF_useCMN=0_S+T.mat';
+            fileNames{end+1} = 'NN_k=3_S+T.mat';
         end
         
         sourceData = {'A','C','D','W'};
@@ -80,6 +82,7 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
             options.dataSet = dataSet;            
             options.showPostTransferMeasures = showPostTransferMeasures;
             options.showRelativePerformance = showRelativePerformance;
+            options.showPreTransferMeasures = showPreTransferMeasures;
             options.measuresToShow = measuresToShow;
             options.methodsToShow = methodsToShow;
             options.subPlotField = 'C';

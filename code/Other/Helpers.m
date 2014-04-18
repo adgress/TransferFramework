@@ -175,7 +175,7 @@ classdef Helpers < handle
         function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV)
             sigmas = [.1 .05 .01 .005 .001 .0005 .0001];
             percentageArray = [.9 .1 0];
-            if useCV
+            if useCV && length(Ytrain) > 0
                 [split] = DataSet.generateSplitForLabels(percentageArray,Ytrain);
                 trainInds = split == 1;
                 cvInds = split == 2;            
@@ -186,7 +186,8 @@ classdef Helpers < handle
                 Wperm = W(newPerm,newPerm);            
                 sigma = Helpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas);
             else
-                isLabeledTest = Ytest > 0;
+                display('autoSelectSigma: No YTrain, default sigma selected');
+                sigma = .1;
             end
         end
         
