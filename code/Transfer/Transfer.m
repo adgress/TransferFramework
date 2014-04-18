@@ -80,6 +80,9 @@ classdef Transfer
         
     end
     methods(Static)
+        function [name] = GetPrefixForMethod(transferClass,configs)
+            name = eval([transferClass '.getPrefix()']);
+        end
         function [name] = MethodName(configs)            
             name = 'Target Only';
         end

@@ -62,14 +62,6 @@ function [f] = visualizeResults(options,f)
 
             sizes = getSizes(results,options.xAxisField);
 
-            if numel(sizes) == 1
-                display('Only 1 size - extending');
-                sizes = 1:maxSize;
-                vars = vars*ones(numel(sizes),1);
-                means = means*ones(numel(sizes),1);            
-            end
-
-
             if options.showRelativePerformance && isKey(configs,'postTransferMeasures')
                 measures = configs('postTransferMeasures');
                 for i=1:numel(measures)
@@ -91,8 +83,13 @@ function [f] = visualizeResults(options,f)
                     index = index+1;
                 end
             else
-                vars = getVariances(results,'testResults',-1);
-                means = getMeans(results,'testResults',-1);
+                if isfield(results{1}.aggregatedResults,'testResults')
+                    vars = getVariances(results,'testResults',-1);
+                    means = getMeans(results,'testResults',-1);
+                else
+                    vars = getVariances(results,'PTMResults',1);
+                    means = getMeans(results,'PTMResults',1);
+                end
                 errorbar(sizes,means,vars,'color',colors(index,:));            
 
                 if options.showTrain
@@ -110,7 +107,6 @@ function [f] = visualizeResults(options,f)
                 if options.showPostTransferMeasures && isKey(configs,'postTransferMeasures')
                     %error('Update for multiple measures');
                     measures = configs('postTransferMeasures');
-                    
                     for i=1:numel(measures)
                         if ~isKey(options.measuresToShow,measures{i})
                             continue;

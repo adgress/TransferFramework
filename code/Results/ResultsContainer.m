@@ -28,6 +28,11 @@ classdef ResultsContainer < handle
                 obj.allResults{i}.aggregateResults(measure);
             end
         end
+        function [] = aggregateMeasureResults(obj)
+            for i=1:numel(obj.allResults)
+                obj.allResults{i}.aggregateMeasureResults();
+            end
+        end
         function [] = saveResults(obj,filename)
             results = obj;
             save(filename,'results');

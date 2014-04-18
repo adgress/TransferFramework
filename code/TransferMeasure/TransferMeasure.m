@@ -40,7 +40,7 @@ classdef TransferMeasure < handle
             end
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {};
+            nameParams = {'transferMethodClass'};
         end
         function [] = displayMeasure(obj,val)
             display([obj.getPrefix() ': ' num2str(val)]); 

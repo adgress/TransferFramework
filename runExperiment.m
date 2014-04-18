@@ -106,13 +106,17 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
     allResults.configs = experimentLoader.configs;
     if experimentLoader.configs('processResults')
         allResults.processResults(measureObject);
+        allResults.aggregateResults(measureObject);
+        %{
     else
         for i=1:numel(allResults.allResults)
             allResults.allResults{i}.splitMeasures = ...
                 allResults.allResults{i}.splitResults;
-        end
+        end        
+        %}
     end
-    allResults.aggregateResults(measureObject);
+    allResults.aggregateMeasureResults();
+    
     outputFile = experimentLoader.getOutputFileName();
     allResults.saveResults(outputFile);
     toc

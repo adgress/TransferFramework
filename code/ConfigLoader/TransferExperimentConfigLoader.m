@@ -18,67 +18,73 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
         end
         
+        
+        
         function [results, metadata] = ...
-                runExperiment(obj,experimentIndex,splitIndex,savedData)
-            metadata = struct();
-            [train,test,validate] = obj.getSplit(splitIndex);
-            experiment = obj.allExperiments{experimentIndex};            
-            methodClass = str2func(experiment.methodClass);
-            methodObject = methodClass();
+                runExperiment(obj,experimentIndex,splitIndex,savedData)                      
+            experiment = obj.allExperiments{experimentIndex};                                    
+                                    
+            [train,test,validate] = obj.getSplit(splitIndex);            
+            [numTrain,numPerClass] = obj.calculateSampling(experiment,test);
             
-            numClasses = max(test.Y);
-            if isfield(experiment,'numPerClass')           
-                numPerClass = experiment.numPerClass;
-                numTrain = numClasses*numPerClass;
-            else
-                percTrain = experiment.trainSize;
-                numTrain = ceil(percTrain*size(train.X,1));
-                numPerClass = ceil(numTrain/numClasses);
-                numTrain = numPerClass*numClasses
-            end
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
+            sources = obj.dataAndSplits.sourceDataSets;
+            assert(numel(sources) == 1);
             
-            transferClass = str2func(obj.configs('transferMethodClass'));
-            transferObject = transferClass();
             m = struct();
             m.configs = savedData.configs;
             m.metadata = savedData.metadata{experimentIndex,splitIndex};
             
-            sources = obj.dataAndSplits.sourceDataSets;
-            assert(numel(sources) == 1);
-            [tTrain,tTest,metadata,tSource,tTarget] = ...
-                transferObject.performTransfer(...
-                sampledTrain, test,sources,...
-                validate,obj.configs,m);
-
+                        
+            [transferOutput,trainTestInput] = ...
+                obj.performTransfer(sampledTrain,test,sources,validate,m,...
+                experiment);
             %savedData.metadata{experimentIndex,splitIndex} = tMetadata;
+                        
+            [results,~] = obj.trainAndTest(trainTestInput,experiment);
             
-            input = ExperimentConfigLoader.CreateRunExperimentInput(...
-                tTrain,tTest,validate,experiment,metadata);
-            input.sharedConfigs = obj.configs;
-            [results,~] = ...
-                methodObject.trainAndTest(input);
             postTransferMeasures = obj.configs('postTransferMeasures');
-            results.postTransferMeasureVal = {};
-            options = {};
-            if isfield(metadata,'distanceMatrix')
-                options.distanceMatrix = metadata.distanceMatrix;
-            end
+            results.postTransferMeasureVal = {};      
             for i=1:numel(postTransferMeasures)
                 measureFunc = str2func(postTransferMeasures{i});
                 measureObject = measureFunc(obj.configs);                                
                 results.postTransferMeasureVal{i} = ...
-                    measureObject.computeMeasure(tSource,tTarget,options);
+                    measureObject.computeMeasure(transferOutput.tSource,...
+                    transferOutput.tTarget,transferOutput.metadata);
             end
-            results.metadata.numSourceLabels = ...
+            results.metadata = obj.constructResultsMetadata(sources,...
+                sampledTrain,test,numPerClass);
+            metadata = results.metadata;
+        end
+        function [transferOutput,trainTestInput] = ...
+                performTransfer(obj,train,test,sources,validate,m,experiment)
+            transferClass = str2func(obj.configs('transferMethodClass'));
+            transferObject = transferClass();
+            [tTrain,tTest,metadata,tSource,tTarget] = ...
+                transferObject.performTransfer(...
+                train, test,sources,...
+                validate,obj.configs,m); 
+            transferOutput = struct();
+            transferOutput.tTrain = tTrain;
+            transferOutput.tTest = tTest;
+            transferOutput.metadata = metadata;
+            transferOutput.tSource = tSource;
+            transferOutput.tTarget = tTarget;
+            trainTestInput = ExperimentConfigLoader.CreateRunExperimentInput(...
+                tTrain,tTest,validate,experiment,metadata);
+        end                      
+        
+        function [metadata] = constructResultsMetadata(obj,sources,...
+                sampledTrain,test,numPerClass)
+            metadata = struct();
+            metadata.numSourceLabels = ...
                 size(find(sources{1}.Y > 0),1);
-            results.metadata.numTargetLabels = ...
+            metadata.numTargetLabels = ...
                 size(find(sampledTrain.Y > 0),1);
-            results.metadata.targetLabelsPerClass = numPerClass;
-            results.metadata.numTrain = numel(sampledTrain.Y);
-            results.metadata.numTest = numel(test.Y);
-            results.metadata.numClasses = numClasses;
-            %display(num2str(metadata.preTransferMeasure));
+            metadata.targetLabelsPerClass = numPerClass;
+            metadata.numTrain = numel(sampledTrain.Y);
+            metadata.numTest = numel(test.Y);
+            metadata.numClasses = max(test.Y);
         end
         function [outputFileName] = getOutputFileName(obj)
             outputDir = [obj.configs('outputDir') '/' obj.configs('dataSet') '/'];

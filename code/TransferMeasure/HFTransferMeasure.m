@@ -75,7 +75,11 @@ classdef HFTransferMeasure < TransferMeasure
                     [~,predicted] = max(fu,[],2);
                     [~,predictedCMN] = max(fu_CMN,[],2);
                     
-                    Ypred(i) = predictedCMN(1);
+                    if obj.configs('useCMN')
+                        Ypred(i) = predictedCMN(1);
+                    else
+                        Ypred(i) = predicted(1);
+                    end
                     Yact = Yt(isLabeledTarget(i));                    
                     numCorrect = numCorrect + (Ypred(i) == Yact);
                     score = score + fu_CMN(i,Yact);
@@ -83,7 +87,7 @@ classdef HFTransferMeasure < TransferMeasure
                 val = numCorrect / length(isLabeledTarget);
                 %val = score / length(isLabeledTarget);
             else
-                display('HFTransferMeasure: Not using labeled target for measure');
+                %display('HFTransferMeasure: Not using labeled target for measure');
                 YsLabelMatrix = Helpers.createLabelMatrix(Ys);
                 
                 [fu, fu_CMN] = harmonic_function(W, YsLabelMatrix);
@@ -102,12 +106,9 @@ classdef HFTransferMeasure < TransferMeasure
             end
             mostCommon = mode(predicted);            
             percentMostCommon = sum(mostCommon == predicted)/numel(predicted);
-            display(['percentMostCommon: ' num2str(percentMostCommon)]);
-            display(['num NaN: ' num2str(sum(isnan(predicted)))]);
+            %display(['percentMostCommon: ' num2str(percentMostCommon)]);
+            %display(['num NaN: ' num2str(sum(isnan(predicted)))]);
             obj.displayMeasure(val);
-            if val > .8
-                display('');
-            end
         end
                      
         function [ri] = calculateRandIndex(obj,C,Y,isTarget)
@@ -161,7 +162,7 @@ classdef HFTransferMeasure < TransferMeasure
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'sigma'};
+            nameParams = {'useCMN'};
         end
     end
     

@@ -166,9 +166,9 @@ classdef Helpers < handle
             end
             [bestAcc,bestAccInd] = max(percCorrect);
             [bestScore,bestScoreInd] = max(scores);
-            [bestAcc bestScore]
+            %[bestAcc bestScore]
             %assert(bestAccInd == bestScoreInd);
-            percCorrect
+            %percCorrect
             sigma = sigmas(bestAccInd);
         end
         
@@ -184,7 +184,7 @@ classdef Helpers < handle
                 newPerm = [find(trainInds) ; find(cvInds)];
                 newPerm = [newPerm ; find(~isTrain)];
                 Wperm = W(newPerm,newPerm);            
-                sigma = Helpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas)
+                sigma = Helpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas);
             else
                 isLabeledTest = Ytest > 0;
             end

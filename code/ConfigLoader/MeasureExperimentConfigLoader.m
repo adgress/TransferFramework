@@ -1,4 +1,4 @@
-classdef MeasureExperimentConfigLoader < ExperimentConfigLoader
+classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
     %MEASUREEXPERIMENTCONFIGLOADER Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -7,57 +7,68 @@ classdef MeasureExperimentConfigLoader < ExperimentConfigLoader
     
     methods
         function obj = MeasureExperimentConfigLoader(configs,commonConfigFile)
-            obj = obj@ExperimentConfigLoader(configs,commonConfigFile);               
+            obj = obj@TransferExperimentConfigLoader(configs,commonConfigFile);               
         end 
         
         function [results, metadata] = ...
-                runExperiment(obj,experimentIndex,splitIndex,savedData)
-            [train,test,~] = obj.getSplit(splitIndex);                        
+                runExperiment(obj,experimentIndex,splitIndex,savedData)                                    
             experiment = obj.allExperiments{experimentIndex};
             
-            numClasses = max(test.Y);
-            if isfield(experiment,'numPerClass')           
-                numPerClass = experiment.numPerClass;
-                numTrain = numClasses*numPerClass;
-            else
-                percTrain = experiment.trainSize;
-                numTrain = ceil(percTrain*size(train.X,1));
-                numPerClass = ceil(numTrain/numClasses);
-                numTrain = numPerClass*numClasses
-            end
+            [train,test,validate] = obj.getSplit(splitIndex);            
+            [numTrain,numPerClass] = obj.calculateSampling(experiment,test);
+            
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
-
+            sources = obj.dataAndSplits.sourceDataSets;
+            assert(numel(sources) == 1);
+            
             metadata = struct();
             metadata.configs = savedData.configs;
             metadata.metadata = savedData.metadata{experimentIndex,splitIndex};
-            
-            sources = obj.dataAndSplits.sourceDataSets;
-            preTransferMeasure = str2func(obj.configs('preTransferMeasure'));
-            measureObj = preTransferMeasure(obj.configs);
-            target = DataSet('','','',[sampledTrain.X ; test.X],...
-                [sampledTrain.Y ; zeros(size(test.Y,1),1)]);
-            metadata.preTransferMeasure = ...
-                measureObj.computeMeasure(sources{1},target,obj.configs);
-            results = struct();
-            results.trainPerformance = metadata.preTransferMeasure;
-            results.testPerformance = metadata.preTransferMeasure;
-            results.numSourceLabels = size(find(sources{1}.Y > 0),1);
-            results.numTargetLabels = size(find(sampledTrain.Y > 0),1);
-            
-            results.targetLabelsPerClass = numPerClass;
-            results.numTrain = numel(sampledTrain.Y);
-            results.numTest = numel(test.Y);
-            results.numClasses = numClasses;
+                        
+            %{
+            if ~isempty(obj.configs('preTransferMeasure'))
+                preTransferMeasure = str2func(obj.configs('preTransferMeasure'));
+                measureObj = preTransferMeasure(obj.configs);
+                target = DataSet('','','',[sampledTrain.X ; test.X],...
+                    [sampledTrain.Y ; zeros(size(test.Y,1),1)]);
+                m.preTransferMeasure = ...
+                    measureObj.computeMeasure(sources{1},target,obj.configs);
+
+                results.preTransferMeasureVal = m.preTransferMeasure;
+                %results.trainPerformance = metadata.preTransferMeasure;
+                %results.testPerformance = metadata.preTransferMeasure;
+            end
+            %}
+            if ~isempty(obj.configs('postTransferMeasures'))                
+                [transferOutput,~] = ...
+                    obj.performTransfer(sampledTrain,test,sources,validate,metadata,...
+                    experiment);
+                results.postTransferMeasureVal = {};
+                postTransferMeasures = obj.configs('postTransferMeasures');
+                measureFunc = str2func(postTransferMeasures{1});
+                measureObject = measureFunc(obj.configs);                                
+                results.postTransferMeasureVal{1} = ...
+                    measureObject.computeMeasure(transferOutput.tSource,...
+                    transferOutput.tTarget,transferOutput.metadata);                                                
+            end
+            results.metadata = obj.constructResultsMetadata(sources,...
+                sampledTrain,test,numPerClass);
         end
         function [outputFileName] = getOutputFileName(obj)
             outputDir = [obj.configs('outputDir') '/' obj.configs('dataSet') '/'];
             if ~exist(outputDir,'dir')
                 mkdir(outputDir);
             end
-            measureClass = str2func(obj.configs('preTransferMeasure'));
+            measures = obj.configs('postTransferMeasures');
+            measureClass = str2func(measures{1});
             measureObject = measureClass(obj.configs);
             measurePrefix = measureObject.getResultFileName();
-            outputFileName = [outputDir measurePrefix '.mat'];
+            
+            transferMethodClass = obj.configs('transferMethodClass');
+            methodPrefix = Transfer.GetPrefixForMethod(...
+                transferMethodClass,obj.configs);
+            outputFileName = [outputDir measurePrefix ...
+                '_' methodPrefix '.mat'];
         end
     end
     

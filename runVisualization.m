@@ -6,7 +6,8 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
     showCorrelations = 0;
     measuresToShow = containers.Map();
     measuresToShow('NNTransferMeasure') = 1;
-    %measuresToShow('ECTTransferMeasure') = 1;
+    measuresToShow('HFTransferMeasure') = 1;
+    
     methodsToShow = containers.Map();
     methodsToShow('NearestNeighborMethod') = 1;
     %methodsToShow('HFMethod') = 1;
@@ -17,13 +18,13 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
         showLegend = true;
     end    
     if nargin < 3
-        showBaselines = 1;
+        showBaselines = 0;
         showAdvanced10 = 0;
         showAdvanced20 = 0;
-        showMeasures = 0;
+        showMeasures = 1;
         fileNames = {};       
         if showBaselines
-            fileNames{end+1} = 'TO.mat';
+            %fileNames{end+1} = 'TO.mat';
             %fileNames{end+1} = 'SO.mat';
             fileNames{end+1} = 'S+T.mat';
         end
@@ -39,7 +40,8 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
             %fileNames{end+1} = 'TDAS_autoEps=2.mat';
             %fileNames{end+1} = 'HDH.mat';
             %fileNames{end+1} = 'ROD_d=10_usePLS=0.mat';
-            fileNames{end+1} = 'NN_k=10.mat';
+            %fileNames{end+1} = 'NN_k=10.mat';
+            fileNames{end+1} = 'HF_useCMN=0_S+T.mat';
         end
         
         sourceData = {'A','C','D','W'};

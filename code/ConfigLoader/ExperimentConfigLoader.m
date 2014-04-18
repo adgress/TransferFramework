@@ -17,6 +17,26 @@ classdef ExperimentConfigLoader < ConfigLoader
             obj.setDataSet(dataSet);            
         end        
         
+        function [results,metadata] = trainAndTest(obj,input,experiment)
+            methodClass = str2func(experiment.methodClass);
+            methodObject = methodClass();            
+            input.sharedConfigs = obj.configs;
+            [results,metadata] = ...
+                methodObject.trainAndTest(input);
+        end
+        function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
+            numClasses = max(test.Y);
+            if isfield(experiment,'numPerClass')           
+                numPerClass = experiment.numPerClass;
+                numTrain = numClasses*numPerClass;
+            else
+                percTrain = experiment.trainSize;
+                numTrain = ceil(percTrain*size(train.X,1));
+                numPerClass = ceil(numTrain/numClasses);
+                numTrain = numPerClass*numClasses
+            end 
+        end  
+        
         function [] = setDataSet(obj,dataSet)
             obj.configs('dataSet') = dataSet;
             inputDir = obj.configs('inputDir');

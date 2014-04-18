@@ -36,21 +36,29 @@ classdef Results < handle
             obj.aggregatedResults = struct();
             obj.aggregatedResults = measure.aggregateResults(obj.splitMeasures);
             obj.aggregatedResults.metadata = ...
-                obj.splitResults{1}.metadata;            
-            if isfield(obj.splitResults{1},'postTransferMeasureVal')
-                measures = Helpers.getValuesOfField(obj.splitResults, ...
-                    'postTransferMeasureVal');
-                obj.aggregatedResults.PTMResults = {};
-                for i=1:numel(measures{1})
-                    vals = [];
-                    for j=1:numel(measures)
-                        vals(j) = measures{j}{i};
-                    end 
-                    obj.aggregatedResults.PTMResults{i} = ...
-                        ResultsVector(vals);   
-                end                
-            end
+                obj.splitResults{1}.metadata;
         end        
+        function [] = aggregateMeasureResults(obj)
+            if ~isfield(obj.splitResults{1},'postTransferMeasureVal')
+                return;
+            end
+            measures = Helpers.getValuesOfField(obj.splitResults, ...
+                'postTransferMeasureVal');
+            if ~isfield(obj,'aggregatedResults')
+                obj.aggregatedResults = struct();
+                obj.aggregatedResults.metadata = ...
+                    obj.splitResults{1}.metadata;
+            end
+            obj.aggregatedResults.PTMResults = {};
+            for i=1:numel(measures{1})
+                vals = [];
+                for j=1:numel(measures)
+                    vals(j) = measures{j}{i};
+                end
+                obj.aggregatedResults.PTMResults{i} = ...
+                    ResultsVector(vals);
+            end
+        end
     end    
     methods(Static)        
     end
