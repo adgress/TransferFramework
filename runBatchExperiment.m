@@ -16,7 +16,7 @@ function [] = runBatchExperiment(multithread, configFile)
         
         if runBaseline
             configFiles{end+1} = 'config/batch/batchFuse.cfg';
-            %configFiles{end+1} = 'config/batch/batchTransfer.cfg';
+            configFiles{end+1} = 'config/batch/batchTransfer.cfg';
             %configFiles{end+1} = 'config/batch/batchSource.cfg';            
         end                
         

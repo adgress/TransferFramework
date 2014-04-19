@@ -9,7 +9,8 @@ function [f] = visualizeResults(options,f)
     if options.showTrain
         numColors = 2*numColors;
     end
-    files = [options.fileNames options.measureFiles];
+    baselineFiles = {};    
+    files = [options.baselineFiles options.fileNames options.measureFiles];    
     for i=1:numel(files)
         fileName = files{i};
         fileName = ['results/' options.dataSet '/' fileName];
@@ -26,6 +27,12 @@ function [f] = visualizeResults(options,f)
             end
             
         end
+    end
+    if options.showRelativePerformance
+        numBaselineFiles = numel(options.baselineFiles);
+        assert(numBaselineFiles > 0);
+        baselineFiles = files(1:numBaselineFiles);
+        files = files(numBaselineFiles+1:end);
     end
     numColors = numColors*numel(results.configs('methodClasses'));
     numColors = numColors + numel(options.measureFiles);
@@ -48,12 +55,17 @@ function [f] = visualizeResults(options,f)
             end
             [results] = allResults.getResultsForMethod(methodClassString);
             learnerName = eval([methodClassString '.getMethodName(configs);']);
+            hasPostTM = isKey(configs,'postTransferMeasures') && ...
+                ~isempty(configs('postTransferMeasures'));
+            hasPreTM = isKey(configs,'preTransferMeasures') && ...
+                ~isempty(configs('preTransferMeasures'));
+            hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
             if isKey(allResults.configs,'transferMethodClass')
                 transferClass = str2func(allResults.configs('transferMethodClass'));
                 transferObject = transferClass();
                 transferName = transferObject.getDisplayName(configs);
                 learnerName = [learnerName ';' transferName];
-            elseif isKey(allResults.configs,'preTransferMeasure')
+            elseif hasPreTM
                 error('Not implemented yet');
                 measure = allResults.configs('preTransferMeasure');
                 measureName = TransferMeasure.getDisplayName(measure,configs);
@@ -61,16 +73,23 @@ function [f] = visualizeResults(options,f)
             end        
 
             sizes = getSizes(results,options.xAxisField);
-
-            if options.showRelativePerformance && isKey(configs,'postTransferMeasures')
-                measures = configs('postTransferMeasures');
-                for i=1:numel(measures)
-                    if ~isKey(options.measuresToShow,measures{i})
+            
+            if options.showRelativePerformance && hasTestResults
+                baselineFile = ['results/' options.dataSet '/' baselineFiles{1}];
+                baselineResults = load(baselineFile);
+                baselineResults = baselineResults.results.allResults;
+                for k=1:numel(measures)
+                    if ~isKey(options.measuresToShow,measures{k})
                         continue;
                     end
-                    dispName = TransferMeasure.GetDisplayName(measures{i},configs);
-                    [m,v,l,u] = getRelativePerf(results,'PTMResults',...
-                        'testResults',i,options);
+                    for i=1:numel(results)
+                        results{i}.aggregatedResults.baseline = ...
+                            baselineResults{i}.aggregatedResults.testResults;
+                    end
+                    field1 = 'baseline';
+                    field2 = 'testResults';
+                    [m,v,l,u] = getRelativePerf(results,field1,...
+                        field2,k,options);
                     if ~isempty(v)
                         if sum(isinf(m)) > 0
                             display('NaN');
@@ -79,7 +98,9 @@ function [f] = visualizeResults(options,f)
                     else                    
                         errorbar(sizes,m,l,u,'color',colors(index,:));
                     end
-                    leg{index} = [learnerName ':' dispName];
+                    dispName = TransferMeasure.GetDisplayName(measures{k},configs);
+                    %leg{index} = ['Relative' learnerName '/' dispName];
+                    leg{index} = ['Relative Acc: ' learnerName];
                     index = index+1;
                 end
             else
@@ -92,26 +113,42 @@ function [f] = visualizeResults(options,f)
                     end
                     leg{index} = learnerName;
                     index = index+1;
-                end                
-
-                
-                
-                if options.showTrain
-                    vars = getVariances(results,'trainResults');
-                    means = getMeans(results,'trainResults');
+                    if options.showTrain
+                        vars = getVariances(results,'trainResults');
+                        means = getMeans(results,'trainResults');
+                        errorbar(sizes,means,vars,'color',colors(index,:));
+                        leg{index} = [learnerName ', Train'];
+                        index = index+1;
+                    end 
+                end                                                
+                                     
+                if hasPostTM && hasPreTM && options.showRelativeMeasures
+                    %{
+                    [leg,index] = plotMeasureResults(options,configs,results,sizes,...
+                            'postTransferMeasures','PostTMResults','PostTM',...
+                            learnerName,leg,index,colors);
+                    %}
+                    measureIndex = 1;
+                    field2 = 'PostTMResults';
+                    field1 = 'PreTMResults';
+                    [means,vars,lows,ups] = getRelativePerf(results,...
+                        field1,field2,measureIndex,options);                    
                     errorbar(sizes,means,vars,'color',colors(index,:));
-                    leg{index} = [learnerName ', Train'];
-                    index = index+1;
-                end      
-                if options.showPostTransferMeasures && isKey(configs,'postTransferMeasures')
-                    [leg,index] = plotMeasureResults(options,configs,results,sizes,...
-                        'postTransferMeasures','PostTMResults','PostTM',...
-                        learnerName,leg,index,colors);
-                end
-                if options.showPreTransferMeasures && isKey(configs,'preTransferMeasures')
-                    [leg,index] = plotMeasureResults(options,configs,results,sizes,...
-                        'preTransferMeasures','PreTMResults','PreTM',...
-                        learnerName,leg,index,colors);
+                    measures = configs('postTransferMeasures');
+                    dispName = TransferMeasure.GetDisplayName(measures{1},configs);
+                    leg{index} = ['Relative Measure: ' dispName];
+                    index = index + 1;
+                else
+                    if options.showPostTransferMeasures && hasPostTM
+                        [leg,index] = plotMeasureResults(options,configs,results,sizes,...
+                            'postTransferMeasures','PostTMResults','PostTM',...
+                            learnerName,leg,index,colors);
+                    end
+                    if options.showPreTransferMeasures && hasPreTM
+                        [leg,index] = plotMeasureResults(options,configs,results,sizes,...
+                            'preTransferMeasures','PreTMResults','PreTM',...
+                            learnerName,leg,index,colors);
+                    end
                 end
             end
         end
@@ -160,9 +197,15 @@ function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,index,opt
         ups = means;
         lows = means;
     end
-    for i=1:numel(results);
-        x = results{i}.aggregatedResults.(field1){index};
+    for i=1:numel(results);        
+        x = results{i}.aggregatedResults.(field1);
         y = results{i}.aggregatedResults.(field2);
+        if iscell(x)
+            x = cell2mat(x);
+        end
+        if iscell(results{i}.aggregatedResults.(field2))
+            y = cell2mat(y);
+        end
         if size(x,1) ~= size(y,1)            
             y = y';
         end
