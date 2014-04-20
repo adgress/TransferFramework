@@ -45,7 +45,8 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
             %fileNames{end+1} = 'ROD_d=10_usePLS=0.mat';
             %fileNames{end+1} = 'NN_k=10.mat';
             fileNames{end+1} = 'TM/HF_useCMN=0_S+T.mat';
-            %fileNames{end+1} = 'TM/NN_k=3_S+T.mat';
+            fileNames{end+1} = 'TM/HF_useCMN=1_S+T.mat';
+            fileNames{end+1} = 'TM/NN_k=3_S+T.mat';
         end
         
         sourceData = {'A','C','D','W'};

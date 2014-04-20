@@ -87,9 +87,7 @@ classdef HFTransferMeasure < TransferMeasure
                     Yact = Yt(isLabeledTarget(i));                    
                     numCorrect = numCorrect + (Ypred(i) == Yact);
                     score = score + fu_CMN(i,Yact);
-                end
-                val = numCorrect / length(isLabeledTarget);
-                %val = score / length(isLabeledTarget);
+                end             
             else
                 %display('HFTransferMeasure: Not using labeled target for measure');
                 YsLabelMatrix = Helpers.createLabelMatrix(Ys);
@@ -105,13 +103,14 @@ classdef HFTransferMeasure < TransferMeasure
                 Yact = Yt(isLabeledTarget);
                 YactLabelMatrix = Helpers.createLabelMatrix(Yact);
                 Yvals = fu_CMN2.*YactLabelMatrix;
-                %val = sum(Ypred == Yact)/numel(isLabeledTarget);                
-                val = sum(Yvals(:))/length(isLabeledTarget);
+                numCorrect = sum(Ypred == Yact);
+                score = sum(Yvals(:))
             end
-            mostCommon = mode(predicted);            
-            percentMostCommon = sum(mostCommon == predicted)/numel(predicted);
-            %display(['percentMostCommon: ' num2str(percentMostCommon)]);
-            %display(['num NaN: ' num2str(sum(isnan(predicted)))]);
+            if obj.configs('useSoftLoss')
+                val = score / length(isLabeledTarget);
+            else
+                val = numCorrect / length(isLabeledTarget);
+            end
             obj.displayMeasure(val);
         end
                      
@@ -166,7 +165,7 @@ classdef HFTransferMeasure < TransferMeasure
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'useCMN'};
+            nameParams = {'useCMN','useSoftLoss'};
         end
     end
     
