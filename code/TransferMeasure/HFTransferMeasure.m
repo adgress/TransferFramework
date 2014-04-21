@@ -75,7 +75,7 @@ classdef HFTransferMeasure < TransferMeasure
                     YlLabelMatrix = Helpers.createLabelMatrix(Yl);
                     [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);
                     fu = Helpers.normRows(fu);
-                    fu_CMN = Helpers.normRows(fu_CMN);
+                    fu_CMN = Helpers.normRows(fu_CMN);                    
                     [~,predicted] = max(fu,[],2);
                     [~,predictedCMN] = max(fu_CMN,[],2);
                     
@@ -95,6 +95,8 @@ classdef HFTransferMeasure < TransferMeasure
                 [fu, fu_CMN] = harmonic_function(W, YsLabelMatrix);
                 [~,predicted] = max(fu,[],2);
                 [~,predictedCMN] = max(fu_CMN,[],2);
+                fu = Helpers.normRows(fu);
+                fu_CMN = Helpers.normRows(fu_CMN);
                 fu2 = fu(isLabeledTarget,:);
                 fu_CMN2 = fu_CMN(isLabeledTarget,:);
                 classPriors = histc(Ys,1:10)./length(Ys);
