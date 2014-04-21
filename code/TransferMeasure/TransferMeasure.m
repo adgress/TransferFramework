@@ -36,8 +36,9 @@ classdef TransferMeasure < handle
                 if ~isa(v,'char')
                     v = num2str(v);
                 end
-                name = ['/TM/' name delim n '=' v];
+                name = [name delim n '=' v];
             end
+            name = ['/TM/' name];
         end
         function [nameParams] = getNameParams(obj)
             nameParams = {'transferMethodClass'};
