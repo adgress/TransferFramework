@@ -27,6 +27,7 @@ function [f] = visualizeResults(options,f)
             
         end
     end
+    numColors = 6;
     if options.showRelativePerformance
         numBaselineFiles = numel(options.baselineFiles);
         assert(numBaselineFiles > 0);
@@ -76,9 +77,6 @@ function [f] = visualizeResults(options,f)
                 baselineResults = load(baselineFile);
                 baselineResults = baselineResults.results.allResults;
                 for k=1:numel(measures)
-                    if ~isKey(options.measuresToShow,measures{k})
-                        continue;
-                    end
                     for i=1:numel(results)
                         results{i}.aggregatedResults.baseline = ...
                             baselineResults{i}.aggregatedResults.testResults;

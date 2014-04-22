@@ -50,6 +50,7 @@ function [] = runVisualization(showTrain,showLegend,fileNames,measureFiles)
             %fileNames{end+1} = 'TM/HF_useCMN=1_useSoftLoss=1_S+T.mat';
             %fileNames{end+1} = 'TM/HF_useCMN=1_S+T.mat';
             fileNames{end+1} = 'TM/NN_k=3_S+T.mat';
+            fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_S+T.mat';
         end
         
         sourceData = {'A','C','D','W'};

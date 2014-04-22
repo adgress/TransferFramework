@@ -34,12 +34,19 @@ classdef LLGCTransferMeasure < TransferMeasure
             [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
             sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true,false);
             W = Helpers.distance2RBF(W,sigma);
-            addpath(genpath('libraryCode'));
-            Y = [Ys ; Yt];            
+            addpath(genpath('libraryCode'));            
+            if ~obj.configs('useSourceForTransfer')
+                W = W(isTarget,isTarget);
+                Ys = zeros(0,size(Ys,2));
+                isTarget = isTarget(isTarget);
+            end            
+            Y = [Ys ; Yt];
             labeledTarget = length(Ys) + find(Yt > 0);            
             numCorrect = 0;
             score = 0;
             Ymat = full(Helpers.createLabelMatrix(Y));
+            Yscore = zeros(size(labeledTarget));
+            Ypred = Yscore;
             for i=1:length(labeledTarget)
                 ind = labeledTarget(i);
                 yi = Ymat(ind,:);
@@ -49,11 +56,11 @@ classdef LLGCTransferMeasure < TransferMeasure
                 else
                     [fu,~] = llgc(W,Ymat,invM);
                 end
-                fu_i = fu(ind,:);
-                yActual = Y(ind);
-                [~,yPred] = max(fu_i);
-                score = score + fu_i(yActual);  
-                numCorrect = numCorrect + (yPred == yActual);
+                Yactual = Y(ind);
+                Yscore(i) = fu(ind,Yactual);                
+                [~,Ypred(i)] = max(fu(ind,:));
+                score = score + Yscore(i);  
+                numCorrect = numCorrect + (Ypred(i) == Yactual);
                 Ymat(ind,:) = yi;
             end
             n = length(labeledTarget);
