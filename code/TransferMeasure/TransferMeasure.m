@@ -32,7 +32,12 @@ classdef TransferMeasure < handle
             params = obj.getNameParams();            
             for i=1:numel(params)
                 n = params{i};
-                v = obj.configs(n);
+                if isKey(obj.configs,n)
+                    v = obj.configs(n);
+                else
+                    v = '0';
+                    display([n ' Missing: setting to 0']);
+                end
                 if ~isa(v,'char')
                     v = num2str(v);
                 end

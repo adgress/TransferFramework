@@ -64,3 +64,5 @@ fu = - inv(Lu + reg*eye(size(Lu))) * L(l+1:n, 1:l) * fl;
 % compute the CMN solution
 q = sum(fl)+1; % the unnormalized class proportion estimate from labeled data, with Laplace smoothing
 fu_CMN = fu .* repmat(q./sum(fu), n-l, 1);
+fu = Helpers.normRows(fu);
+fu_CMN = Helpers.normRows(fu_CMN); 

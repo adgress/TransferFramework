@@ -112,7 +112,11 @@ classdef Helpers < handle
             %Ymat = zeros(size(Y,1),max(Y));
             %Ymat(:,Y) = 1;
             n = size(Y,1);
-            Ymat = sparse(1:n,Y,1,n,max(Y));
+            m = max(Y);
+            assert(m > 0);
+            Y(Y < 0) = m+1;
+            Ymat = sparse(1:n,Y,1,n,m+1);
+            Ymat = Ymat(:,1:m);
         end  
         function [vals] = getValuesOfField(cellArray,field)
             vals = [];
@@ -149,20 +153,39 @@ classdef Helpers < handle
             end
         end
         
-        function [sigma] = selectBestSigma(W,Ytrain,Ytest,sigmas)
+        function [sigma] = selectBestSigma(W,Ytrain,Ytest,sigmas,useHF)
             scores = zeros(1,length(sigmas));
-            percCorrect = scores;
-            YtrainMat = Helpers.createLabelMatrix(Ytrain);
+            percCorrect = scores;            
+            if useHF
+                YtrainMat = Helpers.createLabelMatrix(Ytrain); 
+            else
+                Yactual = [Ytrain ; Ytest];
+                isTrain = ...
+                    logical([ones(size(Ytrain)) ; zeros(size(Ytest))]);
+                labeledTest = Yactual > 0 & ~isTrain;                
+                Y = [Ytrain ; -1*ones(size(Ytest))];
+                YtrainMat = Helpers.createLabelMatrix(Y);
+            end
             for i=1:length(sigmas)                
                 s = sigmas(i);
-                K = Helpers.distance2RBF(W,s);                                
-                warning off;                
-                [fu, fu_CMN] = harmonic_function(K, YtrainMat);
-                warning on;
-                fuCV = fu(1:length(Ytest),:);
-                fuCMNCV = fu_CMN(1:length(Ytest),:);
-                [percCorrect(i),scores(i)] = Helpers.getAccuracy(fuCMNCV,...
-                    Ytest);
+                K = Helpers.distance2RBF(W,s);  
+                if useHF                    
+                    warning off;                
+                    [fu, fu_CMN] = harmonic_function(K, YtrainMat);
+                    warning on;
+                    fuCV = fu(1:length(Ytest),:);
+                    fuCMNCV = fu_CMN(1:length(Ytest),:);
+                    fu_test = fuCMNCV;
+                    [percCorrect(i),scores(i)] = Helpers.getAccuracy(fu_test,...
+                        Ytest);
+                else                                            
+                    warning off;
+                    [fu] = llgc(K, YtrainMat);
+                    warning on;
+                    [percCorrect(i),scores(i)] = Helpers.getAccuracy(...
+                        fu(labeledTest,:),Yactual(labeledTest));
+                end
+                
             end
             [bestAcc,bestAccInd] = max(percCorrect);
             [bestScore,bestScoreInd] = max(scores);
@@ -172,8 +195,11 @@ classdef Helpers < handle
             sigma = sigmas(bestAccInd);
         end
         
-        function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV)
-            sigmas = [.1 .05 .01 .005 .001 .0005 .0001];
+        function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV,useHF)
+            if nargin < 6
+                useHF = true;
+            end
+            sigmas = [.1 .01 .001 .0001 .00001 .000001];
             percentageArray = [.9 .1 0];
             if useCV && length(Ytrain) > 0
                 [split] = DataSet.generateSplitForLabels(percentageArray,Ytrain);
@@ -181,10 +207,13 @@ classdef Helpers < handle
                 cvInds = split == 2;            
                 YtestTrain = Ytrain(trainInds);
                 YtestTest = Ytrain(cvInds);
+                if ~useHF
+                    YtestTest = [YtestTest ; -1*ones(size(find(~isTrain)))];
+                end
                 newPerm = [find(trainInds) ; find(cvInds)];
                 newPerm = [newPerm ; find(~isTrain)];
                 Wperm = W(newPerm,newPerm);            
-                sigma = Helpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas);
+                sigma = Helpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas,useHF);
             else
                 display('autoSelectSigma: No YTrain, default sigma selected');
                 sigma = .1;

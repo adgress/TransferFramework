@@ -12,8 +12,7 @@ function [f] = visualizeResults(options,f)
     baselineFiles = {};    
     files = [options.baselineFiles options.fileNames options.measureFiles];    
     for i=1:numel(files)
-        fileName = files{i};
-        fileName = ['results/' options.dataSet '/' fileName];
+        fileName = ['results/' options.dataSet '/' files{i}];
         results = load(fileName);
         results = results.results;
         configs = results.configs;
@@ -38,10 +37,8 @@ function [f] = visualizeResults(options,f)
     numColors = numColors + numel(options.measureFiles);
     colors = colormap(hsv(numColors));
     index = 1;    
-    maxSize = 15;
     for i=1:numel(files)
-        fileName = files{i};
-        fileName = ['results/' options.dataSet '/' fileName];
+        fileName = ['results/' options.dataSet '/' files{i}];
         allResults = load(fileName);
         allResults = allResults.results;
         
@@ -165,6 +162,7 @@ function [f] = visualizeResults(options,f)
         ', ' num2str(numTrain) '/' num2str(numTest) ')'];
     xlabel(xAxisLabel,'FontSize',8);
     ylabel(options.yAxisDisplay,'FontSize',8);
+    axis([0 10 0 2]);
     hold off;    
 end
 

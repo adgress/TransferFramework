@@ -19,7 +19,7 @@ classdef HFTransferMeasure < TransferMeasure
                 sum(targetWithLabels) <= max(target.Y)
                 val = nan;
                 return;
-            end            
+            end
             if nargin >= 4 && isfield(options,'distanceMatrix')
                 W = options.distanceMatrix;
             else                
@@ -34,18 +34,6 @@ classdef HFTransferMeasure < TransferMeasure
             [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
             sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true);            
             if ~obj.configs('useSourceForTransfer')
-                %{
-                sourceDataSet = DataSet('','','',...
-                    zeros(0,size(target.X,2)),...
-                    zeros(0,size(target.Y,2)));
-                Xall = [target.X];  
-                Y = [sourceDataSet.Y ; target.Y];
-                type = [ones(numel(sourceDataSet.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
-                    ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
-                W = Kernel.Distance(Xall);
-                W = DistanceMatrix(W,Y,type);
-                [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
-                %}
                 W = W(isTarget,isTarget);
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);
@@ -73,9 +61,7 @@ classdef HFTransferMeasure < TransferMeasure
                     
                     Yl = [Ys ; Yt(isLabeledTargetToUse)];
                     YlLabelMatrix = Helpers.createLabelMatrix(Yl);
-                    [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);
-                    fu = Helpers.normRows(fu);
-                    fu_CMN = Helpers.normRows(fu_CMN);                    
+                    [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);                
                     [~,predicted] = max(fu,[],2);
                     [~,predictedCMN] = max(fu_CMN,[],2);
                     
@@ -95,8 +81,6 @@ classdef HFTransferMeasure < TransferMeasure
                 [fu, fu_CMN] = harmonic_function(W, YsLabelMatrix);
                 [~,predicted] = max(fu,[],2);
                 [~,predictedCMN] = max(fu_CMN,[],2);
-                fu = Helpers.normRows(fu);
-                fu_CMN = Helpers.normRows(fu_CMN);
                 fu2 = fu(isLabeledTarget,:);
                 fu_CMN2 = fu_CMN(isLabeledTarget,:);
                 classPriors = histc(Ys,1:10)./length(Ys);

@@ -26,7 +26,8 @@ function [] = runBatchExperiment(multithread, configFile)
             configFiles{end+1} = 'config/measure/batchHDH.cfg';
             configFiles{end+1} = 'config/measure/batchTDAS.cfg';
             %}            
-            configFiles{end+1} = 'config/measure/batchHF.cfg';
+            %configFiles{end+1} = 'config/measure/batchHF.cfg';
+            configFiles{end+1} = 'config/measure/batchLLGC.cfg';
             %configFiles{end+1} = 'config/measure/batchNN.cfg';
         end
     end
