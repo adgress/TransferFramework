@@ -36,6 +36,30 @@ classdef LLGCTransferMeasure < TransferMeasure
             W = Helpers.distance2RBF(W,sigma);
             addpath(genpath('libraryCode'));
             Y = [Ys ; Yt];            
+            labeledTarget = length(Ys) + find(Yt > 0);            
+            numCorrect = 0;
+            score = 0;
+            Ymat = full(Helpers.createLabelMatrix(Y));
+            for i=1:length(labeledTarget)
+                ind = labeledTarget(i);
+                yi = Ymat(ind,:);
+                Ymat(ind,:) = 0;
+                if i==1
+                    [fu,invM] = llgc(W,Ymat);
+                else
+                    [fu,~] = llgc(W,Ymat,invM);
+                end
+                fu_i = fu(ind,:);
+                yActual = Y(ind);
+                [~,yPred] = max(fu_i);
+                score = score + fu_i(yActual);  
+                numCorrect = numCorrect + (yPred == yActual);
+                Ymat(ind,:) = yi;
+            end
+            n = length(labeledTarget);
+            score = score/n;
+            numCorrect = numCorrect/n;
+            %{
             [fu] = llgc(W, Helpers.createLabelMatrix(Y));
             Yactual = Yt(Yt > 0);
             labelMat = Helpers.createLabelMatrix(Yactual);
@@ -46,7 +70,7 @@ classdef LLGCTransferMeasure < TransferMeasure
             score = sum(fuLabeledTarget(logical(labelMat)))/n;
             [~,pred] = max(fuLabeledTarget,[],2);
             numCorrect = sum(Yactual==pred)/n;
-            
+            %}
             if obj.configs('useSoftLoss')
                 val = score;
             else

@@ -1,11 +1,12 @@
-function [fu] = llgc(W,fl,alpha)
+function [fu,invM] = llgc(W,fl,invM)
+    alpha = .5;    
     if nargin < 3
-        alpha = .5;
+        Disq = diag(sum(W).^-.5);
+        WN = Disq*W*Disq;
+        I = eye(size(WN,1));
+        invM = (1-alpha)*inv(I-alpha*WN);        
     end
-    Disq = diag(sum(W).^-.5);
-    WN = Disq*W*Disq;
-    I = eye(size(WN,1));
-    fu = (1-alpha)*inv(I-alpha*WN)*fl;
+    fu = invM*fl;
     fu = Helpers.normRows(fu);
 end
 
