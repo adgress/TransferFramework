@@ -21,6 +21,10 @@ classdef DataSplitterConfigLoader < ConfigLoader
             percentTest = obj.configs('percentTest');
             dataSetType = obj.configs('dataSetType');
             normalizeData = obj.configs('normalizeRows');
+            maxTrain=Inf;
+            if isKey(obj.configs,'maxTrain')
+                maxTrain = obj.configs('maxTrain');
+            end
             dataSetTypeConstructer = str2func(dataSetType);
             allData = dataSetTypeConstructer(inputFile,XName,YName);
             allData.X = Helpers.NormalizeRows(allData.X);
