@@ -227,14 +227,14 @@ classdef Helpers < handle
                     warning on;
                     [percCorrect(i),scores(i)] = Helpers.getAccuracy(...
                         fu(labeledTest,:),Yactual(labeledTest));
-                end
-                
+                end                
             end
             [bestAcc,bestAccInd] = max(percCorrect);
             [bestScore,bestScoreInd] = max(scores);
             %[bestAcc bestScore]
             %assert(bestAccInd == bestScoreInd);
             %percCorrect
+            %scores
             sigma = sigmas(bestAccInd);
         end
         
@@ -268,7 +268,9 @@ classdef Helpers < handle
             [~,predicted] = max(predMat,[],2);
             predMat = Helpers.normRows(predMat);
             percCorrect = sum(predicted == Yactual)/length(predicted);
-            score = sum(sum(YactualMat.*predMat))/length(predicted);
+            entryScores = sum(YactualMat.*predMat,2);
+            entryScores(isnan(entryScores)) = 0;
+            score = sum(entryScores)/length(predicted);
         end
         
         function [W] = normRows(W)

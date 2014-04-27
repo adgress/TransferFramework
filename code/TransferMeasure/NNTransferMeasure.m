@@ -27,17 +27,21 @@ classdef NNTransferMeasure < TransferMeasure
                 assert(size(Ynn,2) == k);
             else
                 if includeTarget
-                    X = [target.X(targetWithLabels,:) ; source.X(sourceWithLabels,:)];
-                    Y = [target.Y(targetWithLabels,:) ; source.Y(sourceWithLabels,:)];
+                    X = target.X(targetWithLabels,:);
+                    Y = target.Y(targetWithLabels,:);
+                    if obj.configs('useSourceForTransfer')
+                        X = [X ; source.X(sourceWithLabels,:)];
+                        Y = [Y ; source.Y(sourceWithLabels,:)];
+                    end
                     startIndex = 2;
                     endIndex = k+1;
                 else
+                    error('Not yet implemented');
                     startIndex = 1;
                     endIndex = k;
                     X = source.X(sourceWithLabels,:);
                     Y = source.Y(sourceWithLabels,:);
                 end
-                %[Dtl,Itl] = pdist2(source.X,target.X(withLabels,:),'euclidean','Smallest',k);
                 %{
                 [Dtl,Itl] = pdist2(X,target.X(targetWithLabels,:),'euclidean','Smallest',endIndex);                
                 Dtl = Dtl';

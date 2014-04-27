@@ -28,7 +28,7 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             configsCopy = obj.configs;
             if ~isempty(obj.configs('preTransferMeasures'))
                 configsCopy('useSourceForTransfer') = 0;
-                preTransferMeasures = obj.configs('postTransferMeasures');
+                preTransferMeasures = obj.configs('preTransferMeasures');
                 measureFunc = str2func(preTransferMeasures{1});                
                 measureObj = measureFunc(configsCopy);
                 target = DataSet('','','',[sampledTrain.X ; test.X],...

@@ -59,12 +59,12 @@ classdef LLGCTransferMeasure < TransferMeasure
                 Yactual = Y(ind);
                 Yscore(i) = fu(ind,Yactual);                
                 [~,Ypred(i)] = max(fu(ind,:));
-                score = score + Yscore(i);  
                 numCorrect = numCorrect + (Ypred(i) == Yactual);
                 Ymat(ind,:) = yi;
             end
+            Yscore(isnan(Yscore)) = 0;
             n = length(labeledTarget);
-            score = score/n;
+            score = sum(Yscore)/n;
             numCorrect = numCorrect/n;
             %{
             [fu] = llgc(W, Helpers.createLabelMatrix(Y));

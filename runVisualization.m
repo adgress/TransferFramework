@@ -50,7 +50,7 @@ function [] = runVisualization(dataset)
         %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
         %fileNames{end+1} = 'TM/HF_useCMN=1_useSoftLoss=1_S+T.mat';
         %fileNames{end+1} = 'TM/HF_useCMN=1_S+T.mat';
-        fileNames{end+1} = 'TM/NN_k=3_S+T.mat';
+        fileNames{end+1} = 'TM/NN_k=1_S+T.mat';
         fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_S+T.mat';
     end
     if dataset == Constants.CV_DATA        

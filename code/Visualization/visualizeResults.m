@@ -38,7 +38,7 @@ function [f] = visualizeResults(options,f)
     colors = colormap(hsv(numColors));
     index = 1;    
     for i=1:numel(files)
-        fileName = ['results/' options.dataSet '/' files{i}];
+        fileName = ['results/' options.prefix '/' options.dataSet '/' files{i}];
         allResults = load(fileName);
         allResults = allResults.results;
         
@@ -72,7 +72,7 @@ function [f] = visualizeResults(options,f)
             sizes = getSizes(results,options.xAxisField);
             
             if options.showRelativePerformance && hasTestResults
-                baselineFile = ['results/' options.dataSet '/' baselineFiles{1}];
+                baselineFile = ['results/' options.prefix '/' options.dataSet '/' baselineFiles{1}];
                 baselineResults = load(baselineFile);
                 baselineResults = baselineResults.results.allResults;
                 for k=1:numel(measures)
