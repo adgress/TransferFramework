@@ -3,7 +3,6 @@ classdef ExperimentConfigLoader < ConfigLoader
     %   Detailed explanation goes here
     
     properties
-        nameFile
         names
         dataAndSplits   
         allExperiments
@@ -40,7 +39,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         function [] = setDataSet(obj,dataSet)
             obj.configs('dataSet') = dataSet;
             inputDir = obj.configs('inputDir');
-            inputFile = [inputDir '/transfer' dataSet '.mat'];
+            inputFile = [inputDir '/' dataSet '.mat'];
             obj.dataAndSplits = load(inputFile);
             obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
             obj.numSplits = obj.dataAndSplits.configs('numSplits');
@@ -78,9 +77,6 @@ classdef ExperimentConfigLoader < ConfigLoader
             [train,test,validate] = dataSet.splitDataSet(split);
         end
         
-        function [] = loadNames(obj)            
-            obj.names = ConfigLoader.StaticLoadConfigs(obj.nameFile);            
-        end
         function [nExperiments] = numExperiments(obj)
             nExperiments = numel(obj.allExperiments);
         end

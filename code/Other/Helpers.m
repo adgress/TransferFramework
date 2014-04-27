@@ -6,10 +6,45 @@ classdef Helpers < handle
     end
     
     methods(Static)
+        
+        function [D] = CreateDistanceMatrix(X,Y)
+            X=X';
+            Y=Y';
+            D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 
+        end
+        
+        function [minInds] = KNN(Xtrain,Xtest,k)
+            D = Helpers.CreateDistanceMatrix(Xtrain,Xtest);
+            minInds = zeros(size(Xtest,1),k);
+            for i=1:k
+                [~,inds] = min(D);
+                minInds(:,i) = inds';
+                numTest = size(Xtest,1);
+                indMat = sparse(inds,1:numTest,true(numTest,1));
+                if i ~= k
+                    D(indMat) = Inf;
+                end
+            end
+        end
+        
         function [split] = split_string(string,delim)
             split = {};
             while numel(string) > 0
                 [split{end+1}, string] = strtok(string,delim);
+            end
+        end
+        
+        function [map] = CombineMaps(map1,map2)
+            map = containers.Map();
+            maps = {map1,map2};
+            for i=1:length(maps)
+                m = maps{i};
+                keys = m.keys;
+                for j=1:length(keys)
+                    k = keys{j};
+                    v = m(k);
+                    map(k) = v;
+                end
             end
         end
         
@@ -71,7 +106,15 @@ classdef Helpers < handle
             X = X - repmat(mean,size(X,1),1);
         end
         function [X] = NormalizeRows(X)
-            X = X ./ repmat(sum(X,2),1,size(X,2));
+            sums = sum(X,2);
+            assert(sum(sums == 0) == 0);
+            try 
+                r = repmat(sums,1,size(X,2));
+                X = X ./ r;
+            catch err
+                numRows = size(X,1);
+                X = spdiags (sums, 0, numRows, numRows) \ X ;
+            end            
         end        
         function [Psource,Ptarget] = getSubspaces(sourceTrainData, ...
                 targetTrainData, targetTestData, configs)            

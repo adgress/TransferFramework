@@ -14,6 +14,9 @@ classdef DataSet < handle
             if ~isempty(dataFile)
                 obj.dataFile = dataFile;
                 obj.data = load(dataFile);
+                if isfield(obj.data,'data')
+                    obj.data = obj.data.data;
+                end
                 obj.X = obj.data.(XName);
                 obj.Y = obj.data.(YName);
             end

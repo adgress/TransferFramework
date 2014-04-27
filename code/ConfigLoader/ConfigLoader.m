@@ -26,7 +26,7 @@ classdef ConfigLoader < handle
             end
             if ~isempty(obj.commonConfigFile)
                 obj.configs = ...
-                    ConfigLoader.StaticLoadConfigs(obj.commonConfigFile);
+                    ConfigLoader.LoadConfigs(obj.commonConfigFile);
             end
             configs = ConfigLoader.StaticLoadConfigs(obj.configFile);
             keys = configs.keys;
@@ -43,6 +43,31 @@ classdef ConfigLoader < handle
             error('TODO');            
         end
     end
+    methods(Static)
+       function [configs] = LoadConfigs(fileName)
+            fid = ConfigLoader.loadFile(fileName);
+            configs = containers.Map;
+            while ~feof(fid)
+                x = fgetl(fid);
+                if isempty(x) || x(1) == '#' || ...
+                    (isa(x,'double') && x == -1)
+                    continue;
+                end
+                C = textscan(x,'%s','delimiter','=');
+                C = C{1};
+                var = C{1};
+                val = '';
+                if length(C) > 1
+                    val = [C{2:end}];                    
+                end
+                assert(~isempty(val))
+                val = eval(val);
+                configs(var) = val;
+            end
+            fclose(fid);
+        end    
+    end
+    
     methods(Access=protected,Static)
         function [configs] = StaticLoadConfigs(fileName)
             fid = ConfigLoader.loadFile(fileName);

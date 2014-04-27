@@ -46,10 +46,12 @@ classdef NearestNeighborMethod < Method
                 if isempty(YWithLabels)
                     testResults.trainPredicted = ones(size(train.X,1),1);
                     testResults.testPredicted = ones(size(test.X,1),1);
-                else
-                    idx = knnsearch(XWithLabels,testX,'k',k);
+                else                                                            
+                    %idx = knnsearch(XWithLabels,testX,'k',k);
+                    idx = Helpers.KNN(XWithLabels,testX,k);
                     testResults.testPredicted = YWithLabels(idx);                
-                    idx = knnsearch(XWithLabels,trainX,'k',k);
+                    %idx = knnsearch(XWithLabels,trainX,'k',k);
+                    idx = Helpers.KNN(XWithLabels,trainX,k);
                     testResults.trainPredicted = YWithLabels(idx);
                 end
             end

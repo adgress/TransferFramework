@@ -7,12 +7,15 @@ classdef BatchExperimentConfigLoader < ConfigLoader
     
     methods
         function obj = BatchExperimentConfigLoader(configs,commonConfigFile)          
-            obj = obj@ConfigLoader(configs,commonConfigFile);                        
+            obj = obj@ConfigLoader(configs,commonConfigFile);
+            obj.configs('batchCommonFile') = commonConfigFile;
         end
         function [] = runExperiments(obj,multithread)
             inputFile = obj.configs('inputFile');
+            batchCommonFile = obj.configs('batchCommonFile');
+            batchCommonConfigs = ConfigLoader.LoadConfigs(batchCommonFile);
+            obj.configs = Helpers.CombineMaps(obj.configs,batchCommonConfigs);
             inputCommonFile = obj.configs('inputCommonFile');
-            %outputFilePrefix = obj.configs('outputFilePrefix');
             paramsToVary = obj.configs('paramsToVary');
             
             experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
