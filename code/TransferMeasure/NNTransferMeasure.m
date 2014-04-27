@@ -47,7 +47,7 @@ classdef NNTransferMeasure < TransferMeasure
                 Yactual = target.Y(targetWithLabels);
                 Ynn = Y(Itl);
                 %}
-                [minInds] = Helpers.KNN(X,target.X(targetWithLabels,:),endIndex)
+                [minInds] = Helpers.KNN(X,target.X(targetWithLabels,:),endIndex);
                 minInds = minInds(:,startIndex:endIndex);
                 Yactual = target.Y(targetWithLabels);
                 Ynn = Y(minInds);
