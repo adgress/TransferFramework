@@ -18,7 +18,7 @@ classdef NearestNeighborMethod < Method
             metadata = input.metadata;           
             numTest = numel(test.Y);
             k = experiment.k;
-            %assert(k == 1);
+            assert(k == 1);
             trainX = train.X;
             trainY = train.Y;
             testX = test.X;

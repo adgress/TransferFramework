@@ -13,7 +13,7 @@ classdef NNTransferMeasure < TransferMeasure
         function [val,metadata] = computeMeasure(obj,source,target,options)            
             metadata = {};            
             k = obj.configs('k');
-            
+            assert(k==1);
             targetWithLabels = target.Y > 0;
             sourceWithLabels = source.Y > 0;
             if sum(targetWithLabels) == 0
@@ -38,13 +38,19 @@ classdef NNTransferMeasure < TransferMeasure
                     Y = source.Y(sourceWithLabels,:);
                 end
                 %[Dtl,Itl] = pdist2(source.X,target.X(withLabels,:),'euclidean','Smallest',k);
-                [Dtl,Itl] = pdist2(X,target.X(targetWithLabels,:),'euclidean','Smallest',endIndex);
+                %{
+                [Dtl,Itl] = pdist2(X,target.X(targetWithLabels,:),'euclidean','Smallest',endIndex);                
                 Dtl = Dtl';
                 Itl = Itl';
                 Dtl = Dtl(:,startIndex:endIndex);
                 Itl = Itl(:,startIndex:endIndex);
                 Yactual = target.Y(targetWithLabels);
                 Ynn = Y(Itl);
+                %}
+                [minInds] = Helpers.KNN(X,target.X(targetWithLabels,:),endIndex)
+                minInds = minInds(:,startIndex:endIndex);
+                Yactual = target.Y(targetWithLabels);
+                Ynn = Y(minInds);
                 %{
                 Dt = D(numSource+1:end,1:numSource);
                 It = I(numSource+1:end,1:numSource);

@@ -20,7 +20,7 @@ classdef Helpers < handle
                 [~,inds] = min(D);
                 minInds(:,i) = inds';
                 numTest = size(Xtest,1);
-                indMat = sparse(inds,1:numTest,true(numTest,1));
+                indMat = sparse(inds,1:numTest,true(numTest,1),size(D,1),size(D,2));
                 if i ~= k
                     D(indMat) = Inf;
                 end
