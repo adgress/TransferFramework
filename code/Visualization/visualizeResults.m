@@ -10,9 +10,9 @@ function [f] = visualizeResults(options,f)
         numColors = 2*numColors;
     end
     baselineFiles = {};    
-    files = [options.baselineFiles options.fileNames options.measureFiles];    
+    files = [options.baselineFiles options.fileNames];    
     for i=1:numel(files)
-        fileName = ['results/' options.dataSet '/' files{i}];
+        fileName = ['results/' options.prefix '/' options.dataSet '/' files{i}];
         results = load(fileName);
         results = results.results;
         configs = results.configs;
@@ -35,7 +35,6 @@ function [f] = visualizeResults(options,f)
         files = files(numBaselineFiles+1:end);
     end
     numColors = numColors*numel(results.configs('methodClasses'));
-    numColors = numColors + numel(options.measureFiles);
     colors = colormap(hsv(numColors));
     index = 1;    
     for i=1:numel(files)
