@@ -27,7 +27,7 @@ function [f] = visualizeResults(options,f)
             
         end
     end
-    numColors = 4;
+    numColors = 5;
     if options.showRelativePerformance
         numBaselineFiles = numel(options.baselineFiles);
         assert(numBaselineFiles > 0);
@@ -159,7 +159,8 @@ function [f] = visualizeResults(options,f)
         ', ' num2str(numTrain) '/' num2str(numTest) ')'];
     xlabel(xAxisLabel,'FontSize',8);
     ylabel(options.yAxisDisplay,'FontSize',8);
-    axis([0 10 0 2]);
+    axisToUse = options.axisToUse;
+    axis(axisToUse);
     hold off;    
 end
 
