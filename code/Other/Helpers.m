@@ -242,8 +242,9 @@ classdef Helpers < handle
             if nargin < 6
                 useHF = true;
             end
-            sigmas = [.1 .01 .001 .0001 .00001 .000001];
-            percentageArray = [.9 .1 0];
+            %sigmas = [.1 .01 .001 .0001 .00001 .000001];
+            sigmas = [.1 .01 .001 .0001 .00001];
+            percentageArray = [.8 .2 0];
             if useCV && length(Ytrain) > 0
                 [split] = DataSet.generateSplitForLabels(percentageArray,Ytrain);
                 trainInds = split == 1;
