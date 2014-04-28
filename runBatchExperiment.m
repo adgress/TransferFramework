@@ -1,7 +1,7 @@
 function [] = runBatchExperiment(multithread, dataset)
     setPaths;
     configFiles = {};
-    runBaseline = 0;
+    runBaseline = 1;
     runAdvanced = 0;
     runMeasures = 1;
     %configFiles{end+1} = 'config/batch/batchMA.cfg';
