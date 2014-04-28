@@ -27,7 +27,7 @@ function [f] = visualizeResults(options,f)
             
         end
     end
-    numColors = 6;
+    numColors = 3;
     if options.showRelativePerformance
         numBaselineFiles = numel(options.baselineFiles);
         assert(numBaselineFiles > 0);
