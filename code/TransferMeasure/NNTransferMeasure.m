@@ -10,7 +10,7 @@ classdef NNTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,metadata] = computeMeasure(obj,source,target,options)            
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)            
             metadata = {};            
             k = obj.configs('k');
             assert(k==1);
@@ -63,7 +63,11 @@ classdef NNTransferMeasure < TransferMeasure
                 %}                                
             end            
             numTargetLabeled = ...
-                sum(Ynn == repmat(Yactual,1,k),2)/k;            
+                sum(Ynn == repmat(Yactual,1,k),2)/k;   
+            
+            assert(k == 1);
+            perLabelMeasures = ...
+                Helpers.getAllLabelAccuracy(Ynn,Yactual);
             val = mean(numTargetLabeled);
             obj.displayMeasure(val);            
         end

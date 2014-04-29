@@ -13,6 +13,17 @@ classdef Helpers < handle
             D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 
         end
         
+        function [perf] = getAllLabelAccuracy(pred,act)
+            maxLabel = max(act);
+            perf = zeros(maxLabel,1);
+            for i=1:maxLabel
+                perf(i) = Helpers.getLabelAccuracy(pred,act,i);
+            end
+        end
+        function [perf] = getLabelAccuracy(pred,act,label)
+            perf = sum(act == label & pred == act)/sum(act == label);
+        end
+        
         function [minInds] = KNN(Xtrain,Xtest,k)
             D = Helpers.CreateDistanceMatrix(Xtrain,Xtest);
             minInds = zeros(size(Xtest,1),k);
@@ -172,9 +183,16 @@ classdef Helpers < handle
                     vals{i} = cellArray{i}.(field);
                 end                
             else
-                vals = zeros(numel(cellArray),1);
+                n = numel(cellArray);
+                l = length(cellArray{1}.(field));
+                assert(min(size(l)) == 1);
+                vals = zeros(n,l);
                 for i=1:numel(cellArray)
-                    vals(i) = cellArray{i}.(field);
+                    v = cellArray{i}.(field);
+                    if size(v,1) > 1
+                        v = v';
+                    end
+                    vals(i,:) = v;
                 end
             end
         end

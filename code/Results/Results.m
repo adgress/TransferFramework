@@ -39,11 +39,15 @@ classdef Results < handle
             obj.aggregatedResults.metadata = ...
                 obj.splitResults{1}.metadata;
         end        
-        function [] = aggregateMeasureResults(obj)            
+        function [] = aggregateMeasureResults(obj)                        
+            aggregateMeasureResultsForField(obj,'preTransferPerLabelMeasures',...
+                'preTransferPerLabelMeasures');
+            aggregateMeasureResultsForField(obj,'postTransferPerLabelMeasures',...
+                'postTransferPerLabelMeasures');
             aggregateMeasureResultsForField(obj,'postTransferMeasureVal',...
                 'PostTMResults');
             aggregateMeasureResultsForField(obj,'preTransferMeasureVal',...
-                'PreTMResults');
+                'PreTMResults');            
         end
         
         function [] = aggregateMeasureResultsForField(obj,field,saveField)
@@ -56,12 +60,14 @@ classdef Results < handle
                 obj.splitResults{1}.metadata;
             obj.aggregatedResults.(saveField) = {};
             for i=1:numel(measures{1})
-                vals = [];
+                m = length(measures{1}{i});
+                vals = zeros(length(measures),m);
                 for j=1:numel(measures)
-                    vals(j) = measures{j}{i};
+                    v = measures{j}{i};
+                    vals(j,:) = v(:)';
                 end
-                obj.aggregatedResults.(saveField){i} = ...
-                    ResultsVector(vals);
+                r = ResultsVector(vals);
+                obj.aggregatedResults.(saveField){i} = r;
             end
         end
     end    

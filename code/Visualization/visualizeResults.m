@@ -123,10 +123,23 @@ function [f] = visualizeResults(options,f)
                             learnerName,leg,index,colors);
                     %}
                     measureIndex = 1;
-                    field2 = 'PostTMResults';
-                    field1 = 'PreTMResults';
+                    
+                    if ~options.usePerLabel
+                        field2 = 'PostTMResults';
+                        field1 = 'PreTMResults';
+                    else
+                        field2 = 'postTransferPerLabelMeasures';
+                        field1 = 'preTransferPerLabelMeasures';
+                    end
                     [means,vars,lows,ups] = getRelativePerf(results,...
-                        field1,field2,measureIndex,options);                    
+                        field1,field2,measureIndex,options);        
+                    means(isnan(means)) = 0;
+                    means(isinf(means)) = 2;
+                    vars(isnan(vars)) = 0;
+                    if options.usePerLabel
+                        means = mean(means,2);
+                        vars = mean(vars,2);
+                    end
                     errorbar(sizes,means,vars,'color',colors(index,:));
                     measures = configs('postTransferMeasures');
                     dispName = TransferMeasure.GetDisplayName(measures{1},configs);
@@ -183,7 +196,12 @@ function [leg,index] = plotMeasureResults(options,configs,results,sizes,field,..
 end
 
 function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,index,options)
-    means = zeros(numel(results),1);
+    t = results{1}.aggregatedResults.(field1);
+    if iscell(t)
+        t = cell2mat(t);
+    end
+    numMeasureFields = size(t,2);
+    means = zeros(numel(results),numMeasureFields);
     vars = [];
     ups = [];
     lows = [];
@@ -208,8 +226,8 @@ function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,index,opt
         if options.relativeType == Constants.RELATIVE_PERFORMANCE
             relativePerf = ...
                 ResultsVector.GetRelativePerformance(x,y);
-            means(i) = relativePerf.getMean();
-            vars(i) = relativePerf.getVar();        
+            means(i,:) = relativePerf.getMean();
+            vars(i,:) = relativePerf.getVar();        
         elseif options.relativeType == Constants.CORRELATION
             [means(i),ups(i),lows(i)] = ResultsVector.GetCorrelation(x,y);
         else

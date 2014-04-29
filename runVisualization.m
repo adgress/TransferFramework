@@ -8,16 +8,17 @@ function [] = runVisualization(dataset)
     if dataset == Constants.CV_DATA
         axisToUse = [0 5 0 1.8];
     else
-        axisToUse = [0 20 0 1.8];
+        axisToUse = [0 20 0 1.2];
     end
     
+    usePerLabel = 1;
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 0;
     showRelativePerformance = 1;
     showRelativeMeasures = 1;
     showCorrelations = 0;
     showTrain = false;
-    showLegend = true;
+    showLegend = true;    
     
     measuresToShow = containers.Map();
     measuresToShow('NNTransferMeasure') = 1;
@@ -59,7 +60,7 @@ function [] = runVisualization(dataset)
         %fileNames{end+1} = 'TM/HF_useCMN=1_useSoftLoss=1_S+T.mat';
         %fileNames{end+1} = 'TM/HF_useCMN=1_S+T.mat';
         fileNames{end+1} = 'TM/NN_k=1_S+T.mat';
-        fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_S+T.mat';
+        %fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_S+T.mat';
         %fileNames{end+1} = 'TM/LLGC_useSoftLoss=0_S+T.mat';
     end
     if dataset == Constants.CV_DATA        
@@ -98,6 +99,7 @@ function [] = runVisualization(dataset)
             options.yAxisDisplay = 'Accuracy';        
             options.baselineFiles = baselineFiles;
             options.axisToUse = axisToUse;
+            options.usePerLabel = usePerLabel;
             if options.showRelativePerformance
                 if showCorrelations
                     options.relativeType = Constants.CORRELATION;

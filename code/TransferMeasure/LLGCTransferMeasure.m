@@ -10,7 +10,7 @@ classdef LLGCTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,metadata] = computeMeasure(obj,source,target,...
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,...
                 options)            
             metadata = {};                        
             
@@ -46,7 +46,7 @@ classdef LLGCTransferMeasure < TransferMeasure
             score = 0;
             Ymat = full(Helpers.createLabelMatrix(Y));
             Yscore = zeros(size(labeledTarget));
-            Ypred = Yscore;
+            Ypred = Yscore;            
             for i=1:length(labeledTarget)
                 ind = labeledTarget(i);
                 yi = Ymat(ind,:);
@@ -80,8 +80,12 @@ classdef LLGCTransferMeasure < TransferMeasure
             %}
             if obj.configs('useSoftLoss')
                 val = score;
+                perLabelMeasures = ...
+                    Helpers.getAllLabelAccuracy(Yscore,Y(labeledTarget));
             else
                 val = numCorrect;
+                perLabelMeasures = ...
+                    Helpers.getAllLabelAccuracy(Ypred,Y(labeledTarget));
             end
             obj.displayMeasure(val);
         end            

@@ -14,6 +14,17 @@ classdef Measure < handle
             measureResults = struct();
             measureResults.testPerformance = valTest;
             measureResults.trainPerformance = valTrain;
+            numLabels = max(split.testActual);
+            measureResults.trainPerfPerLabel = zeros(numLabels,1);
+            measureResults.testPerfPerLabel = zeros(numLabels,1);
+            for i=1:numLabels
+                measureResults.trainPerfPerLabel(i) = ...
+                    Helpers.getLabelAccuracy(split.trainPredicted,...
+                    split.trainActual,i);
+                measureResults.testPerfPerLabel(i) = ...
+                    Helpers.getLabelAccuracy(split.testPredicted,...
+                    split.testActual,i);
+            end
         end
         
         function [aggregatedResults] = aggregateResults(obj,splitMeasures)
@@ -21,11 +32,14 @@ classdef Measure < handle
             testMeasures = ...
                 Helpers.getValuesOfField(splitMeasures,'testPerformance');
             trainMeasures = ...
-                Helpers.getValuesOfField(splitMeasures,'trainPerformance');            
+                Helpers.getValuesOfField(splitMeasures,'trainPerformance');                        
             aggregatedResults.testResults = ResultsVector(testMeasures);
             aggregatedResults.trainResults = ResultsVector(trainMeasures);
-        end
+            aggregatedResults.trainLabelMeasures = ...
+                Helpers.getValuesOfField(splitMeasures,'trainPerfPerLabel');
+            aggregatedResults.testLabelMeasures  = ...
+                Helpers.getValuesOfField(splitMeasures,'testPerfPerLabel');
+        end                
     end
-    
 end
 
