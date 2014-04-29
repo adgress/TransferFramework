@@ -1,9 +1,9 @@
 function [] = runBatchExperiment(multithread, dataset)
     setPaths;
     configFiles = {};
-    runBaseline = 1;
+    runBaseline = 0;
     runAdvanced = 0;
-    runMeasures = 0;
+    runMeasures = 1;
     %configFiles{end+1} = 'config/batch/batchMA.cfg';
     
     batchCommon = 'config/batch/batchCommon.cfg';
@@ -29,8 +29,8 @@ function [] = runBatchExperiment(multithread, dataset)
             configFiles{end+1} = 'config/measure/batchTDAS.cfg';
         %}
         %configFiles{end+1} = 'config/measure/batchHF.cfg';
-        configFiles{end+1} = 'config/measure/batchNN.cfg';
-        %configFiles{end+1} = 'config/measure/batchLLGC.cfg';        
+        %configFiles{end+1} = 'config/measure/batchNN.cfg';
+        configFiles{end+1} = 'config/measure/batchLLGC.cfg';        
     end
     for i=1:numel(configFiles)
         obj = BatchExperimentConfigLoader(configFiles{i},batchCommon);
