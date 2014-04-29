@@ -18,6 +18,8 @@ classdef LLGCTransferMeasure < TransferMeasure
             if sum(targetWithLabels) == 0 || ...
                 sum(targetWithLabels) <= max(target.Y)
                 val = nan;
+                numLabels = max(source.Y);
+                perLabelMeasures = nan(1,numLabels);
                 return;
             end
             if nargin >= 4 && isfield(options,'distanceMatrix')
