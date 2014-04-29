@@ -82,8 +82,9 @@ classdef LLGCTransferMeasure < TransferMeasure
             %}
             if obj.configs('useSoftLoss')
                 val = score;
+                display('Not using softloss for perLabelAccuracy');
                 perLabelMeasures = ...
-                    Helpers.getAllLabelAccuracy(Yscore,Y(labeledTarget));
+                    Helpers.getAllLabelAccuracy(Ypred,Y(labeledTarget));
             else
                 val = numCorrect;
                 perLabelMeasures = ...
