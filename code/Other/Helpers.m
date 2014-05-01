@@ -20,11 +20,8 @@ classdef Helpers < handle
                 perf(i) = Helpers.getLabelAccuracy(pred,act,i);
             end
         end
-        function [perf] = getLabelAccuracy(conf,act,label)
-            
-        end
-        
-        function [perf] = getLabelConfidence(pred,act,label)
+
+        function [perf] = getLabelAccuracy(pred,act,label)
             perf = sum(act == label & pred == act)/sum(act == label);
         end
         
@@ -302,6 +299,7 @@ classdef Helpers < handle
             m = max(Yactual);
             percCorrect = zeroes(m,1);
             score = percCorrect;
+            error('Not Finished');
         end
         
         function [W] = normRows(W)
