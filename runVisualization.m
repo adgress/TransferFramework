@@ -6,14 +6,15 @@ function [] = runVisualization(dataset)
     setPaths;
     
     if dataset == Constants.CV_DATA
-        axisToUse = [0 5 0 1.8];
+        axisToUse = [0 5 0 1];
     else
         axisToUse = [0 20 0 1.2];
     end
     
-    usePerLabel = 1;
+    usePerLabel = 0;
+    labelToShow = 2;
     showPostTransferMeasures = 1;
-    showPreTransferMeasures = 0;
+    showPreTransferMeasures = 1;
     showRelativePerformance = 1;
     showRelativeMeasures = 1;
     showCorrelations = 0;
@@ -31,7 +32,7 @@ function [] = runVisualization(dataset)
     
     baselineFiles = {'TO.mat'};    
     
-    showBaselines = 0;
+    showBaselines = 1;
     showAdvanced10 = 0;
     showAdvanced20 = 0;
     showMeasures = 1;
@@ -101,6 +102,7 @@ function [] = runVisualization(dataset)
             options.baselineFiles = baselineFiles;
             options.axisToUse = axisToUse;
             options.usePerLabel = usePerLabel;
+            options.labelToShow = labelToShow;
             if options.showRelativePerformance
                 if showCorrelations
                     options.relativeType = Constants.CORRELATION;

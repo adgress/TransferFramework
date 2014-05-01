@@ -15,8 +15,8 @@ classdef Measure < handle
             measureResults.testPerformance = valTest;
             measureResults.trainPerformance = valTrain;
             numLabels = max(split.testActual);
-            measureResults.trainPerfPerLabel = zeros(numLabels,1);
-            measureResults.testPerfPerLabel = zeros(numLabels,1);
+            measureResults.trainPerfPerLabel = ResultsVector(zeros(numLabels,1));
+            measureResults.testPerfPerLabel = ResultsVector(zeros(numLabels,1));
             for i=1:numLabels
                 measureResults.trainPerfPerLabel(i) = ...
                     Helpers.getLabelAccuracy(split.trainPredicted,...
@@ -36,9 +36,9 @@ classdef Measure < handle
             aggregatedResults.testResults = ResultsVector(testMeasures);
             aggregatedResults.trainResults = ResultsVector(trainMeasures);
             aggregatedResults.trainLabelMeasures = ...
-                Helpers.getValuesOfField(splitMeasures,'trainPerfPerLabel');
+                ResultsVector(Helpers.getValuesOfField(splitMeasures,'trainPerfPerLabel'));
             aggregatedResults.testLabelMeasures  = ...
-                Helpers.getValuesOfField(splitMeasures,'testPerfPerLabel');
+                ResultsVector(Helpers.getValuesOfField(splitMeasures,'testPerfPerLabel'));
         end                
     end
 end

@@ -20,7 +20,11 @@ classdef Helpers < handle
                 perf(i) = Helpers.getLabelAccuracy(pred,act,i);
             end
         end
-        function [perf] = getLabelAccuracy(pred,act,label)
+        function [perf] = getLabelAccuracy(conf,act,label)
+            
+        end
+        
+        function [perf] = getLabelConfidence(pred,act,label)
             perf = sum(act == label & pred == act)/sum(act == label);
         end
         
@@ -282,7 +286,10 @@ classdef Helpers < handle
             end
         end
         
-        function [percCorrect,score] = getAccuracy(predMat,Yactual)
+        function [percCorrect,score] = getAccuracy(predMat,Yactual,label)
+            if nargin < 3
+                label = -1;
+            end
             YactualMat = Helpers.createLabelMatrix(Yactual);
             [~,predicted] = max(predMat,[],2);
             predMat = Helpers.normRows(predMat);
@@ -290,6 +297,11 @@ classdef Helpers < handle
             entryScores = sum(YactualMat.*predMat,2);
             entryScores(isnan(entryScores)) = 0;
             score = sum(entryScores)/length(predicted);
+        end             
+        function [percCorrect,score] = getAccuracyPerLabel(predMat,Yactual)
+            m = max(Yactual);
+            percCorrect = zeroes(m,1);
+            score = percCorrect;
         end
         
         function [W] = normRows(W)

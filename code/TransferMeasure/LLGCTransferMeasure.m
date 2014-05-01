@@ -45,7 +45,6 @@ classdef LLGCTransferMeasure < TransferMeasure
             Y = [Ys ; Yt];
             labeledTarget = length(Ys) + find(Yt > 0);            
             numCorrect = 0;
-            score = 0;
             Ymat = full(Helpers.createLabelMatrix(Y));
             Yscore = zeros(size(labeledTarget));
             Ypred = Yscore;            
@@ -67,19 +66,7 @@ classdef LLGCTransferMeasure < TransferMeasure
             Yscore(isnan(Yscore)) = 0;
             n = length(labeledTarget);
             score = sum(Yscore)/n;
-            numCorrect = numCorrect/n;
-            %{
-            [fu] = llgc(W, Helpers.createLabelMatrix(Y));
-            Yactual = Yt(Yt > 0);
-            labelMat = Helpers.createLabelMatrix(Yactual);
-            n = length(Yactual);
-            isLabeledTarget = length(Ys) + find(Yt > 0);
-            fuLabeledTarget = fu(isLabeledTarget,:);            
-            
-            score = sum(fuLabeledTarget(logical(labelMat)))/n;
-            [~,pred] = max(fuLabeledTarget,[],2);
-            numCorrect = sum(Yactual==pred)/n;
-            %}
+
             if obj.configs('useSoftLoss')
                 val = score;
                 display('Not using softloss for perLabelAccuracy');

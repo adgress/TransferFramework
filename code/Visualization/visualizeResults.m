@@ -79,18 +79,39 @@ function [f] = visualizeResults(options,f)
                     for i=1:numel(results)
                         results{i}.aggregatedResults.baseline = ...
                             baselineResults{i}.aggregatedResults.testResults;
+                        results{i}.aggregatedResults.baselinePerLabel = ...
+                            baselineResults{i}.aggregatedResults.testLabelMeasures;
+                        
                     end
-                    field1 = 'baseline';
-                    field2 = 'testResults';
-                    [m,v,l,u] = getRelativePerf(results,field1,...
+                    if ~options.usePerLabel
+                        field2 = 'testResults';
+                        field1 = 'baseline';
+                    else
+                        field2 = 'testLabelMeasures';
+                        field1 = 'baselinePerLabel';
+                    end                       
+                    
+                    [means,vars,l,u] = getRelativePerf(results,field1,...
                         field2,k,options);
-                    if ~isempty(v)
-                        if sum(isinf(m)) > 0
+                    means(isnan(means)) = 0;
+                    means(isinf(means)) = 2;
+                    vars(isnan(vars)) = 0;
+                    if ~isempty(vars)
+                        if sum(isinf(means)) > 0
                             display('NaN');
                         end
-                        errorbar(sizes,m,v,'color',colors(index,:));
+                        if options.usePerLabel
+                            if options.labelToShow > 0
+                                means = means(:,options.labelToShow);
+                                vars = vars(:,options.labelToShow);
+                            else
+                                means = mean(means,2);
+                                vars = mean(vars,2);
+                            end
+                        end
+                        errorbar(sizes,means,vars,'color',colors(index,:));
                     else                    
-                        errorbar(sizes,m,l,u,'color',colors(index,:));
+                        errorbar(sizes,means,l,u,'color',colors(index,:));
                     end
                     dispName = TransferMeasure.GetDisplayName(measures{k},configs);
                     %leg{index} = ['Relative' learnerName '/' dispName];
@@ -98,9 +119,21 @@ function [f] = visualizeResults(options,f)
                     index = index+1;
                 end
             else
-                if isfield(results{1}.aggregatedResults,'testResults')
-                    vars = getVariances(results,'testResults',-1);
-                    means = getMeans(results,'testResults',-1);
+                if hasTestResults
+                    if options.usePerLabel 
+                        vars = getVariances(results,'testLabelMeasures',-1);
+                        means = getMeans(results,'testLabelMeasures',-1); 
+                        if options.labelToShow > 0
+                            means = means(:,options.labelToShow);
+                            vars = vars(:,options.labelToShow);
+                        else
+                            means = mean(means,2);
+                            vars = mean(vars,2);
+                        end
+                    else
+                        vars = getVariances(results,'testResults',-1);
+                        means = getMeans(results,'testResults',-1); 
+                    end
                     errorbar(sizes,means,vars,'color',colors(index,:));
                     if options.showTrain
                         learnerName = [learnerName ', Test'];
@@ -108,13 +141,14 @@ function [f] = visualizeResults(options,f)
                     leg{index} = learnerName;
                     index = index+1;
                     if options.showTrain
+                        error('Not yet implemented');
                         vars = getVariances(results,'trainResults');
                         means = getMeans(results,'trainResults');
                         errorbar(sizes,means,vars,'color',colors(index,:));
                         leg{index} = [learnerName ', Train'];
                         index = index+1;
-                    end 
-                end                                                
+                    end
+                end                                
                                      
                 if hasPostTM && hasPreTM && options.showRelativeMeasures
                     %{
@@ -137,8 +171,13 @@ function [f] = visualizeResults(options,f)
                     means(isinf(means)) = 2;
                     vars(isnan(vars)) = 0;
                     if options.usePerLabel
-                        means = mean(means,2);
-                        vars = mean(vars,2);
+                        if options.labelToShow > 0
+                            means = means(:,options.labelToShow);
+                            vars = vars(:,options.labelToShow);
+                        else
+                            means = mean(means,2);
+                            vars = mean(vars,2);
+                        end
                     end
                     errorbar(sizes,means,vars,'color',colors(index,:));
                     measures = configs('postTransferMeasures');
@@ -237,26 +276,36 @@ function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,index,opt
 end
 
 function [vars] = getVariances(results,name,index)
-    vars = zeros(numel(results),1);
+    if index < 0
+        m = size(results{1}.aggregatedResults.(name),2);
+    else
+        m = size(results{1}.aggregatedResults.(name){index},2);
+    end
+    vars = zeros(numel(results),m);
     for i=1:numel(results);
         if index < 0
-            vars(i) = ...
-                results{i}.aggregatedResults.(name).getVar();        
+            vars(i,:) = ...
+                results{i}.aggregatedResults.(name).getVar();
         else
-            vars(i) = ...
+            vars(i,:) = ...
                 results{i}.aggregatedResults.(name){index}.getVar();
         end
     end
 end
 
 function [means] = getMeans(results,name,index)
-    means = zeros(numel(results),1);
+    if index < 0
+        m = size(results{1}.aggregatedResults.(name),2);
+    else
+        m = size(results{1}.aggregatedResults.(name){index},2);
+    end
+    means = zeros(numel(results),m);
     for i=1:numel(results);
         if index < 0
-            means(i) = ...
+            means(i,:) = ...
                 results{i}.aggregatedResults.(name).getMean();
         else
-            means(i) = ...
+            means(i,:) = ...
                 results{i}.aggregatedResults.(name){index}.getMean();
         end
     end
