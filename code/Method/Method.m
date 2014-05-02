@@ -11,10 +11,14 @@ classdef Method < handle
     methods(Abstract)
         [testResults,metadata] = ...
             trainAndTest(obj,input)   
-    end
+    end    
     methods(Abstract,Static)
         name = getMethodName(configs)
     end
-    
+    methods(Static)
+        function name = getMethodNameForMethod(methodClass,configs)
+            name = eval([methodClass '.getMethodName(configs);']);
+        end
+    end
 end
 

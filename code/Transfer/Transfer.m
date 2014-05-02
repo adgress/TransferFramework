@@ -80,6 +80,11 @@ classdef Transfer
         
     end
     methods(Static)
+        function [name] = GetName(transferClassName,configs)        
+            transferClass = str2func(transferClassName);
+            transferObject = transferClass();
+            name = transferObject.getDisplayName(configs);
+        end
         function [name] = GetPrefixForMethod(transferClass,configs)
             name = eval([transferClass '.getPrefix()']);
         end

@@ -6,7 +6,7 @@ function [] = runVisualization(dataset)
     setPaths;
     
     if dataset == Constants.CV_DATA
-        axisToUse = [0 5 0 1];
+        axisToUse = [0 5 0 2];
     else
         axisToUse = [0 20 0 1.2];
     end
