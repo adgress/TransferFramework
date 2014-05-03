@@ -4,14 +4,9 @@ function [f] = visualizeResults(options,f)
     end
     hold on;
     leg = {};
-    %symbols = {'.','+','v','x'};
-    numColors = numel(options.fileNames);
-    if options.showTrain
-        numColors = 2*numColors;
-    end
     baselineFiles = {};    
     files = [options.baselineFiles options.fileNames];    
-    numColors = 5;    
+    numColors = 5;
     colors = colormap(hsv(numColors));
     if options.showRelativePerformance
         numBaselineFiles = numel(options.baselineFiles);
@@ -21,6 +16,8 @@ function [f] = visualizeResults(options,f)
     end
 
     index = 1;    
+    measureVals = {};
+    transferPerfVals = [];
     for i=1:numel(files)
         fileName = ['results/' options.prefix '/' options.dataSet '/' files{i}];
         allResults = load(fileName);
@@ -48,7 +45,19 @@ function [f] = visualizeResults(options,f)
             end                                
             
             sizes = getSizes(results,options.xAxisField);
-            if options.showRelativePerformance && hasTestResults
+            if options.binPerformance     
+                if hasPostTM
+                    measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
+                    measures = configs.getPostTransferMeasures();
+                    dispName = TransferMeasure.GetDisplayName(measures{1},configs.configs);
+                    leg{index} = [learnerName ';' dispName];
+                    index = index + 1;
+                elseif hasTestResults
+                    transferPerfVals = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
+                else
+                    error('');
+                end
+            elseif options.showRelativePerformance && hasTestResults
                 [index,leg] = plotRelativePerformance(options,...
                     baselineFiles,results,sizes,configs,colors,index,learnerName,leg);
             else
@@ -62,6 +71,21 @@ function [f] = visualizeResults(options,f)
                 end                
             end
         end
+    end    
+    if options.binPerformance
+        [~,inds] = sort(transferPerfVals);
+        measureRange = [Inf -Inf];
+        for i=1:length(measureVals)
+            measureRange(1) = min(measureRange(1),min(measureVals{i}));
+            measureRange(2) = max(measureRange(1),max(measureVals{i}));
+        end
+        xVals = Helpers.NormalizeRange(transferPerfVals(inds));
+        for i=1:length(measureVals)
+            yVals = Helpers.NormalizeRange(measureVals{i},measureRange);
+            plot(xVals,yVals,'color',colors(i,:),'Marker','x');
+        end
+        plot([0 1],[0 1],'color',colors(i+1,:),'LineStyle','--');
+        leg{end+1} = 'Perfect Correlation';
     end
     if options.showLegend
         legend(leg);
@@ -70,13 +94,20 @@ function [f] = visualizeResults(options,f)
     numTest = results{1}.aggregatedResults.metadata.numTest;
     numSourceLabels = ...
         results{1}.aggregatedResults.metadata.numSourceLabels;
-    xAxisLabel = [options.xAxisDisplay ' (Num Source Labels = ' ...
-        num2str(numSourceLabels) ...
-        ', ' num2str(numTrain) '/' num2str(numTest) ')'];
-    xlabel(xAxisLabel,'FontSize',8);
-    ylabel(options.yAxisDisplay,'FontSize',8);
-    axisToUse = options.axisToUse;
-    axis(axisToUse);
+    if options.binPerformance
+        xlabel('Normalized Accuracy','FontSize',8);
+        ylabel('Normalized Measure','FontSize',8);
+        axisToUse = [0 1 0 1];
+        axis(axisToUse);
+    else        
+        xAxisLabel = [options.xAxisDisplay ' (Num Source Labels = ' ...
+            num2str(numSourceLabels) ...
+            ', ' num2str(numTrain) '/' num2str(numTest) ')'];
+        xlabel(xAxisLabel,'FontSize',8);
+        ylabel(options.yAxisDisplay,'FontSize',8);
+        axisToUse = options.axisToUse;
+        axis(axisToUse);
+    end
     hold off;    
 end
 
@@ -208,11 +239,10 @@ function [leg,index] = plotMeasureResults(options,configs,results,sizes,field,..
             continue;
         end
         dispName = TransferMeasure.GetDisplayName(measures{k},configs.configs);
-        
-        tranferMeans = getMeans(results,resultField,k);
-        tranferVars = getVariances(results,resultField,k);
-        errorbar(sizes,tranferMeans,tranferVars,'color',colors(index,:));
-        
+        xVals = getMeans(results,resultField,k);
+        xValsBars = getVariances(results,resultField,k);
+        yVals = sizes;
+        errorbar(yVals,xVals,xValsBars,'color',colors(index,:));
         leg{index} = [displayName ':' learnerName ':' dispName];
         index = index+1;
     end
@@ -257,6 +287,21 @@ function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,options)
             error('Unknown Relative Type');
         end
     end
+end
+
+function [vals] = getMeasurePerformanceForSize(results,numLabelsToUse,sizes)
+    vals = zeros(1,1);
+    resultIndex = find(sizes == numLabelsToUse);
+    assert(length(resultIndex) == 1);
+    r = results{resultIndex};
+    if ~isempty(r.splitResults{1}.postTransferMeasureVal)
+        for i=1:length(r.splitResults)
+            vals(i) = r.splitResults{i}.postTransferMeasureVal{1};
+        end
+    else
+        vals = double(r.aggregatedResults.testResults);
+    end
+    vals = vals(:);
 end
 
 function [vars] = getVariances(results,name,index)

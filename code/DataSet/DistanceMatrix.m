@@ -108,7 +108,7 @@ classdef DistanceMatrix < double
             Ys = obj.Y(sourceInds);
             Yt = obj.Y(targetInds);
             W = W(allInds,allInds);
-            isTarget = obj.type ~= DistanceMatrix.TYPE_SOURCE;
+            isTarget = obj.type(allInds) ~= DistanceMatrix.TYPE_SOURCE;
         end
         
         function [I] = isTarget(obj)

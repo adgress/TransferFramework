@@ -15,34 +15,32 @@ classdef HFMethod < Method
             test = input.test;
             %validate = input.validate;
             experiment = input.configs;
-            metadata = input.metadata;                       
-            
-            sigma = input.sharedConfigs('sigma');
+            metadata = input.metadata;                                   
             
             testResults = struct();   
             if nargin >= 4 && isfield(input,'distanceMatrix')
                 W = input.distanceMatrix;
-                W = W.getRBFKernel(sigma);
             else
                 trainLabeled = train.Y > 0;
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
-                Xall = [XLabeled ; XUnlabeled];
-                sigma = sum(var(Xall));
-                display(['Empirical sigma: ' num2str(sigma)]);
+                Xall = [XLabeled ; XUnlabeled];                
                 Y = [train.Y(trainLabeled) ; ...
                     train.Y(~trainLabeled) ; ...
                     test.Y];
                 type = [ones(size(XLabeled,1),1)*DistanceMatrix.TYPE_TARGET_TRAIN ;...
                     ones(size(train.X(~trainLabeled,:),1),1)*DistanceMatrix.TYPE_TARGET_TRAIN ; ...
                     ones(size(test.X,1),1)*DistanceMatrix.TYPE_TARGET_TEST];                                
-                W = Kernel.RBFKernel(Xall,sigma);
+                W = Helpers.CreateDistanceMatrix(Xall);
                 W = DistanceMatrix(W,Y,type);
-            end            
+            end     
             [W,YTrainLabeled,YTest,isTest] = W.prepareForHF();
-            assert(min(YTrainLabeled) > 0);
-            assert(min(YTest) > 0);
-            assert(length(YTest) == length(test.Y));
+            useCV = 1;
+            useHF = false;
+            display('HFMethod: Not using HF to select sigma');
+            sigma = Helpers.autoSelectSigma(W,YTrainLabeled,YTest,~isTest,useCV,useHF);
+            %W = W.getRBFKernel(sigma);
+            W = Kernel.RBFKernel(W,sigma);
             usellgc = 0;
             if usellgc
                 YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
@@ -69,10 +67,7 @@ classdef HFMethod < Method
     methods(Static)
         function [name] = getMethodName(configs)
             if nargin < 1
-                name = 'HF';
-            else
-                sigma = configs('sigma');
-                name = ['HF, sigma=' num2str(sigma)];                   
+                name = 'HF';                 
             end
         end
     end

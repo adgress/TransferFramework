@@ -25,17 +25,6 @@ classdef NearestNeighborMethod < Method
             testY = test.Y;
             testResults = struct();
             if isfield(metadata,'distanceMatrix')
-                %{
-                numTrain = size(trainX,1);
-                numTest = size(testX,1);
-                labeled = metadata.Y > 0;
-                labeledDist = ...
-                    metadata.distanceMatrix(numTrain+1:numTrain+numTest,...
-                    labeled);
-                labeledY = metadata.Y(labeled);
-                [~, minIDX] = min(labeledDist);
-                testResults.testPredicted = labeledY(minIDX);
-                %}
                 testResults.testPredicted = ...
                     metadata.distanceMatrix.getTestToLabeledNN(k);
                 testResults.trainPredicted = trainY;

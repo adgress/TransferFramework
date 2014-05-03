@@ -7,7 +7,18 @@ classdef Helpers < handle
     
     methods(Static)
         
+        function [v] = NormalizeRange(v,range)
+            if nargin < 2
+                range = [min(v) max(v)];
+            end
+            v = v - range(1);
+            v = v ./ (range(2)-range(1));
+        end                
+        
         function [D] = CreateDistanceMatrix(X,Y)
+            if nargin < 2
+                Y = X;
+            end
             X=X';
             Y=Y';
             D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 

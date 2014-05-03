@@ -13,6 +13,10 @@ function [] = runVisualization(dataset)
     
     usePerLabel = 0;
     labelToShow = 2;
+    
+    binPerformance = 0;
+    numLabelsToUse = 2;
+    
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 1;
     showRelativePerformance = 1;
@@ -36,6 +40,14 @@ function [] = runVisualization(dataset)
     showAdvanced10 = 0;
     showAdvanced20 = 0;
     showMeasures = 1;
+    
+    if binPerformance
+        showBaselines = 0;
+        showPreTransferMeasures = 0;
+        showRelativePerformance = 0;
+        showRelativeMeasures = 0;
+    end
+    
     fileNames = {};
     if showBaselines
         %fileNames{end+1} = 'TO.mat';
@@ -103,6 +115,8 @@ function [] = runVisualization(dataset)
             options.axisToUse = axisToUse;
             options.usePerLabel = usePerLabel;
             options.labelToShow = labelToShow;
+            options.binPerformance = binPerformance;
+            options.numLabelsToUse = numLabelsToUse;
             if options.showRelativePerformance
                 if showCorrelations
                     options.relativeType = Constants.CORRELATION;

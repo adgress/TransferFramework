@@ -3,7 +3,7 @@ function [] = runBatchExperiment(multithread, dataset)
     configFiles = {};
     runBaseline = 1;
     runAdvanced = 0;
-    runMeasures = 1;
+    runMeasures = 0;
     %configFiles{end+1} = 'config/batch/batchMA.cfg';
     
     batchCommon = 'config/batch/batchCommon.cfg';
