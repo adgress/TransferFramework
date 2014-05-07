@@ -36,7 +36,7 @@ classdef HFMethod < Method
                 W = DistanceMatrix(W,Y,type);
             end
             [W,YTrainLabeled,YTest,isTest] = W.prepareForHF();
-            useCV = 1;
+            useCV = true;
             useHF = true;
             if ~useHF
                 display('HFMethod: Not using HF to select sigma');
@@ -47,19 +47,13 @@ classdef HFMethod < Method
             else
                 sigma = Helpers.autoSelectSigma(W,YTrainLabeled,YTest,~isTest,useCV,useHF);
             end
-            %W = W.getRBFKernel(sigma);
             W = Kernel.RBFKernel(W,sigma);
-            usellgc = 0;
-            if usellgc
-                YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
-                [fu,fu_CMN] = llgc(W,YLabelMatrix)
-            else                
-                YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
-                addpath(genpath('libraryCode'));
-                [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);                                
-                [~,predicted] = max(fu,[],2);
-                isTest = isTest(size(YTrainLabeled,1)+1:end);
-            end
+     
+            YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
+            addpath(genpath('libraryCode'));
+            [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);
+            [~,predicted] = max(fu,[],2);
+            isTest = isTest(size(YTrainLabeled,1)+1:end);
             
             val = sum(predicted(isTest) == YTest)/...
                 length(YTest);
