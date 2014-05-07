@@ -35,50 +35,27 @@ classdef LLGCTransferMeasure < TransferMeasure
             end            
             [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
             sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true,false);
-            W = Helpers.distance2RBF(W,sigma);
-            addpath(genpath('libraryCode'));            
+            W = Helpers.distance2RBF(W,sigma);                        
             if ~obj.configs('useSourceForTransfer')
                 W = W(isTarget,isTarget);
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);
             end            
             Y = [Ys ; Yt];
-            labeledTarget = length(Ys) + find(Yt > 0);            
-            numCorrect = 0;
-            Ymat = full(Helpers.createLabelMatrix(Y));
-            Yscore = zeros(size(labeledTarget));
-            Ypred = Yscore;            
-            for i=1:length(labeledTarget)
-                ind = labeledTarget(i);
-                yi = Ymat(ind,:);
-                Ymat(ind,:) = 0;
-                if i==1
-                    [fu,invM] = llgc(W,Ymat);
-                else
-                    [fu,~] = llgc(W,Ymat,invM);
-                end
-                Yactual = Y(ind);
-                Yscore(i) = fu(ind,Yactual);                
-                [~,Ypred(i)] = max(fu(ind,:));
-                numCorrect = numCorrect + (Ypred(i) == Yactual);
-                Ymat(ind,:) = yi;
-            end
-            Yscore(isnan(Yscore)) = 0;
-            n = length(labeledTarget);
-            score = sum(Yscore)/n;
-
+            labeledTarget = length(Ys) + find(Yt > 0);                        
+            [score,percCorrect,Ypred,Yactual] = Helpers.LLGC_LOOCV(W,labeledTarget,Y);
             if obj.configs('useSoftLoss')
                 val = score;
                 display('Not using softloss for perLabelAccuracy');
                 perLabelMeasures = ...
-                    Helpers.getAllLabelAccuracy(Ypred,Y(labeledTarget));
+                    Helpers.getAllLabelAccuracy(Ypred,Yactual);
             else
-                val = numCorrect;
+                val = percCorrect;
                 perLabelMeasures = ...
-                    Helpers.getAllLabelAccuracy(Ypred,Y(labeledTarget));
+                    Helpers.getAllLabelAccuracy(Ypred,Yactual);
             end
             obj.displayMeasure(val);
-        end            
+        end                    
         
         function [name] = getPrefix(obj)
             name = 'LLGC';

@@ -6,6 +6,17 @@ classdef Kernel < handle
     end
     
     methods(Static)
+        function [K] = swapElements(K,i,j)
+            Ki = K(i,:);
+            Kj = K(j,:);
+            K(i,:) = Kj;
+            K(j,:) = Ki;
+            K_i = K(:,i);
+            K_j = K(:,j);
+            K(:,i) = K_j;
+            K(:,j) = K_i;
+        end
+        
         function [K] = LinearKernel(X)
             K = X * X';
         end
@@ -38,9 +49,8 @@ classdef Kernel < handle
             min(eig(K2))
             norm(K2-K3,Inf)
             %}
-            K = pdist2(X,X).^2;
-            K = K./(-2*sigma);
-            K = exp(K);
+            K = Helpers.CreateDistanceMatrix(X);
+            K = Helpers.distance2RBF(K,sigma);
         end 
         function [K] = Distance(X)
             K = Helpers.CreateDistanceMatrix(X,X);

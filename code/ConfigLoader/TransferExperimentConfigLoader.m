@@ -58,6 +58,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         end
         function [transferOutput,trainTestInput] = ...
                 performTransfer(obj,train,test,sources,validate,m,experiment)
+            assert(length(sources) == 1);
             transferClass = str2func(obj.configs('transferMethodClass'));
             transferObject = transferClass();
             [tTrain,tTest,metadata,tSource,tTarget] = ...
@@ -70,8 +71,10 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             transferOutput.metadata = metadata;
             transferOutput.tSource = tSource;
             transferOutput.tTarget = tTarget;
+            transferOutput.originalSourceData = sources{1};
             trainTestInput = ExperimentConfigLoader.CreateRunExperimentInput(...
                 tTrain,tTest,validate,experiment,metadata);
+            trainTestInput.originalSourceData = sources{1};
         end                      
         
         function [metadata] = constructResultsMetadata(obj,sources,...

@@ -5,7 +5,55 @@ classdef Helpers < handle
     properties
     end
     
-    methods(Static)
+    methods(Static)                
+        function [score,percCorrect,Ypred,Yactual] = LOOCV(W,labeledInds,Y,useHF)
+            if nargin < 4
+                useHF = false;
+            end
+            addpath(genpath('libraryCode'));
+            Ymat = full(Helpers.createLabelMatrix(Y));
+            Yscore = zeros(size(labeledInds));
+            Ypred = Yscore;
+            Yactual = Y(labeledInds);            
+            if useHF
+                WdistMat = DistanceMatrix(W,Y);                
+                [W,~,~,~] = WdistMat.prepareForHF();
+                lastLabeled = length(Yactual);
+                %Wt = W;
+                for i=1:lastLabeled
+                    Ycurr = Yactual;
+                    Ycurr(i) = Ycurr(end);
+                    Ycurr(end) = [];
+                    YLabelMatrix = Helpers.createLabelMatrix(Ycurr);
+                    W = Kernel.swapElements(W,i,lastLabeled);
+                    [fu, ~] = harmonic_function(W, YLabelMatrix);                                
+                    [~,Ypred(i)] = max(fu(1,:));
+                    Yscore(i) = fu(1,Yactual(i));
+                    W = Kernel.swapElements(W,lastLabeled,i);
+                    %W = Wt;
+                end
+            else
+                for i=1:length(labeledInds)
+                    ind = labeledInds(i);                    
+                    yi = Ymat(ind,:);
+                    Ymat(ind,:) = 0;
+                    if i==1
+                        [fu,invM] = llgc(W,Ymat);
+                    else
+                        [fu,~] = llgc(W,Ymat,invM);
+                    end
+                    Yactual_i = Yactual(i);
+                    Yscore(i) = fu(ind,Yactual_i);
+                    [~,Ypred(i)] = max(fu(ind,:));
+                    Ymat(ind,:) = yi;
+                end
+            end
+                     
+            Yscore(isnan(Yscore)) = 0;
+            n = length(labeledInds);
+            score = sum(Yscore)/n;
+            percCorrect = sum(Ypred == Yactual)/n;
+        end
         
         function [v] = NormalizeRange(v,range)
             if nargin < 2
@@ -22,6 +70,7 @@ classdef Helpers < handle
             X=X';
             Y=Y';
             D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 
+            D = real(D.^.5);            
         end
         
         function [perf] = getAllLabelAccuracy(pred,act)
@@ -269,13 +318,38 @@ classdef Helpers < handle
         end
         
         function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV,useHF)
+            W = double(W);
+            meanDistance = mean(W(:))^2;
+            
             if nargin < 6
-                useHF = true;
+                useHF = false;
             end
-            %sigmas = [.1 .01 .001 .0001 .00001 .000001];
-            sigmas = [.1 .01 .001 .0001 .00001];
-            percentageArray = [.8 .2 0];
-            if useCV && length(Ytrain) > 0
+            numSigmas = 7;
+            sigmas = zeros(numSigmas,1);
+            e = floor(numSigmas/2);
+            expVals = -e:e;
+            base = 10;
+            for i=1:length(expVals)
+                sigmas(i) = meanDistance*base^expVals(i);
+            end
+            maxLabel = max([Ytrain ; Ytest]);
+            counts = histc(Ytrain(Ytrain > 0),1:maxLabel);
+            hasEnoughLabeledTrain = sum(counts < 2) == 0;
+            useLOOCV = 1;
+            if useLOOCV && hasEnoughLabeledTrain
+                scores = zeros(size(sigmas));
+                percCorrect = scores;
+                Y = [Ytrain ; Ytest];
+                labeledInds = find(Ytrain > 0);
+                for i=1:length(sigmas)
+                    S = Helpers.distance2RBF(W,sigmas(i));
+                    [scores(i),percCorrect(i),~,~] = Helpers.LOOCV(S,labeledInds,Y,useHF);
+                end
+                [~,bestInd] = max(scores);
+                sigma = sigmas(bestInd);
+            elseif useCV && length(Ytrain) > 0 && hasEnoughLabeledTrain
+                error('Has this been updated?');
+                percentageArray = [.8 .2 0];
                 [split] = DataSet.generateSplitForLabels(percentageArray,Ytrain);
                 trainInds = split == 1;
                 cvInds = split == 2;            
@@ -289,8 +363,8 @@ classdef Helpers < handle
                 Wperm = W(newPerm,newPerm);            
                 sigma = Helpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas,useHF);
             else
-                display('autoSelectSigma: No YTrain, default sigma selected');
-                sigma = .1;
+                display('autoSelectSigma: Not enough YTrain, default sigma selected');
+                sigma = meanDistance;
             end
         end
         

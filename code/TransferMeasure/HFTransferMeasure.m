@@ -21,7 +21,7 @@ classdef HFTransferMeasure < TransferMeasure
                 return;
             end
             if nargin >= 4 && isfield(options,'distanceMatrix')
-                W = options.distanceMatrix;
+                W = options.distanceMatrix;                
             else                
                 Xall = [source.X ; target.X];                                
                 Y = [source.Y ; target.Y];
@@ -32,7 +32,10 @@ classdef HFTransferMeasure < TransferMeasure
                 clear type;
             end            
             [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
-            sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true);            
+            useCV = 1;
+            useHF = 0;
+            display('HFTransferMeasure: Not using HF to select sigma');
+            sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,useCV,useHF);
             if ~obj.configs('useSourceForTransfer')
                 W = W(isTarget,isTarget);
                 Ys = zeros(0,size(Ys,2));

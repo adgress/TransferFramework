@@ -14,6 +14,9 @@ classdef DistanceMatrix < double
     
     methods
         function [obj] = DistanceMatrix(W,Y,type)
+            if nargin < 3
+                type = ones(size(Y))*DistanceMatrix.TYPE_TARGET_TRAIN;
+            end
             obj = obj@double(W);
             obj.Y = Y;
             obj.type = type;
