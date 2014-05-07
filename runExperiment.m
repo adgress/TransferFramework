@@ -29,7 +29,7 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         display(['Skipping: ' outputFile]);
         return;
     end
-    tic
+    
     multithread = experimentLoader.configs('multithread');    
     if multithread
         %Fix for laptop
@@ -39,7 +39,7 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         end
         matlabpool;
     end
-    
+    tic
     experimentLoader.getOutputFileName();
     allResults = ResultsContainer(experimentLoader.numSplits,...
         experimentLoader.allExperiments);
@@ -99,6 +99,7 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
             display('Not saving result metadata');  
         end
     end
+    toc
     savedData.configs = experimentLoader.configs;
     shouldSaveData = 0;
     if ~shouldSaveData
@@ -123,5 +124,5 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
     allResults.aggregateMeasureResults();
         
     allResults.saveResults(outputFile);
-    toc
+    
 end
