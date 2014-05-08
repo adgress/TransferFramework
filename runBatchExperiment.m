@@ -17,7 +17,7 @@ function [] = runBatchExperiment(multithread, dataset)
     end
     
     if runBaseline
-        configFiles{end+1} = 'config/batch/batchTransfer.cfg';
+        %configFiles{end+1} = 'config/batch/batchTransfer.cfg';
         configFiles{end+1} = 'config/batch/batchFuse.cfg';        
         %configFiles{end+1} = 'config/batch/batchSource.cfg';
     end
@@ -28,9 +28,9 @@ function [] = runBatchExperiment(multithread, dataset)
             configFiles{end+1} = 'config/measure/batchHDH.cfg';
             configFiles{end+1} = 'config/measure/batchTDAS.cfg';
         %}
-        configFiles{end+1} = 'config/measure/batchLLGC.cfg';  
         configFiles{end+1} = 'config/measure/batchHF.cfg';
-        configFiles{end+1} = 'config/measure/batchNN.cfg';
+        %configFiles{end+1} = 'config/measure/batchLLGC.cfg';          
+        %configFiles{end+1} = 'config/measure/batchNN.cfg';
               
     end
     for i=1:numel(configFiles)

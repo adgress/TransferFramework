@@ -6,33 +6,38 @@ classdef Helpers < handle
     end
     
     methods(Static)                
-        function [score,percCorrect,Ypred,Yactual] = LOOCV(W,labeledInds,Y,useHF)
+        function [score,percCorrect,Ypred,Yactual] = LOOCV(W,labeledInds,Y,useHF,type)
             if nargin < 4
                 useHF = false;
             end
-            addpath(genpath('libraryCode'));
-            Ymat = full(Helpers.createLabelMatrix(Y));
-            Yscore = zeros(size(labeledInds));
-            Ypred = Yscore;
-            Yactual = Y(labeledInds);            
+            addpath(genpath('libraryCode'));                                  
             if useHF
-                WdistMat = DistanceMatrix(W,Y);                
-                [W,~,~,~] = WdistMat.prepareForHF();
-                lastLabeled = length(Yactual);
-                %Wt = W;
-                for i=1:lastLabeled
-                    Ycurr = Yactual;
+                WdistMat = DistanceMatrix(W,Y,type);                
+                [W,Y,isTarget] = WdistMat.prepareForHF_LOOCV() ; 
+                isLabeled = Y > 0;
+                assert(issorted(~isLabeled));                
+                lastLabeledInd = max(find(isLabeled));
+                lastLabeledTargetInd = max(find(isLabeled & isTarget));
+                Yscore = zeros(lastLabeledTargetInd,1);
+                Ypred = Yscore;
+                Yactual = Y(1:lastLabeledTargetInd);  
+                for i=1:lastLabeledTargetInd
+                    Ycurr = Y(Y > 0);
                     Ycurr(i) = Ycurr(end);
                     Ycurr(end) = [];
                     YLabelMatrix = Helpers.createLabelMatrix(Ycurr);
-                    W = Kernel.swapElements(W,i,lastLabeled);
+                    W = Kernel.swapElements(W,i,lastLabeledInd);
                     [fu, ~] = harmonic_function(W, YLabelMatrix);                                
                     [~,Ypred(i)] = max(fu(1,:));
                     Yscore(i) = fu(1,Yactual(i));
-                    W = Kernel.swapElements(W,lastLabeled,i);
-                    %W = Wt;
+                    W = Kernel.swapElements(W,lastLabeledInd,i);
                 end
             else
+                Yscore = [];
+                Ypred = Yscore;
+                Yactual = [];
+                error('TODO: Only check labeled target');
+                Ymat = full(Helpers.createLabelMatrix(Y));
                 for i=1:length(labeledInds)
                     ind = labeledInds(i);                    
                     yi = Ymat(ind,:);
@@ -50,7 +55,7 @@ classdef Helpers < handle
             end
                      
             Yscore(isnan(Yscore)) = 0;
-            n = length(labeledInds);
+            n = length(Yactual);
             score = sum(Yscore)/n;
             percCorrect = sum(Ypred == Yactual)/n;
         end
@@ -317,8 +322,7 @@ classdef Helpers < handle
             sigma = sigmas(bestAccInd);
         end
         
-        function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV,useHF)
-            W = double(W);
+        function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV,useHF,type)           
             meanDistance = mean(W(:))^2;
             
             if nargin < 6
@@ -340,10 +344,10 @@ classdef Helpers < handle
                 scores = zeros(size(sigmas));
                 percCorrect = scores;
                 Y = [Ytrain ; Ytest];
-                labeledInds = find(Ytrain > 0);
+                labeledInds = find([Ytrain ; Ytest] > 0 & isTrain);
                 for i=1:length(sigmas)
                     S = Helpers.distance2RBF(W,sigmas(i));
-                    [scores(i),percCorrect(i),~,~] = Helpers.LOOCV(S,labeledInds,Y,useHF);
+                    [scores(i),percCorrect(i),~,~] = Helpers.LOOCV(S,labeledInds,Y,useHF,type);
                 end
                 [~,bestInd] = max(scores);
                 sigma = sigmas(bestInd);

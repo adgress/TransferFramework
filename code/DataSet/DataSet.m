@@ -2,15 +2,25 @@ classdef DataSet < handle
     %DATASET Summary of this class goes here
     %   Detailed explanation goes here
     
+    properties(Constant)
+        NO_TYPE = 0;
+        TARGET_TRAIN = 1;
+        TARGET_TEST = 2;
+        SOURCE = 3;
+    end
     properties        
         data
         dataFile
         X
-        Y
+        Y        
+        type
     end    
     methods
-        function obj = DataSet(dataFile,XName,YName,X,Y)
+        function obj = DataSet(dataFile,XName,YName,X,Y,type)
             obj.dataFile = '';
+            if nargin < 6
+                display('');
+            end
             if ~isempty(dataFile)
                 obj.dataFile = dataFile;
                 obj.data = load(dataFile);
@@ -19,14 +29,18 @@ classdef DataSet < handle
                 end
                 obj.X = obj.data.(XName);
                 obj.Y = obj.data.(YName);
-            end
-            if nargin > 3
+            else
                 obj.X = X;
                 obj.Y = Y;
-            end
+            end                                 
+            obj.type = type;
             assert(size(obj.X,1) == size(obj.Y,1));
+            assert(length(obj.type) == length(obj.Y));
         end
           
+        function [n] = size(obj)
+            n = length(obj.Y);
+        end
         
         function [split] = generateSplitArray(obj,percTrain,percTest)            
             percValidate = 1 - percTrain - percTest;
@@ -39,7 +53,8 @@ classdef DataSet < handle
             YSplit = DataSet.splitMatrix(obj.Y,split);
             allDataSets = cell(3,1);
             for i=1:numel(allDataSets)
-                allDataSets{i} = DataSet('','','',XSplit{i},YSplit{i});
+                type = DataSet.NoType(length(YSplit{i}));
+                allDataSets{i} = DataSet('','','',XSplit{i},YSplit{i},type);
             end
             train = allDataSets{1};
             test = allDataSets{2};
@@ -56,7 +71,8 @@ classdef DataSet < handle
             [selectedItems] = obj.stratifiedSelection(numItems);
             YCopy = obj.Y;
             YCopy(~selectedItems) = -1;
-            sampledDataSet = DataSet('','','',obj.X,YCopy);
+            dataType = DataSet.NoType(length(YCopy));
+            sampledDataSet = DataSet('','','',obj.X,YCopy,dataType);
         end
         
         function [selectedItems] = stratifiedSelection(obj,numItems)
@@ -78,11 +94,42 @@ classdef DataSet < handle
             Yu = obj.Y;
             Yu(:) = -1;
         end
+        function [b] = hasTypes(obj)
+            b = length(obj.Y) == length(obj.type) && ...
+                isempty(find(obj.type == DataSet.NO_TYPE));
+        end
+        function [b] = isSource(obj)
+            b = sum(obj.type == DataSet.SOURCE) == length(obj.Y);            
+        end
+        function [b] = isTarget(obj)
+            b = sum(obj.type == DataSet.TARGET_TRAIN | ...
+                obj.type == DataSet.TARGET_TEST) == length(obj.Y);            
+        end
+        function [] = setTarget(obj)
+            obj.type = DataSet.TargetType(obj.size());
+        end
+        function [] = setSource(obj)
+            obj.type = DataSet.SourceType(obj.size());
+        end
     end
     
     methods(Static)
         function [split] = generateSplitForLabels(percentageArray,Y)
             split = DataSet.generateSplit(percentageArray,Y);
+        end
+        function [f] = Combine(d1,d2)
+            f = DataSet('','','',[d1.X ; d2.X],[d1.Y;d2.Y],...
+                [d1.type;d2.type]);
+        end
+        
+        function [v] = TargetType(n)
+            v = DataSet.TARGET_TRAIN*ones(n,1);
+        end
+        function [v] = SourceType(n)
+            v = DataSet.SOURCE*ones(n,1);
+        end
+        function [v] = NoType(n)
+            v = DataSet.NO_TYPE*ones(n,1); 
         end
     end
     

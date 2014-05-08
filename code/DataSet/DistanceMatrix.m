@@ -1,4 +1,4 @@
-classdef DistanceMatrix < double
+classdef DistanceMatrix < handle
     %DISTANCEMATRIX Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -10,6 +10,7 @@ classdef DistanceMatrix < double
     properties
         Y
         type
+        W
     end
     
     methods
@@ -17,7 +18,7 @@ classdef DistanceMatrix < double
             if nargin < 3
                 type = ones(size(Y))*DistanceMatrix.TYPE_TARGET_TRAIN;
             end
-            obj = obj@double(W);
+            obj.W = W;
             obj.Y = Y;
             obj.type = type;
             assert(numel(obj.type) == numel(obj.Y));
@@ -25,7 +26,7 @@ classdef DistanceMatrix < double
         end
         
         function [W] = getRBFKernel(obj,sigma)
-            W = exp(-2*double(obj)./(sigma));
+            W = exp(-2*obj.W./(sigma));
             W = DistanceMatrix(W,obj.Y,obj.type);
         end
         
@@ -43,13 +44,13 @@ classdef DistanceMatrix < double
             if justLabeled
                 indices = indices & obj.Y > 0;
             end
-            W = double(obj);
+            W = obj.W;
             W = W(indices,obj.Y > 0);
             labels = obj.Y(obj.Y > 0);
         end
         
         function [W,Yt,Y] = getLabeledTrainToSource(obj)
-            W = double(obj);
+            W = obj.W;
             It = obj.type == obj.TYPE_TARGET_TRAIN & obj.Y > 0;
             I = obj.Y > 0;
             W = W(It,I);
@@ -91,8 +92,8 @@ classdef DistanceMatrix < double
             nn = labels(I);
         end
         
-        function [W,YTrainLabeled,YTest,isTest] = prepareForHF(obj)
-            W = double(obj);
+        function [W,YTrainLabeled,YTest,isTest,type] = prepareForHF(obj)
+            W = obj.W;
             isTest = obj.type == DistanceMatrix.TYPE_TARGET_TEST;
             labeledTrain = (obj.type  == DistanceMatrix.TYPE_TARGET_TRAIN | ...
                 obj.type == DistanceMatrix.TYPE_SOURCE) & obj.Y > 0;
@@ -101,10 +102,39 @@ classdef DistanceMatrix < double
             W = W(perm,perm);
             YTrainLabeled = obj.Y(labeledTrain);
             YTest = obj.Y(isTest);
+            type = obj.type(perm);
+        end
+        
+        function [] = shiftLabeledDataToFront(obj)
+            isLabeled = obj.Y > 0;
+            newPerm = [find(isLabeled); find(~isLabeled)];            
+            obj.permuteData(newPerm);
+        end
+        function [] = shiftLabeledTargetDataToFront(obj)
+            isLabeledTarget = obj.Y > 0 & obj.type ~= DistanceMatrix.TYPE_SOURCE;
+            newPerm = [find(isLabeledTarget) ; find(~isLabeledTarget)];
+            obj.permuteData(newPerm);
+            
+        end
+        function [] = permuteData(obj,newPerm)
+            if issorted(newPerm)
+                return;
+            end
+            obj.W = obj.W(newPerm,newPerm);
+            obj.type = obj.type(newPerm);
+            obj.Y = obj.Y(newPerm);
+        end
+        
+        function [W,Y,isTarget] = prepareForHF_LOOCV(obj)
+            obj.shiftLabeledDataToFront();
+            obj.shiftLabeledTargetDataToFront();
+            W = obj.W;
+            Y = obj.Y;
+            isTarget = obj.type ~= DistanceMatrix.TYPE_SOURCE;
         end
         
         function [W,Ys,Yt,isTarget] = prepareForSourceHF(obj)
-            W = double(obj);            
+            W = obj.W;
             sourceInds = find(obj.type == DistanceMatrix.TYPE_SOURCE);
             targetInds = find(obj.type ~= DistanceMatrix.TYPE_SOURCE);
             allInds = [sourceInds; targetInds];

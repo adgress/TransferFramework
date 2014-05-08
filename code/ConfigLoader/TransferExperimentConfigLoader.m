@@ -29,18 +29,28 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
             sources = obj.dataAndSplits.sourceDataSets;
+            for i=1:length(sources)
+                sources{i}.setSource;
+            end
+            sampledTrain.setTarget();
+            train.setTarget();
+            test.setTarget();
+            validate.setTarget();
             assert(numel(sources) == 1);
             
             m = struct();
             m.configs = savedData.configs;
             m.metadata = savedData.metadata{experimentIndex,splitIndex};
             
-                        
+            
             [transferOutput,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,m,...
                 experiment);
             %savedData.metadata{experimentIndex,splitIndex} = tMetadata;
                         
+            assert(trainTestInput.train.hasTypes());
+            assert(trainTestInput.test.isTarget());
+            assert(trainTestInput.originalSourceData.isSource());
             [results,~] = obj.trainAndTest(trainTestInput,experiment);
             
             postTransferMeasures = obj.configs('postTransferMeasures');

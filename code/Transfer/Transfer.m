@@ -16,9 +16,10 @@ classdef Transfer
                 sourceDataSets,validateData,configs,savedData)
             transformedTargetTrain = targetTrainData;            
             transformedTargetTest = targetTestData;
-            tSource = sourceDataSets{1};
+            tSource = sourceDataSets{1};            
+            type = DataSet.TargetType(targetTrainData.size()+targetTestData.size());
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
-                [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)]);
+                [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],type);
             metadata = struct();
         end           
         

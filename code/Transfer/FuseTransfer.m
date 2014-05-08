@@ -12,15 +12,16 @@ classdef FuseTransfer < Transfer
         function [transformedTargetTrain,transformedTargetTest,metadata,...
                 tSource,tTarget] = ...
                 performTransfer(obj,targetTrainData, targetTestData,...
-                sourceDataSets,validateData,configs,savedData)            
-            xTrain = [sourceDataSets{1}.X ; targetTrainData.X];
-            yTrain = [sourceDataSets{1}.Y ; targetTrainData.Y];
-            transformedTargetTrain = DataSet('','','',xTrain,yTrain);
+                sourceDataSets,validateData,configs,savedData) 
+            transformedTargetTrain = DataSet.Combine(sourceDataSets{1},targetTrainData);
             transformedTargetTest = targetTestData;
-            tSource = sourceDataSets{1};
-            tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
-                [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)]);
+            tSource = sourceDataSets{1};  
             
+            numTrain = targetTrainData.size();
+            numTest = targetTestData.size();
+            type = DataSet.TargetType(numTrain+numTest);
+            tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
+                [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],type);
             metadata = struct();
         end       
     end

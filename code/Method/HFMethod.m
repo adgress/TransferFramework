@@ -45,7 +45,7 @@ classdef HFMethod < Method
             if ~usesSourceData
                 sigma = obj.chooseBestSigma(train,test,input.originalSourceData,useHF);
             else
-                sigma = Helpers.autoSelectSigma(W,YTrainLabeled,YTest,~isTest,useCV,useHF);
+                sigma = Helpers.autoSelectSigma(W,YTrainLabeled,YTest,~isTest,useCV,useHF,type);
             end
             W = Kernel.RBFKernel(W,sigma);
      
@@ -81,12 +81,11 @@ classdef HFMethod < Method
             %}
             Xall = [train.X ; test.X];
             Y = [train.Y ; -1*ones(size(test.Y))];
-            type = DistanceMatrix.TYPE_TARGET_TRAIN*ones(size(Y));
             W = Kernel.Distance(Xall);
-            W = DistanceMatrix(W,Y,type);
-            isTarget = ones(size(type));
+            W = DistanceMatrix(W,Y,[train.type; test.type]);
+            isTarget = ones(train.size()+test.size(),1);
             useCV = true;
-            sigma = Helpers.autoSelectSigma(W,Y,[],isTarget,useCV,useHF);
+            sigma = Helpers.autoSelectSigma(W.W,Y,[],isTarget,useCV,useHF,W.type);
         end
     end
     
