@@ -42,6 +42,7 @@ classdef HFMethod < Method
                 display('HFMethod: Not using HF to select sigma');
             end
             usesSourceData = 0;
+            error('Is type set properly?');
             if ~usesSourceData
                 sigma = obj.chooseBestSigma(train,test,input.originalSourceData,useHF);
             else
@@ -85,6 +86,7 @@ classdef HFMethod < Method
             W = DistanceMatrix(W,Y,[train.type; test.type]);
             isTarget = ones(train.size()+test.size(),1);
             useCV = true;
+            error('Is type set properly?');
             sigma = Helpers.autoSelectSigma(W.W,Y,[],isTarget,useCV,useHF,W.type);
         end
     end

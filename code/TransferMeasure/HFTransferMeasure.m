@@ -32,14 +32,15 @@ classdef HFTransferMeasure < TransferMeasure
             end            
             [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
             useCV = 1;
-            useHF = 1;            
-            sigma = Helpers.autoSelectSigma(W,Ys,Yt,isTarget,useCV,useHF,type);
+            useHF = 1;                        
             if ~obj.configs('useSourceForTransfer')
                 W = W(isTarget,isTarget);
+                type = type(isTarget);
                 Ys = zeros(0,size(Ys,2));
-                isTarget = isTarget(isTarget);
+                isTarget = isTarget(isTarget);            
             end
-
+            error('Is type set properly?');
+            sigma = Helpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);
             W = Helpers.distance2RBF(W,sigma);
             labedTargetInds = find(Yt > 0);
             addpath(genpath('libraryCode'));

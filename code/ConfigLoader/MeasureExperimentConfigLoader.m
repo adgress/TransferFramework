@@ -32,7 +32,8 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
                 measureFunc = str2func(preTransferMeasures{1});                
                 measureObj = measureFunc(configsCopy);
                 target = DataSet('','','',[sampledTrain.X ; test.X],...
-                    [sampledTrain.Y ; -1*ones(size(test.Y))]);
+                    [sampledTrain.Y ; -1*ones(size(test.Y))],...
+                    DataSet.TargetType(sampledTrain.size()+test.size()));
                 results.preTransferMeasureVal = {};
                 results.preTransferPerLabelMeasures = {};
                 [results.preTransferMeasureVal{1},...

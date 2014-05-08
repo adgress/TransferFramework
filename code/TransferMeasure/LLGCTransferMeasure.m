@@ -34,7 +34,8 @@ classdef LLGCTransferMeasure < TransferMeasure
                 clear type;
             end            
             [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
-            sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,true,false);
+            error('Is type set properly?');
+            sigma = Helpers.autoSelectSigma(W,[Ys;Yt],~isTarget,true,false,type);
             W = Helpers.distance2RBF(W,sigma);                        
             if ~obj.configs('useSourceForTransfer')
                 W = W(isTarget,isTarget);

@@ -322,7 +322,7 @@ classdef Helpers < handle
             sigma = sigmas(bestAccInd);
         end
         
-        function sigma = autoSelectSigma(W,Ytrain,Ytest,isTrain,useCV,useHF,type)           
+        function sigma = autoSelectSigma(W,Y,isTrain,useCV,useHF,type)           
             meanDistance = mean(W(:))^2;
             
             if nargin < 6
@@ -336,15 +336,15 @@ classdef Helpers < handle
             for i=1:length(expVals)
                 sigmas(i) = meanDistance*base^expVals(i);
             end
-            maxLabel = max([Ytrain ; Ytest]);
-            counts = histc(Ytrain(Ytrain > 0),1:maxLabel);
-            hasEnoughLabeledTrain = sum(counts < 2) == 0;
+            %maxLabel = max(Y);
+            %counts = histc(Ytrain(Ytrain > 0),1:maxLabel);
+            %hasEnoughLabeledTrain = sum(counts < 2) == 0;
+            hasEnoughLabeledTrain = 1;
             useLOOCV = 1;
             if useLOOCV && hasEnoughLabeledTrain
                 scores = zeros(size(sigmas));
                 percCorrect = scores;
-                Y = [Ytrain ; Ytest];
-                labeledInds = find([Ytrain ; Ytest] > 0 & isTrain);
+                labeledInds = find(Y > 0 & isTrain);
                 for i=1:length(sigmas)
                     S = Helpers.distance2RBF(W,sigmas(i));
                     [scores(i),percCorrect(i),~,~] = Helpers.LOOCV(S,labeledInds,Y,useHF,type);
