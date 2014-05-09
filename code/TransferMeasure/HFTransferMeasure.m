@@ -25,32 +25,35 @@ classdef HFTransferMeasure < TransferMeasure
             else                
                 Xall = [source.X ; target.X];                                
                 Y = [source.Y ; target.Y];
-                type = [ones(numel(source.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
-                    ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
+                type = [ones(numel(source.Y),1)*Constants.SOURCE ;...
+                    ones(numel(target.Y),1)*Constants.TARGET_TRAIN];
                 W = Kernel.Distance(Xall);
                 W = DistanceMatrix(W,Y,type);
             end            
-            [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
+            [W,Ys,Yt,type,isTarget] = W.prepareForSourceHF();            
             useCV = 1;
             useHF = 1;                        
-            if ~obj.configs('useSourceForTransfer')
+            if ~obj.configs('useSourceForTransfer')                
                 W = W(isTarget,isTarget);
                 type = type(isTarget);
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);            
             end
-            error('Is type set properly?');
+            %error('Is type set properly?');
             sigma = Helpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);
             W = Helpers.distance2RBF(W,sigma);
-            labedTargetInds = find(Yt > 0);
+            labeledTargetInds = find(Yt > 0) + length(Ys);
             addpath(genpath('libraryCode'));
             useTraining = 1;                              
             
             if useTraining
+                [score, percCorrect,Ypred,Yactual] = Helpers.LOOCV(W,...
+                    labeledTargetInds,[Ys ; Yt],true,type);
+                %{
                 display('TODO: Refactor HFTransferMeasure LOOCV');
                 numCorrect = 0;
                 Ypred = zeros(length(labedTargetInds),1);
-                score = 0;
+                Yscore = Ypred;
                 for i=1:numel(labedTargetInds)
                     isLabeledTargetToUse = true(size(Yt));
                     isLabeledTargetToUse(Yt < 0) = false;
@@ -65,8 +68,8 @@ classdef HFTransferMeasure < TransferMeasure
                     Yl = [Ys ; Yt(isLabeledTargetToUse)];
                     YlLabelMatrix = Helpers.createLabelMatrix(Yl);
                     [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);                
-                    [~,predicted] = max(fu,[],2);
-                    [~,predictedCMN] = max(fu_CMN,[],2);
+                    [~,predicted] = max(fu(1,:),[],2);
+                    [~,predictedCMN] = max(fu_CMN(1,:),[],2);
                     
                     if obj.configs('useCMN')
                         Ypred(i) = predictedCMN(1);
@@ -75,10 +78,11 @@ classdef HFTransferMeasure < TransferMeasure
                     end
                     Yact = Yt(labedTargetInds(i));                    
                     numCorrect = numCorrect + (Ypred(i) == Yact);
-                    score = score + fu_CMN(i,Yact);
+                    Yscore(i) = fu_CMN(i,Yact);
                 end   
-                score = score/length(labedTargetInds);
+                score = sum(Yscore)/length(labedTargetInds);
                 percCorrect = numCorrect/length(labedTargetInds);
+                %}
             else
                 %display('HFTransferMeasure: Not using labeled target for measure');
                 YsLabelMatrix = Helpers.createLabelMatrix(Ys);

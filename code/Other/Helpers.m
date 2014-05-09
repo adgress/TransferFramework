@@ -33,13 +33,16 @@ classdef Helpers < handle
                     W = Kernel.swapElements(W,lastLabeledInd,i);
                 end
             else
-                Yscore = [];
+                isLabeledTarget = Y > 0 & ...
+                    (type == Constants.TARGET_TEST | type == Constants.TARGET_TRAIN);
+                labeledTargetInds = find(isLabeledTarget);
+                Yscore = zeros(size(labeledTargetInds));
                 Ypred = Yscore;
-                Yactual = [];
-                error('TODO: Only check labeled target');
+                Yactual = Y(labeledTargetInds);
+                %error('TODO: Only check labeled target');
                 Ymat = full(Helpers.createLabelMatrix(Y));
-                for i=1:length(labeledInds)
-                    ind = labeledInds(i);                    
+                for i=1:length(labeledTargetInds)
+                    ind = labeledTargetInds(i);                    
                     yi = Ymat(ind,:);
                     Ymat(ind,:) = 0;
                     if i==1

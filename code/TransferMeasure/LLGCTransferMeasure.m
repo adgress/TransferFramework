@@ -27,24 +27,23 @@ classdef LLGCTransferMeasure < TransferMeasure
             else                
                 Xall = [source.X ; target.X];                                
                 Y = [source.Y ; target.Y];
-                type = [ones(numel(source.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
-                    ones(numel(target.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
+                type = [ones(numel(source.Y),1)*Constants.SOURCE ;...
+                    ones(numel(target.Y),1)*Constants.TARGET_TRAIN];
                 W = Kernel.Distance(Xall);
                 W = DistanceMatrix(W,Y,type);
                 clear type;
             end            
-            [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
-            error('Is type set properly?');
-            sigma = Helpers.autoSelectSigma(W,[Ys;Yt],~isTarget,true,false,type);
-            W = Helpers.distance2RBF(W,sigma);                        
+            [W,Ys,Yt,type,isTarget] = W.prepareForSourceHF();       
             if ~obj.configs('useSourceForTransfer')
                 W = W(isTarget,isTarget);
                 Ys = zeros(0,size(Ys,2));
-                isTarget = isTarget(isTarget);
+                type = type(isTarget);
+                isTarget = isTarget(isTarget);               
             end            
+            sigma = Helpers.autoSelectSigma(W,[Ys;Yt],~isTarget,true,false,type);
+            W = Helpers.distance2RBF(W,sigma);                        
             Y = [Ys ; Yt];
-            labeledTarget = length(Ys) + find(Yt > 0);                        
-            [score,percCorrect,Ypred,Yactual] = Helpers.LLGC_LOOCV(W,labeledTarget,Y);
+            [score,percCorrect,Ypred,Yactual] = Helpers.LOOCV(W,[],Y,false,type);
             if obj.configs('useSoftLoss')
                 val = score;
                 display('Not using softloss for perLabelAccuracy');

@@ -3,10 +3,6 @@ classdef DataSet < handle
     %   Detailed explanation goes here
     
     properties(Constant)
-        NO_TYPE = 0;
-        TARGET_TRAIN = 1;
-        TARGET_TEST = 2;
-        SOURCE = 3;
     end
     properties        
         data
@@ -96,14 +92,14 @@ classdef DataSet < handle
         end
         function [b] = hasTypes(obj)
             b = length(obj.Y) == length(obj.type) && ...
-                isempty(find(obj.type == DataSet.NO_TYPE));
+                isempty(find(obj.type == Constants.NO_TYPE));
         end
         function [b] = isSource(obj)
-            b = sum(obj.type == DataSet.SOURCE) == length(obj.Y);            
+            b = sum(obj.type == Constants.SOURCE) == length(obj.Y);            
         end
         function [b] = isTarget(obj)
-            b = sum(obj.type == DataSet.TARGET_TRAIN | ...
-                obj.type == DataSet.TARGET_TEST) == length(obj.Y);            
+            b = sum(obj.type == Constants.TARGET_TRAIN | ...
+                obj.type == Constants.TARGET_TEST) == length(obj.Y);            
         end
         function [] = setTarget(obj)
             obj.type = DataSet.TargetType(obj.size());
@@ -123,13 +119,13 @@ classdef DataSet < handle
         end
         
         function [v] = TargetType(n)
-            v = DataSet.TARGET_TRAIN*ones(n,1);
+            v = Constants.TARGET_TRAIN*ones(n,1);
         end
         function [v] = SourceType(n)
-            v = DataSet.SOURCE*ones(n,1);
+            v = Constants.SOURCE*ones(n,1);
         end
         function [v] = NoType(n)
-            v = DataSet.NO_TYPE*ones(n,1); 
+            v = Constants.NO_TYPE*ones(n,1); 
         end
     end
     

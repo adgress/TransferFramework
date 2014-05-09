@@ -3,9 +3,6 @@ classdef DistanceMatrix < handle
     %   Detailed explanation goes here
     
     properties(Constant)
-        TYPE_TARGET_TRAIN = 1
-        TYPE_TARGET_TEST = 2
-        TYPE_SOURCE = 3
     end
     properties
         Y
@@ -16,7 +13,7 @@ classdef DistanceMatrix < handle
     methods
         function [obj] = DistanceMatrix(W,Y,type)
             if nargin < 3
-                type = ones(size(Y))*DistanceMatrix.TYPE_TARGET_TRAIN;
+                type = ones(size(Y))*Constants.TARGET_TRAIN;
             end
             obj.W = W;
             obj.Y = Y;
@@ -32,7 +29,7 @@ classdef DistanceMatrix < handle
         
         function [W,labels] = getTestToLabeled(obj)
             W = double(obj);
-            W = W(obj.type == obj.TYPE_TARGET_TEST,obj.Y > 0);
+            W = W(obj.type == Constants.TARGET_TEST,obj.Y > 0);
             labels = obj.Y(obj.Y > 0);
         end
         
@@ -51,7 +48,7 @@ classdef DistanceMatrix < handle
         
         function [W,Yt,Y] = getLabeledTrainToSource(obj)
             W = obj.W;
-            It = obj.type == obj.TYPE_TARGET_TRAIN & obj.Y > 0;
+            It = obj.type == Constants.TARGET_TRAIN & obj.Y > 0;
             I = obj.Y > 0;
             W = W(It,I);
             Yt = obj.Y(It);
@@ -94,9 +91,9 @@ classdef DistanceMatrix < handle
         
         function [W,YTrainLabeled,YTest,isTest,type] = prepareForHF(obj)
             W = obj.W;
-            isTest = obj.type == DistanceMatrix.TYPE_TARGET_TEST;
-            labeledTrain = (obj.type  == DistanceMatrix.TYPE_TARGET_TRAIN | ...
-                obj.type == DistanceMatrix.TYPE_SOURCE) & obj.Y > 0;
+            isTest = obj.type == Constants.TARGET_TEST;
+            labeledTrain = (obj.type  == Constants.TARGET_TRAIN | ...
+                obj.type == Constants.SOURCE) & obj.Y > 0;
             perm = [find(labeledTrain) ; find(~labeledTrain)];
             isTest = isTest(perm);
             W = W(perm,perm);
@@ -111,7 +108,7 @@ classdef DistanceMatrix < handle
             obj.permuteData(newPerm);
         end
         function [] = shiftLabeledTargetDataToFront(obj)
-            isLabeledTarget = obj.Y > 0 & obj.type ~= DistanceMatrix.TYPE_SOURCE;
+            isLabeledTarget = obj.Y > 0 & obj.type ~= Constants.SOURCE;
             newPerm = [find(isLabeledTarget) ; find(~isLabeledTarget)];
             obj.permuteData(newPerm);
             
@@ -130,23 +127,25 @@ classdef DistanceMatrix < handle
             obj.shiftLabeledTargetDataToFront();
             W = obj.W;
             Y = obj.Y;
-            isTarget = obj.type ~= DistanceMatrix.TYPE_SOURCE;
+            isTarget = obj.type ~= Constants.SOURCE;
         end
         
-        function [W,Ys,Yt,isTarget] = prepareForSourceHF(obj)
+        function [W,Ys,Yt,type,isTarget] = prepareForSourceHF(obj)
             W = obj.W;
-            sourceInds = find(obj.type == DistanceMatrix.TYPE_SOURCE);
-            targetInds = find(obj.type ~= DistanceMatrix.TYPE_SOURCE);
+            sourceInds = find(obj.type == Constants.SOURCE);
+            targetInds = find(obj.type ~= Constants.SOURCE);
             allInds = [sourceInds; targetInds];
             Ys = obj.Y(sourceInds);
             Yt = obj.Y(targetInds);
             W = W(allInds,allInds);
-            isTarget = obj.type(allInds) ~= DistanceMatrix.TYPE_SOURCE;
+            type = obj.type(allInds);
+            isTarget = type == Constants.TARGET_TEST | ...
+                    type == Constants.TARGET_TRAIN;
         end
         
         function [I] = isTarget(obj)
-            I = obj.type == DistanceMatrix.TYPE_TARGET_TRAIN | ...
-                obj.type == DistanceMatrix.TYPE_TARGET_TEST;
+            I = obj.type == Constants.TARGET_TRAIN | ...
+                obj.type == Constants.TARGET_TEST;
         end
         
         function [I] = isLabeledTarget(obj)
@@ -158,7 +157,7 @@ classdef DistanceMatrix < handle
         end
         
         function [I] = isSource(obj)
-            I = obj.type == DistanceMatrix.TYPE_SOURCE;
+            I = obj.type == Constants.SOURCE;
         end
         
         function [I] = isLabeledSource(obj)

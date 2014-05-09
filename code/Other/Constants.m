@@ -8,6 +8,11 @@ classdef Constants < handle
         
         CV_DATA = 1
         NG_DATA = 2
+        
+        NO_TYPE = 0;
+        TARGET_TRAIN = 1;
+        TARGET_TEST = 2;
+        SOURCE = 3;
     end
     
     methods

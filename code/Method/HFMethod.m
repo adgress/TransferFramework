@@ -29,9 +29,9 @@ classdef HFMethod < Method
                 Y = [train.Y(trainLabeled) ; ...
                     train.Y(~trainLabeled) ; ...
                     test.Y];
-                type = [ones(size(XLabeled,1),1)*DistanceMatrix.TYPE_TARGET_TRAIN ;...
-                    ones(size(train.X(~trainLabeled,:),1),1)*DistanceMatrix.TYPE_TARGET_TRAIN ; ...
-                    ones(size(test.X,1),1)*DistanceMatrix.TYPE_TARGET_TEST];                                
+                type = [ones(size(XLabeled,1),1)*Constants.TARGET_TRAIN ;...
+                    ones(size(train.X(~trainLabeled,:),1),1)*Constants.TARGET_TRAIN ; ...
+                    ones(size(test.X,1),1)*Constants.TARGET_TEST];                                
                 W = Helpers.CreateDistanceMatrix(Xall);
                 W = DistanceMatrix(W,Y,type);
             end
@@ -42,11 +42,11 @@ classdef HFMethod < Method
                 display('HFMethod: Not using HF to select sigma');
             end
             usesSourceData = 0;
-            error('Is type set properly?');
+            %error('Is type set properly?');
             if ~usesSourceData
                 sigma = obj.chooseBestSigma(train,test,input.originalSourceData,useHF);
             else
-                sigma = Helpers.autoSelectSigma(W,YTrainLabeled,YTest,~isTest,useCV,useHF,type);
+                sigma = Helpers.autoSelectSigma(W,[YTrainLabeled ; YTest],~isTest,useCV,useHF,type);
             end
             W = Kernel.RBFKernel(W,sigma);
      
@@ -67,27 +67,14 @@ classdef HFMethod < Method
         end
         
         function [sigma] = chooseBestSigma(obj,train,test,source,useHF)
-            %{
-            source.X = zeros(0,size(source.X,2));
-            source.Y = [];
-            Xall = [source.X ; train.X ; test.X];
-            Y = [source.Y ; train.Y ; -1*ones(size(test.Y))];
-            type = [ones(numel(source.Y),1)*DistanceMatrix.TYPE_SOURCE ;...
-                ones(length(train.Y)+length(test.Y),1)*DistanceMatrix.TYPE_TARGET_TRAIN];
-            W = Kernel.Distance(Xall);
-            W = DistanceMatrix(W,Y,type);
-            [W,Ys,Yt,isTarget] = W.prepareForSourceHF();
-            useCV = true;
-            sigma = Helpers.autoSelectSigma(W,Ys,Yt,~isTarget,useCV,useHF);
-            %}
             Xall = [train.X ; test.X];
             Y = [train.Y ; -1*ones(size(test.Y))];
             W = Kernel.Distance(Xall);
             W = DistanceMatrix(W,Y,[train.type; test.type]);
             isTarget = ones(train.size()+test.size(),1);
             useCV = true;
-            error('Is type set properly?');
-            sigma = Helpers.autoSelectSigma(W.W,Y,[],isTarget,useCV,useHF,W.type);
+            %error('Is type set properly?');
+            sigma = Helpers.autoSelectSigma(W.W,Y,isTarget,useCV,useHF,W.type);
         end
     end
     

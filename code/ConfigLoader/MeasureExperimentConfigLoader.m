@@ -19,6 +19,9 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
             sources = obj.dataAndSplits.sourceDataSets;
+            for i=1:length(sources)
+                sources{i}.setSource();
+            end
             assert(numel(sources) == 1);
             
             metadata = struct();
