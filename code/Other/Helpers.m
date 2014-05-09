@@ -331,11 +331,11 @@ classdef Helpers < handle
             if nargin < 6
                 useHF = false;
             end
-            numSigmas = 7;
+            numSigmas = 13;
             sigmas = zeros(numSigmas,1);
             e = floor(numSigmas/2);
             expVals = -e:e;
-            base = 10;
+            base = 8;
             for i=1:length(expVals)
                 sigmas(i) = meanDistance*base^expVals(i);
             end
