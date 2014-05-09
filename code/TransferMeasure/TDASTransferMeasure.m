@@ -10,7 +10,7 @@ classdef TDASTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,metadata] = computeMeasure(obj,source,target,options)            
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)            
             autoEps = obj.configs('autoEps');
             numSource = size(source.X,1);
             numTarget = size(target.X,1);
@@ -32,6 +32,7 @@ classdef TDASTransferMeasure < TransferMeasure
             val = mean(numWithinEps)/size(Dst,2);            
             obj.displayMeasure(val);
             metadata = {};
+            perLabelMeasures = [];
         end
                      
         function [name] = getPrefix(obj)

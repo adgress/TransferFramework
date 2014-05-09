@@ -10,7 +10,7 @@ classdef RODTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,metadata] = computeMeasure(obj,source,target,options)
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)
             [Psource,Ptarget] = Helpers.getSubspaces(source,...
                 target, target, options);
             d = options('d');
@@ -40,6 +40,7 @@ classdef RODTransferMeasure < TransferMeasure
             end
             val = sum(vals);
             metadata = {};
+            perLabelMeasures = [];
         end
                         
         function [name] = getPrefix(obj)

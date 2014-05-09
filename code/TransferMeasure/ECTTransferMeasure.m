@@ -10,7 +10,7 @@ classdef ECTTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,metadata] = computeMeasure(obj,source,target,...
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,...
                 options)
             sigma = obj.configs('sigma');
             if nargin >= 4 && isfield(options,'distanceMatrix')
@@ -63,6 +63,7 @@ classdef ECTTransferMeasure < TransferMeasure
             end
             obj.displayMeasure(val);
             metadata = struct();
+            perLabelMeasures = [];
         end
         function [name] = getPrefix(obj)
             name = 'ECT';

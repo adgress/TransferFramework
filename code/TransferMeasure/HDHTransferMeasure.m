@@ -10,7 +10,7 @@ classdef HDHTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,metadata] = computeMeasure(obj,source,target,options)
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)
             sourceY = ones(size(source.Y,1),1);
             targetY = 2*ones(size(target.Y,1),1);
             train = DataSet('','','',[source.X;target.X],[sourceY;targetY]);
@@ -20,6 +20,7 @@ classdef HDHTransferMeasure < TransferMeasure
                 numel(results.train.predicted);
             obj.displayMeasure(val);
             metadata = {};
+            perLabelMeasures = [];
         end
                         
         function [name] = getPrefix(obj)

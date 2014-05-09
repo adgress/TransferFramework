@@ -18,7 +18,7 @@ classdef HFMethod < Method
             metadata = input.metadata;                                   
             
             testResults = struct();   
-            if nargin >= 4 && isfield(input,'distanceMatrix')
+            if isfield(input,'distanceMatrix')
                 W = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
             else
@@ -46,7 +46,7 @@ classdef HFMethod < Method
             if ~usesSourceData
                 sigma = obj.chooseBestSigma(train,test,input.originalSourceData,useHF);
             else
-                sigma = Helpers.autoSelectSigma(W,[YTrainLabeled ; YTest],~isTest,useCV,useHF,type);
+                sigma = GraphHelpers.autoSelectSigma(W,[YTrainLabeled ; YTest],~isTest,useCV,useHF,type);
             end
             W = Kernel.RBFKernel(W,sigma);
      
@@ -74,7 +74,7 @@ classdef HFMethod < Method
             isTarget = ones(train.size()+test.size(),1);
             useCV = true;
             %error('Is type set properly?');
-            sigma = Helpers.autoSelectSigma(W.W,Y,isTarget,useCV,useHF,W.type);
+            sigma = GraphHelpers.autoSelectSigma(W.W,Y,isTarget,useCV,useHF,W.type);
         end
     end
     

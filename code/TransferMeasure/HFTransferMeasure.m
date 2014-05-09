@@ -10,105 +10,13 @@ classdef HFTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,metadata] = computeMeasure(obj,source,target,...
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,...
                 options)            
-            metadata = {};                        
-            
-            targetWithLabels = target.Y > 0;
-            if sum(targetWithLabels) == 0 || ...
-                sum(targetWithLabels) <= max(target.Y)
-                val = nan;
-                return;
-            end
-            if nargin >= 4 && isfield(options,'distanceMatrix')
-                W = options.distanceMatrix;                
-            else                
-                Xall = [source.X ; target.X];                                
-                Y = [source.Y ; target.Y];
-                type = [ones(numel(source.Y),1)*Constants.SOURCE ;...
-                    ones(numel(target.Y),1)*Constants.TARGET_TRAIN];
-                W = Kernel.Distance(Xall);
-                W = DistanceMatrix(W,Y,type);
-            end            
-            [W,Ys,Yt,type,isTarget] = W.prepareForSourceHF();            
-            useCV = 1;
-            useHF = 1;                        
-            if ~obj.configs('useSourceForTransfer')                
-                W = W(isTarget,isTarget);
-                type = type(isTarget);
-                Ys = zeros(0,size(Ys,2));
-                isTarget = isTarget(isTarget);            
-            end
-            %error('Is type set properly?');
-            sigma = Helpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);
-            W = Helpers.distance2RBF(W,sigma);
-            labeledTargetInds = find(Yt > 0) + length(Ys);
-            addpath(genpath('libraryCode'));
-            useTraining = 1;                              
-            
-            if useTraining
-                [score, percCorrect,Ypred,Yactual] = Helpers.LOOCV(W,...
-                    labeledTargetInds,[Ys ; Yt],true,type);
-                %{
-                display('TODO: Refactor HFTransferMeasure LOOCV');
-                numCorrect = 0;
-                Ypred = zeros(length(labedTargetInds),1);
-                Yscore = Ypred;
-                for i=1:numel(labedTargetInds)
-                    isLabeledTargetToUse = true(size(Yt));
-                    isLabeledTargetToUse(Yt < 0) = false;
-                    isLabeledTargetToUse(labedTargetInds(i)) = false;
-                    iInd = labedTargetInds(i) + length(Ys);                              
-                    indsLabeled = [ones(size(Ys)); isLabeledTargetToUse];
-                    indsUnlabeled = ~indsLabeled;
-                    indsUnlabeled(iInd) = 0;
-                    newPerm = [find(indsLabeled); iInd; find(indsUnlabeled)];
-                    Wl = W(newPerm,newPerm);
-                    
-                    Yl = [Ys ; Yt(isLabeledTargetToUse)];
-                    YlLabelMatrix = Helpers.createLabelMatrix(Yl);
-                    [fu, fu_CMN] = harmonic_function(Wl, YlLabelMatrix);                
-                    [~,predicted] = max(fu(1,:),[],2);
-                    [~,predictedCMN] = max(fu_CMN(1,:),[],2);
-                    
-                    if obj.configs('useCMN')
-                        Ypred(i) = predictedCMN(1);
-                    else
-                        Ypred(i) = predicted(1);
-                    end
-                    Yact = Yt(labedTargetInds(i));                    
-                    numCorrect = numCorrect + (Ypred(i) == Yact);
-                    Yscore(i) = fu_CMN(i,Yact);
-                end   
-                score = sum(Yscore)/length(labedTargetInds);
-                percCorrect = numCorrect/length(labedTargetInds);
-                %}
-            else
-                %display('HFTransferMeasure: Not using labeled target for measure');
-                YsLabelMatrix = Helpers.createLabelMatrix(Ys);
-                
-                [fu, fu_CMN] = harmonic_function(W, YsLabelMatrix);
-                [~,predicted] = max(fu,[],2);
-                [~,predictedCMN] = max(fu_CMN,[],2);
-                fu2 = fu(labedTargetInds,:);
-                fu_CMN2 = fu_CMN(labedTargetInds,:);
-                classPriors = histc(Ys,1:10)./length(Ys);
-                
-                Ypred = predicted(labedTargetInds);
-                Yact = Yt(labedTargetInds);
-                YactLabelMatrix = Helpers.createLabelMatrix(Yact);
-                Yvals = fu_CMN2.*YactLabelMatrix;
-                numCorrect = sum(Ypred == Yact);
-                percCorrect = numCorrect/length(labedTargetInds);
-                score = sum(Yvals(:))
-                score = score/length(labedTargetInds);                
-            end
-            if obj.configs('useSoftLoss')
-                val = score;
-            else
-                val = percCorrect;
-            end
-            obj.displayMeasure(val);
+            metadata = {};                           
+            useHF = true;
+            [score,percCorrect,Ypred,Yactual,perLabelMeasures,val] = ...
+                computeGraphMeasure(obj,source,target,options,...
+                useHF);
         end
                      
         function [ri] = calculateRandIndex(obj,C,Y,isTarget)

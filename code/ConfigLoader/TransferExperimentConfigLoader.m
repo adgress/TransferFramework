@@ -54,8 +54,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             [results,~] = obj.trainAndTest(trainTestInput,experiment);
             
             postTransferMeasures = obj.configs('postTransferMeasures');
-            results.postTransferMeasureVal = {};      
+            results.postTransferMeasureVal = {};             
             for i=1:numel(postTransferMeasures)
+                error('Get rid of this code!');
                 measureFunc = str2func(postTransferMeasures{i});
                 measureObject = measureFunc(obj.configs);                                
                 results.postTransferMeasureVal{i} = ...
