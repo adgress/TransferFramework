@@ -20,14 +20,17 @@ classdef DataSplitterConfigLoader < ConfigLoader
             percentTrain = obj.configs('percentTrain');
             percentTest = obj.configs('percentTest');
             dataSetType = obj.configs('dataSetType');
-            normalizeData = obj.configs('normalizeRows');
+            normalizeRows = obj.configs('normalizeRows');
             maxTrain=Inf;
             if isKey(obj.configs,'maxTrain')
                 maxTrain = obj.configs('maxTrain');
             end
             dataSetTypeConstructer = str2func(dataSetType);
             allData = dataSetTypeConstructer(inputFile,XName,YName);
-            allData.X = Helpers.NormalizeRows(allData.X);
+            allData.setTarget();
+            if normalizeRows
+                allData.X = Helpers.NormalizeRows(allData.X);
+            end
             allSplits = cell(obj.numSplits,1);
             for i=1:obj.numSplits
                 [allSplits{i}] = ...
@@ -36,9 +39,10 @@ classdef DataSplitterConfigLoader < ConfigLoader
             obj.dataAndSplits.sourceDataSets = {};
             for i=1:numel(sourceFiles)
                 sourceDataSet = DataSet(sourceFiles{i},XName,YName);
-                if normalizeData
+                if normalizeRows
                     sourceDataSet.X = Helpers.NormalizeRows(sourceDataSet.X);
                 end
+                sourceDataSet.setSource();
                 obj.dataAndSplits.sourceDataSets{i} = sourceDataSet;
             end
             obj.dataAndSplits.allData = allData;

@@ -11,15 +11,16 @@ function [] = runBatchExperiment(multithread, dataset)
     end    
     
     if runBaseline
+        configFiles{end+1} = 'config/batch/batchFuse.cfg';
         configFiles{end+1} = 'config/batch/batchTransfer.cfg';
-        configFiles{end+1} = 'config/batch/batchFuse.cfg';        
+        
         %configFiles{end+1} = 'config/batch/batchSource.cfg';
     end
     
     if runMeasures
         configFiles{end+1} = 'config/measure/batchHF.cfg';
-        configFiles{end+1} = 'config/measure/batchLLGC.cfg';          
-        configFiles{end+1} = 'config/measure/batchNN.cfg';              
+        configFiles{end+1} = 'config/measure/batchLLGC.cfg';
+        configFiles{end+1} = 'config/measure/batchNN.cfg';
     end
     if runRepair
         configFiles{end+1} = 'config/repair/batchLLGC.cfg';

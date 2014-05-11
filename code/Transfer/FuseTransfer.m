@@ -19,7 +19,8 @@ classdef FuseTransfer < Transfer
             
             numTrain = targetTrainData.size();
             numTest = targetTestData.size();
-            type = DataSet.TargetType(numTrain+numTest);
+            type = [DataSet.TargetTrainType(numTrain); ...
+                DataSet.TargetTestType(numTest)];
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
                 [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],type);
             metadata = struct();

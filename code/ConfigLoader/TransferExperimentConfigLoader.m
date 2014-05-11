@@ -32,10 +32,10 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             for i=1:length(sources)
                 sources{i}.setSource;
             end
-            sampledTrain.setTarget();
-            train.setTarget();
-            test.setTarget();
-            validate.setTarget();
+            sampledTrain.setTargetTrain();
+            train.setTargetTrain();
+            test.setTargetTest();
+            validate.setTargetTrain();
             assert(numel(sources) == 1);
             
             m = struct();

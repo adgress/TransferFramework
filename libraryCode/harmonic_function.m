@@ -57,12 +57,14 @@ L4 = - inv(L(l+1:n, l+1:n)) * L(l+1:n, 1:l);
 min(svd(L4))
 max(svd(L4))
 %}
-reg = 1e-3;
+reg = 1e-9;
 Lu = L(l+1:n, l+1:n);
-fu = - inv(Lu + reg*eye(size(Lu))) * L(l+1:n, 1:l) * fl;
+regLU = Lu + reg*eye(size(Lu));
+invRegLU = inv(regLU);
+fu = - invRegLU * L(l+1:n, 1:l) * fl;
 %warning on;
 % compute the CMN solution
 q = sum(fl)+1; % the unnormalized class proportion estimate from labeled data, with Laplace smoothing
 fu_CMN = fu .* repmat(q./sum(fu), n-l, 1);
-fu = Helpers.normRows(fu);
-fu_CMN = Helpers.normRows(fu_CMN); 
+%fu = Helpers.normRows(fu);
+%fu_CMN = Helpers.normRows(fu_CMN); 

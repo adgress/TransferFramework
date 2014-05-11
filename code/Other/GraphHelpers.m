@@ -13,11 +13,12 @@ classdef GraphHelpers
             addpath(genpath('libraryCode'));                                  
             if useHF
                 WdistMat = DistanceMatrix(W,Y,type);                
-                [W,Y,isTarget] = WdistMat.prepareForHF_LOOCV() ; 
+                [W,Y,type] = WdistMat.prepareForHF_LOOCV() ; 
                 isLabeled = Y > 0;
                 assert(issorted(~isLabeled));                
                 lastLabeledInd = max(find(isLabeled));
-                lastLabeledTargetInd = max(find(isLabeled & isTarget));
+                isLabeledTrain = isLabeled & type == Constants.TARGET_TRAIN;
+                lastLabeledTargetInd = max(find(isLabeledTrain));
                 Yscore = zeros(lastLabeledTargetInd,1);
                 Ypred = Yscore;
                 Yactual = Y(1:lastLabeledTargetInd);  
@@ -27,9 +28,10 @@ classdef GraphHelpers
                     Ycurr(end) = [];
                     YLabelMatrix = Helpers.createLabelMatrix(Ycurr);
                     W = Kernel.swapElements(W,i,lastLabeledInd);
-                    [fu, ~] = harmonic_function(W, YLabelMatrix);                                
-                    [~,Ypred(i)] = max(fu(1,:));
-                    Yscore(i) = fu(1,Yactual(i));
+                    [fu, ~] = harmonic_function(W, YLabelMatrix);
+                    fu_1 = fu(1,:);
+                    [~,Ypred(i)] = max(fu_1);                    
+                    Yscore(i) = fu_1(Yactual(i));
                     W = Kernel.swapElements(W,lastLabeledInd,i);
                 end
             else
@@ -62,17 +64,15 @@ classdef GraphHelpers
             score = sum(Yscore)/n;
             percCorrect = sum(Ypred == Yactual)/n;
         end
-        function sigma = autoSelectSigma(W,Y,isTrain,useCV,useHF,type)           
+        function [sigma,bestScore,bestAcc] = autoSelectSigma(W,Y,isTrain,useCV,useHF,type)           
             meanDistance = mean(W(:))^2;
             
             if nargin < 6
                 useHF = false;
             end
-            numSigmas = 7;
-            sigmas = zeros(numSigmas,1);
-            e = floor(numSigmas/2);
-            expVals = -e:e;
-            base = 10;
+            expVals = -3:3;
+            sigmas = zeros(length(expVals),1);            
+            base = 5;
             for i=1:length(expVals)
                 sigmas(i) = meanDistance*base^expVals(i);
             end
@@ -91,6 +91,8 @@ classdef GraphHelpers
                 end
                 [~,bestInd] = max(scores);
                 sigma = sigmas(bestInd);
+                bestScore = scores(bestInd);
+                bestAcc = percCorrect(bestInd);
             elseif useCV && length(Ytrain) > 0 && hasEnoughLabeledTrain
                 error('Has this been updated?');
                 percentageArray = [.8 .2 0];
@@ -107,9 +109,12 @@ classdef GraphHelpers
                 Wperm = W(newPerm,newPerm);            
                 sigma = GraphHelpers.selectBestSigma(Wperm,YtestTrain,YtestTest,sigmas,useHF);
             else
+                error('Update');
                 display('autoSelectSigma: Not enough YTrain, default sigma selected');
                 sigma = meanDistance;
             end
+            %scores'
+            %percCorrect'
         end
         function [sigma] = selectBestSigma(W,Ytrain,Ytest,sigmas,useHF)
             scores = zeros(1,length(sigmas));

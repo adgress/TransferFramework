@@ -28,10 +28,12 @@ classdef DataSet < handle
             else
                 obj.X = X;
                 obj.Y = Y;
-            end                                 
-            obj.type = type;
+            end                                             
             assert(size(obj.X,1) == size(obj.Y,1));
-            assert(length(obj.type) == length(obj.Y));
+            if nargin > 3
+                obj.type = type;
+                assert(length(obj.type) == length(obj.Y));
+            end
         end
           
         function [n] = size(obj)
@@ -101,8 +103,11 @@ classdef DataSet < handle
             b = sum(obj.type == Constants.TARGET_TRAIN | ...
                 obj.type == Constants.TARGET_TEST) == length(obj.Y);            
         end
-        function [] = setTarget(obj)
-            obj.type = DataSet.TargetType(obj.size());
+        function [] = setTargetTrain(obj)
+            obj.type = DataSet.TargetTrainType(obj.size());
+        end
+        function [] = setTargetTest(obj)
+            obj.type = DataSet.TargetTestType(obj.size());
         end
         function [] = setSource(obj)
             obj.type = DataSet.SourceType(obj.size());
@@ -118,8 +123,11 @@ classdef DataSet < handle
                 [d1.type;d2.type]);
         end
         
-        function [v] = TargetType(n)
+        function [v] = TargetTrainType(n)
             v = Constants.TARGET_TRAIN*ones(n,1);
+        end
+        function [v] = TargetTestType(n)
+            v = Constants.TARGET_TEST*ones(n,1);
         end
         function [v] = SourceType(n)
             v = Constants.SOURCE*ones(n,1);

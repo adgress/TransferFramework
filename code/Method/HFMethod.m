@@ -25,56 +25,58 @@ classdef HFMethod < Method
                 trainLabeled = train.Y > 0;
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
-                Xall = [XLabeled ; XUnlabeled];                
+                Xall = [XLabeled ; XUnlabeled];      
+                if input.sharedConfigs('zscore')
+                    Xall = zscore(Xall);
+                end
                 Y = [train.Y(trainLabeled) ; ...
                     train.Y(~trainLabeled) ; ...
                     test.Y];
+                %{
                 type = [ones(size(XLabeled,1),1)*Constants.TARGET_TRAIN ;...
                     ones(size(train.X(~trainLabeled,:),1),1)*Constants.TARGET_TRAIN ; ...
                     ones(size(test.X,1),1)*Constants.TARGET_TEST];                                
+                    %}
+                type = [train.type(trainLabeled);...
+                    train.type(~trainLabeled);...
+                    test.type];
                 W = Helpers.CreateDistanceMatrix(Xall);
                 W = DistanceMatrix(W,Y,type);
             end
-            [W,YTrainLabeled,YTest,isTest] = W.prepareForHF();
+            [W,Y,isTest,type] = W.prepareForHF();
             useCV = true;
             useHF = true;
             if ~useHF
                 display('HFMethod: Not using HF to select sigma');
             end
-            usesSourceData = 0;
-            %error('Is type set properly?');
-            if ~usesSourceData
-                sigma = obj.chooseBestSigma(train,test,input.originalSourceData,useHF);
-            else
-                sigma = GraphHelpers.autoSelectSigma(W,[YTrainLabeled ; YTest],~isTest,useCV,useHF,type);
-            end
+            Y_testCleared = Y;
+            Y_testCleared(isTest) = -1;
+            sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,useCV,useHF,type);
             W = Kernel.RBFKernel(W,sigma);
-     
-            YLabelMatrix = Helpers.createLabelMatrix(YTrainLabeled);
+            isTrainLabeled = Y > 0 & ~isTest;
+            assert(~issorted(isTrainLabeled));
+            YTrain = Y(isTrainLabeled);
+            YLabelMatrix = Helpers.createLabelMatrix(YTrain);
             addpath(genpath('libraryCode'));
             [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);
             [~,predicted] = max(fu,[],2);
-            isTest = isTest(size(YTrainLabeled,1)+1:end);
-            
-            val = sum(predicted(isTest) == YTest)/...
+            %[~,predicted] = max(fu_CMN,[],2);
+            numNan = sum(isnan(fu(:)));
+            if numNan > 0
+                display(['numNan: ' num2str(numNan)]);
+            end
+            isYTest = Y > 0 & isTest;
+            YTest = Y(isYTest);            
+            numTrainLabeled = sum(isTrainLabeled);
+            predicted = predicted(isYTest(numTrainLabeled+1:end));
+            val = sum(predicted == YTest)/...
                 length(YTest);
-            display(['HF Acc: ' num2str(val)]);
-            testResults.testPredicted = predicted(isTest);
-            testResults.testActual = test.Y;
+            display(['HFMethod Acc: ' num2str(val)]);
+            testResults.testPredicted = predicted;
+            testResults.testActual = YTest;
             testResults.trainActual = train.Y;
             testResults.trainPredicted = train.Y;
             metadata = {};
-        end
-        
-        function [sigma] = chooseBestSigma(obj,train,test,source,useHF)
-            Xall = [train.X ; test.X];
-            Y = [train.Y ; -1*ones(size(test.Y))];
-            W = Kernel.Distance(Xall);
-            W = DistanceMatrix(W,Y,[train.type; test.type]);
-            isTarget = ones(train.size()+test.size(),1);
-            useCV = true;
-            %error('Is type set properly?');
-            sigma = GraphHelpers.autoSelectSigma(W.W,Y,isTarget,useCV,useHF,W.type);
         end
     end
     

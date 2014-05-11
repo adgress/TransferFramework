@@ -89,7 +89,7 @@ classdef DistanceMatrix < handle
             nn = labels(I);
         end
         
-        function [W,YTrainLabeled,YTest,isTest,type] = prepareForHF(obj)
+        function [W,Y,isTest,type] = prepareForHF(obj)
             W = obj.W;
             isTest = obj.type == Constants.TARGET_TEST;
             labeledTrain = (obj.type  == Constants.TARGET_TRAIN | ...
@@ -97,8 +97,7 @@ classdef DistanceMatrix < handle
             perm = [find(labeledTrain) ; find(~labeledTrain)];
             isTest = isTest(perm);
             W = W(perm,perm);
-            YTrainLabeled = obj.Y(labeledTrain);
-            YTest = obj.Y(isTest);
+            Y = obj.Y(perm);
             type = obj.type(perm);
         end
         
@@ -122,12 +121,12 @@ classdef DistanceMatrix < handle
             obj.Y = obj.Y(newPerm);
         end
         
-        function [W,Y,isTarget] = prepareForHF_LOOCV(obj)
+        function [W,Y,type] = prepareForHF_LOOCV(obj)
             obj.shiftLabeledDataToFront();
             obj.shiftLabeledTargetDataToFront();
             W = obj.W;
             Y = obj.Y;
-            isTarget = obj.type ~= Constants.SOURCE;
+            type = obj.type;
         end
         
         function [W,Ys,Yt,type,isTarget] = prepareForSourceHF(obj)

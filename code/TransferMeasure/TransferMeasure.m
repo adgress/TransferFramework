@@ -30,10 +30,16 @@ classdef TransferMeasure < handle
                 error('Not yet implemented!');
                 W = options.distanceMatrix;                
             else                
-                Xall = [source.X ; target.X];                                
+                Xall = [source.X ; target.X];  
+                if obj.configs('zscore')
+                    Xall = zscore(Xall);
+                end
                 Y = [source.Y ; target.Y];
+                %{
                 type = [ones(numel(source.Y),1)*Constants.SOURCE ;...
                     ones(numel(target.Y),1)*Constants.TARGET_TRAIN];
+                %}
+                type = [source.type ; target.type];
                 W = Kernel.Distance(Xall);
                 W = DistanceMatrix(W,Y,type);
             end            
@@ -44,22 +50,35 @@ classdef TransferMeasure < handle
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);            
             end
-            sigma = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);
-            W = Helpers.distance2RBF(W,sigma);
-            addpath(genpath('libraryCode'));
-
-            [score, percCorrect,Ypred,Yactual] = GraphHelpers.LOOCV(W,...
-                [],[Ys ; Yt],useHF,type);
+            [sigma,score,percCorrect] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);            
+            
+            rerunLOOCV = 0;
+            if rerunLOOCV            
+                W = Helpers.distance2RBF(W,sigma);
+                addpath(genpath('libraryCode'));
+                [score, percCorrect,Ypred,Yactual] = GraphHelpers.LOOCV(W,...
+                    [],[Ys ; Yt],useHF,type);
+            else
+                display('TransferMeasure: Not rerunning LOOCV');
+                perLabelMeasures = [];
+                Ypred = [];
+                Yactual = [];
+            end
             if obj.configs('useSoftLoss')
                 val = score;
                 display('Not using softloss for perLabelAccuracy');
-                perLabelMeasures = ...
-                    Helpers.getAllLabelAccuracy(Ypred,Yactual);
+                if rerunLOOCV
+                    perLabelMeasures = ...
+                        Helpers.getAllLabelAccuracy(Ypred,Yactual);
+                end
             else
                 val = percCorrect;
-                perLabelMeasures = ...
-                    Helpers.getAllLabelAccuracy(Ypred,Yactual);
+                if rerunLOOCV
+                    perLabelMeasures = ...
+                        Helpers.getAllLabelAccuracy(Ypred,Yactual);
+                end
             end
+            
             obj.displayMeasure(val);
         end
         
