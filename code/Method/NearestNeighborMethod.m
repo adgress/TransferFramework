@@ -55,15 +55,14 @@ classdef NearestNeighborMethod < Method
             display(['NN Acc: ' num2str(val)]);
             metadata = {};
         end
-    end
-    
-    methods(Static)
-        function [name] = getMethodName(configs)
-            if nargin < 1
-                name = 'kNN';
-            else
-                name = ['kNN, k=' num2str(configs('k'))];
-            end
+        function [prefix] = getPrefix(obj)
+            prefix = 'kNN';
+        end
+        function [nameParams] = getNameParams(obj)
+            nameParams = {};
+        end
+        function [d] = getDirectory(obj)
+            error('Do we save based on method?');
         end
     end
     

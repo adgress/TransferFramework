@@ -1,4 +1,4 @@
-classdef Transfer
+classdef Transfer < Saveable
     %TRANSFER Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -17,43 +17,12 @@ classdef Transfer
             transformedTargetTrain = targetTrainData;            
             transformedTargetTest = targetTestData;
             tSource = sourceDataSets{1};            
-            type = DataSet.TargetType(targetTrainData.size()+targetTestData.size());
+            type = [DataSet.TargetTrainType(targetTrainData.size());...
+                DataSet.TargetTestType(targetTestData.size())];
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
                 [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],type);
             metadata = struct();
-        end           
-        
-        function [name] = getResultFileName(obj,configs)
-            name = obj.getMethodName(configs);
-        end
-        
-        function [name] = getMethodName(obj,configs,delim)
-            if nargin < 3
-                delim = '_';                
-            end
-            objectClass = str2func(class(obj));
-            name = eval([class(obj) '.getPrefix();']);
-            
-            transferObject = objectClass();
-            params = transferObject.getNameParams();
-            
-            for i=1:numel(params)
-                n = params{i};
-                v = configs(n);
-                if ~isa(v,'char')
-                    v = num2str(v);
-                end
-                name = [name delim n '=' v];
-            end
-        end
-        
-        function [transferName] = getDisplayName(obj,configs)
-            transferName = obj.getMethodName(configs,',');
-        end
-        
-        function [nameParams] = getNameParams(obj)
-            nameParams = {};
-        end
+        end                                                     
         
         function [transferData] = loadTransferData(obj,configs)
             transferFile = configs('transferFile');
@@ -78,22 +47,15 @@ classdef Transfer
                 end
             end            
         end
-        
-    end
-    methods(Static)
-        function [name] = GetName(transferClassName,configs)        
-            transferClass = str2func(transferClassName);
-            transferObject = transferClass();
-            name = transferObject.getDisplayName(configs);
-        end
-        function [name] = GetPrefixForMethod(transferClass,configs)
-            name = eval([transferClass '.getPrefix()']);
-        end
-        function [name] = MethodName(configs)            
-            name = 'Target Only';
-        end
-        function [prefix] = getPrefix()
+        function [prefix] = getPrefix(obj)
             prefix = 'TO';
+        end
+        function [nameParams] = getNameParams(obj)
+            nameParams = {};
+        end
+        function [d] = getDirectory(obj)
+            %error('Do we want this?');
+            d='';
         end
     end
     

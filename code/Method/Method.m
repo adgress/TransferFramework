@@ -1,4 +1,4 @@
-classdef Method < handle
+classdef Method < Saveable
     %UNTITLED4 Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -11,14 +11,6 @@ classdef Method < handle
     methods(Abstract)
         [testResults,metadata] = ...
             trainAndTest(obj,input)   
-    end    
-    methods(Abstract,Static)
-        name = getMethodName(configs)
-    end
-    methods(Static)
-        function name = getMethodNameForMethod(methodClass,configs)
-            name = eval([methodClass '.getMethodName(configs);']);
-        end
-    end
+    end        
 end
 

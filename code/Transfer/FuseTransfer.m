@@ -24,13 +24,10 @@ classdef FuseTransfer < Transfer
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
                 [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],type);
             metadata = struct();
-        end       
-    end
-    methods(Static)
-        function [prefix] = getPrefix()
+        end  
+        function [prefix] = getPrefix(obj)
             prefix = 'S+T';
         end
-    end
-    
+    end        
 end
 

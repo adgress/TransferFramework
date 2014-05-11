@@ -78,15 +78,16 @@ classdef HFMethod < Method
             testResults.trainPredicted = train.Y;
             metadata = {};
         end
-    end
-    
-    methods(Static)
-        function [name] = getMethodName(configs)
-            if nargin < 1
-                name = 'HF';                 
-            end
+        function [prefix] = getPrefix(obj)
+            prefix = 'HF';
         end
-    end
+        function [nameParams] = getNameParams(obj)
+            nameParams = {};
+        end
+        function [d] = getDirectory(obj)
+            error('Do we save based on method?');
+        end
+    end        
     
 end
 

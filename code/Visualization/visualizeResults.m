@@ -37,7 +37,7 @@ function [f] = visualizeResults(options,f)
             hasTransferMethod = configs.hasTransferMethod();
             hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
             
-            learnerName = Method.getMethodNameForMethod(methodClassString,configs.configs);            
+            learnerName = Method.GetDisplayName(methodClassString,configs.configs);            
             if hasTransferMethod
                 transferName = ...
                     Transfer.GetName(configs.getTransferMethod(),allResults.configs);

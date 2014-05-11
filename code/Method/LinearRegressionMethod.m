@@ -21,15 +21,6 @@ classdef LinearRegressionMethod < Method
             );
         end
     end   
-    
-    methods(Static)
-        function [name] = getMethodName(configs)
-            if nargin < 1
-            else
-            end
-            name = 'Logistic Regression';
-        end
-    end
 end
 
 

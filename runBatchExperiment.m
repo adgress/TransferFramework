@@ -1,7 +1,7 @@
 function [] = runBatchExperiment(multithread, dataset)
     setPaths;
     configFiles = {};
-    runBaseline = 1;    
+    runBaseline = 0;    
     runMeasures = 1;
     runRepair = 0;
     
@@ -11,19 +11,19 @@ function [] = runBatchExperiment(multithread, dataset)
     end    
     
     if runBaseline
-        configFiles{end+1} = 'config/batch/batchFuse.cfg';
+        %configFiles{end+1} = 'config/batch/batchFuse.cfg';
         configFiles{end+1} = 'config/batch/batchTransfer.cfg';
         
         %configFiles{end+1} = 'config/batch/batchSource.cfg';
     end
     
     if runMeasures
-        configFiles{end+1} = 'config/measure/batchHF.cfg';
-        configFiles{end+1} = 'config/measure/batchLLGC.cfg';
+        %configFiles{end+1} = 'config/measure/batchHF.cfg';
+        %configFiles{end+1} = 'config/measure/batchLLGC.cfg';
         configFiles{end+1} = 'config/measure/batchNN.cfg';
     end
     if runRepair
-        configFiles{end+1} = 'config/repair/batchLLGC.cfg';
+        configFiles{end+1} = 'config/repair/batchFuseLLGC.cfg';
     end
     for i=1:numel(configFiles)
         obj = BatchExperimentConfigLoader(configFiles{i},batchCommon);

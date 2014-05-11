@@ -1,4 +1,4 @@
-classdef TransferMeasure < handle
+classdef TransferMeasure < Saveable
     %TRANSFERMEASURE Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -92,48 +92,17 @@ classdef TransferMeasure < handle
                 [mVals(i),metadata{i}] = computeMeasure(s,target,options);
             end
         end  
-
-        function [displayName] = getDisplayName(obj)
-            displayName = obj.getResultFileName(',');
-        end
-        function [name] = getResultFileName(obj,delim)
-             if nargin < 2
-                delim = '_';                
-             end
-            name = obj.getPrefix();
-            params = obj.getNameParams();            
-            for i=1:numel(params)
-                n = params{i};
-                if isKey(obj.configs,n)
-                    v = obj.configs(n);
-                else
-                    v = '0';
-                    display([n ' Missing: setting to 0']);
-                end
-                if ~isa(v,'char')
-                    v = num2str(v);
-                end
-                name = [name delim n '=' v];
-            end
-            name = ['/TM/' name];
-        end
-        function [nameParams] = getNameParams(obj)
-            nameParams = {'transferMethodClass'};
+        
+        function [d] = getDirectory(obj)
+            d = 'TM';
         end
         function [] = displayMeasure(obj,val)
             display([obj.getPrefix() ' TransferMeasure: ' num2str(val)]); 
         end
     end
-    methods(Static)
-        function [name] = GetDisplayName(measureName,configs)
-            measureFunc = str2func(measureName);
-            measureObject = measureFunc(configs);
-            name = measureObject.getDisplayName();
-        end
-    end
+    
     methods(Abstract)
-        [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)
-        [name] = getPrefix(obj)       
+        [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)        
     end
     
 end
