@@ -18,10 +18,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
         end
         
-        
-        
-        function [results, metadata] = ...
-                runExperiment(obj,experimentIndex,splitIndex,savedData)                      
+        function [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
+                prepareDataForTransfer(obj,experimentIndex,splitIndex)
             experiment = obj.allExperiments{experimentIndex};                                    
                                     
             [train,test,validate] = obj.getSplit(splitIndex);            
@@ -37,32 +35,20 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             test.setTargetTest();
             validate.setTargetTrain();
             assert(numel(sources) == 1);
-            
             m = struct();
             m.configs = savedData.configs;
             m.metadata = savedData.metadata{experimentIndex,splitIndex};
+        end
+        
+        function [results, metadata] = ...
+                runExperiment(obj,experimentIndex,splitIndex,savedData)                                  
             
-            
+            [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
+                prepareDataForTransfer(obj,experimentIndex,splitIndex)                        
             [transferOutput,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,m,...
-                experiment);
-            %savedData.metadata{experimentIndex,splitIndex} = tMetadata;
-                        
-            assert(trainTestInput.train.hasTypes());
-            assert(trainTestInput.test.isTarget());
-            assert(trainTestInput.originalSourceData.isSource());
-            [results,~] = obj.trainAndTest(trainTestInput,experiment);
-            
-            postTransferMeasures = obj.configs('postTransferMeasures');
-            results.postTransferMeasureVal = {};             
-            for i=1:numel(postTransferMeasures)
-                error('Get rid of this code!');
-                measureFunc = str2func(postTransferMeasures{i});
-                measureObject = measureFunc(obj.configs);                                
-                results.postTransferMeasureVal{i} = ...
-                    measureObject.computeMeasure(transferOutput.tSource,...
-                    transferOutput.tTarget,transferOutput.metadata);
-            end
+                experiment);                        
+            [results,~] = obj.trainAndTest(trainTestInput,experiment);            
             results.metadata = obj.constructResultsMetadata(sources,...
                 sampledTrain,test,numPerClass);
             metadata = results.metadata;
@@ -86,6 +72,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             trainTestInput = ExperimentConfigLoader.CreateRunExperimentInput(...
                 tTrain,tTest,validate,experiment,metadata);
             trainTestInput.originalSourceData = sources{1};
+            assert(trainTestInput.train.hasTypes());
+            assert(trainTestInput.test.isTarget());
+            assert(trainTestInput.originalSourceData.isSource());
         end                      
         
         function [metadata] = constructResultsMetadata(obj,sources,...

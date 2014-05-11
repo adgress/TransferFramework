@@ -53,8 +53,7 @@ classdef Transfer < Saveable
         function [nameParams] = getNameParams(obj)
             nameParams = {};
         end
-        function [d] = getDirectory(obj)
-            %error('Do we want this?');
+        function [d] = getDirectory(obj)            
             d='';
         end
     end

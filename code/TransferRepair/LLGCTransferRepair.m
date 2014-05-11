@@ -1,4 +1,4 @@
-classdef LLGCTransferRepair < Saveable       
+classdef LLGCTransferRepair < TransferRepair       
     properties
         configs
     end
@@ -6,8 +6,15 @@ classdef LLGCTransferRepair < Saveable
     methods
         function obj = LLGCTransferRepair(configs)
             obj.configs = configs;
+        end        
+        function [prefix] = getPrefix(obj)
+            prefix = 'LLGC';
+        end        
+        function [nameParams] = getNameParams(obj)
+            nameParams = {'numPerIteration','numIterations'}
         end
     end
+    
     
 end
 

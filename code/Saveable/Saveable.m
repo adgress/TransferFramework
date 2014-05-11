@@ -45,6 +45,11 @@ classdef Saveable < handle
     end
     
     methods(Static)
+        function [name] = GetResultFileName(className,configs)
+            classFunc = str2func(className);
+            o = classFunc(configs);
+            name = o.getRessultFileName(configs);
+        end
         function [name] = GetDisplayName(className,configs)
             classFunc = str2func(className);
             o = classFunc(configs);
