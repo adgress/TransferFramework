@@ -52,8 +52,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             results.postTransferMeasureVal{1} = postTransferMeasureVal;
             numIterations = obj.configs('numIterations');
             percToRemove = obj.configs('percToRemove');
-            
-            experiment.methodClass = obj.configs('methodClass');
+                        
             repairObj = LLGCTransferRepair(obj.configs);
            
             for i=1:numIterations+1
