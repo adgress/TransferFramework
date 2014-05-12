@@ -19,7 +19,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         end
         
         function [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
-                prepareDataForTransfer(obj,experimentIndex,splitIndex)
+                prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData)
             experiment = obj.allExperiments{experimentIndex};                                    
                                     
             [train,test,validate] = obj.getSplit(splitIndex);            
@@ -44,7 +44,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 runExperiment(obj,experimentIndex,splitIndex,savedData)                                  
             
             [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
-                prepareDataForTransfer(obj,experimentIndex,splitIndex)                        
+                prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData);
             [transferOutput,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,m,...
                 experiment);                        
@@ -57,7 +57,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 performTransfer(obj,train,test,sources,validate,m,experiment)
             assert(length(sources) == 1);
             transferClass = str2func(obj.configs('transferMethodClass'));
-            transferObject = transferClass();
+            transferObject = transferClass(obj.configs);
             [tTrain,tTest,metadata,tSource,tTarget] = ...
                 transferObject.performTransfer(...
                 train, test,sources,...
@@ -102,10 +102,10 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         function [transferFileName] = getTransferFileName(obj)
             dataSet = obj.configs('dataSet');
             transferDir = obj.configs('transferDir');
-            transferClass = str2func(obj.configs('transferMethodClass'));
-            transferObject = transferClass();
-            transferMethodPrefix = transferObject.getResultFileName(obj.configs);
-            transferFileName = [transferDir transferMethodPrefix '_' ...
+            transferClassName = obj.configs('transferMethodClass');
+            transferSaveFileName = Transfer.GetResultFileName(...
+                transferClassName,obj.configs);
+            transferFileName = [transferDir transferSaveFileName '_' ...
                 dataSet '.mat'];
         end        
         function [savedDataFileName] = getSavedDataFileName(obj)

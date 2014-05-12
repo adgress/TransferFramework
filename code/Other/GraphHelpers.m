@@ -6,11 +6,13 @@ classdef GraphHelpers
     end
     
     methods(Static)
-        function [score,percCorrect,Ypred,Yactual] = LOOCV(W,labeledInds,Y,useHF,type)
+        function [score,percCorrect,Ypred,Yactual,labeledTargetScores] ...
+                = LOOCV(W,labeledInds,Y,useHF,type)
             if nargin < 4
                 useHF = false;
             end
-            addpath(genpath('libraryCode'));                                  
+            addpath(genpath('libraryCode'));  
+            numClasses = max(Y);
             if useHF
                 WdistMat = DistanceMatrix(W,Y,type);                
                 [W,Y,type] = WdistMat.prepareForHF_LOOCV() ; 
@@ -22,6 +24,7 @@ classdef GraphHelpers
                 Yscore = zeros(lastLabeledTargetInd,1);
                 Ypred = Yscore;
                 Yactual = Y(1:lastLabeledTargetInd);  
+                labeledTargetScores = zeros(lastLabeledTargetInd,numClasses);
                 for i=1:lastLabeledTargetInd
                     Ycurr = Y(Y > 0);
                     Ycurr(i) = Ycurr(end);
@@ -32,8 +35,9 @@ classdef GraphHelpers
                     fu_1 = fu(1,:);
                     [~,Ypred(i)] = max(fu_1);                    
                     Yscore(i) = fu_1(Yactual(i));
+                    labeledTargetScores(i,:) = fu_1;
                     W = Kernel.swapElements(W,lastLabeledInd,i);
-                end
+                end                
             else
                 isLabeledTarget = Y > 0 & ...
                     (type == Constants.TARGET_TEST | type == Constants.TARGET_TRAIN);
@@ -41,8 +45,8 @@ classdef GraphHelpers
                 Yscore = zeros(size(labeledTargetInds));
                 Ypred = Yscore;
                 Yactual = Y(labeledTargetInds);
-                %error('TODO: Only check labeled target');
                 Ymat = full(Helpers.createLabelMatrix(Y));
+                labeledTargetScores = zeros(length(labeledTargetInds),numClasses);
                 for i=1:length(labeledTargetInds)
                     ind = labeledTargetInds(i);                    
                     yi = Ymat(ind,:);
@@ -56,6 +60,7 @@ classdef GraphHelpers
                     Yscore(i) = fu(ind,Yactual_i);
                     [~,Ypred(i)] = max(fu(ind,:));
                     Ymat(ind,:) = yi;
+                    labeledTargetScores(i,:) = fu(ind,:);
                 end
             end
                      
@@ -70,7 +75,9 @@ classdef GraphHelpers
             if nargin < 6
                 useHF = false;
             end
-            expVals = -3:3;
+            %expVals = -3:3;
+            display('TODO: Expand Sigma search');
+            expVals = -3:1;
             sigmas = zeros(length(expVals),1);            
             base = 5;
             for i=1:length(expVals)

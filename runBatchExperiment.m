@@ -2,8 +2,8 @@ function [] = runBatchExperiment(multithread, dataset)
     setPaths;
     configFiles = {};
     runBaseline = 0;    
-    runMeasures = 1;
-    runRepair = 0;
+    runMeasures = 0;
+    runRepair = 1;
     
     batchCommon = 'config/batch/batchCommon.cfg';
     if nargin >= 2 && dataset == Constants.NG_DATA
@@ -18,9 +18,10 @@ function [] = runBatchExperiment(multithread, dataset)
     end
     
     if runMeasures
-        %configFiles{end+1} = 'config/measure/batchHF.cfg';
-        %configFiles{end+1} = 'config/measure/batchLLGC.cfg';
         configFiles{end+1} = 'config/measure/batchNN.cfg';
+        configFiles{end+1} = 'config/measure/batchHF.cfg';
+        configFiles{end+1} = 'config/measure/batchLLGC.cfg';
+        
     end
     if runRepair
         configFiles{end+1} = 'config/repair/batchFuseLLGC.cfg';

@@ -11,7 +11,7 @@ classdef TransferRepair < Saveable
         end
     end
     methods(Abstract)
-        [results] = repairTransfer(obj,input);
+        [repairedTransferOutput] = repairTransfer(obj,input);
     end
     
 end

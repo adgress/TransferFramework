@@ -6,7 +6,8 @@ classdef FuseTransfer < Transfer
     end
     
     methods
-        function obj = FuseTransfer()            
+        function obj = FuseTransfer(configs)            
+            obj = obj@Transfer(configs);
         end
         
         function [transformedTargetTrain,transformedTargetTest,metadata,...

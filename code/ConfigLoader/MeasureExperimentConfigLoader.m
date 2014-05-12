@@ -12,22 +12,10 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
         
         function [results, metadata] = ...
                 runExperiment(obj,experimentIndex,splitIndex,savedData)                                    
-            experiment = obj.allExperiments{experimentIndex};
             
-            [train,test,validate] = obj.getSplit(splitIndex);            
-            [numTrain,numPerClass] = obj.calculateSampling(experiment,test);
-            
-            [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
-            sources = obj.dataAndSplits.sourceDataSets;
-            for i=1:length(sources)
-                sources{i}.setSource();
-            end
-            assert(numel(sources) == 1);
-            
-            metadata = struct();
-            metadata.configs = savedData.configs;
-            metadata.metadata = savedData.metadata{experimentIndex,splitIndex};
-                        
+            [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
+                prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData);
+            metadata = m;
             configsCopy = obj.configs;
             if ~isempty(obj.configs('preTransferMeasures'))
                 configsCopy('useSourceForTransfer') = 0;
@@ -63,7 +51,7 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
                     transferOutput.tTarget,transferOutput.metadata);                                                
             end
             results.metadata = obj.constructResultsMetadata(sources,...
-                sampledTrain,test,numPerClass);
+                sampledTrain,test,numPerClass);            
         end
         function [outputFileName] = getOutputFileName(obj)
             outputDir = [obj.configs('outputDir') '/' obj.configs('dataSet') '/'];
@@ -73,12 +61,12 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             measures = obj.configs('postTransferMeasures');
             measureClass = str2func(measures{1});
             measureObject = measureClass(obj.configs);
-            measurePrefix = measureObject.getResultFileName();
+            measureFileName = measureObject.getResultFileName();
             
             transferMethodClass = obj.configs('transferMethodClass');
             methodPrefix = Transfer.GetPrefix(...
                 transferMethodClass,obj.configs);
-            outputFileName = [outputDir measurePrefix ...
+            outputFileName = [outputDir measureFileName ...
                 '_' methodPrefix '.mat'];
         end
     end

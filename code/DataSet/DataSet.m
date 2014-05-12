@@ -39,6 +39,9 @@ classdef DataSet < handle
         function [n] = size(obj)
             n = length(obj.Y);
         end
+        function [n] = numSource(obj)
+            n = sum(obj.type == Constants.SOURCE);
+        end
         
         function [split] = generateSplitArray(obj,percTrain,percTest)            
             percValidate = 1 - percTrain - percTest;
@@ -103,6 +106,16 @@ classdef DataSet < handle
             b = sum(obj.type == Constants.TARGET_TRAIN | ...
                 obj.type == Constants.TARGET_TEST) == length(obj.Y);            
         end
+        function [] = remove(obj,shouldRemove)
+            if ~islogical(shouldRemove)
+                logArray = false(obj.size(),1);
+                logArray(shouldRemove) = true;
+                shouldRemove = logArray;
+            end
+            obj.X = obj.X(~shouldRemove,:);
+            obj.Y = obj.Y(~shouldRemove);
+            obj.type = obj.type(~shouldRemove);
+        end
         function [] = setTargetTrain(obj)
             obj.type = DataSet.TargetTrainType(obj.size());
         end
@@ -112,11 +125,33 @@ classdef DataSet < handle
         function [] = setSource(obj)
             obj.type = DataSet.SourceType(obj.size());
         end
+        function [] = removeTestLabels(obj)
+            obj.Y(obj.type == Constants.TARGET_TEST) = -1;
+        end 
+        function [d] = getDataOfType(obj,dataType)
+            isType = dataType == dataType;
+            d = DataSet('','','',obj.X(isType,:),obj.Y(isType),...
+                obj.type(isType));
+        end
+        function [d] = getSourceData(obj)
+            d = obj.getDataOfType(Constants.SOURCE);            
+        end
+        function [d] = getTargetData(obj)
+            d = DataSet.Combine(obj.getDataOfType(Constants.TARGET_TRAIN),...
+                obj.getDataOfType(Constants.TARGET_TEST));
+        end
     end
     
     methods(Static)
         function [split] = generateSplitForLabels(percentageArray,Y)
             split = DataSet.generateSplit(percentageArray,Y);
+        end
+        function [dataSet] = CreateDataSet(targetTrain,targetTest,source)
+            assert(targetTrain.isTarget());
+            assert(targetTest.isTarget());
+            assert(source.isSource);
+            dataSet = combine(targetTrain,targetTest);
+            dataSet = combine(dataSet,source);
         end
         function [f] = Combine(d1,d2)
             f = DataSet('','','',[d1.X ; d2.X],[d1.Y;d2.Y],...

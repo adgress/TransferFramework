@@ -11,7 +11,7 @@ classdef TransferMeasure < Saveable
             obj.configs = configs;
         end
         
-        function [score,percCorrect,Ypred,Yactual,perLabelMeasures,val] = ...
+        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val] = ...
                 computeGraphMeasure(obj,source,target,options,...
                 useHF)
             targetWithLabels = target.Y > 0;
@@ -22,7 +22,7 @@ classdef TransferMeasure < Saveable
                 Ypred = [];
                 Yactual = [];
                 numLabels = max(source.Y);
-                perLabelMeasures = nan(1,numLabels);
+                labeledTargetScores = nan(size(targetWithLabels,1),numLabels);
                 return;
             end
             useCV = 1;
@@ -52,33 +52,23 @@ classdef TransferMeasure < Saveable
             end
             [sigma,score,percCorrect] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);            
             
-            rerunLOOCV = 0;
+            rerunLOOCV = 1;
             if rerunLOOCV            
                 W = Helpers.distance2RBF(W,sigma);
                 addpath(genpath('libraryCode'));
-                [score, percCorrect,Ypred,Yactual] = GraphHelpers.LOOCV(W,...
+                [score, percCorrect,Ypred,Yactual,labeledTargetScores] = GraphHelpers.LOOCV(W,...
                     [],[Ys ; Yt],useHF,type);
             else
                 display('TransferMeasure: Not rerunning LOOCV');
-                perLabelMeasures = [];
+                labeledTargetScores = [];
                 Ypred = [];
                 Yactual = [];
             end
             if obj.configs('useSoftLoss')
-                val = score;
-                display('Not using softloss for perLabelAccuracy');
-                if rerunLOOCV
-                    perLabelMeasures = ...
-                        Helpers.getAllLabelAccuracy(Ypred,Yactual);
-                end
+                val = score;                                
             else
-                val = percCorrect;
-                if rerunLOOCV
-                    perLabelMeasures = ...
-                        Helpers.getAllLabelAccuracy(Ypred,Yactual);
-                end
-            end
-            
+                val = percCorrect;                
+            end            
             obj.displayMeasure(val);
         end
         
@@ -102,7 +92,7 @@ classdef TransferMeasure < Saveable
     end
     
     methods(Abstract)
-        [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)        
+        [val,labeledTargetScores,metadata] = computeMeasure(obj,source,target,options)        
     end
     
 end

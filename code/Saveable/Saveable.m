@@ -48,7 +48,7 @@ classdef Saveable < handle
         function [name] = GetResultFileName(className,configs)
             classFunc = str2func(className);
             o = classFunc(configs);
-            name = o.getRessultFileName(configs);
+            name = o.getResultFileName();
         end
         function [name] = GetDisplayName(className,configs)
             classFunc = str2func(className);
@@ -57,8 +57,12 @@ classdef Saveable < handle
         end
         function [name] = GetPrefix(className,configs)
             func = str2func(className);
-            o = func();
+            o = func(configs);
             name = o.getPrefix();
+        end
+        function [o] = ConstructObject(className,configs)
+            func = str2func(className);
+            o = func(configs);
         end
     end
     

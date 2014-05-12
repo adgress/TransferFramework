@@ -5,9 +5,14 @@ classdef Transfer < Saveable
     properties(Constant)
         
     end
+    properties
+        %TODO: Get rid of this
+        configs
+    end
     
     methods
-        function obj = Transfer()            
+        function obj = Transfer(configs)
+            obj.configs = configs;
         end
         
         function [transformedTargetTrain,transformedTargetTest,metadata,...
