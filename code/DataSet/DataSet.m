@@ -129,7 +129,7 @@ classdef DataSet < handle
             obj.Y(obj.type == Constants.TARGET_TEST) = -1;
         end 
         function [d] = getDataOfType(obj,dataType)
-            isType = dataType == dataType;
+            isType = obj.type == dataType;
             d = DataSet('','','',obj.X(isType,:),obj.Y(isType),...
                 obj.type(isType));
         end

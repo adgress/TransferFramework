@@ -32,23 +32,32 @@ function [] = runVisualization(dataset)
     
     methodsToShow = containers.Map();
     methodsToShow('NearestNeighborMethod') = 1;
-    %methodsToShow('HFMethod') = 1;
+    methodsToShow('HFMethod') = 1;
     
     baselineFiles = {'TO.mat'};    
+    fileNames = {};
     
     showBaselines = 1;
     showAdvanced10 = 0;
     showAdvanced20 = 0;
     showMeasures = 1;
     
+    showRepair = 1;
+    if showRepair
+        showBaselines = 0;
+        showMeasures = 0;
+        binPerformance = 0;
+        fileNames{end+1} = 'REP/LLGC_strategy=Random_percToRemove=0.1_numIterations=3-S+T.mat';
+    end
+    
     if binPerformance
         showBaselines = 0;
         showPreTransferMeasures = 0;
         showRelativePerformance = 0;
         showRelativeMeasures = 0;
+        axisToUse = [0 3 0 1];
     end
-    
-    fileNames = {};
+        
     if showBaselines
         %fileNames{end+1} = 'TO.mat';
         %fileNames{end+1} = 'SO.mat';
@@ -117,7 +126,11 @@ function [] = runVisualization(dataset)
             options.labelToShow = labelToShow;
             options.binPerformance = binPerformance;
             options.numLabelsToUse = numLabelsToUse;
-            if options.showRelativePerformance
+            options.showRepair = showRepair;
+            if options.showRepair
+                options.yAxisDisplay = 'Measure/Accuracy';
+                options.xAxisDisplay = 'Num Iterations';
+            elseif options.showRelativePerformance
                 if showCorrelations
                     options.relativeType = Constants.CORRELATION;
                     options.yAxisDisplay = 'Measure-Accuracy Correlation';

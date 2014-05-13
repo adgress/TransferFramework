@@ -3,9 +3,14 @@ classdef Method < Saveable
     %   Detailed explanation goes here
     
     properties
+        configs
     end
     methods
-        function obj = Method()            
+        function obj = Method(configs)            
+            obj.configs = configs;
+        end
+        function n = getDisplayName(obj)
+            n = obj.getPrefix();
         end
     end
     methods(Abstract)

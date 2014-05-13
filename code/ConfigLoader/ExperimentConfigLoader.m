@@ -18,7 +18,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         
         function [results,metadata] = trainAndTest(obj,input,experiment)
             methodClass = str2func(experiment.methodClass);
-            methodObject = methodClass();            
+            methodObject = methodClass(obj.configs);            
             input.sharedConfigs = obj.configs;
             [results,metadata] = ...
                 methodObject.trainAndTest(input);

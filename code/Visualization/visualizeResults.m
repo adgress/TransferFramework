@@ -40,35 +40,72 @@ function [f] = visualizeResults(options,f)
             learnerName = Method.GetDisplayName(methodClassString,configs.configs);            
             if hasTransferMethod
                 transferName = ...
-                    Transfer.GetName(configs.getTransferMethod(),allResults.configs);
+                    Transfer.GetDisplayName(configs.getTransferMethod(),allResults.configs);
                 learnerName = [learnerName ';' transferName];
             end                                
-            
-            sizes = getSizes(results,options.xAxisField);
-            if options.binPerformance     
-                if hasPostTM
-                    measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
-                    measures = configs.getPostTransferMeasures();
-                    dispName = TransferMeasure.GetDisplayName(measures{1},configs.configs);
-                    leg{index} = [learnerName ';' dispName];
-                    index = index + 1;
-                elseif hasTestResults
-                    transferPerfVals = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
-                else
-                    error('');
+            if options.showRepair
+                repairMethodString = configs.configs('repairMethod');
+                transferRepairName = ...
+                    TransferRepair.GetDisplayName(repairMethodString,configs.configs);
+                learnerName = [transferRepairName ';' learnerName];
+                measureClassName = configs.configs('measureClass');
+                measureObject = Measure.ConstructObject(measureClassName,configs);
+                results = results{1};
+                numIterations = configs.configs('numIterations');
+                numSplits = results.numSplits;
+                postTransferVals = zeros(numIterations,numSplits);
+                repairedAcc = zeros(numIterations,numSplits);
+                for itr=1:numIterations+1
+                    for split=1:numSplits
+                        splitResults = results.splitResults{split};
+                        postTransferVals(itr,split) = ...
+                            splitResults.postTransferMeasureVal{itr};
+                        repairResults = splitResults.repairResults{itr};
+                        measureResults = measureObject.evaluate(repairResults);
+                        repairedAcc(itr,split) = ...
+                            measureResults.testPerformance;                            
+                    end
                 end
-            elseif options.showRelativePerformance && hasTestResults
-                [index,leg] = plotRelativePerformance(options,...
-                    baselineFiles,results,sizes,configs,colors,index,learnerName,leg);
+                PTResults = ResultsVector(postTransferVals');
+                accResults = ResultsVector(repairedAcc');
+                mPT = PTResults.getMean();
+                vPT = PTResults.getVar();                
+                errorbar(0:numIterations,mPT,vPT,'color',colors(index,:));
+                leg{index} = [learnerName ':' 'Transfer Measure'];
+                index = index+1;
+                
+                mAcc = accResults.getMean();
+                vAcc = accResults.getVar();
+                errorbar(0:numIterations,mAcc,vAcc,'color',colors(index,:));
+                leg{index} = [learnerName ':' 'Repaired Acc'];
+                index = index+1;
             else
-                if hasTestResults
-                    [index,leg] = plotTestResults(options,results,sizes,colors,...
-                        index,learnerName,leg);
+                sizes = getSizes(results,options.xAxisField);
+                if options.binPerformance
+                    if hasPostTM
+                        measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
+                        measures = configs.getPostTransferMeasures();
+                        dispName = TransferMeasure.GetDisplayName(measures{1},configs.configs);
+                        leg{index} = [learnerName ';' dispName];
+                        index = index + 1;
+                    elseif hasTestResults
+                        transferPerfVals = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
+                    else
+                        error('');
+                    end
+                elseif options.showRelativePerformance && hasTestResults
+                    [index,leg] = plotRelativePerformance(options,...
+                        baselineFiles,results,sizes,configs,colors,index,learnerName,leg);
+                else
+                    if hasTestResults
+                        [index,leg] = plotTestResults(options,results,sizes,colors,...
+                            index,learnerName,leg);
+                    end
+                    if hasPostTM || hasPreTM
+                        [index,leg] = plotMeasures(options,results,sizes,configs,...
+                            hasPostTM,hasPreTM,colors,index,learnerName,leg);
+                    end
                 end
-                if hasPostTM || hasPreTM
-                    [index,leg] = plotMeasures(options,results,sizes,configs,...
-                        hasPostTM,hasPreTM,colors,index,learnerName,leg);
-                end                
             end
         end
     end    
@@ -90,24 +127,24 @@ function [f] = visualizeResults(options,f)
     if options.showLegend
         legend(leg);
     end
-    numTrain = results{1}.aggregatedResults.metadata.numTrain;
-    numTest = results{1}.aggregatedResults.metadata.numTest;
-    numSourceLabels = ...
-        results{1}.aggregatedResults.metadata.numSourceLabels;
-    if options.binPerformance
-        xlabel('Normalized Accuracy','FontSize',8);
-        ylabel('Normalized Measure','FontSize',8);
-        axisToUse = [0 1 0 1];
-        axis(axisToUse);
-    else        
+    axisToUse = options.axisToUse;    
+    if options.showRepair        
+        xAxisLabel = options.xAxisDisplay;
+    elseif options.binPerformance
+        xAxisLabel = 'Normalized Accuracy';                      
+        axisToUse = [0 1 0 1];        
+    else    
+        numTrain = results{1}.aggregatedResults.metadata.numTrain;
+        numTest = results{1}.aggregatedResults.metadata.numTest;
+        numSourceLabels = ...
+            results{1}.aggregatedResults.metadata.numSourceLabels;
         xAxisLabel = [options.xAxisDisplay ' (Num Source Labels = ' ...
             num2str(numSourceLabels) ...
             ', ' num2str(numTrain) '/' num2str(numTest) ')'];
-        xlabel(xAxisLabel,'FontSize',8);
-        ylabel(options.yAxisDisplay,'FontSize',8);
-        axisToUse = options.axisToUse;
-        axis(axisToUse);
     end
+    axis(axisToUse);
+    xlabel(xAxisLabel,'FontSize',8);
+        ylabel(options.yAxisDisplay,'FontSize',8);
     hold off;    
 end
 
@@ -239,10 +276,10 @@ function [leg,index] = plotMeasureResults(options,configs,results,sizes,field,..
             continue;
         end
         dispName = TransferMeasure.GetDisplayName(measures{k},configs.configs);
-        xVals = getMeans(results,resultField,k);
-        xValsBars = getVariances(results,resultField,k);
-        yVals = sizes;
-        errorbar(yVals,xVals,xValsBars,'color',colors(index,:));
+        yVals = getMeans(results,resultField,k);
+        yValsBars = getVariances(results,resultField,k);
+        xVals = sizes;
+        errorbar(xVals,yVals,yValsBars,'color',colors(index,:));
         leg{index} = [displayName ':' learnerName ':' dispName];
         index = index+1;
     end

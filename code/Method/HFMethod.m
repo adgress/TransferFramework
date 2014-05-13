@@ -6,8 +6,8 @@ classdef HFMethod < Method
     end
     
     methods
-        function obj = HFMethod
-            %obj = obj@Method();
+        function obj = HFMethod(configs)
+            obj = obj@Method(configs);
         end
         function [testResults,metadata] = ...
                 trainAndTest(obj,input)

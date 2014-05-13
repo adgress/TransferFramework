@@ -54,7 +54,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             percToRemove = obj.configs('percToRemove');
                         
             repairObj = LLGCTransferRepair(obj.configs);
-           
+            
             for i=1:numIterations+1
                 if i > 1
                     [results.trainTestInput{i}] = repairObj.repairTransfer(...

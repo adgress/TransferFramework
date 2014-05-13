@@ -6,8 +6,8 @@ classdef NearestNeighborMethod < Method
     end
     
     methods
-        function obj = NearestNeighborMethod
-            %obj = obj@Method();
+        function obj = NearestNeighborMethod(configs)
+            obj = obj@Method(configs);
         end
         function [testResults,metadata] = ...
                 trainAndTest(obj,input)

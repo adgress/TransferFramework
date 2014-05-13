@@ -39,8 +39,7 @@ classdef GraphHelpers
                     W = Kernel.swapElements(W,lastLabeledInd,i);
                 end                
             else
-                isLabeledTarget = Y > 0 & ...
-                    (type == Constants.TARGET_TEST | type == Constants.TARGET_TRAIN);
+                isLabeledTarget = Y > 0 & type == Constants.TARGET_TRAIN;
                 labeledTargetInds = find(isLabeledTarget);
                 Yscore = zeros(size(labeledTargetInds));
                 Ypred = Yscore;
@@ -75,9 +74,7 @@ classdef GraphHelpers
             if nargin < 6
                 useHF = false;
             end
-            %expVals = -3:3;
-            display('TODO: Expand Sigma search');
-            expVals = -3:1;
+            expVals = -3:3;
             sigmas = zeros(length(expVals),1);            
             base = 5;
             for i=1:length(expVals)
