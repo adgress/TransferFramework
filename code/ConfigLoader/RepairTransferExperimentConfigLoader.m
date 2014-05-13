@@ -86,11 +86,16 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             if ~exist(outputDir,'dir')
                 mkdir(outputDir);
             end
+            methodClasses = obj.configs('methodClasses');
+            assert(length(methodClasses) == 1);
+            methodClassName = methodClasses{1};
+            
             transferClassName = obj.configs('transferMethodClass');
             repairClassName = obj.configs('repairMethod');
+            methodPrefix = Method.GetPrefix(methodClassName,obj.configs);
             transferPrefix = Transfer.GetPrefix(transferClassName,obj.configs);
             repairFileName = TransferRepair.GetResultFileName(repairClassName,obj.configs);
-            outputFileName = [outputDir repairFileName '-' transferPrefix '.mat'];
+            outputFileName = [outputDir repairFileName '-' methodPrefix '-' transferPrefix '.mat'];
         end          
     end 
 end
