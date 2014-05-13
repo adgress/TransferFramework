@@ -76,10 +76,10 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
     toc
     savedData.configs = experimentLoader.configs;
 
-    measureClass = str2func(experimentLoader.configs('measureClass'));
-    measureObject = measureClass();
     allResults.configs = experimentLoader.configs;
     if experimentLoader.configs('processResults')
+        measureClass = str2func(experimentLoader.configs('measureClass'));
+        measureObject = measureClass(experimentLoader.configs);
         allResults.processResults(measureObject);
         allResults.aggregateResults(measureObject);
     end
