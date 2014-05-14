@@ -1,9 +1,10 @@
 function [] = runVisualization(dataset)
+    setPaths;
     if nargin < 1
         dataset = Constants.CV_DATA;
     end    
     close all
-    setPaths;
+    
     
     if dataset == Constants.CV_DATA
         axisToUse = [0 5 0 2];
@@ -47,7 +48,15 @@ function [] = runVisualization(dataset)
         showBaselines = 0;
         showMeasures = 0;
         binPerformance = 0;
-        fileNames{end+1} = 'REP/LLGC_strategy=Random_percToRemove=0.1_numIterations=3-S+T.mat';
+        showHF = 1;
+        if showHF
+            %fileNames{end+1} = 'REP/LLGC_strategy=NNPrune_percToRemove=0.1_numIterations=3-HF-S+T.mat';
+            fileNames{end+1} = 'REP/LLGC_strategy=Random_percToRemove=0.1_numIterations=3-HF-S+T.mat';
+        else
+            fileNames{end+1} = 'REP/LLGC_strategy=NNPrune_percToRemove=0.1_numIterations=3-kNN-S+T.mat';
+            fileNames{end+1} = 'REP/LLGC_strategy=Random_percToRemove=0.1_numIterations=3-kNN-S+T.mat';
+        end
+        axisToUse = [0 3 0 1];
     end
     
     if binPerformance
