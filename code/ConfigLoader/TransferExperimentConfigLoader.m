@@ -95,7 +95,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 mkdir(outputDir);
             end
             transferClass = str2func(obj.configs('transferMethodClass'));
-            transferObject = transferClass();
+            transferObject = transferClass(obj.configs);
             transferMethodPrefix = transferObject.getResultFileName(obj.configs);
             outputFileName = [outputDir transferMethodPrefix '.mat'];
         end
