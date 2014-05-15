@@ -51,27 +51,27 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         end
     else
         display('Loaded saved data');
-    end
+    end    
     for j=1:experimentLoader.numExperiments
         splitResults = cell(experimentLoader.numSplits,1);
         splitMetadata = cell(experimentLoader.numSplits,1);        
         if multithread
             parfor i=1:experimentLoader.numSplits  
                 display(sprintf('%d',i));
-                [splitResults{i},~] = ...
+                [splitResults{i},splitMetadata{i}] = ...
                     experimentLoader.runExperiment(j,i,...
                     savedData);
             end            
         else
             for i=1:experimentLoader.numSplits                
                 display(sprintf('%d',i));
-                [splitResults{i},~] = ...
+                [splitResults{i},splitMetadata{i}] = ...
                     experimentLoader.runExperiment(j,i,...
                     savedData);
             end
         end
-        savedData.metadata(j,:) = splitMetadata';
         allResults.allResults{j}.splitResults = splitResults;
+        allResults.allResults{j}.splitMetadata = splitMetadata;
     end
     toc
     savedData.configs = experimentLoader.configs;

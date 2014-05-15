@@ -14,8 +14,7 @@ classdef HFMethod < Method
             train = input.train;
             test = input.test;
             %validate = input.validate;
-            experiment = input.configs;
-            metadata = input.metadata;                                   
+            experiment = input.configs;            
             
             testResults = struct();   
             if isfield(input,'distanceMatrix')
@@ -52,6 +51,8 @@ classdef HFMethod < Method
             Y_testCleared = Y;
             Y_testCleared(isTest) = -1;
             sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,useCV,useHF,type);
+            metadata = struct();
+            metadata.sigma = sigma;
             W = Kernel.RBFKernel(W,sigma);
             isTrainLabeled = Y > 0 & ~isTest;
             assert(~issorted(isTrainLabeled));
@@ -76,7 +77,6 @@ classdef HFMethod < Method
             testResults.testActual = YTest;
             testResults.trainActual = train.Y;
             testResults.trainPredicted = train.Y;
-            metadata = {};
         end
         function [prefix] = getPrefix(obj)
             prefix = 'HF';

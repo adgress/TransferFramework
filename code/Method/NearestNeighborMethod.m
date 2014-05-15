@@ -14,8 +14,7 @@ classdef NearestNeighborMethod < Method
             train = input.train;
             test = input.test;
             validate = input.validate;
-            experiment = input.configs;
-            metadata = input.metadata;           
+            experiment = input.configs;         
             numTest = numel(test.Y);
             k = experiment.k;
             assert(k == 1);
@@ -24,9 +23,9 @@ classdef NearestNeighborMethod < Method
             testX = test.X;
             testY = test.Y;
             testResults = struct();
-            if isfield(metadata,'distanceMatrix')
+            if isfield(input.metadata,'distanceMatrix')
                 testResults.testPredicted = ...
-                    metadata.distanceMatrix.getTestToLabeledNN(k);
+                    input.metadata.distanceMatrix.getTestToLabeledNN(k);
                 testResults.trainPredicted = trainY;
             else
                 withLabels = train.Y > 0;
@@ -53,7 +52,7 @@ classdef NearestNeighborMethod < Method
             val = sum(testResults.testActual == testResults.testPredicted)/...
                 length(testResults.testActual);
             display(['NN Acc: ' num2str(val)]);
-            metadata = {};
+            metadata = struct();
         end
         function [prefix] = getPrefix(obj)
             prefix = 'kNN';

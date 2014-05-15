@@ -11,9 +11,10 @@ classdef TransferMeasure < Saveable
             obj.configs = configs;
         end
         
-        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val] = ...
+        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata] = ...
                 computeGraphMeasure(obj,source,target,options,...
                 useHF)
+            metadata = struct();
             targetWithLabels = target.Y > 0;
             if sum(targetWithLabels) == 0 || ...
                 sum(targetWithLabels) <= max(target.Y)
@@ -51,7 +52,7 @@ classdef TransferMeasure < Saveable
                 isTarget = isTarget(isTarget);            
             end
             [sigma,score,percCorrect] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);            
-            
+            metadata.sigma = sigma;
             rerunLOOCV = 1;
             if rerunLOOCV            
                 W = Helpers.distance2RBF(W,sigma);
@@ -70,18 +71,9 @@ classdef TransferMeasure < Saveable
                 val = percCorrect;                
             end            
             obj.displayMeasure(val);
-        end
-        
-        function [mVals,metadata] = computeMultisourceMeasure(obj,...
-                sources,target,options)
-            error('UPDATE!');
-            mVals = zeros(numel(sources),1);
-            metadata = cell(numel(sources),1);
-            for i=1:numel(sources)
-                s = sources{i};
-                [mVals(i),metadata{i}] = computeMeasure(s,target,options);
-            end
-        end  
+            metadata.Ypred = Ypred;
+            metadata.Yactual = Yactual;
+        end         
         
         function [d] = getDirectory(obj)
             d = 'TM';

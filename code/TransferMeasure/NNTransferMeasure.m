@@ -11,7 +11,7 @@ classdef NNTransferMeasure < TransferMeasure
         end
         
         function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)            
-            metadata = {};            
+            metadata = struct();
             k = obj.configs('k');
             assert(k==1);
             targetWithLabels = target.Y > 0;
@@ -68,6 +68,8 @@ classdef NNTransferMeasure < TransferMeasure
             assert(k == 1);
             perLabelMeasures = ...
                 Helpers.getAllLabelAccuracy(Ynn,Yactual);
+            metadata.Ypred = Ynn;
+            metadata.Yactual = Yactual;
             val = mean(numTargetLabeled);
             obj.displayMeasure(val);            
         end
