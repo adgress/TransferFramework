@@ -26,7 +26,7 @@ classdef TransferMeasure < Saveable
                 labeledTargetScores = nan(size(targetWithLabels,1),numLabels);
                 return;
             end
-            useCV = 1;
+            useMeanSigma = obj.configs('useMeanSigma');
             if nargin >= 4 && isfield(options,'distanceMatrix')
                 error('Not yet implemented!');
                 W = options.distanceMatrix;                
@@ -51,7 +51,7 @@ classdef TransferMeasure < Saveable
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);            
             end
-            [sigma,score,percCorrect] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useCV,useHF,type);            
+            [sigma,score,percCorrect] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,type);            
             metadata.sigma = sigma;
             rerunLOOCV = 1;
             if rerunLOOCV            

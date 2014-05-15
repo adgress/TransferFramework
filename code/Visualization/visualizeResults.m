@@ -6,7 +6,7 @@ function [f] = visualizeResults(options,f)
     leg = {};
     baselineFiles = {};    
     files = [options.baselineFiles options.fileNames];    
-    numColors = 5;
+    numColors = 3;
     colors = colormap(hsv(numColors));
     if options.showRelativePerformance
         numBaselineFiles = numel(options.baselineFiles);
@@ -27,7 +27,8 @@ function [f] = visualizeResults(options,f)
         methodClasses = configs.getMethodClasses();
         for j=1:numel(methodClasses)            
             methodClassString = methodClasses{j};            
-            if ~isKey(options.methodsToShow,methodClassString)
+            if ~isKey(options.methodsToShow,methodClassString) || ...
+                    ~options.methodsToShow(methodClassString)
                 continue;
             end            
             
@@ -106,6 +107,10 @@ function [f] = visualizeResults(options,f)
                             hasPostTM,hasPreTM,colors,index,learnerName,leg);
                     end
                 end
+            end
+            if ~hasTestResults
+                display('Hack - fix this later');
+                break;
             end
         end
     end    

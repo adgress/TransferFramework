@@ -32,7 +32,7 @@ function [] = runVisualization(dataset)
     measuresToShow('HFTransferMeasure') = 1;    
     
     methodsToShow = containers.Map();
-    methodsToShow('NearestNeighborMethod') = 1;
+    methodsToShow('NearestNeighborMethod') = 0;
     methodsToShow('HFMethod') = 1;
     
     baselineFiles = {'TO.mat'};    
@@ -43,7 +43,7 @@ function [] = runVisualization(dataset)
     showAdvanced20 = 0;
     showMeasures = 1;
     
-    showRepair = 1;
+    showRepair = 0;
     if showRepair
         showBaselines = 0;
         showMeasures = 0;
@@ -85,15 +85,10 @@ function [] = runVisualization(dataset)
         %fileNames{end+1} = 'HDH.mat';
         %fileNames{end+1} = 'ROD_d=10_usePLS=0.mat';
         %fileNames{end+1} = 'NN_k=10.mat';
-        
-        %fileNames{end+1} = 'TM/HF_useCMN=0_S+T.mat';
-        %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
-        %fileNames{end+1} = 'TM/HF_useCMN=1_useSoftLoss=1_S+T.mat';
-        %fileNames{end+1} = 'TM/HF_useCMN=1_S+T.mat';
+                
+        fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
         fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_S+T.mat';
-        fileNames{end+1} = 'TM/NN_k=1_S+T.mat';
-        
-        %fileNames{end+1} = 'TM/LLGC_useSoftLoss=0_S+T.mat';
+        %fileNames{end+1} = 'TM/NN_k=1_S+T.mat';                
     end
     if dataset == Constants.CV_DATA        
         sourceData = {'A','C','D','W'};

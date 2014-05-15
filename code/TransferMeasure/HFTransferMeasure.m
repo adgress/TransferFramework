@@ -69,7 +69,7 @@ classdef HFTransferMeasure < TransferMeasure
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'useCMN','useSoftLoss'};
+            nameParams = {'useSoftLoss','useMeanSigma'};
         end
     end
     

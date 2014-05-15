@@ -23,7 +23,7 @@ classdef LLGCTransferMeasure < TransferMeasure
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'useSoftLoss'};
+            nameParams = {'useSoftLoss','useMeanSigma'};
         end
     end    
 end
