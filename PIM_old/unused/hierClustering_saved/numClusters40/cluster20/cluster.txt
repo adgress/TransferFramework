@@ -1,0 +1,8 @@
+IMAGES:
+TAGS:
+	chimneyrockpark, 3.74e-02
+LOCATIONS:
+	35, 3.92e-03
+	46, 4.95e-03
+	25, 6.33e-03
+	66, 6.42e-03

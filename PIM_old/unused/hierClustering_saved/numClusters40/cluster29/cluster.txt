@@ -1,0 +1,15 @@
+IMAGES:
+	476, 1.33e-04
+		shadows,
+		93
+	477, 1.99e-04
+		shadows,
+		93
+	475, 2.24e-04
+		shadows,
+		93
+	474, 3.51e-04
+		shadows,
+		93
+TAGS:
+LOCATIONS:

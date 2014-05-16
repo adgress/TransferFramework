@@ -1,0 +1,21 @@
+IMAGES:
+	78, 1.19e-02
+		biltmore,sc,ashville,vanderbuiltresidence,
+		23
+	94, 1.19e-02
+		biltmore,sc,ashville,vanderbuiltresidence,
+		23
+	69, 1.19e-02
+		biltmore,sc,ashville,vanderbuiltresidence,
+		23
+	83, 1.19e-02
+		biltmore,sc,ashville,vanderbuiltresidence,
+		23
+TAGS:
+	ashville, 1.07e-02
+	sc, 1.14e-02
+	vanderbuiltresidence, 1.17e-02
+LOCATIONS:
+	28, 6.67e-02
+	23, 6.71e-02
+	80, 6.89e-02

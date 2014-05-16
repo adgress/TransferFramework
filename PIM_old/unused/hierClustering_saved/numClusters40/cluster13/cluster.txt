@@ -1,0 +1,9 @@
+IMAGES:
+TAGS:
+	biltmore, 4.18e-02
+	junk, 4.64e-02
+LOCATIONS:
+	38, 3.16e-03
+	40, 4.73e-03
+	44, 5.86e-03
+	55, 7.53e-03

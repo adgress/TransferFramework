@@ -1,0 +1,8 @@
+IMAGES:
+	489, 1.18e-01
+		shadows,
+		81
+TAGS:
+	shadows, 6.15e-02
+LOCATIONS:
+	93, 9.61e-02

@@ -1,0 +1,23 @@
+IMAGES:
+	411, 4.98e-02
+		asheville,festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,
+		67
+	295, 5.93e-02
+		festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+	328, 5.94e-02
+		festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+	322, 5.94e-02
+		festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+TAGS:
+	lexingtonave, 2.32e-02
+	laaff, 2.34e-02
+	20030831, 2.36e-02
+	lexfest, 2.39e-02
+LOCATIONS:
+	67, 3.61e-02
+	72, 3.64e-02
+	31, 3.83e-02
+	88, 3.89e-02

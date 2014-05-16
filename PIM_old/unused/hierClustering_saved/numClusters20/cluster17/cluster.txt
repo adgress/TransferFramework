@@ -1,0 +1,15 @@
+IMAGES:
+	187, 1.05e-01
+		mountains,nc,northcarolina,landscape,blueridgeparkway,
+		39
+	184, 1.15e-01
+		mountains,nc,northcarolina,landscape,blueridgeparkway,
+		37
+	221, 2.58e-01
+		nc,landscape,green,
+		53
+TAGS:
+LOCATIONS:
+	37, 2.92e-02
+	39, 3.65e-02
+	53, 6.12e-02

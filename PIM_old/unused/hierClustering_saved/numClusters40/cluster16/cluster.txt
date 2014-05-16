@@ -1,0 +1,6 @@
+IMAGES:
+	259, 3.53e-01
+		asheville,2003,fotolog,green,
+		61
+TAGS:
+LOCATIONS:

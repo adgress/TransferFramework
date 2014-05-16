@@ -1,0 +1,23 @@
+IMAGES:
+Image Locations: {[0.456286,0.322766],[0.389741,0.496585],[0.389741,0.496585],[0.390155,0.497160]}
+	478, 3.56e-03
+		northcarolina,
+		94
+	182, 3.82e-03
+		nc,asheville,northcarolina,biltmore,
+		36
+	181, 3.84e-03
+		nc,asheville,northcarolina,biltmore,
+		36
+	30, 3.84e-03
+		nc,asheville,northcarolina,biltmore,
+		9
+TAGS:
+	nc, 3.49e-03
+	northcarolina, 8.45e-03
+LOCATIONS:
+[99,98,42,41]
+	99, 5.56e-03
+	98, 6.09e-03
+	42, 6.33e-03
+	41, 6.33e-03

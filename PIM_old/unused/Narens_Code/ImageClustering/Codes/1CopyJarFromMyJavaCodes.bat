@@ -1,0 +1,1 @@
+xcopy MyJavaCodes\dist\MyJavaCodes.jar /Y

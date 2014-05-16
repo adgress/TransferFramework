@@ -1,0 +1,25 @@
+IMAGES:
+Image Locations: {[0.451966,0.506344],[0.451966,0.506344],[0.451966,0.506344],[0.451966,0.506344]}
+	291, 3.01e-03
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+	368, 3.20e-03
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+	370, 3.26e-03
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+	361, 3.28e-03
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+TAGS:
+	discarded, 1.47e-03
+	junk, 2.63e-03
+	junkyard, 3.54e-03
+	metal, 3.60e-03
+LOCATIONS:
+[55,32,44,40]
+	55, 7.83e-04
+	32, 8.84e-04
+	44, 1.25e-03
+	40, 1.62e-03

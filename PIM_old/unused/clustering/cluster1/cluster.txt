@@ -1,0 +1,25 @@
+IMAGES:
+Image Locations: {[0.502698,0.499101],[0.502698,0.499101],[0.502698,0.499101],[0.502698,0.499101]}
+	274, 1.24e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+	267, 1.28e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+	263, 1.32e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+	264, 1.32e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+TAGS:
+	wilco, 1.78e-03
+	geotagged, 2.94e-03
+	livemusic, 3.34e-03
+	orangepeel, 6.31e-03
+LOCATIONS:
+[61,57,77,73]
+	61, 8.69e-03
+	57, 9.55e-03
+	77, 1.12e-02
+	73, 1.55e-02

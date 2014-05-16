@@ -1,0 +1,20 @@
+IMAGES:
+	101, 1.81e-02
+		chimneyrockpark,
+		25
+	106, 1.81e-02
+		chimneyrockpark,
+		25
+	110, 1.82e-02
+		chimneyrockpark,
+		24
+	111, 1.83e-02
+		chimneyrockpark,
+		24
+TAGS:
+	chimneyrockpark, 6.96e-02
+LOCATIONS:
+	24, 7.76e-02
+	26, 7.77e-02
+	66, 7.78e-02
+	25, 7.78e-02

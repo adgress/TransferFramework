@@ -1,0 +1,6 @@
+IMAGES:
+	496, 4.49e-01
+		bga,green,
+		47
+TAGS:
+LOCATIONS:

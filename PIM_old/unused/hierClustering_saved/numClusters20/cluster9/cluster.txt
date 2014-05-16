@@ -1,0 +1,17 @@
+IMAGES:
+	135, 8.52e-03
+		waterfall,chimneyrockpark,hickorynutfalls,
+		24
+	138, 8.71e-03
+		waterfall,chimneyrockpark,hickorynutfalls,
+		25
+	137, 8.77e-03
+		waterfall,chimneyrockpark,hickorynutfalls,
+		25
+	134, 8.90e-03
+		waterfall,chimneyrockpark,hickorynutfalls,
+		26
+TAGS:
+	hickorynutfalls, 7.39e-03
+	waterfall, 1.00e-01
+LOCATIONS:

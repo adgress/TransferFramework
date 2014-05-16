@@ -1,0 +1,22 @@
+IMAGES:
+Image Locations: {[0.143044,0.947200],[0.143044,0.947200],[0.143571,0.947014],[0.143044,0.947200]}
+	135, 5.65e-04
+		chimneyrockpark,
+		24
+	110, 5.74e-04
+		chimneyrockpark,
+		24
+	138, 6.31e-04
+		chimneyrockpark,
+		25
+	111, 6.78e-04
+		chimneyrockpark,
+		24
+TAGS:
+	chimneyrockpark, 2.33e-03
+LOCATIONS:
+[24,25,66,46]
+	24, 5.50e-03
+	25, 5.50e-03
+	66, 5.53e-03
+	46, 5.56e-03

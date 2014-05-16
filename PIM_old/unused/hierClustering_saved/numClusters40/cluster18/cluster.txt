@@ -1,0 +1,8 @@
+IMAGES:
+TAGS:
+	asheville, 9.29e-02
+LOCATIONS:
+	81, 1.51e-02
+	77, 1.65e-02
+	57, 1.84e-02
+	62, 1.88e-02

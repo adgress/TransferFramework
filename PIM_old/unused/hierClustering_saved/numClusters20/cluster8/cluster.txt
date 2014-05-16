@@ -1,0 +1,19 @@
+IMAGES:
+	262, 5.07e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+	275, 5.11e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+	273, 5.11e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+	266, 5.11e-03
+		asheville,geotagged,wilco,orangepeel,livemusic,
+		62
+TAGS:
+	orangepeel, 3.40e-03
+	livemusic, 4.94e-03
+	wilco, 6.80e-03
+	geotagged, 2.02e-02
+LOCATIONS:

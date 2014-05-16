@@ -1,0 +1,19 @@
+IMAGES:
+	242, 1.03e-02
+		biltmore,metal,junk,discarded,scrap,20030110,
+		32
+	245, 1.03e-02
+		biltmore,metal,junk,discarded,scrap,20030110,
+		32
+	228, 1.04e-02
+		biltmore,metal,junk,discarded,scrap,20030110,
+		55
+	235, 1.04e-02
+		biltmore,metal,junk,discarded,scrap,20030110,
+		32
+TAGS:
+	20030110, 2.18e-03
+	discarded, 3.08e-03
+	scrap, 3.22e-02
+	metal, 5.92e-02
+LOCATIONS:

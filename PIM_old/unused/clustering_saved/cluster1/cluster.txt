@@ -1,0 +1,19 @@
+IMAGES:
+	466, 2.63e-02
+		blueridgeparkway,
+		89
+	469, 2.63e-02
+		blueridgeparkway,
+		90
+	461, 2.63e-02
+		blueridgeparkway,
+		87
+	458, 2.63e-02
+		blueridgeparkway,
+		87
+TAGS:
+	blueridgeparkway, 7.49e-02
+LOCATIONS:
+	87, 8.76e-02
+	89, 8.77e-02
+	90, 8.77e-02

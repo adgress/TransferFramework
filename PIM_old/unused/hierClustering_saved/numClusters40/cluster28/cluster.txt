@@ -1,0 +1,10 @@
+IMAGES:
+	258, 9.26e-02
+		asheville,bga,geotagged,
+		47
+TAGS:
+	bga, 9.02e-02
+LOCATIONS:
+	42, 3.12e-02
+	41, 3.13e-02
+	47, 3.94e-02

@@ -1,0 +1,15 @@
+IMAGES:
+	191, 1.57e-02
+		nc,northcarolina,
+		35
+	194, 1.57e-02
+		nc,northcarolina,
+		35
+	195, 1.58e-02
+		nc,northcarolina,
+		35
+	180, 1.58e-02
+		nc,northcarolina,
+		35
+TAGS:
+LOCATIONS:

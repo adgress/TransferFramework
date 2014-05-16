@@ -1,0 +1,9 @@
+IMAGES:
+	201, 1.06e-03
+		northcarolina,
+		46
+	290, 1.06e-03
+		northcarolina,
+		66
+TAGS:
+LOCATIONS:

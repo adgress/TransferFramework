@@ -1,0 +1,17 @@
+IMAGES:
+	183, 4.77e-02
+		nc,asheville,northcarolina,biltmore,
+		36
+	30, 4.77e-02
+		nc,asheville,northcarolina,biltmore,
+		9
+	182, 4.77e-02
+		nc,asheville,northcarolina,biltmore,
+		36
+	181, 4.77e-02
+		nc,asheville,northcarolina,biltmore,
+		36
+TAGS:
+	nc, 7.71e-02
+	northcarolina, 8.22e-02
+LOCATIONS:

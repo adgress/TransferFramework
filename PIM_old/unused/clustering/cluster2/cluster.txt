@@ -1,0 +1,17 @@
+IMAGES:
+Image Locations: {[0.144641,0.946541],[0.144641,0.946541],[0.144641,0.946541],[0.144641,0.946541]}
+	191, 2.00e-03
+		nc,northcarolina,
+		35
+	194, 2.14e-03
+		nc,northcarolina,
+		35
+	180, 2.16e-03
+		nc,northcarolina,
+		35
+	195, 2.17e-03
+		nc,northcarolina,
+		35
+TAGS:
+LOCATIONS:
+[]

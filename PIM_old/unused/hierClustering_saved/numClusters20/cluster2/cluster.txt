@@ -1,0 +1,16 @@
+IMAGES:
+	486, 1.49e-01
+		junk,
+		83
+	483, 1.49e-01
+		junk,
+		83
+TAGS:
+	biltmore, 7.62e-02
+	junk, 7.98e-02
+	asheville, 1.19e-01
+LOCATIONS:
+	83, 1.94e-02
+	73, 2.72e-02
+	96, 3.58e-02
+	94, 4.51e-02

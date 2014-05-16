@@ -1,0 +1,10 @@
+IMAGES:
+Image Locations: {}
+TAGS:
+	biltmoreestate, 3.03e-03
+LOCATIONS:
+[2,7,1,19]
+	2, 6.99e-04
+	7, 9.36e-04
+	1, 9.53e-04
+	19, 9.84e-04

@@ -1,0 +1,12 @@
+IMAGES:
+	384, 2.85e-05
+		2003,fotolog,bga,
+		47
+	202, 3.60e-05
+		2003,fotolog,bga,
+		47
+	208, 4.25e-05
+		2003,fotolog,bga,
+		47
+TAGS:
+LOCATIONS:

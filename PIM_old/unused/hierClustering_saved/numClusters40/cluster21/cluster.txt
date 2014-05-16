@@ -1,0 +1,15 @@
+IMAGES:
+	449, 1.66e-03
+		asheville,northcarolina,
+		86
+	450, 1.66e-03
+		asheville,northcarolina,
+		86
+	448, 1.77e-03
+		asheville,northcarolina,
+		86
+	454, 1.77e-03
+		asheville,northcarolina,
+		86
+TAGS:
+LOCATIONS:

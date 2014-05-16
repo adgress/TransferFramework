@@ -1,0 +1,9 @@
+IMAGES:
+	190, 2.80e-04
+		nc,northcarolina,
+		41
+	192, 2.80e-04
+		nc,northcarolina,
+		42
+TAGS:
+LOCATIONS:

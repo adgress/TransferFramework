@@ -1,0 +1,23 @@
+IMAGES:
+	470, 1.04e-01
+		northcarolina,biltmore,
+		91
+	204, 1.16e-01
+		biltmore,
+		48
+	203, 1.16e-01
+		biltmore,
+		48
+	488, 1.26e-01
+		mountains,nc,asheville,
+		96
+TAGS:
+	biltmore, 8.25e-02
+	junk, 9.34e-02
+	asheville, 1.05e-01
+	metal, 1.22e-01
+LOCATIONS:
+	83, 5.26e-02
+	73, 5.71e-02
+	94, 6.10e-02
+	96, 6.21e-02

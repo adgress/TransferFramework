@@ -1,0 +1,15 @@
+IMAGES:
+	102, 5.40e-04
+		chimneyrockpark,
+		24
+	118, 5.90e-04
+		chimneyrockpark,
+		24
+	115, 5.90e-04
+		chimneyrockpark,
+		24
+	99, 6.00e-04
+		chimneyrockpark,
+		24
+TAGS:
+LOCATIONS:

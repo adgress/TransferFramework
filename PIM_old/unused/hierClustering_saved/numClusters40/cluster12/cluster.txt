@@ -1,0 +1,9 @@
+IMAGES:
+	486, 8.24e-05
+		junk,
+		83
+	483, 8.24e-05
+		junk,
+		83
+TAGS:
+LOCATIONS:

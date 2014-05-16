@@ -1,0 +1,15 @@
+IMAGES:
+	243, 7.36e-05
+		biltmore,2003,fotolog,junk,scrap,landscape,
+		32
+	238, 9.00e-05
+		biltmore,2003,fotolog,junk,scrap,landscape,
+		32
+	244, 1.82e-04
+		biltmore,2003,fotolog,junk,scrap,landscape,
+		32
+	237, 2.47e-04
+		biltmore,2003,fotolog,junk,scrap,landscape,
+		32
+TAGS:
+LOCATIONS:

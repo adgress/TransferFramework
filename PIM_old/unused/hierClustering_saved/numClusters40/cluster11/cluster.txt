@@ -1,0 +1,11 @@
+IMAGES:
+TAGS:
+	lexingtonave, 3.50e-02
+	laaff, 3.52e-02
+	20030831, 3.58e-02
+	lexfest, 3.59e-02
+LOCATIONS:
+	67, 1.95e-02
+	72, 1.95e-02
+	31, 2.12e-02
+	88, 2.39e-02

@@ -1,0 +1,12 @@
+IMAGES:
+	169, 5.99e-02
+		mountains,
+		28
+	170, 5.99e-02
+		mountains,
+		28
+TAGS:
+LOCATIONS:
+	80, 3.73e-02
+	28, 4.11e-02
+	23, 4.16e-02

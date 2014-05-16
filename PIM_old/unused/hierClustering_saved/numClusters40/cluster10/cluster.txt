@@ -1,0 +1,16 @@
+IMAGES:
+	397, 2.97e-03
+		festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,
+		67
+	321, 2.99e-03
+		festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,
+		67
+	309, 3.00e-03
+		festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,
+		67
+	320, 3.01e-03
+		festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,
+		67
+TAGS:
+	festival, 1.35e-02
+LOCATIONS:

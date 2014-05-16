@@ -1,0 +1,22 @@
+IMAGES:
+	3, 1.75e-02
+		mountains,biltmoreestate,davidlindbo,
+		1
+	4, 1.75e-02
+		mountains,biltmoreestate,davidlindbo,
+		1
+	5, 1.75e-02
+		mountains,biltmoreestate,davidlindbo,
+		1
+	151, 1.75e-02
+		mountains,biltmoreestate,davidlindbo,
+		1
+TAGS:
+	biltmoreestate, 1.70e-02
+	davidlindbo, 1.75e-02
+	mountains, 4.95e-02
+LOCATIONS:
+	11, 4.79e-02
+	7, 4.79e-02
+	1, 4.81e-02
+	19, 4.82e-02

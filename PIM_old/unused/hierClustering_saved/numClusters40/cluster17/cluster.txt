@@ -1,0 +1,17 @@
+IMAGES:
+	222, 5.93e-02
+		nc,asheville,2003,fotolog,
+		54
+	224, 6.76e-02
+		biltmore,2003,fotolog,junk,
+		32
+	251, 7.49e-02
+		nc,asheville,2003,fotolog,
+		57
+	174, 9.35e-02
+		2003,festival,fotolog,lexfest,laaff,
+		31
+TAGS:
+	fotolog, 4.35e-02
+	2003, 5.43e-02
+LOCATIONS:

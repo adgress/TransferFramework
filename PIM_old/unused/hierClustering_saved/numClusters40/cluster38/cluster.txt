@@ -1,0 +1,10 @@
+IMAGES:
+	500, 2.54e-03
+		nc,northcarolina,waterfall,
+		99
+	499, 2.54e-03
+		nc,northcarolina,waterfall,
+		99
+TAGS:
+LOCATIONS:
+	99, 5.08e-03

@@ -1,0 +1,19 @@
+IMAGES:
+Image Locations: {[0.387602,0.498217],[0.387602,0.498217],[0.387602,0.498217],[0.387602,0.498217]}
+	149, 1.01e-04
+		mountains,biltmoreestate,davidlindbo,
+		1
+	1, 1.15e-04
+		mountains,biltmoreestate,davidlindbo,
+		1
+	163, 1.16e-04
+		mountains,biltmoreestate,davidlindbo,
+		1
+	9, 1.25e-04
+		mountains,biltmoreestate,davidlindbo,
+		1
+TAGS:
+	davidlindbo, 5.28e-03
+	mountains, 8.07e-03
+LOCATIONS:
+[]

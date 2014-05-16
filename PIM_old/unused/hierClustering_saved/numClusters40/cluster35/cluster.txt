@@ -1,0 +1,19 @@
+IMAGES:
+	372, 1.93e-02
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+	359, 1.94e-02
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+	363, 1.94e-02
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+	360, 1.94e-02
+		biltmore,junk,junkyard,20030619,biltmorescrap,
+		32
+TAGS:
+	20030619, 2.22e-03
+	junkyard, 2.38e-03
+	biltmorescrap, 3.43e-03
+	iron, 7.36e-02
+LOCATIONS:

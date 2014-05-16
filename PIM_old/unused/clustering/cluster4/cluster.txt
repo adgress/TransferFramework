@@ -1,0 +1,20 @@
+IMAGES:
+Image Locations: {[0.022491,0.028565],[0.021640,0.027798],[0.022579,0.027831],[0.743167,0.753898]}
+	276, 4.77e-03
+		mountains,nc,
+		63
+	177, 4.77e-03
+		mountains,nc,
+		34
+	277, 4.81e-03
+		mountains,nc,
+		64
+	187, 1.06e-02
+		mountains,nc,northcarolina,
+		39
+TAGS:
+LOCATIONS:
+[34,63,64]
+	34, 2.59e-03
+	63, 2.62e-03
+	64, 2.62e-03

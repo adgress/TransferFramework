@@ -1,0 +1,25 @@
+IMAGES:
+Image Locations: {[0.515124,0.495579],[0.516555,0.495068],[0.516555,0.495068],[0.516555,0.495068]}
+	174, 2.75e-04
+		festival,lexfest,laaff,
+		31
+	303, 4.88e-04
+		lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+	323, 5.08e-04
+		lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+	304, 5.11e-04
+		lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+TAGS:
+	laaff, 4.58e-04
+	lexingtonave, 8.05e-04
+	lexingtonavenue, 1.32e-03
+	lexfest, 1.36e-03
+LOCATIONS:
+[86,67,88,31]
+	86, 5.49e-03
+	67, 5.82e-03
+	88, 5.88e-03
+	31, 6.49e-03

@@ -1,0 +1,10 @@
+IMAGES:
+	497, 2.44e-03
+		northcarolina,landscape,
+		98
+	498, 2.52e-03
+		northcarolina,landscape,
+		98
+TAGS:
+LOCATIONS:
+	98, 4.95e-03

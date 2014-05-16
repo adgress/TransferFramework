@@ -1,0 +1,16 @@
+IMAGES:
+	335, 1.31e-02
+		lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+	331, 1.31e-02
+		lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+	400, 1.31e-02
+		lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+	407, 1.31e-02
+		lexfest,laaff,lexingtonave,lexingtonavenue,20030831,artcars,
+		67
+TAGS:
+	artcars, 4.76e-02
+LOCATIONS:

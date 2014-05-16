@@ -1,0 +1,23 @@
+IMAGES:
+	411, 9.52e-02
+		asheville,festival,lexfest,laaff,lexingtonave,lexingtonavenue,20030831,
+		67
+	204, 9.93e-02
+		biltmore,
+		48
+	203, 9.93e-02
+		biltmore,
+		48
+	414, 1.02e-01
+		festival,lexfest,laaff,iron,lexingtonave,lexingtonavenue,20030831,
+		67
+TAGS:
+	biltmore, 7.41e-02
+	laaff, 8.95e-02
+	lexingtonave, 8.96e-02
+	lexfest, 8.99e-02
+LOCATIONS:
+	71, 6.91e-02
+	54, 6.94e-02
+	31, 6.95e-02
+	72, 7.01e-02

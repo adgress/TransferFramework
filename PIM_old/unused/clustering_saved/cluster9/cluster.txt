@@ -1,0 +1,15 @@
+IMAGES:
+	277, 4.10e-02
+		mountains,nc,landscape,
+		64
+	276, 4.12e-02
+		mountains,nc,landscape,
+		63
+	177, 4.20e-02
+		mountains,nc,landscape,
+		34
+TAGS:
+LOCATIONS:
+	34, 4.07e-02
+	63, 4.16e-02
+	64, 4.18e-02

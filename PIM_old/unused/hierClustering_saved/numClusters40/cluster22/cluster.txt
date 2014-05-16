@@ -1,0 +1,15 @@
+IMAGES:
+	385, 5.07e-03
+		asheville,
+		78
+	386, 5.07e-03
+		asheville,
+		78
+	387, 5.08e-03
+		asheville,
+		78
+	389, 5.09e-03
+		asheville,
+		78
+TAGS:
+LOCATIONS:
