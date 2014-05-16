@@ -1,0 +1,21 @@
+function [] = runBatchExperiment(multithread)
+    setPaths;
+    configFiles = {};
+    runBaseline = 1;        
+    
+    batchCommon = 'config/batch/batchCommon.cfg';    
+    
+    if runBaseline
+        configFiles{end+1} = 'config/batch/CCA.cfg';
+    end
+    
+    for i=1:numel(configFiles)
+        obj = BatchExperimentConfigLoader(configFiles{i},batchCommon);
+        if nargin < 1
+            obj.runExperiments();
+        else
+            obj.runExperiments(multithread);    
+        end
+    end
+end
+
