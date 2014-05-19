@@ -1,2 +1,2 @@
-addpath(genpath('../code'));
-addPath(genpath('Data'));
+addpath(genpath('code'));
+addpath(genpath('PIM/Data'));

@@ -13,7 +13,8 @@ classdef BatchExperimentConfigLoader < ConfigLoader
         function [] = runExperiments(obj,multithread)
             inputFile = obj.configs('inputFile');
             batchCommonFile = obj.configs('batchCommonFile');
-            batchCommonConfigs = ConfigLoader.LoadConfigs(batchCommonFile);
+            batchCommonConfigs = ConfigLoader.LoadConfigs(...
+                Helpers.MakeProjectURL(batchCommonFile));
             obj.configs = Helpers.CombineMaps(obj.configs,batchCommonConfigs);
             inputCommonFile = obj.configs('inputCommonFile');
             paramsToVary = obj.configs('paramsToVary');

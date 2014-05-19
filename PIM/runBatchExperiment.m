@@ -6,7 +6,7 @@ function [] = runBatchExperiment(multithread)
     batchCommon = 'config/batch/batchCommon.cfg';    
     
     if runBaseline
-        configFiles{end+1} = 'config/batch/CCA.cfg';
+        configFiles{end+1} = 'config/batch/batchCCA.cfg';
     end
     
     for i=1:numel(configFiles)
@@ -16,6 +16,6 @@ function [] = runBatchExperiment(multithread)
         else
             obj.runExperiments(multithread);    
         end
-    end
+    end    
 end
 

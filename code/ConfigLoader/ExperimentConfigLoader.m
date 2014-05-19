@@ -29,18 +29,19 @@ classdef ExperimentConfigLoader < ConfigLoader
                 numPerClass = experiment.numPerClass;
                 numTrain = numClasses*numPerClass;
             else
+                error('What if there is class imalance?');
                 percTrain = experiment.trainSize;
                 numTrain = ceil(percTrain*size(train.X,1));
                 numPerClass = ceil(numTrain/numClasses);
-                numTrain = numPerClass*numClasses
+                numTrain = numPerClass*numClasses;
             end 
         end  
         
         function [] = setDataSet(obj,dataSet)
             obj.configs('dataSet') = dataSet;
             inputDir = obj.configs('inputDir');
-            inputFile = [inputDir '/' dataSet '.mat'];
-            obj.dataAndSplits = load(inputFile);
+            inputFile = [inputDir '/' dataSet '.mat'];           
+            obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
             obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
             obj.numSplits = obj.dataAndSplits.configs('numSplits');
             obj.createAllExperiments();
@@ -57,16 +58,31 @@ classdef ExperimentConfigLoader < ConfigLoader
         end
         
         function [results, metadata] = ...
-                runExperiment(obj,experimentIndex,splitIndex,metadata)
+                runExperiment(obj,experimentIndex,splitIndex,metadata)            
+            experimentConfigs = obj.allExperiments{experimentIndex};
+            methodClass = str2func(experimentConfigs.methodClass);
+            methodObject = methodClass(obj.configs);
+            percTrain = experimentConfigs.trainSize;
             [train,test,validate] = obj.getSplit(splitIndex);
-            expermentConfigs = obj.allExperiments{experimentIndex};
-            methodClass = str2func(expermentConfigs.methodClass);
-            methodObject = methodClass();
-            percTrain = expermentConfigs.trainSize;
             numTrain = ceil(percTrain*size(train.X,1));
-            [sampledTrain] = train.stratifiedSample(numTrain);
-            input = ExperimentConfigLoader.CreateRunExperimentInput(...
-                sampledTrain,test,validate,expermentConfigs);
+            if isa(train,'DataSet')
+                [sampledTrain] = train.stratifiedSample(numTrain);
+                input = ExperimentConfigLoader.CreateRunExperimentInput(...
+                    sampledTrain,test,validate,experimentConfigs);
+            elseif isa(train,'SimilarityDataSet')
+                data = struct();
+                data.train = train; data.test = test; data.validate = validate;
+                drMethodName = obj.configs('drMethod');
+                drMethodObj = DRMethod.ConstructObject(drMethodName,obj.configs);
+                [modData,metadata] = performDR(data,configs);
+                train = modData.train; test = modData.test; validate = modData.validate;
+            else
+                error('Unknown Data type');
+            end
+            
+            
+            
+            
             [results,metadata] = ...
                 methodObject.trainAndTest(input);
         end
@@ -74,7 +90,17 @@ classdef ExperimentConfigLoader < ConfigLoader
         function [train,test,validate] = getSplit(obj,index)
             split = obj.dataAndSplits.allSplits{index};
             dataSet = obj.dataAndSplits.allData;
-            [train,test,validate] = dataSet.splitDataSet(split);
+            if isa(dataSet,'DataSet')
+                [train,test,validate] = dataSet.splitDataSet(split);
+            elseif isa(dataSet,'SimilarityDataSet')
+                ind = obj.dataAndSplits.metadata.splitIndex;
+                [dataSets] = dataSet.createDataSetsWithSplit(split,ind);
+                train = dataSets{Constants.TRAIN};
+                test = dataSets{Constants.TEST};
+                validate = dataSets{Constants.VALIDATE};
+            else
+                error('Unknown DataSet')
+            end
         end
         
         function [nExperiments] = numExperiments(obj)
@@ -96,9 +122,13 @@ classdef ExperimentConfigLoader < ConfigLoader
         end
         function [outputFileName] = getOutputFileName(obj)
             outputDir = [obj.configs('outputDir') '/' obj.configs('dataSet') '/'];
-            mkdir(outputDir);
-            outputFileName = [outputDir ...
-               obj.configs('saveFile')];
+            if ~exist(outputDir,'dir')
+                mkdir(outputDir);
+            end
+            drMethodName = obj.configs('drMethod');
+                        
+            drMethodPrevix = DRMethod.GetPrefix(drMethodName,obj.configs);            
+            outputFileName = [outputDir drMethodPrevix '.mat'];
         end
         function [savedDataFileName] = getSavedDataFileName(obj)
             savedDataFileName = '';

@@ -26,9 +26,9 @@ classdef ConfigLoader < handle
             end
             if ~isempty(obj.commonConfigFile)
                 obj.configs = ...
-                    ConfigLoader.LoadConfigs(obj.commonConfigFile);
+                    ConfigLoader.LoadConfigs(Helpers.MakeProjectURL(obj.commonConfigFile));
             end
-            configs = ConfigLoader.StaticLoadConfigs(obj.configFile);
+            configs = ConfigLoader.StaticLoadConfigs(Helpers.MakeProjectURL(obj.configFile));
             keys = configs.keys;
             for i=1:numel(configs.keys)
                 key = keys{i};
@@ -91,9 +91,9 @@ classdef ConfigLoader < handle
             end
             fclose(fid);
         end   
-        function fid = loadFile(fileName)
-            fid = fopen(fileName,'r');
+        function fid = loadFile(fileName)            
             ConfigLoader.checkFile(fileName);
+            fid = fopen(fileName,'r');            
             if fid == -1
                 error('Could not open config file');
             end

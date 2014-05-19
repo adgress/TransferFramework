@@ -13,6 +13,10 @@ classdef Constants < handle
         TARGET_TRAIN = 1;
         TARGET_TEST = 2;
         SOURCE = 3;
+        
+        TRAIN = 1;
+        VALIDATE = 2;
+        TEST = 3;
     end
     
     methods

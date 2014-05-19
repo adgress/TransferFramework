@@ -6,7 +6,10 @@ classdef Helpers < handle
     end
     
     methods(Static)                
-        
+        function [f] = MakeProjectURL(file)
+            [s] = getProjectConstants();
+            f = [s.projectDir '/' file];
+        end
         
         function [v] = NormalizeRange(v,range)
             if nargin < 2
