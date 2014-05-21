@@ -19,7 +19,7 @@ function [f] = visualizeResults(options,f)
     measureVals = {};
     transferPerfVals = [];
     for i=1:numel(files)
-        fileName = ['results/' options.prefix '/' options.dataSet '/' files{i}];
+        fileName = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' files{i}];        
         allResults = load(fileName);
         allResults = allResults.results;
                 
@@ -38,13 +38,15 @@ function [f] = visualizeResults(options,f)
             hasTransferMethod = configs.hasTransferMethod();
             hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
             
-            learnerName = Method.GetDisplayName(methodClassString,configs.configs);            
+            learnerName = Method.GetDisplayName(methodClassString,configs.configs);
+            drName = DRMethod.GetDisplayName(configs.configs('drMethod'),configs.configs);
+            learnerName = [drName '-' learnerName];                
             if hasTransferMethod
                 transferName = ...
                     Transfer.GetDisplayName(configs.getTransferMethod(),allResults.configs);
                 learnerName = [learnerName ';' transferName];
             end                                
-            if options.showRepair
+            if isfield(options,'showRepair') && options.showRepair
                 repairMethodString = configs.configs('repairMethod');
                 transferRepairName = ...
                     TransferRepair.GetDisplayName(repairMethodString,configs.configs);
@@ -82,7 +84,7 @@ function [f] = visualizeResults(options,f)
                 index = index+1;
             else
                 sizes = getSizes(results,options.xAxisField);
-                if options.binPerformance
+                if isfield(options,'binPerformance') && options.binPerformance
                     if hasPostTM
                         measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
                         measures = configs.getPostTransferMeasures();
@@ -114,7 +116,7 @@ function [f] = visualizeResults(options,f)
             end
         end
     end    
-    if options.binPerformance
+    if isfield(options,'binPerformance') && options.binPerformance
         [~,inds] = sort(transferPerfVals);
         measureRange = [Inf -Inf];
         for i=1:length(measureVals)
@@ -133,19 +135,21 @@ function [f] = visualizeResults(options,f)
         legend(leg);
     end
     axisToUse = options.axisToUse;    
-    if options.showRepair        
+    if isfield(options,'showRepair') && options.showRepair        
         xAxisLabel = options.xAxisDisplay;
-    elseif options.binPerformance
+    elseif isfield(options,'binPerformance') && options.binPerformance
         xAxisLabel = 'Normalized Accuracy';                      
         axisToUse = [0 1 0 1];        
     else    
         numTrain = results{1}.aggregatedResults.metadata.numTrain;
         numTest = results{1}.aggregatedResults.metadata.numTest;
-        numSourceLabels = ...
-            results{1}.aggregatedResults.metadata.numSourceLabels;
-        xAxisLabel = [options.xAxisDisplay ' (Num Source Labels = ' ...
-            num2str(numSourceLabels) ...
-            ', ' num2str(numTrain) '/' num2str(numTest) ')'];
+        xAxisLabel = [options.xAxisDisplay ' ('];
+        if isfield(results{1}.aggregatedResults.metadata,'numSourceLabels')
+            numSourceLabels = ...
+                results{1}.aggregatedResults.metadata.numSourceLabels;
+            xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
+        end
+        xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
     end
     axis(axisToUse);
     xlabel(xAxisLabel,'FontSize',8);
@@ -197,7 +201,7 @@ function [index,leg] = plotMeasures(options,results,sizes,configs,...
 end
 
 function [index,leg] = plotTestResults(options,results,sizes,colors,index,learnerName,leg)
-    if options.usePerLabel
+    if isfield(options,'usePerLabel') && options.usePerLabel
         vars = getVariances(results,'testLabelMeasures',-1);
         means = getMeans(results,'testLabelMeasures',-1);
         if options.labelToShow > 0
@@ -212,15 +216,15 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
         means = getMeans(results,'testResults',-1);
     end
     errorbar(sizes,means,vars,'color',colors(index,:));
+    legName = learnerName;
     if options.showTrain
-        learnerName = [learnerName ', Test'];
+        legName = [learnerName ', Test'];
     end
-    leg{index} = learnerName;
+    leg{index} = legName;
     index = index+1;
     if options.showTrain
-        error('Not yet implemented');
-        vars = getVariances(results,'trainResults');
-        means = getMeans(results,'trainResults');
+        vars = getVariances(results,'trainResults',-1);
+        means = getMeans(results,'trainResults',-1);
         errorbar(sizes,means,vars,'color',colors(index,:));
         leg{index} = [learnerName ', Train'];
         index = index+1;

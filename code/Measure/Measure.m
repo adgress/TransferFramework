@@ -3,32 +3,43 @@ classdef Measure < Saveable
     %   Detailed explanation goes here
     
     properties
-        configs
     end
     
     methods
         function obj = Measure(configs)
-            obj.configs = configs;
+            obj = obj@Saveable(configs);
         end
         function [measureResults] = evaluate(obj,split)
-            valTrain = sum(split.trainPredicted==split.trainActual)/...
-                numel(split.trainPredicted); 
-            valTest = sum(split.testPredicted==split.testActual)/...
-                numel(split.testPredicted);
             measureResults = struct();
+            if size(split.trainActual,2) == 1
+                valTrain = sum(split.trainPredicted==split.trainActual)/...
+                    numel(split.trainPredicted); 
+                valTest = sum(split.testPredicted==split.testActual)/...
+                    numel(split.testPredicted);                
+                numLabels = max(split.testActual);
+                measureResults.trainPerfPerLabel = ResultsVector(zeros(numLabels,1));
+                measureResults.testPerfPerLabel = ResultsVector(zeros(numLabels,1));
+                for i=1:numLabels
+                    measureResults.trainPerfPerLabel(i) = ...
+                        Helpers.getLabelAccuracy(split.trainPredicted,...
+                        split.trainActual,i);
+                    measureResults.testPerfPerLabel(i) = ...
+                        Helpers.getLabelAccuracy(split.testPredicted,...
+                        split.testActual,i);
+                end
+            else
+                trainPredictedMat = logical(Helpers.createLabelMatrix(split.trainPredicted));
+                t = split.trainActual(:,1:size(trainPredictedMat,2));
+                trainIsCorrect = t(trainPredictedMat);
+                valTrain = sum(trainIsCorrect(:))/numel(split.trainPredicted);
+                
+                testPredictedMat = logical(Helpers.createLabelMatrix(split.testPredicted));
+                t = split.testActual(:,1:size(testPredictedMat,2));
+                testIsCorrect = t(testPredictedMat);
+                valTest = sum(testIsCorrect(:))/numel(split.testPredicted);
+            end            
             measureResults.testPerformance = valTest;
             measureResults.trainPerformance = valTrain;
-            numLabels = max(split.testActual);
-            measureResults.trainPerfPerLabel = ResultsVector(zeros(numLabels,1));
-            measureResults.testPerfPerLabel = ResultsVector(zeros(numLabels,1));
-            for i=1:numLabels
-                measureResults.trainPerfPerLabel(i) = ...
-                    Helpers.getLabelAccuracy(split.trainPredicted,...
-                    split.trainActual,i);
-                measureResults.testPerfPerLabel(i) = ...
-                    Helpers.getLabelAccuracy(split.testPredicted,...
-                    split.testActual,i);
-            end
         end
         
         function [aggregatedResults] = aggregateResults(obj,splitMeasures)

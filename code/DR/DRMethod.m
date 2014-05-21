@@ -3,14 +3,14 @@ classdef DRMethod < Saveable
     %   Detailed explanation goes here
     
     properties
-        configs
     end
     
     methods      
         function [obj] = DRMethod(configs)
-            obj.configs = configs;
+            obj = obj@Saveable(configs);
         end
-        function [modData,metadata] = performDR(data,configs)
+        function [modData,metadata] = performDR(obj,data)
+            modData = struct();
             modData.train = SimilarityDataSet(data.train.X,data.train.W);
             modData.test = SimilarityDataSet(data.test.X,data.test.W);
             modData.validate = SimilarityDataSet(data.validate.X,...
@@ -25,7 +25,7 @@ classdef DRMethod < Saveable
         end        
         function [nameParams] = getNameParams(obj)
             nameParams = {};
-        end
+        end        
     end
     
 end

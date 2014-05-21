@@ -1,11 +1,10 @@
 classdef LLGCTransferRepair < TransferRepair       
     properties
-        configs
     end
     
     methods
         function obj = LLGCTransferRepair(configs)
-            obj.configs = configs;                        
+            obj = obj@TransferRepair(configs);                    
         end        
         
         function [repairedInput] = ...

@@ -5,7 +5,19 @@ classdef Helpers < handle
     properties
     end
     
-    methods(Static)                
+    methods(Static)   
+        
+        function [dupeX] = DupeRows(X,numDupe)
+            inds = zeros(sum(numDupe),1);
+            index = 0;
+            for i=1:length(numDupe)
+                k = numDupe(i);
+                inds(index+1:index+k) = i;
+                index = index + k;
+            end
+            dupeX = X(inds,:);
+        end
+        
         function [f] = MakeProjectURL(file)
             [s] = getProjectConstants();
             f = [s.projectDir '/' file];
@@ -74,6 +86,10 @@ classdef Helpers < handle
                     map(k) = v;
                 end
             end
+        end
+        
+        function [m2] = CopyMap(m)            
+            m2 = Helpers.CombineMaps(m,containers.Map);
         end
         
         function [] = printCondNumber(X,varName)
@@ -182,12 +198,15 @@ classdef Helpers < handle
         function [Ymat] = createLabelMatrix(Y)
             %Ymat = zeros(size(Y,1),max(Y));
             %Ymat(:,Y) = 1;
+            Ymat = 0;
             n = size(Y,1);
-            m = max(Y);
-            assert(m > 0);
+            m = max(Y(:));
             Y(Y < 0) = m+1;
-            Ymat = sparse(1:n,Y,1,n,m+1);
-            Ymat = Ymat(:,1:m);
+            for i=1:size(Y,2)            
+                assert(m > 0);                
+                s = sparse(1:n,Y(:,i),1,n,m+1);
+                Ymat = Ymat + s(:,1:m);
+            end
         end  
         function [vals] = getValuesOfField(cellArray,field)
             vals = [];

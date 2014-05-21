@@ -3,10 +3,13 @@ classdef Saveable < handle
     %   Detailed explanation goes here
     
     properties
-        %configs
+        configs
     end
     
     methods
+        function obj = Saveable(configs)
+            obj.configs = Helpers.CopyMap(configs);
+        end
         function [displayName] = getDisplayName(obj)
             displayName = obj.getResultFileName(',',false);
         end

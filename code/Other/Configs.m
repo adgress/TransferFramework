@@ -15,9 +15,9 @@ classdef Configs < handle
     methods
         function [obj] = Configs(configs)
             if isa(configs,'Configs')
-                obj.configs = configs.configs;
+                obj.configs = Helpers.CopyMap(configs.configs);
             else
-                obj.configs = configs;
+                obj.configs = Helpers.CopyMap(configs);
             end
         end
         function [v] = getConfig(obj,key)

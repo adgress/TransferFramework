@@ -4,8 +4,11 @@ classdef TransferRepair < Saveable
     
     properties
     end
-    
+        
     methods
+        function [obj] = TransferRepair(configs)
+            obj = obj@Saveable(configs);
+        end
         function [d] = getDirectory(obj)
             d = 'REP';
         end

@@ -8,7 +8,7 @@ classdef TransferMeasure < Saveable
     
     methods
         function obj = TransferMeasure(configs)
-            obj.configs = configs;
+            obj = obj@Saveable(configs);
         end
         
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata] = ...

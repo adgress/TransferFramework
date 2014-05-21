@@ -16,14 +16,46 @@ classdef SimilarityDataSet < handle
                 obj.dataSetInds = [obj.dataSetInds ; i*ones(n,1)];
             end
             obj.verify();
-        end                
+        end
+        function [] = removeLastKFeatures(obj,k)
+            numFeats = size(obj.X{1},2);
+            shouldRemove = [false(numFeats-k,1) ; true(k,1)];
+            obj.removeFeatures(shouldRemove);
+        end
+        function [] = removeFeatures(obj,shouldRemove)
+            for i=1:length(obj.X)
+                origX = obj.X{i};
+                obj.X{i} = origX(:,~shouldRemove);
+            end
+        end
+        function [W] = getCellW(obj)
+            W = SimilarityDataSet.CreateCellW(obj.W,obj.dataSetInds);
+        end
         
         function [X] = getBlockX(obj)
             X = SimilarityDataSet.CreateBlockX(obj.X);
-        end
+        end                
         
-        function [W] = getSubW(obj,ind1,ind2)
-            W = obj.W(obj.dataSetInds == ind1, obj.dataSetInds == ind2);
+        function [W] = getSubW(obj,sets1,sets2)
+            if nargin < 3
+                sets2 = sets1;
+            end
+            inds1 = zeros(size(obj.dataSetInds));
+            inds2 = inds1;
+            for i=1:length(sets1)
+                inds1 = inds1 | obj.dataSetInds == sets1(i);
+            end
+            for i=1:length(sets2)
+                inds2 = inds2 | obj.dataSetInds == sets2(i);
+            end
+            W = obj.W(inds1, inds2);
+        end
+        function [] = setSubW(obj,subW,set1,set2)
+            inds1 = obj.dataSetInds == set1;
+            inds2 = obj.dataSetInds == set2;
+            obj.W(inds1,inds2) = subW;
+            obj.W(inds2,inds1) = subW';
+            obj.verify();
         end
         
         function [m] = numDataSets(obj)
@@ -111,7 +143,22 @@ classdef SimilarityDataSet < handle
                 numYPerSplit(i,Constants.TEST) = ni - sum(numYPerSplit(i,:));
             end
             split = ones(numX,1);            
-        end                   
+        end 
+        function sampledTrain = randomSample(obj,percTrain,trainIndex,testIndex)
+            Wij = obj.getSubW(trainIndex,testIndex);
+            numPerLabel = sum(Wij);
+            numRelations = sum(numPerLabel);
+            rs = RandStream('mt19937ar','Seed',1);
+            perm = rs.randperm(numRelations);
+            permToClear = perm(1:floor((1-percTrain)*length(perm)));
+            relationInds = find(Wij(:));
+            relationsToClear = relationInds(permToClear);
+            sampledWij = Wij;
+            sampledWij(relationsToClear) = 0;
+            
+            sampledTrain = SimilarityDataSet(obj.X,obj.W);
+            sampledTrain.setSubW(sampledWij,trainIndex,testIndex);
+        end
     end
     
     methods(Static)
@@ -138,6 +185,18 @@ classdef SimilarityDataSet < handle
                 startCol = startCol+m;
             end
         end
+        
+        function W = CreateCellW(blockW,inds)
+            numBlocks = max(inds);
+            W = cell(numBlocks);
+            for i=1:numBlocks
+                for j=1:numBlocks
+                    Wij = blockW(inds == i,inds==j)
+                    W{i,j} = Wij;                    
+                end
+            end
+        end
+        
         function [blockW] = CreateBlockW(W)
             [totalRows,totalCols] = SimilarityDataSet.GetWSize(W);
             blockW = zeros(totalRows,totalCols);

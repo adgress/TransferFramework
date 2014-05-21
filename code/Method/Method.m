@@ -3,11 +3,10 @@ classdef Method < Saveable
     %   Detailed explanation goes here
     
     properties
-        configs
     end
     methods
         function obj = Method(configs)            
-            obj.configs = configs;
+            obj = obj@Saveable(configs);
         end
         function n = getDisplayName(obj)
             n = obj.getPrefix();

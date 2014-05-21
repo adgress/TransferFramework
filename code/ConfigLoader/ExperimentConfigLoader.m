@@ -21,7 +21,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             methodObject = methodClass(obj.configs);            
             input.sharedConfigs = obj.configs;
             [results,metadata] = ...
-                methodObject.trainAndTest(input);
+                methodObject.trainAndTest(input);            
         end
         function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
             numClasses = max(test.Y);
@@ -64,27 +64,105 @@ classdef ExperimentConfigLoader < ConfigLoader
             methodObject = methodClass(obj.configs);
             percTrain = experimentConfigs.trainSize;
             [train,test,validate] = obj.getSplit(splitIndex);
-            numTrain = ceil(percTrain*size(train.X,1));
+            numTrain = ceil(percTrain*size(train.X,1)); 
+            emptyMetadata = struct();
             if isa(train,'DataSet')
+                error('TODO: Update!');
                 [sampledTrain] = train.stratifiedSample(numTrain);
                 input = ExperimentConfigLoader.CreateRunExperimentInput(...
-                    sampledTrain,test,validate,experimentConfigs);
+                    sampledTrain,test,validate,experimentConfigs,emptyMetadata);
             elseif isa(train,'SimilarityDataSet')
-                data = struct();
-                data.train = train; data.test = test; data.validate = validate;
+                trainIndex = obj.configs('trainSetIndex');
+                testIndex = obj.configs('testSetIndex');
+                data = struct();                
+                sampledTrain = train.randomSample(percTrain,trainIndex,testIndex);
+                data.train = sampledTrain; data.test = test; data.validate = validate;
                 drMethodName = obj.configs('drMethod');
                 drMethodObj = DRMethod.ConstructObject(drMethodName,obj.configs);
-                [modData,metadata] = performDR(data,configs);
-                train = modData.train; test = modData.test; validate = modData.validate;
+                cvParams = obj.configs('cvParams');
+                bestParams = cell(length(cvParams),1);
+                
+                measureObj = Measure.ConstructObject(...
+                    obj.configs('measureClass'),obj.configs);
+                
+                cvData = struct();
+                cvData.train = sampledTrain;
+                cvData.test = validate;
+                cvData.validate = [];
+                assert(length(cvParams) == 1);
+                for i=1:length(cvParams)
+                    param = cvParams{i};
+                    paramVals = obj.configs(param);
+                    paramAcc = zeros(size(paramVals));  
+                    cvResults = cell(size(paramVals));
+                    bestNumVecs = zeros(size(paramVals));
+                    for j=1:length(paramVals)
+                        drMethodObj.configs(param) = paramVals{j};
+                        [modData,~] = drMethodObj.performDR(cvData);
+                        projTrain = modData.train; projTest = modData.test;
+                        cvInput = ExperimentConfigLoader.CreateRunExperimentInput(...
+                            projTrain,projTest,[],experimentConfigs,emptyMetadata);                        
+                        if obj.configs('tuneNumVecs')
+                            maxVecs = obj.configs('numVecs');
+                            numVecsResults = cell(maxVecs,1);
+                            numVecsAcc = zeros(maxVecs,1);
+                            origTrainX = cvInput.train.X;
+                            origTestX = cvInput.test.X;
+                            for numVecs=1:maxVecs
+                                numFeats = maxVecs-numVecs;
+                                projTrain.X = origTrainX;
+                                projTest.X = origTestX;
+                                projTrain.removeLastKFeatures(numFeats);
+                                projTest.removeLastKFeatures(numFeats);
+                                [numVecsResults{numVecs},~] = ...
+                                    methodObject.trainAndTest(cvInput);
+                                measureResults = measureObj.evaluate(numVecsResults{numVecs});
+                                numVecsAcc(numVecs) = measureResults.testPerformance;
+                            end
+                            %numVecsAcc
+                            [~,bestInd] = max(numVecsAcc);
+                            cvResults{j} = numVecsResults{bestInd};
+                            bestNumVecs(j) = bestInd;                            
+                        else
+                            [cvResults{j},~] = ...
+                                methodObject.trainAndTest(cvInput);
+                        end
+                        measureResults = measureObj.evaluate(cvResults{j});
+                        paramAcc(j) = measureResults.testPerformance;
+                    end
+                    paramAcc
+                    bestNumVecs
+                    [~,bestInd] = max(paramAcc);
+                    drMethodObj.configs(param) = paramVals{bestInd};    
+                    drMethodObj.configs('numVecs') = bestNumVecs(bestInd);
+                end                
+                [modData,drMetadata] = drMethodObj.performDR(data);
+                projTrain = modData.train; projTest = modData.test; projValidate = modData.validate;
+                input = ExperimentConfigLoader.CreateRunExperimentInput(...
+                            projTrain,projTest,projValidate,experimentConfigs,emptyMetadata);
             else
                 error('Unknown Data type');
             end
-            
-            
-            
-            
             [results,metadata] = ...
                 methodObject.trainAndTest(input);
+            if exist('drMetadata','var')
+                metadata.drMetadata = drMetadata;
+            end
+            results.metadata.percTrain = percTrain;
+            if isa(train,'DataSet')            
+                results.metadata.numTrain = numel(sampledTrain.Y);
+                results.metadata.numTest = numel(test.Y);
+                results.metadata.numClasses = max(test.Y);
+            else
+                trainIndex = obj.configs('trainSetIndex');
+                testIndex = obj.configs('testSetIndex');
+                Wij = train.getSubW(trainIndex,testIndex);
+                %results.trainActual = Wij;
+                results.metadata.numClasses = size(Wij,2);
+                results.metadata.numTrain = size(train.X{trainIndex},1) + ...
+                    size(validate.X{trainIndex},1);
+                results.metadata.numTest = size(test.X{trainIndex,1},1);                                
+            end
         end
         
         function [train,test,validate] = getSplit(obj,index)
@@ -126,9 +204,12 @@ classdef ExperimentConfigLoader < ConfigLoader
                 mkdir(outputDir);
             end
             drMethodName = obj.configs('drMethod');
-                        
-            drMethodPrevix = DRMethod.GetPrefix(drMethodName,obj.configs);            
-            outputFileName = [outputDir drMethodPrevix '.mat'];
+            methodName = obj.configs('methodClasses');
+            methodName = methodName{1};
+            drMethodPrefix = DRMethod.GetPrefix(drMethodName,obj.configs);            
+            methodPrefix = Method.GetPrefix(methodName,obj.configs);
+            outputFileName = [getProjectDir() '/' outputDir drMethodPrefix ...
+                '-' methodPrefix '.mat'];
         end
         function [savedDataFileName] = getSavedDataFileName(obj)
             savedDataFileName = '';

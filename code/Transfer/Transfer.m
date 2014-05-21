@@ -12,7 +12,7 @@ classdef Transfer < Saveable
     
     methods
         function obj = Transfer(configs)
-            obj.configs = configs;
+            obj = obj@Saveable(configs);
         end
         
         function [transformedTargetTrain,transformedTargetTest,metadata,...

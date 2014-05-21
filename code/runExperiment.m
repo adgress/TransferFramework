@@ -83,7 +83,8 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         allResults.processResults(measureObject);
         allResults.aggregateResults(measureObject);
     end
-    if experimentLoader.configs('processMeasureResults')
+    if isKey(experimentLoader.configs,'processMeasureResults') &&...
+            experimentLoader.configs('processMeasureResults')
         allResults.aggregateMeasureResults();        
     end
     allResults.saveResults(outputFile);

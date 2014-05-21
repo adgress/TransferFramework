@@ -16,7 +16,7 @@ classdef ConfigLoader < handle
                 obj.configFile = configs;                
                 obj.loadConfigs();                
             else
-                obj.configs = configs; 
+                obj.configs = Helpers.CopyMap(configs);
             end
         end                
         function [configs] = loadConfigs(obj,configFile)
