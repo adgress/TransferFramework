@@ -102,7 +102,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                     bestNumVecs = zeros(size(paramVals));
                     for j=1:length(paramVals)
                         drMethodObj.configs(param) = paramVals{j};
-                        [modData,~] = drMethodObj.performDR(cvData);
+                        [modData,drMetadata] = drMethodObj.performDR(cvData);
                         projTrain = modData.train; projTest = modData.test;
                         cvInput = ExperimentConfigLoader.CreateRunExperimentInput(...
                             projTrain,projTest,[],experimentConfigs,emptyMetadata);                        
@@ -139,6 +139,11 @@ classdef ExperimentConfigLoader < ConfigLoader
                         trainResults = methodObject.trainAndTest(trainInput);
                         trainMeasureResults = measureObj.evaluate(trainResults);
                         display(['Train Acc: ' num2str(trainMeasureResults.testPerformance)]);
+                        if isfield(drMetadata,'keepTuningReg') && ~drMetadata.keepTuningReg && ...
+                                isequal(param,'reg')
+                            display('Done tuning reg')
+                            break;
+                        end
                     end
                     paramAcc
                     if obj.configs('tuneNumVecs')

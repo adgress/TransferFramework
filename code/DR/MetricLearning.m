@@ -11,6 +11,7 @@ classdef MetricLearning < DRMethod
         end
         
         function [modData,metadata] = performDR(obj,data)
+            metadata = struct();    
             train = data.train;
             test = data.test;
             validate = data.validate;
@@ -65,7 +66,12 @@ classdef MetricLearning < DRMethod
                     subject to
                         sum(sum(W.^2,2)) <= reg
                 cvx_end
-                %r = sum(sum(W.^2))
+                r = sum(sum(W.^2));
+                %primValue = sum(sum(X1dupe*W*X2dupe'));
+                %[r reg]
+                if r < reg
+                    metadata.keepTuningReg = false;
+                end
             else
                 cvx_begin quiet
                     variable W(size(X1dupe,2),size(X2dupe,2))
@@ -85,8 +91,7 @@ classdef MetricLearning < DRMethod
             modData.test = obj.applyProjection(test,setsToUse,projections,means);
             
             %modData.train.X{1}(1:10,1:3)
-            %X1dupe(1:10,1:3)
-            metadata = struct();            
+            %X1dupe(1:10,1:3)                    
             metadata.reg = reg;
             metadata.centerData = centerData;
         end   
