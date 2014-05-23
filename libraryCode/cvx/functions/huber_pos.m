@@ -31,7 +31,7 @@ function y = huber_pos( x, M, t )
 % Check arguments
 %
 
-error( nargchk( 1, 3, nargin ) ); %#ok
+error( nargchk( 1, 3, nargin ) );
 if ~isreal( x ),
     error( 'First argument must be real.' );
 end
@@ -66,6 +66,6 @@ if nnz( q ),
     end
 end
 
-% Copyright 2005-2013 CVX Research, Inc. 
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd. 
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -2,12 +2,12 @@ function cvx_optval = matrix_frac( x,Y )
 
 %MATRIX_FRAC   Internal cvx version.
 
-error( nargchk( 2, 2, nargin ) ); %#ok
-if ndims( Y ) > 2 || size( Y, 1 ) ~= size( Y, 2 ), %#ok
+error( nargchk( 2, 2, nargin ) );
+if ndims( Y ) > 2 || size( Y, 1 ) ~= size( Y, 2 ),
 
     error( 'Second argument must be a square matrix.' );
 
-elseif ndims( x ) > 2 || size( x, 2 ) > 1, %#ok
+elseif ndims( x ) > 2 || size( x, 2 ) > 1,
 
     error( 'First argument must be a column vector.' );
 
@@ -22,10 +22,9 @@ elseif cvx_isconstant( x ) && cvx_isconstant( Y ),
 elseif cvx_isaffine( x ) && cvx_isaffine( Y ),
 
     n = size( x, 1 );
-    z = [];
     cvx_begin
         epigraph variable z
-        [Y x; x' z] == semidefinite( n+1 ); %#ok
+        [Y x; x' z] == semidefinite( n+1 );
     cvx_end
 
 else
@@ -34,6 +33,6 @@ else
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

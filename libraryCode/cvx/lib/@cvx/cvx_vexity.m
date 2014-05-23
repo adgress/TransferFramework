@@ -11,18 +11,18 @@ b  = x.basis_;
 n  = length( p );
 nb = size( b, 1 );
 if nb < n,
-    p = p( 1 : nb, 1 );
+    p = p( 1 : nb, : );
 elseif n < nb,
-    p( nb, 1 ) = 0;
+    p( n+1:nb, : ) = 0;
 end
-if ~any( p ),
+b = b( p ~= 0, : );
+if isempty( b ),
     v = cvx_zeros( x.size_ );
     if x.slow_,
         v( isnan( x.basis_( 1, : ) ) ) = NaN;
     end
     return
 end
-b = b( p ~= 0, : );
 p = nonzeros(p).';
 if cvx___.nan_used,
     b = sparse( b );
@@ -40,6 +40,6 @@ end
 v = sign( v );
 v = reshape( v, x.size_ );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

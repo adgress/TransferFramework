@@ -3,7 +3,7 @@ if nargin < 3 || nargout < 6, doineqs = true; end
 if nargin < 2 || nargout < 5, destructive = false; end
 
 global cvx___
-p = cvx___.problems( pp.index_ );
+p = cvx___.problems( index( pp ) );
 n = length( cvx___.reserved );
 
 %
@@ -257,9 +257,9 @@ end
 %
 
 if destructive,
-    pop( pp, 'extract' );
+    cvx_pop( pp, 'extract' );
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

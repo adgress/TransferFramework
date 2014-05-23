@@ -2,9 +2,9 @@ function cvx_optval = lambda_sum_largest( x, k )
 
 %LAMBDA_SUM_LARGEST   Internal cvx version.
 
-error( nargchk( 2, 2, nargin ) ); %#ok
+error( nargchk( 2, 2, nargin ) );
 n = size( x, 1 );
-if ndims( x ) > 2 || n ~= size( x, 2 ), %#ok
+if ndims( x ) > 2 || n ~= size( x, 2 ),
 
     error( 'First input must be a square matrix.' );
     
@@ -30,15 +30,14 @@ elseif k >= size( x, 1 ),
     
 else
     
-    S = [];
     cvx_begin
         variable S(n,n) symmetric
-        S == semidefinite(n); %#ok
+        S == semidefinite(n);
         minimize( k * lambda_max( x - S ) + trace( S ) );
     cvx_end
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

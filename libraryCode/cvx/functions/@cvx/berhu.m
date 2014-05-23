@@ -6,7 +6,7 @@ function cvx_optval = berhu( x, M, t ) %#ok
 % Check arguments
 %
 
-error( nargchk( 1, 3, nargin ) ); %#ok
+error( nargchk( 1, 3, nargin ) );
 if ~cvx_isaffine( x ),
     error( 'Disciplined convex programming error:\n    HUBER is nonmonotonic in X, so X must be affine.', 1 ); %#ok
 end
@@ -35,7 +35,6 @@ end
 % Compute result
 %
 
-v = []; w = [];
 cvx_begin separable
     variables v( sz ) w( sz )
     minimize( quad_over_lin( w, t, 0 ) ./ (2*M) + v + w )
@@ -44,6 +43,6 @@ cvx_begin separable
     w >= 0; %#ok
 cvx_end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

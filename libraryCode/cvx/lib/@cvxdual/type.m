@@ -1,23 +1,13 @@
 function st = type( x )
 
-x = cvxaff( x );
-if isa( x, 'double' ),
-    st = 'unassigned';
-    return
-end
-if iscell( x ),
-    strs = cell(1,numel(x));
-    for k = 1 : numel(x),
-        strs{k} = type(x{k});
-    end
-    strs = sprintf( '%s, ', strs{:} );
-    st = strs(1:end-2);
-    return
-end
 s   = size( x );
 len = prod( s );
 isr = isreal( x );
-if len == 1,
+
+if len == 0,
+    st = 'unassigned';
+elseif len == 1,
+    isstruct = 0;
     if isr,
         st = 'scalar';
     else
@@ -43,6 +33,6 @@ else
     end
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

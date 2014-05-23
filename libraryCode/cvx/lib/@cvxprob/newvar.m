@@ -1,5 +1,5 @@
 function y = newvar( prob, name, siz, str, geo )
-error( nargchk( 2, 5, nargin ) ); %#ok
+error( nargchk( 2, 5, nargin ) );
 
 %
 % Check problem
@@ -8,17 +8,26 @@ error( nargchk( 2, 5, nargin ) ); %#ok
 if ~isa( prob, 'cvxprob' ),
     error( 'First argument must be a cvxprob object.' );
 end
-p = prob.index_;
+p = index( prob );
 global cvx___
 
 %
 % Check name
 %
 
-if isempty( name ),
-    nstr = [];
-elseif ischar( name ),
-    nstr = struct( 'type', '.', 'subs', name );
+if ischar( name ),
+    if ~isempty( name ),
+        if size( name, 1 ) ~= 1,
+            error( 'Second argument must be a string or a subscript structure array.' );
+        elseif ~isvarname( name ),
+            error( 'Invalid variable name: %s', name );
+        elseif isfield( cvx___.problems( p ).variables, name ),
+            error( 'Variable already exists: %s', name );
+        end
+        nstr = struct( 'type', '.', 'subs', name );
+    else
+        nstr = [];
+    end
 elseif ~isstruct( name ),
     error( 'Second argument must be a string or a subscript structure array.' );
 else
@@ -106,7 +115,7 @@ else
     if nargin < 4 || isempty( str ),
         dof = len;
         str = [];
-    elseif ~isnumeric( str ) || ndims( str ) > 2 || size( str, 2 ) ~= len, %#ok
+    elseif ~isnumeric( str ) || ndims( str ) > 2 || size( str, 2 ) ~= len,
         error( 'Fourth argument must be a valid structure matrix.' );
     elseif nnz( str ) == 0,
         error( 'Structure matrix cannot be identically zero.' );
@@ -132,22 +141,25 @@ else
     % Allocate the raw variable data
     %
 
-    geo = any( geo( : ) );
-    ndim = length( cvx___.reserved );
-    ndim = ndim + 1 : ndim + dof;
-    nmel = ( 1 + geo ) * dof;
-    cvx___.reserved( end + nmel, 1 ) = 0;
-    cvx___.vexity( end + dof, 1 ) = 0;
-    cvx___.canslack( end + 1 : end + nmel, 1 ) = true;
-    cvx___.readonly( end + 1 : end + nmel, 1 ) = p;
-    cvx___.logarithm( end + dof, 1 ) = 0;
+    geo  = any( geo( : ) );
+    odim = length( cvx___.reserved );
+    ndim = odim + 1 : odim + ( geo + 1 ) * dof;
+    cvx___.reserved(    ndim, 1 ) = 0;
+    cvx___.vexity(      ndim, 1 ) = 0;
+    cvx___.canslack(    ndim, 1 ) = true;
+    cvx___.readonly(    ndim, 1 ) = p;
+    cvx___.geometric(   ndim, 1 ) = 0;
+    cvx___.logarithm(   ndim, 1 ) = 0;
+    cvx___.exponential( ndim, 1 ) = 0;
     if geo,
-        cvx___.vexity( end + 1 : end + dof, 1 ) = 1;
-        cvx___.logarithm( end + 1 : end + dof, 1 ) = ndim';
-        ndim = ndim(end) + 1 : ndim(end) + dof;
-        cvx___.exponential( end + 1 : end + dof, 1 ) = ndim';
+        ndim2 = ndim( 1 : dof );
+        ndim  = ndim( dof + 1 : end );
+        cvx___.vexity(      ndim,  1 ) = +1;
+        cvx___.canslack(    ndim,  1 ) = true;
+        cvx___.geometric(   ndim,  1 ) = +1;
+        cvx___.exponential( ndim2, 1 ) = ndim( : );
+        cvx___.logarithm(   ndim,  1 ) = ndim2( : );
     end
-    cvx___.exponential( end + dof, 1 ) = 0;
     cvx___.x = [];
     cvx___.y = [];
 
@@ -179,6 +191,6 @@ if ~isempty( nstr ),
     end
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

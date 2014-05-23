@@ -32,10 +32,10 @@ else
 
     b = x.basis_;
     sb = size( b );
-    need_perm = any( s( dim + 1 : end ) > 1 );
+    need_perm = any( s( 1 : dim - 1 ) > 1 );
     if need_perm,
         ndxs = reshape( 1 : prod( s ), s );
-        ndxs = permute( ndxs, [ 1 : dim - 1, dim + 1 : length( s ), dim ] );
+        ndxs = permute( ndxs, [ dim, 1 : dim - 1, dim + 1 : length( s ) ] );
         b = b( :, ndxs );
     end
     b = reshape( b, prod( sb ) / s( dim ), s( dim ) );
@@ -52,6 +52,6 @@ else
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

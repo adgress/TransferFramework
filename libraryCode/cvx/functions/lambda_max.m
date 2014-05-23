@@ -10,8 +10,8 @@ function z = lambda_max( Y )
 %         LAMBDA_MAX is convex and nonmonotonic (at least with respect to
 %         elementwise comparison), so its argument must be affine.
 
-error( nargchk( 1, 1, nargin ) ); %#ok
-if ndims( Y ) > 2 || size( Y, 1 ) ~= size( Y, 2 ), %#ok
+error( nargchk( 1, 1, nargin ) );
+if ndims( Y ) > 2 || size( Y, 1 ) ~= size( Y, 2 ),
     error( 'Input must be a square matrix.' );
 end
 err = Y - Y';
@@ -22,7 +22,7 @@ else
     z = max( eig( full( Y ) ) );
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.
 

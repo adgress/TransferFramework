@@ -3,7 +3,7 @@ function disp( prob, prefix )
 if nargin < 2, prefix = ''; end
 
 global cvx___
-p = cvx___.problems( prob.index_ );
+p = cvx___.problems( index( prob ) );
 
 if isempty( p.variables ),
     nvars = 0;
@@ -36,9 +36,9 @@ tt = p.t_variable;
 ni = nnz( tt ) - 1;
 ndup = sum( rsv ) - nnz( rsv );
 neqns = neqns + ndup;
-nv = nt - fv + ni + ndup;
+nv = nt - fv + ni - nnz( cvx___.geometric( qv ) ) + ndup;
 tt( qv ) = true;
-gfound = nnz( cvx___.logarithm( tt ) );
+gfound = nnz( cvx___.logarithm( tt ) & ~cvx___.geometric( tt ) );
 cfound = false;
 for k = 1 : length( cvx___.cones ),
     if any( any( tt( cvx___.cones( k ).indices ) ) ),
@@ -50,13 +50,6 @@ end
 if all( [ numel( p.objective ), nv, nvars, nduls, neqns, nineqs, cfound, gfound ] == 0 ),
     disp( [ prefix, nm, 'cvx problem object' ] );
 else
-    if ( p.gp ),
-        ptype =' geometric ';
-    elseif ( p.sdp ),
-        ptype = ' semidefinite ';
-    else
-        ptype = ' ';
-    end
     if isempty( p.objective ),
         tp = 'feasibility';
     else
@@ -71,7 +64,7 @@ else
             tp = [ sz(1:end-1), '-objective ', tp ];
         end
     end
-    disp( [ prefix, nm, 'cvx', ptype, tp, ' problem' ] );
+    disp( [ prefix, nm, 'cvx ', tp, ' problem' ] );
     if nvars > 0,
         disp( [ prefix, 'variables: ' ] );
         [ vnam, vsiz ] = dispvar( p.variables, '' );
@@ -104,8 +97,8 @@ else
     if cfound || gfound,
         disp( [ prefix, 'nonlinearities:' ] );
         if gfound > 0,
-            if gfound > 1, plural = 's'; else plural = ''; end
-            fprintf( 1, '%s   %d exponential pair%s\n', prefix, gfound, plural );
+            if gfound > 1, plural = 'ies'; else plural = 'y'; end
+            fprintf( 1, '%s   %d exponential nonlinearit%s\n', prefix, gfound, plural );
         end
         if cfound,
             for k = 1 : length( cvx___.cones ),
@@ -155,6 +148,6 @@ switch class( v ),
         sizes = { [ '(', type( v, true ), ')' ] };
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -9,7 +9,7 @@ else
     isYsparse = false;
     for k = 1 : nargin,
         x = varargin{k};
-        [ p2(k+1), m2(k+1) ] = size(x); %#ok
+        [ p2(k+1), m2(k+1) ] = size(x);
         if issparse(x), isYsparse = true; end
     end
     p1 = cumsum(p2);
@@ -17,7 +17,7 @@ else
     if isYsparse
         y = sparse( varargin{1} );
         for k = 2 : nargin,
-            y = [y sparse(p1(k),m2(k+1)); sparse(p2(k+1),m1(k)) varargin{k}]; %#ok
+            y = [y sparse(p1(k),m2(k+1)); sparse(p2(k+1),m1(k)) varargin{k}];
         end
     else
         y = zeros(p1(end),m1(end));
@@ -26,7 +26,3 @@ else
         end
     end
 end
-
-% Copyright 2005-2013 CVX Research, Inc. 
-% See the file COPYING.txt for full copyright information.
-% The command 'cvx_where' will show where this file is located.

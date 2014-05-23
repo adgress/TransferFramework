@@ -52,7 +52,7 @@ switch length( s ),
             end
         end
 end
-if ~all( isfinite( nonzeros( b ) ) ),
+if nnz( isnan( b ) | isinf( b ) ),
     slow = true;
     tt = any( isnan( b ), 1 ) | sum( isinf( b ), 1 ) > isinf( b( 1, : ) );
     b( :, tt ) = 0;
@@ -68,6 +68,6 @@ end
 
 v = class( struct( 'size_', s, 'basis_', b, 'dual_', '', 'dof_', d, 'slow_', slow ), 'cvx', cvxobj );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

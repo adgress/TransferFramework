@@ -4,12 +4,9 @@
 %    over. Typing this before entering another CVX_BEGIN again avoids the 
 %    warning message that occurs if CVX_BEGIN detects a model in progress.
 
-prob = evalin( 'caller', 'cvx_problem', '[]' );
-if isa( prob, 'cvxprob' ),
-	evalin( 'caller', 'pop( cvx_problem, ''clear'' )' );
-end
-% cvx_clearpath( 1 );
+cvx_pop;
+cvx_clearpath( 1 );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

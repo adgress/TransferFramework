@@ -28,9 +28,9 @@ function cvx_optpnt = hermitian_semidefinite( n )
 %       SEMIDEFINITE is a cvx set specification. See the user guide for
 %       details on how to use sets.
 
-error( nargchk( 1, 1, nargin ) ); %#ok
+error( nargchk( 1, 1, nargin ) );
 cvx_optpnt = semidefinite( n, true );
 
-% Copyright 2005-2013 CVX Research, Inc. 
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd. 
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

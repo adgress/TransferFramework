@@ -5,10 +5,6 @@ end
 disp( [ prefix, 'cvx tuple object: ' ] );
 prefix = [ prefix, '   ' ];
 do_disp( x.value_, {}, prefix, prefix, '' );
-if ~isempty( x.dual_ ),
-    dn = cvx_subs2str( x.dual_ );
-    disp( [ prefix, 'dual variable: ', dn(2:end) ] );
-end
 
 function do_disp( x, f, fprefix, prefix, suffix )
 switch class( x ),
@@ -28,7 +24,7 @@ switch class( x ),
             fprefix = prefix;
         end
     case 'cvx',
-        dual = cvx_getdual( x );
+        dual = getdual( x );
         if ~isempty( dual ),
             suffix = sprintf( ' (dual: %s)%s', dual, suffix );
         end
@@ -37,6 +33,6 @@ switch class( x ),
         fprintf( 1, '%s%g%s\n', fprefix, x, suffix );
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

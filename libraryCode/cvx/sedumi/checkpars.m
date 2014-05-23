@@ -1,12 +1,13 @@
-function pars = checkpars(pars,lponly) %#ok
-% pars = checkpars(pars,lponly)
-%
+%                                          pars = checkpars(pars,lponly)
 % CHECKPARS  Fills in defaults for missing fields in "pars" structure.
 %
 % **********  INTERNAL FUNCTION OF SEDUMI **********
 %
 % See also sedumi
 
+
+function pars = checkpars(pars,lponly)
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -67,7 +68,7 @@ end
 if ~isfield(pars,'w')
     pars.w = [1;1];
 elseif length(pars.w)~=2
-    warning('pars.w should be vector of order 2')
+    warning( 'SeDuMi:pars.w', 'pars.w should be vector of order 2' ); %#ok
     pars.w = [1;1];
 else
     pars.w = max(pars.w,1e-8);    % positive weights
@@ -101,6 +102,9 @@ if ~isfield(pars,'eps')                   % stopping tolerance
 end
 if ~isfield(pars,'bigeps')                   % threshold for numerr=1 vs 2.
     pars.bigeps = 1E-3;
+end
+if ~isfield(pars,'stopeps')
+    pars.stopeps = pars.eps;
 end
 if ~isfield(pars,'maxiter')
     pars.maxiter = 150;

@@ -40,9 +40,8 @@
 %%*************************************************************************
 
   function [obj,X,y,Z,info,runhist] = sqlp(blk,At,C,b,OPTIONS,X0,y0,Z0);
-  
-  if (nargin < 5); OPTIONS = []; end
-  
+
+%%
     isemptyAtb = 0; 
     if isempty(At) & isempty(b);
        %% Add redundant constraint: <-I,X> <= 0

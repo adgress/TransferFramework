@@ -26,9 +26,9 @@ while true,
             end
             if tocell,
                 if nfx == 1,
-                    sx = [ 1, sx ]; %#ok
+                    sx = [ 1, sx ];
                 else
-                    sx = [ 1, nfx, sx ]; %#ok
+                    sx = [ 1, nfx, sx ];
                 end
                 x = struct2cell( x );
                 if ~keeptemp,
@@ -40,6 +40,6 @@ while true,
     break;
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

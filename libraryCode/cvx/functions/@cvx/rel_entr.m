@@ -4,7 +4,7 @@ function cvx_optval = rel_entr( x, y )
 
 cvx_expert_check( 'rel_entr', x, y );
 persistent remap_x remap_y remap_z
-error( nargchk( 2, 2, nargin ) ); %#ok
+error( nargchk( 2, 2, nargin ) );
 sx = size( x ); xs = all( sx == 1 );
 sy = size( y ); ys = all( sy == 1 );
 if xs,
@@ -74,10 +74,9 @@ for k = 1 : nv,
             cvx_optval = cvx( rel_entr( cvx_constant( xt ), cvx_constant( yt ) ) );
         case 2,
             % Real affine
-            q = [];
             cvx_begin
                 epigraph variable q( sz );
-                { -q, xt, yt } == exponential( sz ); %#ok
+                { -q, xt, yt } == exponential( sz );
             cvx_end
         otherwise,
             error( 'Shouldn''t be here.' );
@@ -95,6 +94,6 @@ for k = 1 : nv,
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

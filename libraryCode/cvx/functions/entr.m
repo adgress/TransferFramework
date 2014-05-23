@@ -15,10 +15,10 @@ function y = entr( x )
 %       constrain X to be nonnegative: there is no need to add an
 %       additional X >= 0 to your model in order to enforce this.
 
-error(nargchk(1,1,nargin)); %#ok
+error(nargchk(1,1,nargin));
 cvx_expert_check( 'entr', x );
 y = -rel_entr( x, 1 );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

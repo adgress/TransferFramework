@@ -1,6 +1,4 @@
-function [delta,h,alpha] = iswnbr(w,thetaSQR)
-% [delta,h,alpha] = iswnbr(vSQR,thetaSQR)
-%
+%                            [delta,h,alpha] = iswnbr(vSQR,thetaSQR)
 % ISWNBR  Checks feasibility w.r.t. wide region/neighborhood of Sturm-Zhang.
 %   vTAR:= (1-alpha)*max(h,v) projection v onto theta-central region
 %   delta = (sqrt(n)/theta) * norm(vTAR - v) / norm(v)
@@ -9,6 +7,9 @@ function [delta,h,alpha] = iswnbr(w,thetaSQR)
 %
 % See also sedumi
 
+
+function [delta,h,alpha] = iswnbr(w,thetaSQR) %#ok
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -39,8 +40,10 @@ function [delta,h,alpha] = iswnbr(w,thetaSQR)
 % 02110-1301, USA
 %
 
-%Indicate to the user Matlab cannot find the SeDuMi binaries
-sedumi_binary_error();
+disp('The SeDuMi binaries are not installed.')
+disp('In Matlab, launch "install_sedumi" in the folder you put the SeDuMi files.')
+disp('For more information see the file Install.txt.')
+error(' ')
 
 % ----------------------------------------
 % r = n/thetaSQR
@@ -51,7 +54,7 @@ sedumi_binary_error();
 % deltaSQR = r * ( 2*alpha-alpha^2 - (1-alpha)^2 * sumdifw/gap )
 % WE UPDATE sumdifv AND sumdifw IN A STABLE WAY
 % ----------------------------------------
-n = length(w); gap = sum(w);
+n = length(w); gap = sum(w); %#ok
 sumwNT = gap;
 r = n / thetaSQR;
 cardT = 0; wQ = []; sumdifv = 0; sumdifw = 0;
@@ -73,7 +76,7 @@ for j = 1:n
         sumdifv = sumdifv + (sqrt(oldhSQR)-sqrt(wj)) + ...
             cardT * (sqrt(hSQR)-sqrt(oldhSQR));
     else                    % Inconclusive: j in Q
-        wQ = [wQ;wj]; %#ok
+        wQ = [wQ;wj];
     end % if
 end % for
 % ----------------------------------------

@@ -14,29 +14,34 @@ function y = prod( x, dim )
 %      because the top row contains the product of log-convex and 
 %      log-concave terms, in violation of the DGP ruleset.
 
-error( nargchk( 1, 2, nargin ) ); %#ok
+error( nargchk( 1, 2, nargin ) );
 
 %
-% Size check
+% Basic argument check
 %
 
-try
-    ox = x;
-    if nargin < 2, dim = []; end
-    [ x, sx, sy, zx, zy, nx, nv, perm ] = cvx_reduce_size( x, dim ); %#ok
-catch exc
-    error( exc.message );
+sx = size( x );
+if nargin < 2,
+    dim = cvx_default_dimension( sx );
+elseif ~cvx_check_dimension( dim ),
+    error( 'Second argument must be a positive integer.' );
 end
-    
+
 %
-% Quick exit for easy cases
+% Determine sizes
 %
 
-if isempty( x ),
-    y = ones( zy );
-    return
-elseif nx == 1,
-    y = ox;
+sx = [ sx, ones( 1, dim - length( sx ) ) ];
+nx = sx( dim );
+sy = sx;
+sy( dim ) = 1;
+
+%
+% Quick exit for empty arrays
+%
+
+if any( sx == 0 ),
+    y = ones( sy );
     return
 end
 
@@ -52,15 +57,42 @@ if isempty( remap_3 ),
     remap_3 = cvx_remap( 'log-concave' );
 end
 vx = cvx_reshape( cvx_classify( x ), sx );
-t0 = any( reshape( remap_0( vx ), sx ) );
-t1 = all( reshape( remap_1( vx ), sx ) );
-t2 = all( reshape( remap_2( vx ), sx ) ) | ...
-     all( reshape( remap_3( vx ), sx ) );
+t0 = any( reshape( remap_0( vx ), sx ), dim );
+t1 = all( reshape( remap_1( vx ), sx ), dim );
+t2 = all( reshape( remap_2( vx ), sx ), dim ) | ...
+     all( reshape( remap_3( vx ), sx ), dim );
 t3 = t2 & t0;
 ta = ( t1 | t3 ) + 2 * ( t2 & ~t3 );
 nu = sort( ta(:) );
 nu = nu([true;diff(nu)~=0]);
 nk = length( nu );
+
+%
+% Quick exit for easy case
+%
+
+if nx == 1 && nu(1) > 0,
+    y = x;
+    return
+end
+
+%
+% Permute and reshape, if needed
+%
+
+perm = [];
+if nk > 1 || ( any( nu > 1 ) && nx > 1 ),
+    if dim > 1 && any( sx( 1 : dim - 1 ) > 1 ),
+        perm = [ dim, 1 : dim - 1, dim + 1 : length( sx ) ];
+        x    = permute( x,  perm );
+        ta   = permute( ta, perm );
+        % sx   = sx( perm );
+        sy   = sy( perm );
+    end
+    nv  = prod( sy );
+    x   = reshape( x, nx, nv );
+    dim = 1;
+end
 
 %
 % Perform the computations
@@ -82,9 +114,9 @@ for k = 1 : nk,
         case 0,
             error( 'Disciplined convex programming error:\n   Invalid computation: prod( {%s} )', cvx_class( xt, true, true ) );
         case 1,
-            yt = cvx( prod( cvx_constant( xt ) ) );
+            yt = cvx( prod( cvx_constant( xt ), dim ) );
         case 2,
-            yt = exp( sum( log( xt ) ) );
+            yt = exp( sum( log( xt ), dim ) );
         otherwise,
             error( 'Shouldn''t be here.' );
     end
@@ -106,6 +138,6 @@ if ~isempty( perm ),
     y = ipermute( y, perm );
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

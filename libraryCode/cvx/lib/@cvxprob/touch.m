@@ -3,7 +3,7 @@ global cvx___
 if nargin < 3, iseq = false; end
 
 if isa( x, 'cvx' ),
-    p  = p.index_;
+    p  = index( p );
     b  = cvx_basis( x );
     y  = any( b, 2 );
     if iseq,
@@ -20,6 +20,6 @@ if isa( x, 'cvx' ),
     cvx___.problems( p ).t_variable = v | y;
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

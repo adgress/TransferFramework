@@ -1,10 +1,8 @@
-function [ y, symm ] = cvx_s_skew_symmetric( m, n, symm )
+function y = cvx_s_skew_symmetric( m, n )
 %CVX_S_SKEW_SYMMETRIC Skew-symmetric matrices.
 
 if m ~= n,
     error( 'Skew symmetric structure requires square matrices.' );
-elseif symm,
-	error( 'Cannot specify both symmetry and skew symmetry.' );
 end
 
 nsq = n * n;
@@ -18,6 +16,6 @@ y  = mx + mn .* ( n - 0.5 * ( mn + 1 ) ) + 1;
 y  = sparse( y( : ), 1 : nsq, sign( r( : ) - c( : ) ), ntr, nsq );
 y  = y( any( y, 2 ), : );
 
-% Copyright 2005-2013 CVX Research, Inc. 
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd. 
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

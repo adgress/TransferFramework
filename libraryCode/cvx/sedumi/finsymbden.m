@@ -1,6 +1,4 @@
-function Lden = finsymbden(LAD,perm,dz,firstq) %#ok
-% Lden = finsymbden(LAD,perm,dz,firstq)
-%
+%                                   Lden = finsymbden(LAD,perm,dz,firstq)
 % FINSYMBDEN  Updates perm and dz by inserting the
 %  last Lorentz trace columns (last columns of LAD). It creates the fields
 %  Lden.sign  - +1 for "normal" columns, -1 for Lorentz trace columns
@@ -11,6 +9,9 @@ function Lden = finsymbden(LAD,perm,dz,firstq) %#ok
 %
 % See also incorder
 
+
+function Lden = finsymbden(LAD,perm,dz,firstq) %#ok
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -41,5 +42,7 @@ function Lden = finsymbden(LAD,perm,dz,firstq) %#ok
 % 02110-1301, USA
 %
 
-%Indicate to the user Matlab cannot find the SeDuMi binaries
-sedumi_binary_error();
+disp('The SeDuMi binaries are not installed.')
+disp('In Matlab, launch "install_sedumi" in the folder you put the SeDuMi files.')
+disp('For more information see the file Install.txt.')
+error(' ')

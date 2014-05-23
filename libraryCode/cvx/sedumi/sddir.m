@@ -1,7 +1,5 @@
-function [dx,dy,dz,dy0, err] = sddir(L,Lden,Lsd,pv,...
-    d,v,vfrm,At,DAt,dense, R,K,y,y0,b, pars,pMode) %#ok
-% [dx,dy,dz,dy0, err] = sddir(L,Lden,Lsd,p,d,v,vfrm,At,DAt,dense, R,K,y,y0,b, pars)
-%
+%                                 [dx,dy,dz,dy0, err] = sddir(L,Lden,Lsd,p,...
+%                                     d,v,vfrm,At,DAt,dense, R,K,y,y0,b, pars)
 % SDDIR  Direction decomposition for Ye-Todd-Mizuno self-dual embedding.
 %   Here, p is the direction p = dx+dz. If p=[], then assume p=-v,
 %   the "affine scaling" direction.
@@ -10,6 +8,9 @@ function [dx,dy,dz,dy0, err] = sddir(L,Lden,Lsd,pv,...
 %
 % See also sedumi
 
+function [dx,dy,dz,dy0, err] = sddir(L,Lden,Lsd,pv,...
+    d,v,vfrm,At,DAt,dense, R,K,y,y0,b, pars,pMode)
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -38,6 +39,7 @@ function [dx,dy,dz,dy0, err] = sddir(L,Lden,Lsd,pv,...
 % along with this program; if not, write to the Free Software
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
+%
 
 % ------------------------------------------------
 % dy0 = v'*pv,    ADp = A*D(d)*pv

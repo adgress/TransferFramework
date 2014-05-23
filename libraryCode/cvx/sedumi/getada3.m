@@ -1,6 +1,4 @@
-function [ADA,absd] = getada3(ADA, A,Ajc1,Aord, udsqr,K) %#ok
-% [ADA,absd] = getada3(ADA, A,Ajc1,Aord, udsqr,K)
-%
+%                            [ADA,absd] = getada3(ADA, A,Ajc1,Aord, udsqr,K)
 % GETADA3  Compute ADA(i,j) = (D(d^2)*A.t(:,i))' *A.t(:,j),
 %   and exploit sparsity as much as possible.
 %   absd - length m output vector, containing
@@ -11,6 +9,9 @@ function [ADA,absd] = getada3(ADA, A,Ajc1,Aord, udsqr,K) %#ok
 %
 % See also sedumi, getada1, getada2
 
+
+function [ADA,absd] = getada3(ADA, A,Ajc1,Aord, udsqr,K) %#ok
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -39,6 +40,9 @@ function [ADA,absd] = getada3(ADA, A,Ajc1,Aord, udsqr,K) %#ok
 % along with this program; if not, write to the Free Software
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
+%
 
-%Indicate to the user Matlab cannot find the SeDuMi binaries
-sedumi_binary_error();
+disp('The SeDuMi binaries are not installed.')
+disp('In Matlab, launch "install_sedumi" in the folder you put the SeDuMi files.')
+disp('For more information see the file Install.txt.')
+error(' ')

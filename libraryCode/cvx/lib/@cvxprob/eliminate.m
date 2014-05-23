@@ -1,6 +1,5 @@
-function [ dbCA, cones, dir, Q, P, dualized ] = eliminate( prob, destructive, can_dual )
-if nargin < 3, can_dual = nargout >= 6; end
-if nargin < 2, destructive = false; end
+function [ dbCA, cones, dir, Q, P, dualized ] = eliminate( prob, destructive )
+if nargin  < 2 || nargout < 8, destructive = false; end
 
 % For the problem
 %
@@ -50,10 +49,9 @@ for pass = 1 : 2,
             rsv = rsv + temp;
             if isequal( cones(k).type, 'nonnegative' ),
                 nng = nng + temp;
-            elseif can_dual && strncmp( cones(k).type, 'i_', 2 ),
-                can_dual = false;
             end
         end
+        n_rsv = nnz( rsv ) - 1;
         rsv   = full( rsv );
         nng   = full( nng );
         ndxs  = ( 1 : nn )';
@@ -71,7 +69,7 @@ for pass = 1 : 2,
         trivs = sum( dbCA(rsv==0,:) ~= 0, 1 ) == 1 & sum( dbCA(rsv~=0,:) ~= 0, 1 ) - ( dbCA( 1, : ) ~= 0 ) == 1;
         ineqs = full(any(dbCA(rsv~=0&rcnt==1,:),1)) & full(~trivs);
         ineqs = +ineqs;
-    else % if dualized,
+    elseif dualized,
         ineqs = zeros(1,size(dbCA,2));
     end
     ineqs(1) = 1;
@@ -88,38 +86,34 @@ for pass = 1 : 2,
         % as well be zero. If we have multiple unbounded variables, keep
         % all but one so that the solver can still see this happen.
         %
-        % Eliminated for now. Frankly, my suspicion is that this happens
-        % very infrequently, and this code seems to have been the source
-        % of bugs in the past.
-        %
         
         if 0,
-            rows = ( rcnt == ( cc ~= 0 ) ) & ( ~rsv | nng );
-            nnzr = nnz( rows );
-            if nnzr > 0,
-                csgn = 1 - 2 * dualized;
-                celm = csgn * cc( rows, 1 );
-                celm( nng(rows) & celm < 0 ) = 0;
-                nnzc = nnz( celm );
-                if nnzc > 1 || nnzr > nnzc,
-                    success = true;
-                    if nnzc,
-                        cnrm = norm( celm );
-                        ndxq = find( rows );
-                        ndxq = ndxq( celm ~= 0 );
-                        ndxq = ndxq( 1 );
-                        Q( :, ndxq ) = Q( :, rows ) * ( celm / cnrm );
-                        dbCA( ndxq, 1 ) = csgn * cnrm; %#ok
-                        rows( ndxq ) = 0;
-                    end
-                    rowX = ~rows;
-                    dbCA = dbCA( rowX, : );
-                    rsv  = rsv ( rowX, : );
-                    nng  = nng ( rowX, : );
-                    ndxs = ndxs( rowX, : );
-                    Q    =    Q( :, rowX );
+        rows = ( rcnt == ( cc ~= 0 ) ) & ( ~rsv | nng );
+        nnzr = nnz( rows );
+        if nnzr > 0,
+            csgn = 1 - 2 * dualized;
+            celm = csgn * cc( rows, 1 );
+            celm( nng(rows) & celm < 0 ) = 0;
+            nnzc = nnz( celm );
+            if nnzc > 1 || nnzr > nnzc,
+                success = true;
+                if nnzc,
+                    cnrm = norm( celm );
+                    ndxq = find( rows );
+                    ndxq = ndxq( celm ~= 0 );
+                    ndxq = ndxq( 1 );
+                    Q( :, ndxq ) = Q( :, rows ) * ( celm / cnrm );
+                    dbCA( ndxq, 1 ) = csgn * cnrm; %#ok
+                    rows( ndxq ) = 0;
                 end
+                rowX = ~rows;
+                dbCA = dbCA( rowX, : );
+                rsv  = rsv ( rowX, : );
+                nng  = nng ( rowX, : );
+                ndxs = ndxs( rowX, : );
+                Q    =    Q( :, rowX );
             end
+        end
         end
         
         %
@@ -132,11 +126,10 @@ for pass = 1 : 2,
         %
         
         [ xR, dbCA ] = cvx_bcompress( dbCA, 'full', 1 );
-        if size( xR, 1 ) ~= size( xR, 2 ),
+        if size( xR, 1 ) ~= size( xR, 2 ), 
             success = true;
             P       = P * cvx_invert_structure( xR );
-            ineqs   = ( xR * ineqs(:) )' ~= 0;
-            ineqs   = +ineqs;
+            ineqs   = ineqs( any( xR, 1 ) );
         end
         
         while true,
@@ -196,23 +189,25 @@ for pass = 1 : 2,
         
     end
     
-    if pass == 2 || isempty(cones) || ~can_dual,
+    if pass == 2 || isempty(cones),
         break;
     end
     
     %
     % Check to see if dualization will result in smaller problem
     %
-    ineqs(1) = 0; rsv(1) = 0;
-    n_save = nnz(sum(dbCA(:,ineqs~=0)~=0,1)==1+(dbCA(1,ineqs~=0)~=0));
-    n_ineq = nnz(any(dbCA(rsv&rcnt==(cc~=0)+1,:)));
-    rsv(1) = 1; ineqs(1) = 1;
+    
+    n_ineq = nnz(ineqs);
+    ineqs(:) = 0;
+    [ rows, cols ] = cvx_eliminate_mex( dbCA, 1, rsv, ineqs );
     [n1,m1] = size(dbCA);
-    m_pri = m1 - n_save - 1;
-    n_pri = n1 - n_save - 1;
-    m_dua = n1 - n_ineq - 1;
-    n_dua = nnz( rsv ) + m1 - n_ineq - 1;
-    if ( ( m_pri > n_pri ) || ( m_pri * m_pri * n_pri > m_dua * m_dua * n_dua ) ) && ( m_dua <= n_dua ),
+    m_pri  = m1 - nnz(rows) - 1;
+    n_pri  = n1 - nnz(cols) - 1;
+    n_pri  = n_pri + ( n_rsv ~= n_pri );
+    n_eq   = m1 - 1 - n_ineq;
+    m_dua  = n1 - n_ineq - 1;
+    n_dua  = nnz(rsv) + n_eq + ( n_eq ~= 0 );
+    if ( ( m_pri > n_pri ) || ( m_pri * n_pri > m_dua * n_dua ) ) && ( m_dua <= n_dua ),
         ndxs = full(sparse(ndxs,1,1:n1));
         PP = cell(2,length(cones));
         n_cur = m1;
@@ -233,7 +228,7 @@ for pass = 1 : 2,
                 otherwise,
                     SS = [];
             end
-            PP{k} = sparse(1:numel(temp),max(temp,1),temp~=0,numel(temp),n1);
+            PP{k} = sparse(1:numel(temp),temp,1,numel(temp),n1);
             if ~isempty(SS),
                 if ischar(SS),
                     SS = cvx_create_structure([nt,nt,nv],SS);
@@ -286,6 +281,6 @@ if any(tt),
     cones(tt~=0) = [];
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

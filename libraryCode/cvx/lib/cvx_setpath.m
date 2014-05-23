@@ -1,4 +1,5 @@
-function cvx_setpath( arg ) %#ok
+function cvx_setpath( arg )
+global cvx___
 
 %CVX_SETPATH   Sets the cvx path.
 %   CVX_SETPATH adds the internal cvx directories to Matlab's path so that the
@@ -8,21 +9,27 @@ function cvx_setpath( arg ) %#ok
 %   insure that breakpoints stay valid.
 
 % Set the hold flag
-global cvx___
 cvx_global
 if ~cvx___.path.active,
-    s = warning('off'); %#ok
-    matlabpath([cvx___.path.string,matlabpath]);
-    warning(s);
+    if ~isempty( cvx___.path.string ),
+        s = warning('off');
+        matlabpath([cvx___.path.string,matlabpath]);
+        warning(s);
+    end
     cvx___.path.active = true;
 end
-if nargin == 0,
+if nargin == 0 || cvx___.path.hold,
     cvx___.path.hold = true;
+    if isempty(cvx___.problems),
+        nsolv = cvx___.solver;
+    else
+        nsolv = cvx___.problems(end).solver;
+    end
+else
+    nsolv = '';
 end
-if cvx___.path.hold,
-    cvx_setspath;
-end
+cvx_setspath(nsolv);
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

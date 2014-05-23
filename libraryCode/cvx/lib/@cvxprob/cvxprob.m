@@ -1,7 +1,6 @@
 function z = cvxprob( varargin )
 
 global cvx___
-cvx_global
 if ~iscellstr( varargin ),
     error( 'Arguments must be strings.' );
 end
@@ -12,12 +11,16 @@ end
 % start over when constructing a model
 %
 
+cvx_global
 st = dbstack;
 depth = length( st ) - 2;
 if length(st) <= 2,
     name = '';
 else
     name = st(3).name;
+    if cvx___.mversion < 7,
+        name = name(max(find(name==filesep))+1:end-2);
+    end
 end
 if ~isempty( cvx___.problems ),
     ndx = find( [ cvx___.problems.depth ] >= depth );
@@ -26,7 +29,7 @@ if ~isempty( cvx___.problems ),
         if temp.depth == depth && ( ~isempty(temp.objective) || ~isempty(temp.variables) || ~isempty(temp.duals) || nnz(temp.t_variable) > 1 );
             warning( 'CVX:Empty', 'A non-empty cvx problem already exists in this scope.\n   It is being overwritten.', 1 ); %#ok
         end
-        pop( temp.self, 'reset' );
+        cvx_pop( temp.self, 'reset' );
     end
 end
 
@@ -36,20 +39,15 @@ end
 
 if ~isempty( cvx___.problems ),
     nprec  = cvx___.problems( end ).precision;
-    npflag = cvx___.problems( end ).precflag;
+    ngprec = cvx___.problems( end ).gptol;
     nrprec = cvx___.problems( end ).rat_growth;
     nsolv  = cvx___.problems( end ).solver;
     nquiet = cvx___.problems( end ).quiet;
 else
     nprec  = cvx___.precision;
-    npflag = cvx___.precflag;
+    ngprec = cvx___.gptol;
     nrprec = cvx___.rat_growth;
-    selected = cvx___.solvers.selected;
-    if isfield( cvx___.solvers.list, 'settings'  ),
-        nsolv  = struct( 'index', selected, 'settings', cvx___.solvers.list(selected).settings );
-    else
-        nsolv = struct( 'index', selected, 'settings', [] );
-    end
+    nsolv  = cvx___.solver;
     nquiet = cvx___.quiet;
 end
 
@@ -66,8 +64,8 @@ temp = struct( ...
     'separable',     false,  ...
     'locked',        false,  ...
     'precision',     nprec,  ...
-    'precflag',      npflag, ...
     'solver',        nsolv,  ...
+    'gptol',         ngprec, ...
     'quiet',         nquiet, ... 
     'cputime',       cputime, ...
     'rat_growth',    nrprec, ...
@@ -83,9 +81,6 @@ temp = struct( ...
     'objective',     [],         ...
     'status',        'unsolved', ...
     'result',        [],         ...
-    'bound',         [],         ...
-    'iters',         Inf,        ...
-    'tol',           Inf,        ...
     'depth',         depth, ...
     'self',          z );
 temp.t_variable( 1 ) = true;
@@ -136,6 +131,6 @@ else
     cvx___.problems( end + 1 ) = temp;
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

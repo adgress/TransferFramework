@@ -1,6 +1,4 @@
-function ddotX = ddot(d,X,blkstart, Xblkjc) %#ok
-% ddotX = ddot(d,X,blkstart [, Xblkjc])
-%
+%                                 ddotX = ddot(d,X,blkstart [, Xblkjc])
 % DDOT Given N x m matrix X, creates (blkstart(end)-blkstart(1)) x m matrix
 %   ddotX, having entries d[i]'* xj[i] for each (Lorentz norm bound) block
 %   blkstart(i):blkstart(i+1)-1. If X is sparse, then Xblkjc(:,2:3) should
@@ -10,6 +8,9 @@ function ddotX = ddot(d,X,blkstart, Xblkjc) %#ok
 %
 % See also sedumi, partitA
 
+
+function ddotX = ddot(d,X,blkstart, Xblkjc) %#ok
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -39,5 +40,7 @@ function ddotX = ddot(d,X,blkstart, Xblkjc) %#ok
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
 
-%Indicate to the user Matlab cannot find the SeDuMi binaries
-sedumi_binary_error();
+disp('The SeDuMi binaries are not installed.')
+disp('In Matlab, launch "install_sedumi" in the folder you put the SeDuMi files.')
+disp('For more information see the file Install.txt.')
+error(' ')

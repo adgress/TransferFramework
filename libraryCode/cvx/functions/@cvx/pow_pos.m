@@ -2,7 +2,7 @@ function y = pow_pos( x, p )
 
 %POW_POS   Internal cvx version.
 
-error(nargchk(2,2,nargin)); %#ok
+error(nargchk(2,2,nargin));
 if ~cvx_isconstant( p ),
     error( 'Second argument must be constant.' );
 elseif ~isreal( p ),
@@ -14,7 +14,7 @@ if nnz( p < 1 ),
 end
 y = pow_cvx( x, p, 'pow_pos' );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.
 

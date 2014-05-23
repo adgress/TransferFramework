@@ -134,7 +134,7 @@ nB = length( bN ) - nO;
 if nB ~= 0,
     forms   = bN;
     bN      = cvx_subsref( bN, nO + 1 : nO + nB, 1 );
-    newrepl = newvar( cvx___.problems( end ).self, '', nB );
+    newrepl = newvar( cvx___.problems( end ).self, '', nB, [], false );
     [ ndxs, temp ] = find( newrepl.basis_ ); %#ok
     repls = [ repls ; newrepl ];
     bV = cvx_vexity( bN );
@@ -157,6 +157,6 @@ end
 
 x = cvx_subsasgn( x, tt, buncompress( bNR, repls, nN ) );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

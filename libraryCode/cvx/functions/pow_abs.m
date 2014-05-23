@@ -9,7 +9,7 @@ function y = pow_abs( x, p )
 %       P must be constant, and its elements must be greater than or
 %       equal to one. X may be complex.
 
-error( nargchk( 2, 2, nargin ) ); %#ok
+error( nargchk( 2, 2, nargin ) );
 if ~isnumeric( x ) || ~isnumeric( p ),
     error( 'Arguments must be numeric.' );
 elseif ~isreal( p ),
@@ -19,6 +19,6 @@ elseif any( p(:) < 1 ),
 end
 y = abs(x).^p;
 
-% Copyright 2005-2013 CVX Research, Inc. 
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd. 
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -2,7 +2,7 @@ function y = log_normcdf( x )
 
 %LOG_NORMCDF   Internal CVX version.
 
-error(nargchk(1,1,nargin)); %#ok
+error(nargchk(1,1,nargin));
 if ~isreal( x ),
     error( 'Argument must be real.' );
 end
@@ -31,7 +31,3 @@ else
     y = sum_square_pos( y );
 end
 y = - reshape( y, sx );
-
-% Copyright 2005-2013 CVX Research, Inc. 
-% See the file COPYING.txt for full copyright information.
-% The command 'cvx_where' will show where this file is located.

@@ -35,7 +35,7 @@ function coeffs = nonneg_poly_coeffs( deg, trig, mm ) %#ok
 %       NONNEG_POLY_COEFFS is a cvx set specification. See the user guide
 %       for details on how to use sets.
 
-error( nargchk( 1, 3, nargin ) ); %#ok
+error( nargchk( 1, 3, nargin ) );
 
  
 %
@@ -99,7 +99,7 @@ if trig,
         elseif mm(2) > mm(1) + 2 * pi,
             % Positive over the entire unit circle
             [ii,jj,vv] = find(hermitian_semidefinite(deg+1));
-            coeffs == sparse( deg+1-abs(ii-jj), 1, vv ); %#ok
+            coeffs == sparse( deg+1-abs(ii-jj), 1, vv );
         elseif mm(2) > mm(1),
             % Positive over a subset of the unit circle
             a = exp( 1i * ( 0.5 * ( mm(2) + mm(1) ) ) );
@@ -110,7 +110,7 @@ if trig,
                 + [ (0.5*a)*coeffs2 ; 0 ] ...
                 + [ 0 ; 0 ; (0.5*conj(a))*coeffs2(1:end-1) ] ...
                 + [ zeros(deg-1,1) ; (0.5*a)*conj(coeffs2(end)) ; 0 ] ...
-                - [ 0 ; b*coeffs2 ]; %#ok
+                - [ 0 ; b*coeffs2 ];
         end
     cvx_end
     
@@ -132,11 +132,11 @@ else
             coeffs1 = sparse(ii+jj-1+isodd,1,vv);
             if mm(2) == +Inf,
                 % [ -Inf, +Inf ]
-                coeffs == coeffs1; %#ok
+                coeffs == coeffs1;
             else
                 % [ -Inf, mm(2) ]
                 coeffs2 = nonneg_poly_coeffs(deg-1);
-                coeffs == coeffs1 - [ coeffs2 ; 0 ] + [ 0 ; mm(2) * coeffs2 ]; %#ok
+                coeffs == coeffs1 - [ coeffs2 ; 0 ] + [ 0 ; mm(2) * coeffs2 ];
             end
         elseif mm(2) == +Inf,
             % [ mm(1), +Inf ]
@@ -149,12 +149,12 @@ else
             coeffs2 = nonneg_poly_coeffs(deg);
             [ 0 ; coeffs ] == ...
                 + [ coeffs1 ; 0 ] - [ 0 ; mm(1) * coeffs1 ] ...
-                - [ coeffs2 ; 0 ] + [ 0 ; mm(2) * coeffs2 ]; %#ok
+                - [ coeffs2 ; 0 ] + [ 0 ; mm(2) * coeffs2 ];
         end
     cvx_end
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc. 
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd. 
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -2,8 +2,8 @@ function cvx_optval = lambda_max( x )
 
 %LAMBDA_MAX   Internal cvx version.
 
-error( nargchk( 1, 1, nargin ) ); %#ok
-if ndims( x ) > 2 || size( x, 1 ) ~= size( x, 2 ), %#ok
+error( nargchk( 1, 1, nargin ) );
+if ndims( x ) > 2 || size( x, 1 ) ~= size( x, 2 ),
 
     error( 'Input must be a square matrix.' );
 
@@ -13,11 +13,10 @@ elseif cvx_isconstant( x ),
 
 elseif cvx_isaffine( x ),
 
-	z = [];
     n = size( x, 1 );
     cvx_begin
         epigraph variable z
-        z * eye( n ) - x == semidefinite( n, ~isreal( x ) ); %#ok
+        z * eye( n ) - x == semidefinite( n, ~isreal( x ) );
     cvx_end
 
 else
@@ -26,6 +25,6 @@ else
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

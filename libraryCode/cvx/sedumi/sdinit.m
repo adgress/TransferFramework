@@ -1,12 +1,12 @@
-function [d, v,vfrm,y,y0, R] = sdinit(At,b,c,dense,K,pars)
-% [d, v,vfrm,y,y0, R] = sdinit(At,b,c,dense,K,pars)
-%
+%                               [d, v,vfrm,y,y0, R] = sdinit(At,b,c,dense,K,pars)
 % SDINIT  Initialize with identity solution, for self-dual model.
 %
 % **********  INTERNAL FUNCTION OF SEDUMI **********
 %
 % See also sedumi
 
+function [d, v,vfrm,y,y0, R] = sdinit(At,b,c,dense,K,pars)
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -35,6 +35,7 @@ function [d, v,vfrm,y,y0, R] = sdinit(At,b,c,dense,K,pars)
 % along with this program; if not, write to the Free Software
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
+%
 
 % --------------------------------------------------
 % Initialize m = #eqns, n = order(K).
@@ -52,7 +53,7 @@ R.maxc = norm(c,inf);
 % ----------------------------------------
 y = zeros(m,1);
 mu = pars.mu * sqrt((1+R.maxb)*(1+R.maxc));
-id = eyeK(K); % qreshape(eyeK(K),0,K);
+id = qreshape(eyeK(K),0,K);
 v = mu * id;
 y0 = n * mu;   % b0 * y0 = norm(v)^2.
 R.b0 = mu;

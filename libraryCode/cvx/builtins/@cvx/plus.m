@@ -105,14 +105,14 @@ else
         nz = prod( sz );
         by = by( :, ones( 1, nz ) );
     end
-    [ nx, nv ] = size( bx );
+    nx = size( bx, 1 );
     ny = size( by, 1 );
     if nx < ny,
-        if issparse( by ), bx = sparse( bx ); end
-        bx = [ bx ; sparse( ny - nx, nv ) ];
+        if issparse( by ) && ~issparse( bx ), bx = sparse( bx ); end
+        bx( ny, : ) = 0;
     elseif ny < nx,
-        if issparse( bx ), by = sparse( by ); end
-        by = [ by ; sparse( nx - ny, nv ) ];
+        if issparse( bx ) && ~issparse( by ), by = sparse( by ); end
+        by( nx, : ) = 0;
     end
     bz = bx + by;
 end
@@ -123,6 +123,6 @@ end
 
 z = cvx( sz, bz );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

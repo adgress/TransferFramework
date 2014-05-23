@@ -19,7 +19,7 @@ ndx2 = permute( reshape( ndxs, s ), order );
 b = x.basis_;
 try
     b = x.basis_( :, ndx2 );
-catch %#ok
+catch
     ndxs( ndx2( : ).' ) = ndxs;
     [ r, c, v ] = find( b );
     b = sparse( r, ndxs( c ), v, size( b, 1 ), size( b, 2 ) );
@@ -27,6 +27,6 @@ catch %#ok
 end
 y = cvx( size( ndx2 ), b );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

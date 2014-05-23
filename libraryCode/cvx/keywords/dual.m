@@ -46,59 +46,57 @@ function varargout = dual( varargin )
 %
 %   See also VARIABLE, VARIABLES.
 
-if nargin < 2,
-    error( 'Incorrect syntax for DUAL VARIABLE(S). Type HELP DUAL for details.' );
-elseif nargout && nargout ~= length( varargin ) - 1,
-    error( 'Incorrect number of output arguments.' );
+if ~evalin( 'caller', 'exist(''cvx_problem'',''var'')', '0' ),
+    error( 'A cvx problem does not exist in this scope.' );
 elseif ~iscellstr( varargin ),
     error( 'All arguments must be strings.' );
 end
 
-global cvx___
-prob = evalin( 'caller', 'cvx_problem', '[]' );
-if ~isa( prob, 'cvxprob' ),
-    error( 'No CVX model exists in this scope.' );
-elseif isempty( cvx___.problems ) || cvx___.problems( end ).self ~= prob,
-    error( 'Internal CVX data corruption. Please CLEAR ALL and rebuild your model.' );
-end
-
+prob = evalin( 'caller', 'cvx_problem' );
 if strcmp( varargin{1}, 'variable' ),
-    if nargin > 2,
-        error( 'Too many input arguments.\nTrying to declare multiple dual variables? Use the DUAL VARIABLES command instead.', 1 ); %#ok
-    end
-elseif ~strcmp( varargin{1}, 'variables' ),
-    error( 'Incorrect syntax for DUAL VARIABLE(S). Type HELP DUAL for details.' );
+    error( nargchk( 2, 2, nargin ) );
+    varargin(1) = [];
+elseif strcmp( varargin{1}, 'variables' ),
+    error( nargchk( 2, Inf, nargin ) );
+    varargin(1) = [];
 end
 
-for k = 2 : nargin,
-    arg = varargin{k};
-    toks = regexp( arg, '^\s*([a-zA-Z]\w*)\s*({.*})?\s*$', 'tokens' );
-    if isempty( toks ),
-        error( 'Invalid dual variable specification: %s', arg );
+nargs = length( varargin );
+if nargout > 0,
+    error( nargoutchk( nargs, nargs, nargout ) );
+end
+
+for k = 1 : nargs,
+    nm = varargin{k};
+    xt = find( nm == '{' );
+    if isempty( xt ),
+        x.name = nm;
+        x.size = [];
+    elseif nm(end) ~= '}',
+        error( 'Invalid dual variable specification: %s', nm );
+    else
+        x.name = nm( 1 : xt( 1 ) - 1 );
+        x.size = nm( xt( 1 ) + 1 : end - 1 );
     end
-    nam = toks{1}{1};
-    siz = toks{1}{2};
-    if nam(end) == '_',
-        error( 'Invalid dual variable specification: %s\n   Variables ending in underscores are reserved for internal use.', arg );
+    if ~isvarname( x.name ),
+        error( 'Invalid dual variable specification: %s', nm );
+    elseif x.name( end ) == '_',
+        error( 'Invalid dual variable specification: %s\n   Variables ending in underscores are reserved for internal use.', nm );
     end
-    if ~isempty( siz ),
-        try
-            siz = evalin( 'caller', [ '[', siz(2:end-1), ']' ] );
-        catch exc
-            throw( MException( exc.identifier, sprintf( 'Error attempting to determine size of: %s\n   %s', arg, exc.message ) ) );
-        end
-        [ temp, siz ] = cvx_check_dimlist( siz, true );
+    if ischar( x.size ),
+        x.size = evalin( 'caller', [ '[', x.size, '];' ], 'NaN' );
+        [ temp, x.size ] = cvx_check_dimlist( x.size, true );
         if ~temp,
-            error( 'Invalid dual variable specification: %s\n   Dimension list must be a vector of finite nonnegative integers.', arg );
+            error( 'Invalid variable specification: %s\n   Dimension list must be a vector of finite nonnegative integers.', nm );
         end
     end
-    temp = newdual( prob, nam, siz );
-    if nargout,
-        varargout{k-1} = temp; %#ok
+    temp = newdual( prob, x.name, x.size );
+    if nargout > 0,
+        varargout{k} = temp;
     end
-    assignin( 'caller', nam, temp );
+    assignin( 'caller', x.name, temp );
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

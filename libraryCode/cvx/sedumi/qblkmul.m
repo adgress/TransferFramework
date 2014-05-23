@@ -1,6 +1,4 @@
-function y = qblkmul(mu,d,blkstart) %#ok
-% y = qblkmul(mu,d,blkstart)
-%
+%                                                y = qblkmul(mu,d,blkstart)
 % QBLKMUL  yields length(y)=blkstart(end)-blkstart(1) vector with
 %    y[k] = mu(k) * d[k]; the blocks d[k] are partitioned by blkstart.
 %
@@ -8,6 +6,8 @@ function y = qblkmul(mu,d,blkstart) %#ok
 %
 % See also sedumi
 
+function y = qblkmul(mu,d,blkstart) %#ok
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -37,5 +37,7 @@ function y = qblkmul(mu,d,blkstart) %#ok
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
 
-%Indicate to the user Matlab cannot find the SeDuMi binaries
-sedumi_binary_error();
+disp('The SeDuMi binaries are not installed.')
+disp('In Matlab, launch "install_sedumi" in the folder you put the SeDuMi files.')
+disp('For more information see the file Install.txt.')
+error(' ')

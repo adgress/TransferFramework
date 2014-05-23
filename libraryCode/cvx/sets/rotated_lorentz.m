@@ -36,7 +36,7 @@ function cvx_optpnt = rotated_lorentz( sx, dim, iscplx )
 % Check size vector
 %
 
-error( nargchk( 1, 3, nargin ) ); %#ok
+error( nargchk( 1, 3, nargin ) );
 [ temp, sx ] = cvx_check_dimlist( sx, true );
 if ~temp,
     error( 'First argument must be a dimension vector.' );
@@ -113,6 +113,6 @@ end
 
 cvx_optpnt = cvxtuple( cvx_optpnt );
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

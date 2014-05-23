@@ -16,7 +16,6 @@
 % parameter to be chosen or tuned. 
 
 % Input data 
-rand('state',0);
 randn('state',0);
 n = 10; 
 N = 100; 

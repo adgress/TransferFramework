@@ -1,4 +1,4 @@
-function subject( to )
+function subject( varargin )
 
 %SUBJECT Implements the "subject to" keyword.
 %   The keyword
@@ -12,9 +12,14 @@ function subject( to )
 %           ...
 %   It may be omitted without altering the model in any way.
 
-% We had some consistency checking code here, but given that this is supposed to be 
-% no-op, it seems sensible to remove it all.
+if ~iscellstr( varargin ),
+    error( 'SUBJECT TO must be used in command mode.' );
+elseif nargin ~= 1 || ~strcmpi( varargin{1}, 'to' ),
+    error( 'Syntax: subject to' );
+elseif ~isa( evalin( 'caller', 'cvx_problem', '[]' ), 'cvxprob' ),
+    error( 'SUBJECT TO can only be used within a CVX model.' );
+end
 
-% Copyright 2005-2013 CVX Research, Inc. 
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd. 
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -25,7 +25,7 @@ function z = quad_over_lin( x, y, dim )
 % Check arguments
 %
 
-error( nargchk( 2, 3, nargin ) ); %#ok
+error( nargchk( 2, 3, nargin ) );
 if ~isreal( y ),
     error( 'Second argument must be real.' );
 elseif nargin < 3 || isempty( dim ),
@@ -54,6 +54,6 @@ if inf_fix,
     z( temp ) = +Inf;
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -1,6 +1,4 @@
-function [L,perm,xsuper,split,tmpsiz] = symfctmex(adjncy, perm, cachsz) %#ok
 % [L,perm,xsuper,split,tmpsiz] = symfctmex(X, perm, cachsz)
-%
 %   Computes sparse symbolic factor L, updated permutation PERM,
 %   super-node partition XSUPER, and a splitting of supernodes
 %   (SPLIT) to optimize use of the computer cache (assuming
@@ -13,6 +11,9 @@ function [L,perm,xsuper,split,tmpsiz] = symfctmex(adjncy, perm, cachsz) %#ok
 %
 % See also sedumi
 
+function [L,perm,xsuper,split,tmpsiz] = symfctmex(adjncy, perm, cachsz) %#ok
+
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -41,6 +42,6 @@ function [L,perm,xsuper,split,tmpsiz] = symfctmex(adjncy, perm, cachsz) %#ok
 % along with this program; if not, write to the Free Software
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
+%
 
-%Indicate to the user Matlab cannot find the SeDuMi binaries
-sedumi_binary_error();
+error('At OS prompt, type "make" to create cholTool mex-files.')

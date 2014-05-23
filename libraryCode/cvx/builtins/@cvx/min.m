@@ -7,7 +7,7 @@ function z = min( x, y, dim )
 %       geometric programs, both arguments must be log-concave/affine.
 
 persistent remap remap_1 remap_2 remap_3
-error( nargchk( 1, 3, nargin ) ); %#ok
+error( nargchk( 1, 3, nargin ) );
 if nargin == 2,
 
     %
@@ -96,15 +96,13 @@ if nargin == 2,
             cvx_optval = xt;
         case 4,
             % posy
-            zt = [];
             cvx_begin gp
-                hypograph variable zt( sz )
+                 hypograph variable zt( sz )
                 xt >= zt; %#ok
                 yt >= zt; %#ok
             cvx_end
         case 5,
             % non-posy
-            zt = [];
             cvx_begin
                 hypograph variable zt( sz )
                 xt >= zt; %#ok
@@ -135,27 +133,26 @@ else
     if nargin > 1 && ~isempty( y ),
         error( 'min with two matrices to compare and a working dimension is not supported.' );
     end
-    
-	%
-	% Size check
-	%
+    sx = size( x );
+    if nargin < 2,
+        dim = cvx_default_dimension( sx );
+    elseif ~cvx_check_dimension( dim ),
+        error( 'Third argument must be a positive integer.' );
+    end
 
-	try
-		ox = x;
-		if nargin < 3, dim = []; end
-		[ x, sx, sy, zx, zy, nx, nv, perm ] = cvx_reduce_size( x, dim ); %#ok
-	catch exc
-	    error( exc.message );
-	end
-	
-	%
-	% Quick exit for empty array
-	%
-	
-	if isempty( x ),
-		z = zeros( zx );
-		return
-	end
+    %
+    % Determine sizes, quick exit for empty arrays
+    %
+
+    sx = [ sx, ones( 1, dim - length( sx ) ) ];
+    nx = sx( dim );
+    if any( sx == 0 ),
+        sx( dim ) = min( sx( dim ), 1 );
+        z = zeros( sx );
+        return
+    end
+    sy = sx;
+    sy( dim ) = 1;
 
     %
     % Type check
@@ -167,9 +164,9 @@ else
         remap_3 = cvx_remap( 'concave' );
     end
     vx = cvx_reshape( cvx_classify( x ), sx );
-    t1 = all( reshape( remap_1( vx ), sx ) );
-    t2 = all( reshape( remap_2( vx ), sx ) );
-    t3 = all( reshape( remap_3( vx ), sx ) );
+    t1 = all( reshape( remap_1( vx ), sx ), dim );
+    t2 = all( reshape( remap_2( vx ), sx ), dim );
+    t3 = all( reshape( remap_3( vx ), sx ), dim );
     t3 = t3 & ~( t1 | t2 );
     t2 = t2 & ~t1;
     ta = t1 + ( 2 * t2 + 3 * t3 ) .* ~t1;
@@ -182,9 +179,26 @@ else
     %
 
     if nx == 1 && all( nu ),
-        z = ox;
+        z = x;
         return
     end
+
+    %
+    % Permute and reshape, if needed
+    %
+
+    if dim > 1 && any( sx( 1 : dim - 1 ) > 1 ),
+        perm = [ dim, 1 : dim - 1, dim + 1 : length( sx ) ];
+        x   = permute( x,  perm );
+        ta  = permute( ta, perm );
+        sx  = sx(perm);
+        sy  = sy(perm);
+        dim = 1;
+    else
+        perm = [];
+    end
+    nv = prod( sx ) / nx;
+    x  = reshape( x, nx, nv );
 
     %
     % Perform the computations
@@ -209,13 +223,11 @@ else
             case 1,
                 cvx_optval = min( cvx_constant( xt ), [], 1 );
             case 2,
-            	zt = [];
                 cvx_begin gp
                     hypograph variable zt( 1, nv )
                     xt >= ones(nx,1) * zt; %#ok
                 cvx_end
             case 3,
-            	zt = [];
                 cvx_begin
                     hypograph variable zt( 1, nv )
                     xt >= ones(nx,1) * zt; %#ok
@@ -243,6 +255,6 @@ else
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

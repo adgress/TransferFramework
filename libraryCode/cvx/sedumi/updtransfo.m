@@ -1,6 +1,4 @@
-function  [d,vfrm] = updtransfo(x,z,w, dIN,K)
-% [d,vfrm] = updtransfo(x,z,w, dIN,K)
-%
+%                                      [d,vfrm] = updtransfo(x,z,w, dIN,K)
 % UPDTRANSFO  Updated the Nesterov-Todd transformation using a
 %  numerically stable method.
 %
@@ -8,6 +6,8 @@ function  [d,vfrm] = updtransfo(x,z,w, dIN,K)
 %
 % See also sedumi
 
+function  [d,vfrm] = updtransfo(x,z,w, dIN,K)
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -36,17 +36,14 @@ function  [d,vfrm] = updtransfo(x,z,w, dIN,K)
 % along with this program; if not, write to the Free Software
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
+%
 
 % ------------------------------------------------------------
 % PSD:
 % Given w = D(Xscl)Zscl, compute spec-factor Q*WLAB*Q' = W
 % ------------------------------------------------------------
-if ~isempty(K.s)
-    [wlab,q] = psdeig(w.s,K);
-    w.lab(K.l+2*length(K.q) + 1:end) = wlab;
-else
-    q=[];
-end
+[wlab,q] = psdeig(w.s,K);
+w.lab(K.l+2*length(K.q) + 1:end) = wlab;
 % ------------------------------------------------------------
 % lambda(v) = sqrt(lambda(w))
 % ------------------------------------------------------------

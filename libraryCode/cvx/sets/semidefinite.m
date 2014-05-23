@@ -37,7 +37,7 @@ function cvx_optpnt = semidefinite( sz, iscplx ) %#ok
 % Check size vector
 %
 
-error( nargchk( 1, 2, nargin ) ); %#ok
+error( nargchk( 1, 2, nargin ) );
 if ~isnumeric( sz ) || isempty( sz ) || any( sz < 0 ) || any( sz ~= floor( sz ) ),
     error( 'First argument must be a nonnegative integer or a valid size vector.' );
 elseif length( sz ) == 1,
@@ -60,7 +60,7 @@ end
 % Construct the cone
 %
 
-cvx_begin set
+cvx_begin_set
    if any( sz == 0 ) || sz(1) == 1,
        variable x( sz )
        s = 'nonnegative';
@@ -86,8 +86,8 @@ cvx_begin set
            cvx___.canslack( tx ) = false;
        end
    end
-cvx_end
+cvx_end_set
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 CVX Research, Inc.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

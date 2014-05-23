@@ -2,7 +2,7 @@ function cvx_optval = quad_over_lin( x, y, dim )
 
 %QUAD_OVER_LIN   Internal cvx version.
 
-error( nargchk( 2, 3, nargin ) ); %#ok
+error( nargchk( 2, 3, nargin ) );
 sx = size( x );
 sy = size( y );
 nx = length( sx );
@@ -64,20 +64,19 @@ if any( sz == 0 ),
     cvx_optval = cvx( zeros( sz ) );
 elseif any( sx == 0 ),
     cvx_begin
-        y == nonnegative( sz ); %#ok
+        y == nonnegative( sz );
     cvx_end
 else
-	z = [];
     cvx_begin
         epigraph variable z( sz )
         y = cvx_accept_concave( y );
         if need_contraction,
             x = cvx_accept_convex( norms( x, 2, dim ) );
         end
-        { x, y, z } == rotated_lorentz( sx, dim, ~isreal( x ) ); %#ok
+        { x, y, z } == rotated_lorentz( sx, dim, ~isreal( x ) );
     cvx_end
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

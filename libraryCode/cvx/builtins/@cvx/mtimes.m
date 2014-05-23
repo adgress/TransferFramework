@@ -67,6 +67,7 @@ if cvx_isconstant( x ),
     elseif isequal( oper, 'rdivide' ),
         error( 'Disciplined convex programming error:\n    Matrix divisor must be constant.', 1 ); %#ok
     end
+    xC   = cvx_constant( x );
     yA   = cvx_basis( y );
     laff = true;
     cnst = false;
@@ -123,7 +124,7 @@ else
     quad = +ax * +ay;
     if nnz( quad ) ~= 0,
         if length( quad ) ~= 1,
-            error( 'Disciplined convex programming error:\n    Only scalar quadratic forms can be specified in CVX\n.', 1 ); %#ok
+            error( 'Disciplined convex programming error:\n    Invalid quadratic form: must be a scalar.', 1 ); %#ok
         else
             cx = cx & ~ax;
             cy = cy & ~ay;
@@ -131,7 +132,7 @@ else
             yC( ay ) = 0;
         end
     end
-    cnst = +cx * +cy; %#ok
+    cnst = +cx * +cy;
     laff = +cx * +( vy > 1 );
     raff = +( vx > 1 ) * cy;
     posy = +px * +py;
@@ -306,6 +307,6 @@ if any( isnan( v( : ) ) ),
     error( temp, 1 ); 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -61,19 +61,17 @@ for k = 1 : nv,
             cvx_optval = cvx( builtin( 'abs', cvx_constant( xt ) ) );
         case 2,
             % Real affine
-            w = [];
             st = size( xt );
             cvx_begin
                 epigraph variable w( st )
-                { xt, w } == lorentz( st, 0 ); %#ok
+                { xt, w } == lorentz( st, 0 );
             cvx_end
         case 3,
             % Complex affine
-            w = [];
             st = size( xt );
             cvx_begin
                 epigraph variable w( st )
-                { xt, w } == complex_lorentz( st, 0 ); %#ok
+                { xt, w } == complex_lorentz( st, 0 );
             cvx_end
         case 4,
             % log-affine, log-convex
@@ -94,6 +92,6 @@ for k = 1 : nv,
 
 end
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

@@ -9,7 +9,7 @@ if ~isa( prob, 'cvxprob' ),
     error( 'First argument must be a cvxprob object.' );
 end
 global cvx___
-p = prob.index_;
+p = index( prob );
 vars = cvx___.problems( p ).duals;
 
 %
@@ -54,7 +54,6 @@ if ~isempty( reps ),
     y = cell( reps );
     [ y{:} ] = deal( cvx );
     z = cell( reps );
-    q = cell( reps );
     ndxs = cell( 1, length( reps ) - ( reps(end) == 1 ) );
     [ ndxs{:} ] = ind2sub( reps, 1 : prod( reps ) );
     ndxs = vertcat( ndxs{:} );
@@ -62,11 +61,11 @@ if ~isempty( reps ),
     for k = 1 : prod( reps ),
         nstr(2).subs = sprintf( '%d,', ndxs(:,k) );
         nstr(2).subs = eval( [ '{', nstr(2).subs(1:end-1), '}' ] );
-        z{k} = cvxdual( p, nstr );
+        z{k} = cvxdual( prob, nstr );
     end
 else
-    y = [];
-    z = cvxdual( p, nstr );
+    y = cvx( [0,0], [] );
+    z = cvxdual( prob, nstr );
 end
 vars = cvx___.problems( p ).dvars;
 vars = builtin( 'subsasgn', vars, nstr(1), z );
@@ -77,6 +76,6 @@ cvx___.problems( p ).duals = vars;
 cvx___.x = [];
 cvx___.y = [];
 
-% Copyright 2005-2013 CVX Research, Inc.
+% Copyright 2012 Michael C. Grant and Stephen P. Boyd.
 % See the file COPYING.txt for full copyright information.
 % The command 'cvx_where' will show where this file is located.

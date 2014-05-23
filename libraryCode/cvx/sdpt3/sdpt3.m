@@ -48,7 +48,6 @@
 %%-----------------------------------------
 %%
    warning off; 
-   if (nargin < 5); OPTIONS = []; end
 
    matlabversion = sscanf(version,'%f');
    if strcmp(computer,'PCWIN64') | strcmp(computer,'GLNXA64')

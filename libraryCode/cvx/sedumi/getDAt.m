@@ -1,7 +1,6 @@
-function [DAtq, DAts] = getDAt(At,Ablk,colsel, d,ud,K) %#ok
-% [DAtq, DAts] = getDAt(At,Ablk,colsel, d,ud,K)
+%   [DAtq, DAts] = getDAt(At,Ablk,colsel, d,ud,K)
 %
-% Creates
+%Creates
 %  DAt.s  full nnz x 1 vector, containing nonzeroblocks(T) with T a
 %    sparse N x length(colsel) matrix, with Ablk.s(:,colsel) block struct.
 %    NOTE: only triu(.) stored per block, with redundant 0's in tril.
@@ -12,6 +11,9 @@ function [DAtq, DAts] = getDAt(At,Ablk,colsel, d,ud,K) %#ok
 %
 % See also sedumi
 
+function [DAtq, DAts] = getDAt(At,Ablk,colsel, d,ud,K) %#ok
+
+%
 % This file is part of SeDuMi 1.1 by Imre Polik and Oleksandr Romanko
 % Copyright (C) 2005 McMaster University, Hamilton, CANADA  (since 1.1)
 %
@@ -41,5 +43,7 @@ function [DAtq, DAts] = getDAt(At,Ablk,colsel, d,ud,K) %#ok
 % Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston, MA
 % 02110-1301, USA
 
-%Indicate to the user Matlab cannot find the SeDuMi binaries
-sedumi_binary_error();
+disp('The SeDuMi binaries are not installed.')
+disp('In Matlab, launch "install_sedumi" in the folder you put the SeDuMi files.')
+disp('For more information see the file Install.txt.')
+error(' ')
