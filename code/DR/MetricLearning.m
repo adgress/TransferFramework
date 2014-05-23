@@ -31,7 +31,7 @@ classdef MetricLearning < DRMethod
             [~,X1mean] = Helpers.CenterData(X1dupe);            
             [COEFF, SCORE, LATENT] = princomp(X1dupe,'econ');
             numComponents = min(find(cumsum(LATENT) >= .9));
-            numComponents
+            numComponents = min(numComponents,45);
             components = COEFF(:,1:numComponents);
             
             X1dupe = SCORE(:,1:numComponents);
