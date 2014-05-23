@@ -50,9 +50,9 @@ classdef GuessMethod < Method
             assert(~isempty(testResults.testPredicted));
             assert(~isempty(testResults.trainPredicted));
             testResults.testActual = testY;                        
-            testResults.testPredicted = Helpers.getMode(testResults.testPredicted);
+            %testResults.testPredicted = Helpers.getMode(testResults.testPredicted);
             testResults.trainActual = trainY;
-            testResults.trainPredicted = Helpers.getMode(testResults.trainPredicted);
+            %testResults.trainPredicted = Helpers.getMode(testResults.trainPredicted);
             if size(testResults.testActual,2) == 1
                 val = sum(testResults.testActual == testResults.testPredicted)/...
                     length(testResults.testActual);

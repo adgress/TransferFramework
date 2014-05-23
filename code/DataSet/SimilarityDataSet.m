@@ -144,7 +144,19 @@ classdef SimilarityDataSet < handle
             end
             split = ones(numX,1);            
         end 
-        function sampledTrain = randomSample(obj,percTrain,trainIndex,testIndex)
+        function [sampledTrain] = randomSampleInstances(obj,percTrain,trainIndex)
+            numInstances = size(obj.X{trainIndex},1);
+            rs = RandStream('mt19937ar','Seed',1);
+            perm = rs.randperm(numInstances);
+            toRemove = perm(1:floor((1-percTrain)*numInstances));
+            shouldRemove = false(numInstances,1);
+            shouldRemove(toRemove) = true;
+            
+            sampledTrain = SimilarityDataSet(obj.X,obj.W);
+            sampledTrain.removeData(shouldRemove,trainIndex);
+        end
+        
+        function sampledTrain = randomSampleRelations(obj,percTrain,trainIndex,testIndex)
             Wij = obj.getSubW(trainIndex,testIndex);
             numPerLabel = sum(Wij);
             numRelations = sum(numPerLabel);

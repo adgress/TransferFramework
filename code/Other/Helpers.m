@@ -143,11 +143,11 @@ classdef Helpers < handle
                 param_string = [param_string ',percent_weak_used=' num2str(input('percent_weak_to_use'))];
             end
         end
-        function [X,mean] = CenterData(X,mean)
+        function [X,m] = CenterData(X,m)
             if nargin < 2
-                mean = sum(X,1);
+                m = mean(X,1);
             end
-            X = X - repmat(mean,size(X,1),1);
+            X = X - repmat(m,size(X,1),1);
         end
         function [X] = NormalizeRows(X)
             sums = sum(X,2);

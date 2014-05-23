@@ -74,8 +74,12 @@ classdef ExperimentConfigLoader < ConfigLoader
             elseif isa(train,'SimilarityDataSet')
                 trainIndex = obj.configs('trainSetIndex');
                 testIndex = obj.configs('testSetIndex');
-                data = struct();                
-                sampledTrain = train.randomSample(percTrain,trainIndex,testIndex);
+                data = struct();              
+                if obj.configs('useStandardSampling')
+                    sampledTrain = train.randomSampleInstances(percTrain,trainIndex);
+                else
+                    sampledTrain = train.randomSampleRelations(percTrain,trainIndex,testIndex);
+                end
                 data.train = sampledTrain; data.test = test; data.validate = validate;
                 drMethodName = obj.configs('drMethod');
                 drMethodObj = DRMethod.ConstructObject(drMethodName,obj.configs);
@@ -89,7 +93,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                 cvData.train = sampledTrain;
                 cvData.test = validate;
                 cvData.validate = [];
-                assert(length(cvParams) == 1);
+                assert(length(cvParams) <= 1);
                 for i=1:length(cvParams)
                     param = cvParams{i};
                     paramVals = obj.configs(param);
@@ -206,7 +210,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             drMethodName = obj.configs('drMethod');
             methodName = obj.configs('methodClasses');
             methodName = methodName{1};
-            drMethodPrefix = DRMethod.GetPrefix(drMethodName,obj.configs);            
+            drMethodPrefix = DRMethod.GetResultFileName(drMethodName,obj.configs,false);            
             methodPrefix = Method.GetPrefix(methodName,obj.configs);
             outputFileName = [getProjectDir() '/' outputDir drMethodPrefix ...
                 '-' methodPrefix '.mat'];

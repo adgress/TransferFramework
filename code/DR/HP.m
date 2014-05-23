@@ -25,16 +25,23 @@ classdef HP < CCA
             
             reg = obj.configs('reg');
             numVecs = obj.configs('numVecs');
-            centerData = true;
+            centerData = obj.configs('centerData');
             options = struct();
             options.reg = reg;
             
-            if centerData
+            if centerData == 1
                 [X1,X1mean] = Helpers.CenterData(X1);
                 [X2,X2mean] = Helpers.CenterData(X2);
+            elseif centerData == 2
+                X1dupe = Helpers.DupeRows(X1,sum(Wij,2));
+                X2dupe = Helpers.DupeRows(X2,sum(Wij,1));
+                [~,X1mean] = Helpers.CenterData(X1dupe);
+                [~,X2mean] = Helpers.CenterData(X2dupe);
+                X1 = Helpers.CenterData(X1,X1mean);
+                X2 = Helpers.CenterData(X2,X2mean);
             else
-                X1mean = zeros(size(X1,2),1);
-                X2mean = zeros(size(C2,2),1);
+                X1mean = zeros(1,size(X1,2));
+                X2mean = zeros(1,size(X2,2));
             end
             
             
@@ -43,6 +50,9 @@ classdef HP < CCA
             Q = Q_12;
             
             B = eye(size(Q));
+            if ~obj.configs('useIdentity')
+                B = X1'*diag(sum(Wij,2))*X1+reg*eye(size(B));
+            end
             [v1,vals1] = eig(Q,B);
             [sortedVals,I] = sort(diag(vals1),'ascend');
             v1 = v1(:,I);
@@ -160,7 +170,7 @@ classdef HP < CCA
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {};
+            nameParams = {'useIdentity','centerData','numVecs'};
         end
     end
     

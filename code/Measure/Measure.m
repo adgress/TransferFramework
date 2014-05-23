@@ -28,15 +28,21 @@ classdef Measure < Saveable
                         split.testActual,i);
                 end
             else
-                trainPredictedMat = logical(Helpers.createLabelMatrix(split.trainPredicted));
+                trainPredicted = split.trainPredicted;
+                testPredicted = split.testPredicted;
+                if isKey(obj.configs,'k')
+                    trainPredicted = trainPredicted(:,1:obj.configs('k'));
+                    testPredicted = testPredicted(:,1:obj.configs('k'));
+                end
+                trainPredictedMat = logical(Helpers.createLabelMatrix(trainPredicted));
                 t = split.trainActual(:,1:size(trainPredictedMat,2));
                 trainIsCorrect = t(trainPredictedMat);
-                valTrain = sum(trainIsCorrect(:))/numel(split.trainPredicted);
+                valTrain = sum(trainIsCorrect(:))/numel(trainPredicted);
                 
-                testPredictedMat = logical(Helpers.createLabelMatrix(split.testPredicted));
+                testPredictedMat = logical(Helpers.createLabelMatrix(testPredicted));
                 t = split.testActual(:,1:size(testPredictedMat,2));
                 testIsCorrect = t(testPredictedMat);
-                valTest = sum(testIsCorrect(:))/numel(split.testPredicted);
+                valTest = sum(testIsCorrect(:))/numel(testPredicted);
             end            
             measureResults.testPerformance = valTest;
             measureResults.trainPerformance = valTrain;

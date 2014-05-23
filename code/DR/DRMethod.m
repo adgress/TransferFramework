@@ -17,6 +17,22 @@ classdef DRMethod < Saveable
                 data.validate.W);
             metadata = struct();
         end
+        
+        function [modData] = applyProjection(obj,data,setsToUse,projections,means)
+            if isempty(data)
+                modData = [];
+                return;
+            end
+            projectedData = cell(length(setsToUse),1);
+            for i=1:length(setsToUse)
+                X = data.X{setsToUse(i)};
+                X = Helpers.CenterData(X,means{i});
+                X = X*projections{i};
+                projectedData{i} = X;
+            end
+            modData = SimilarityDataSet(projectedData,data.getSubW(setsToUse));
+        end
+        
         function [prefix] = getPrefix(obj)
             prefix = 'No-DR';
         end        

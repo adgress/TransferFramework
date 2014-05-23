@@ -6,7 +6,7 @@ function [f] = visualizeResults(options,f)
     leg = {};
     baselineFiles = {};    
     files = [options.baselineFiles options.fileNames];    
-    numColors = 3;
+    numColors = options.numColors;
     colors = colormap(hsv(numColors));
     if options.showRelativePerformance
         numBaselineFiles = numel(options.baselineFiles);
@@ -201,9 +201,23 @@ function [index,leg] = plotMeasures(options,results,sizes,configs,...
 end
 
 function [index,leg] = plotTestResults(options,results,sizes,colors,index,learnerName,leg)
+    resultsToUse = results;
+    if isfield(options,'measure')
+        measureObj = Measure.ConstructObject(options.measure,options.measureConfigs);
+        for i=1:length(resultsToUse)
+            r = resultsToUse{i};
+            for j=1:length(r.splitResults)
+                r.splitMeasures{j} = measureObj.evaluate(r.splitResults{j});
+            end
+            m = r.aggregatedResults.metadata;
+            r.aggregatedResults = measureObj.aggregateResults(r.splitMeasures);
+            r.aggregatedResults.metadata = m;
+            resultsToUse{i} = r;
+        end
+    end
     if isfield(options,'usePerLabel') && options.usePerLabel
-        vars = getVariances(results,'testLabelMeasures',-1);
-        means = getMeans(results,'testLabelMeasures',-1);
+        vars = getVariances(resultsToUse,'testLabelMeasures',-1);
+        means = getMeans(resultsToUse,'testLabelMeasures',-1);
         if options.labelToShow > 0
             means = means(:,options.labelToShow);
             vars = vars(:,options.labelToShow);
@@ -212,8 +226,8 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
             vars = mean(vars,2);
         end
     else
-        vars = getVariances(results,'testResults',-1);
-        means = getMeans(results,'testResults',-1);
+        vars = getVariances(resultsToUse,'testResults',-1);
+        means = getMeans(resultsToUse,'testResults',-1);
     end
     errorbar(sizes,means,vars,'color',colors(index,:));
     legName = learnerName;
@@ -223,8 +237,8 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
     leg{index} = legName;
     index = index+1;
     if options.showTrain
-        vars = getVariances(results,'trainResults',-1);
-        means = getMeans(results,'trainResults',-1);
+        vars = getVariances(resultsToUse,'trainResults',-1);
+        means = getMeans(resultsToUse,'trainResults',-1);
         errorbar(sizes,means,vars,'color',colors(index,:));
         leg{index} = [learnerName ', Train'];
         index = index+1;

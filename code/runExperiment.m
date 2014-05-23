@@ -25,9 +25,9 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
     if multithread
         %Fix for laptop
         distcomp.feature( 'LocalUseMpiexec', false );
-        if matlabpool('size') > 0
+        %if matlabpool('size') > 0
             matlabpool close force local;
-        end
+        %end
         matlabpool;
     end
     tic
