@@ -13,7 +13,7 @@ function [] = runVisualization(dataset)
     fileNames = {};
     showBaselines = 1;
     
-    numVecs=1;
+    numVecs=30;
     if showBaselines
         fileNames{end+1} = 'CCA_numVecs=%d-kNN.mat';
         fileNames{end+1} = 'HP_useIdentity=0_centerData=0_numVecs=%d-kNN.mat';

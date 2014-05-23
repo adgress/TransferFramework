@@ -10,6 +10,7 @@ function [] = runBatchExperiment(multithread)
         %configFiles{end+1} = 'config/batch/batchCCA.cfg';        
         %configFiles{end+1} = 'config/batch/batchHP.cfg';
         configFiles{end+1} = 'config/batch/batchML.cfg';
+        
     end
     
     for i=1:numel(configFiles)

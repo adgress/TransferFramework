@@ -135,7 +135,9 @@ classdef ExperimentConfigLoader < ConfigLoader
                         paramAcc(j) = measureResults.testPerformance;
                     end
                     paramAcc
-                    bestNumVecs
+                    if obj.configs('tuneNumVecs')
+                        bestNumVecs
+                    end
                     [~,bestInd] = max(paramAcc);
                     drMethodObj.configs(param) = paramVals{bestInd};    
                     drMethodObj.configs('numVecs') = bestNumVecs(bestInd);
