@@ -31,7 +31,7 @@ classdef MetricLearning < DRMethod
             [~,X1mean] = Helpers.CenterData(X1dupe);            
             [COEFF, SCORE, LATENT] = princomp(X1dupe,'econ');
             numComponents = min(find(cumsum(LATENT) >= .9));
-            MAX_COMPONENTS = 15;
+            MAX_COMPONENTS = obj.configs('maxComponents');
             numComponents = min(numComponents,MAX_COMPONENTS);
             components = COEFF(:,1:numComponents);
             
@@ -100,7 +100,7 @@ classdef MetricLearning < DRMethod
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'useSim'};
+            nameParams = {'maxComponents','useSim'};
         end  
     end
     
