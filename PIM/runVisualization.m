@@ -16,12 +16,15 @@ function [] = runVisualization(dataset)
     numVecs=30;
     if showBaselines
         fileNames{end+1} = 'CCA_numVecs=%d-kNN.mat';
+        %{
         fileNames{end+1} = 'HP_useIdentity=0_centerData=0_numVecs=%d-kNN.mat';
         fileNames{end+1} = 'HP_useIdentity=1_centerData=0_numVecs=%d-kNN.mat';
         fileNames{end+1} = 'HP_useIdentity=0_centerData=1_numVecs=%d-kNN.mat';        
         fileNames{end+1} = 'HP_useIdentity=1_centerData=1_numVecs=%d-kNN.mat';        
+        %}
         fileNames{end+1} = 'HP_useIdentity=0_centerData=2_numVecs=%d-kNN.mat';
         fileNames{end+1} = 'HP_useIdentity=1_centerData=2_numVecs=%d-kNN.mat';
+        fileNames{end+1} = 'ML-kNN.mat';
         for i=1:length(fileNames)
             fileNames{i} = sprintf(fileNames{i},numVecs);
         end

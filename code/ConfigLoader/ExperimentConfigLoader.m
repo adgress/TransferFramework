@@ -129,10 +129,16 @@ classdef ExperimentConfigLoader < ConfigLoader
                             bestNumVecs(j) = bestInd;                            
                         else
                             [cvResults{j},~] = ...
-                                methodObject.trainAndTest(cvInput);
+                                methodObject.trainAndTest(cvInput);                            
                         end
                         measureResults = measureObj.evaluate(cvResults{j});
                         paramAcc(j) = measureResults.testPerformance;
+                        display(['CV Acc: ' num2str(paramAcc(j))]);
+                        trainInput = ExperimentConfigLoader.CreateRunExperimentInput(...
+                            projTrain,projTrain,[],experimentConfigs,emptyMetadata);
+                        trainResults = methodObject.trainAndTest(trainInput);
+                        trainMeasureResults = measureObj.evaluate(trainResults);
+                        display(['Train Acc: ' num2str(trainMeasureResults.testPerformance)]);
                     end
                     paramAcc
                     if obj.configs('tuneNumVecs')

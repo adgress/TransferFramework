@@ -31,20 +31,53 @@ classdef MetricLearning < DRMethod
             [~,X1mean] = Helpers.CenterData(X1dupe);            
             [COEFF, SCORE, LATENT] = princomp(X1dupe,'econ');
             numComponents = min(find(cumsum(LATENT) >= .9));
-            numComponents = min(numComponents,45);
+            MAX_COMPONENTS = 15;
+            numComponents = min(numComponents,MAX_COMPONENTS);
             components = COEFF(:,1:numComponents);
             
             X1dupe = SCORE(:,1:numComponents);
+            X2mean = zeros(1,size(X2,2));
+            if obj.configs('centerData')
+                [X2dupe,X2mean] = Helpers.CenterData(X2dupe);
+            end
             
+            %{
             cvx_begin quiet
                 variable W(size(X2dupe,2),size(X1dupe,2))
                 minimize(sum(sum((X1dupe-X2dupe*W).^2,2)))
                 subject to
                     sum(sum(W.^2,2)) <= reg
             cvx_end
-            
+            r = sum(sum(W.^2))
+            display(['Primal Value: ' num2str(sum(sum((X1dupe-X2dupe*W).^2)))]);
             projections = {components, W};
             means = {X1mean, zeros(1,size(X2,2))};
+
+            modData = struct();
+            modData.train = obj.applyProjection(train,setsToUse,projections,means);
+            modData.validate = obj.applyProjection(validate,setsToUse,projections,means);
+            modData.test = obj.applyProjection(test,setsToUse,projections,means);
+            %}
+            if obj.configs('useSim')
+                cvx_begin quiet
+                    variable W(size(X1dupe,2),size(X2dupe,2))
+                    minimize(sum(sum(X1dupe*W*X2dupe')))
+                    subject to
+                        sum(sum(W.^2,2)) <= reg
+                cvx_end
+                %r = sum(sum(W.^2))
+            else
+                cvx_begin quiet
+                    variable W(size(X1dupe,2),size(X2dupe,2))
+                    minimize(sum((upper-sum((X1dupe*W-X2dupe).^2,2))))
+                    subject to
+                        sum(sum(W.^2,2)) <= reg
+                cvx_end
+            end
+            
+            %display(['Primal Value: ' num2str(sum(sum((X1dupe*W-X2dupe).^2)))]);
+            projections = {components*W, eye(size(X2))};
+            means = {X1mean, X2mean};
 
             modData = struct();
             modData.train = obj.applyProjection(train,setsToUse,projections,means);
@@ -67,7 +100,7 @@ classdef MetricLearning < DRMethod
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'numVecs'};
+            nameParams = {'useSim'};
         end  
     end
     
