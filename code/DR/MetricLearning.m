@@ -60,22 +60,30 @@ classdef MetricLearning < DRMethod
             modData.test = obj.applyProjection(test,setsToUse,projections,means);
             %}
             if obj.configs('useSim')
+                %{
                 cvx_begin quiet
                     variable W(size(X1dupe,2),size(X2dupe,2))
-                    minimize(sum(sum(X1dupe*W*X2dupe')))
+                    minimize(trace(X1dupe*W*X2dupe'))
                     subject to
                         sum(sum(W.^2,2)) <= reg
                 cvx_end
                 r = sum(sum(W.^2));
                 %primValue = sum(sum(X1dupe*W*X2dupe'));
                 %[r reg]
-                if r+1 < reg
+                if r+.1 < reg
                     metadata.keepTuningReg = false;
                 end
+                %}
+                cvx_begin quiet
+                    variable W(size(X1dupe,2),size(X2dupe,2))
+                    minimize(sum(sum(W.^2,2)) + reg*trace(X1dupe*W*X2dupe'))
+                    subject to
+                cvx_end
+                
             else
                 cvx_begin quiet
                     variable W(size(X1dupe,2),size(X2dupe,2))
-                    minimize(sum((upper-sum((X1dupe*W-X2dupe).^2,2))))
+                    minimize(sum(sum((X1dupe*W-X2dupe).^2,2)))
                     subject to
                         sum(sum(W.^2,2)) <= reg
                 cvx_end
