@@ -74,11 +74,12 @@ classdef MetricLearning < DRMethod
                     metadata.keepTuningReg = false;
                 end
                 %}
-                hinge = @(x) sum(max(0,1-x));
+                hinge = @(x) sum(max(0,square(1-x)));
                 if obj.configs('useHinge')
                     cvx_begin quiet
                         variable W(size(X1dupe,2),size(X2dupe,2))
-                        minimize(sum(sum(W.^2,2)) + reg*pow_pos(hinge(diag(X1dupe*W*X2dupe')),2))
+                        %minimize(sum(sum(W.^2,2)) + reg*pow_pos(hinge(diag(X1dupe*W*X2dupe')),2))
+                        minimize(sum(sum(W.^2,2)) + reg*hinge(diag(X1dupe*W*X2dupe')))
                         subject to
                     cvx_end
                 else
