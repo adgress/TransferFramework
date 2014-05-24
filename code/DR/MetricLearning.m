@@ -122,7 +122,7 @@ classdef MetricLearning < DRMethod
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'maxComponents','useSim','useHinge'};
+            nameParams = {'maxComponents','useSim','useHinge','centerData'};
         end  
     end
     
