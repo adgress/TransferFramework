@@ -84,7 +84,7 @@ classdef MetricLearning < DRMethod
                 else
                     cvx_begin quiet
                         variable W(size(X1dupe,2),size(X2dupe,2))
-                        minimize(sum(sum(W.^2,2)) + reg*(trace(X1dupe*W*X2dupe').^2))
+                        minimize(sum(sum(W.^2,2)) + reg*(sum(diag(X1dupe*W*X2dupe').^2))
                         subject to
                     cvx_end
                 end
