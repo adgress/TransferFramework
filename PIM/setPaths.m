@@ -1,3 +1,3 @@
 addpath(genpath('code'));
 addpath(genpath('PIM/Data'));
-addpath(genpath('libraryCode/cvx2'));
+addpath(genpath('libraryCode/cvx'));

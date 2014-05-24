@@ -224,7 +224,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             methodName = obj.configs('methodClasses');
             methodName = methodName{1};
             drMethodPrefix = DRMethod.GetResultFileName(drMethodName,obj.configs,false);            
-            methodPrefix = Method.GetPrefix(methodName,obj.configs);
+            methodPrefix = Method.GetResultFileName(methodName,obj.configs,false);
             outputFileName = [getProjectDir() '/' outputDir drMethodPrefix ...
                 '-' methodPrefix '.mat'];
         end

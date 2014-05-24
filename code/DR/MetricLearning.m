@@ -69,7 +69,7 @@ classdef MetricLearning < DRMethod
                 r = sum(sum(W.^2));
                 %primValue = sum(sum(X1dupe*W*X2dupe'));
                 %[r reg]
-                if r < reg
+                if r+1 < reg
                     metadata.keepTuningReg = false;
                 end
             else
