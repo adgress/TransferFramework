@@ -7,6 +7,15 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [X] = AddBias(X)
+            X = [X ones(size(X,1),1)];
+        end
+        
+        function [Xp] = ApplyPCA(X,proj,mean)
+            Xcentered = X - repmat(mean,size(X,1),1);
+            Xp = Xcentered*proj;
+        end
+        
         function [dupeX] = DupeRows(X,numDupe)
             inds = zeros(sum(numDupe),1);
             index = 0;
