@@ -62,16 +62,29 @@ classdef Helpers < handle
             perf = sum(act == label & pred == act)/sum(act == label);
         end
         
-        function [minInds] = KNN(Xtrain,Xtest,k)
-            D = Helpers.CreateDistanceMatrix(Xtrain,Xtest);
-            minInds = zeros(size(Xtest,1),k);
+        function [bestInds] = KNN(Xtrain,Xtest,k,configs)
+            useSim = nargin >=4 && configs('useKNNSim');
+            if useSim
+                D = Xtrain*Xtest';
+            else
+                D = Helpers.CreateDistanceMatrix(Xtrain,Xtest);
+            end
+            bestInds = zeros(size(Xtest,1),k);
             for i=1:k
-                [~,inds] = min(D);
-                minInds(:,i) = inds';
+                if useSim
+                    [~,inds] = max(D);
+                else
+                    [~,inds] = min(D);
+                end
+                bestInds(:,i) = inds';
                 numTest = size(Xtest,1);
                 indMat = sparse(inds,1:numTest,true(numTest,1),size(D,1),size(D,2));
                 if i ~= k
-                    D(indMat) = Inf;
+                    if useSim
+                        D(indMat) = -Inf;
+                    else
+                        D(indMat) = Inf;
+                    end
                 end
             end
         end

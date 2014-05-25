@@ -55,14 +55,14 @@ classdef NearestNeighborMethod < Method
                     trainY = [trainY ; validate.getSubW(trainIndex,testIndex)];
                     train1 = [train1 ; validate.X{trainIndex}];
                 end
-                idxTrain = Helpers.KNN(train2,train1,k);
+                idxTrain = Helpers.KNN(train2,train1,k,obj.configs);
                 testResults.trainPredicted = idxTrain;                
                 assert(size(idxTrain,1) == size(trainY,1));
                 
                 test1 = test.X{trainIndex};
                 test2 = test.X{testIndex};
                 testY = test.getSubW(trainIndex,testIndex);
-                idxTest = Helpers.KNN(test2,test1,k);
+                idxTest = Helpers.KNN(test2,test1,k,obj.configs);
                 testResults.testPredicted = idxTest;
             else
                 error('Unknown Data Set type');
@@ -87,7 +87,7 @@ classdef NearestNeighborMethod < Method
             prefix = 'kNN';
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {'k'};
+            nameParams = {'k','useKNNSim'};
         end
         function [d] = getDirectory(obj)
             error('Do we save based on method?');
