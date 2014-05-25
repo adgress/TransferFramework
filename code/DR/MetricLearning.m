@@ -24,7 +24,8 @@ classdef MetricLearning < DRMethod
             X2 = full(trainX{setsToUse(2)});
             Wij = train.getSubW(setsToUse(1),setsToUse(2));
             
-                                         
+                              
+            addBias = obj.configs('addBias');
             if obj.configs('useNewCentering')
                 [~,X1mean] = Helpers.CenterData(X1);
                 [COEFF, SCORE, LATENT] = princomp(X1,'econ');
@@ -34,7 +35,15 @@ classdef MetricLearning < DRMethod
                 components = COEFF(:,1:numComponents);
                 
                 X1 = SCORE(:,1:numComponents);
+                
+                X2mean = zeros(1,size(X2,2));
+                if obj.configs('centerData')
+                    [X2,X2mean] = Helpers.CenterData(X2);
+                end                
                 X1dupe = full(Helpers.DupeRows(X1,sum(Wij,2)));
+                if addBias
+                    X1dupe = Helpers.AddBias(X1dupe);
+                end
                 X2dupe = full(Helpers.DupeRows(X2,sum(Wij,1)));
             else
                 X1dupe = full(Helpers.DupeRows(X1,sum(Wij,2)));
@@ -46,13 +55,15 @@ classdef MetricLearning < DRMethod
                 numComponents = min(numComponents,MAX_COMPONENTS);
                 components = COEFF(:,1:numComponents);
                 X1dupe = SCORE(:,1:numComponents);
+                X2mean = zeros(1,size(X2,2));
+                if obj.configs('centerData')
+                    [X2dupe,X2mean] = Helpers.CenterData(X2dupe);
+                end
             end
                    
             
-            X2mean = zeros(1,size(X2,2));
-            if obj.configs('centerData')
-                [X2dupe,X2mean] = Helpers.CenterData(X2dupe);
-            end
+            Wvec = Wij(:);
+            Wvec = Wvec(Wvec ~= 0);
             
             Wij_CL = (Wij == 0);
             
@@ -63,13 +74,13 @@ classdef MetricLearning < DRMethod
                     cvx_begin quiet
                         variable W(size(X1dupe,2),size(X2dupe,2))
                         %minimize(sum(sum(W.^2,2)) + reg*pow_pos(hinge(diag(X1dupe*W*X2dupe')),2))
-                        minimize(sum(sum(W.^2,2)) + reg*hinge(diag(X1dupe*W*X2dupe')))
+                        minimize(sum(sum(W.^2,2)) + reg*hinge(Wvec.*diag(X1dupe*W*X2dupe')))
                         subject to
                     cvx_end
                 else
                     cvx_begin quiet
                         variable W(size(X1dupe,2),size(X2dupe,2))
-                        minimize(sum(sum(W.^2,2)) + reg*(sum(diag(X1dupe*W*X2dupe').^2)))
+                        minimize(sum(sum(W.^2,2)) + reg*(sum(Wvec.*diag(X1dupe*W*X2dupe').^2)))
                         subject to
                     cvx_end
                 end
@@ -83,13 +94,18 @@ classdef MetricLearning < DRMethod
             end
             
             %display(['Primal Value: ' num2str(sum(sum((X1dupe*W-X2dupe).^2)))]);
-            projections = {components*W, eye(size(X2))};
+            projections = {W, eye(size(X2))};
             means = {X1mean, X2mean};
-
+            
+            projMeta = struct();
+            projMeta.pcaProj = cell(length(setsToUse));
+            projMeta.pcaProj{1} = components;
+            projMeta.pcaProj{2} = eye(size(X2));
+            projMeta.addBias = [addBias false];
             modData = struct();
-            modData.train = obj.applyProjection(train,setsToUse,projections,means);
-            modData.validate = obj.applyProjection(validate,setsToUse,projections,means);
-            modData.test = obj.applyProjection(test,setsToUse,projections,means);
+            modData.train = obj.applyProjection(train,setsToUse,projections,means,projMeta);
+            modData.validate = obj.applyProjection(validate,setsToUse,projections,means,projMeta);
+            modData.test = obj.applyProjection(test,setsToUse,projections,means,projMeta);
             
 
             centerData = obj.configs('centerData');            
@@ -106,7 +122,7 @@ classdef MetricLearning < DRMethod
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'maxComponents','useSim','useHinge','centerData','useNewCentering'};
+            nameParams = {'maxComponents','useSim','useHinge','centerData','useNewCentering','addBias'};
         end  
     end
     

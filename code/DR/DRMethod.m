@@ -18,7 +18,7 @@ classdef DRMethod < Saveable
             metadata = struct();
         end
         
-        function [modData] = applyProjection(obj,data,setsToUse,projections,means)
+        function [modData] = applyProjection(obj,data,setsToUse,projections,means,projMeta)
             if isempty(data)
                 modData = [];
                 return;
@@ -27,7 +27,18 @@ classdef DRMethod < Saveable
             for i=1:length(setsToUse)
                 X = data.X{setsToUse(i)};
                 X = Helpers.CenterData(X,means{i});
+                if nargin >= 6
+                    if isfield(projMeta,'pcaProj')
+                        proj = projMeta.pcaProj{i};
+                        X = X*proj;
+                    end
+                    if isfield(projMeta,'addBias') && projMeta.addBias(i);
+                        X = Helpers.AddBias(X);
+                    end
+                end
+                
                 X = X*projections{i};
+                
                 projectedData{i} = X;
             end
             modData = SimilarityDataSet(projectedData,data.getSubW(setsToUse));
