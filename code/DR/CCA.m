@@ -19,6 +19,7 @@ classdef CCA < DRMethod
             assert(length(setsToUse) == 2);
             Wij = train.getSubW(setsToUse(1),setsToUse(2));
             
+            assert(Helpers.IsBinary(Wij));
             X1 = trainX{setsToUse(1)};
             X2 = trainX{setsToUse(2)};
             X1dupe = Helpers.DupeRows(X1,sum(Wij,2));

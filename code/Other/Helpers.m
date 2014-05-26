@@ -15,7 +15,9 @@ classdef Helpers < handle
             Xcentered = X - repmat(mean,size(X,1),1);
             Xp = Xcentered*proj;
         end
-        
+        function [b] = IsBinary(W)
+            b = sum(W(:) == 1 | W(:) == 0) == numel(W);
+        end
         function [dupeX] = DupeRows(X,numDupe)
             inds = zeros(sum(numDupe),1);
             index = 0;
@@ -25,6 +27,11 @@ classdef Helpers < handle
                 index = index + k;
             end
             dupeX = X(inds,:);
+        end
+        function [dupeX] = DupeRowsForW(X,W)
+            isNonZero = W ~= 0;
+            numToDupe = sum(isNonZero,2);
+            dupeX = Helpers.DupeRows(X,numToDupe);
         end
         
         function [f] = MakeProjectURL(file)
