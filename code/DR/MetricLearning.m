@@ -26,6 +26,12 @@ classdef MetricLearning < DRMethod
             
                               
             addBias = obj.configs('addBias');
+            X1dupe = Helpers.DupeRows(X1,sum(Wij,2));
+            X2dupe = Helpers.DupeRows(X2,sum(Wij,1));
+            components = eye(size(X1,2));
+            X1mean = zeros(1,size(X1,2));
+            X2mean = zeros(1,size(X2,2));
+            %{
             if obj.configs('useNewCentering')
                 [~,X1mean] = Helpers.CenterData(X1);
                 [COEFF, SCORE, LATENT] = princomp(X1,'econ');
@@ -60,6 +66,7 @@ classdef MetricLearning < DRMethod
                     [X2dupe,X2mean] = Helpers.CenterData(X2dupe);
                 end
             end
+            %}
                    
             
             Wvec = Wij(:);

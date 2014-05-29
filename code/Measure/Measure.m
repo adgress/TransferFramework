@@ -10,7 +10,7 @@ classdef Measure < Saveable
             obj = obj@Saveable(configs);
         end
         function [measureResults] = evaluate(obj,split)
-            measureResults = struct();
+            measureResults = struct();            
             if size(split.trainActual,2) == 1
                 valTrain = sum(split.trainPredicted==split.trainActual)/...
                     numel(split.trainPredicted); 
@@ -40,9 +40,16 @@ classdef Measure < Saveable
                 valTrain = sum(trainIsCorrect(:))/numel(trainPredicted);
                 
                 testPredictedMat = logical(Helpers.createLabelMatrix(testPredicted));
-                t = split.testActual(:,1:size(testPredictedMat,2));
-                testIsCorrect = t(testPredictedMat);
-                valTest = sum(testIsCorrect(:))/numel(testPredicted);
+                n = size(testPredictedMat,1);
+                m = size(split.testActual,2) - size(testPredictedMat,2);
+                testPredictedMat = logical([testPredictedMat zeros(n,m)]);
+                testIsCorrect = split.testActual(testPredictedMat);
+                
+                numCorrect = sum(testIsCorrect(:));
+                total = sum(testPredictedMat(:) | split.testActual(:));
+                valTest = numCorrect/total;
+                
+                valTest = sum(testIsCorrect(:))/numel(testIsCorrect);
             end            
             measureResults.testPerformance = valTest;
             measureResults.trainPerformance = valTrain;

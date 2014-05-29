@@ -7,13 +7,19 @@ classdef SimilarityDataSet < handle
     
     methods
         function obj = SimilarityDataSet(X,W)
-            obj.X = X;
-            obj.W = W;            
-            numDataSets = length(X);            
-            obj.dataSetInds = [];
-            for i=1:numDataSets
-                n = size(obj.X{i},1);
-                obj.dataSetInds = [obj.dataSetInds ; i*ones(n,1)];
+            if isa(X,'SimilarityDataSet')
+                obj.X = X.X;
+                obj.W = X.W;
+                obj.dataSetInds = X.dataSetInds;
+            else
+                obj.X = X;
+                obj.W = W;            
+                numDataSets = length(X);            
+                obj.dataSetInds = [];
+                for i=1:numDataSets
+                    n = size(obj.X{i},1);
+                    obj.dataSetInds = [obj.dataSetInds ; i*ones(n,1)];
+                end
             end
             obj.verify();
         end
@@ -144,9 +150,12 @@ classdef SimilarityDataSet < handle
             end
             split = ones(numX,1);            
         end 
-        function [sampledTrain] = randomSampleInstances(obj,percTrain,trainIndex)
+        function [sampledTrain,kept] = randomSampleInstances(obj,percTrain,trainIndex,s)
+            if nargin < 4
+                s = 0;
+            end
             numInstances = size(obj.X{trainIndex},1);
-            rs = RandStream('mt19937ar','Seed',1);
+            rs = RandStream('mt19937ar','Seed',s);
             perm = rs.randperm(numInstances);
             toRemove = perm(1:floor((1-percTrain)*numInstances));
             shouldRemove = false(numInstances,1);
@@ -154,6 +163,7 @@ classdef SimilarityDataSet < handle
             
             sampledTrain = SimilarityDataSet(obj.X,obj.W);
             sampledTrain.removeData(shouldRemove,trainIndex);
+            kept = ~shouldRemove;
         end
         
         function sampledTrain = randomSampleRelations(obj,percTrain,trainIndex,testIndex)

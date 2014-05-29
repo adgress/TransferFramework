@@ -22,10 +22,13 @@ classdef CCA < DRMethod
             assert(Helpers.IsBinary(Wij));
             X1 = trainX{setsToUse(1)};
             X2 = trainX{setsToUse(2)};
-            X1dupe = Helpers.DupeRows(X1,sum(Wij,2));
-            X2dupe = Helpers.DupeRows(X2,sum(Wij,1));
-            [X1dupe,X1mean] = Helpers.CenterData(X1dupe);
+            
+            X2dupe = Helpers.DupeRows(X2,sum(Wij,1));            
             [X2dupe,X2mean] = Helpers.CenterData(X2dupe);
+            
+            X1dupe = Helpers.DupeRows(X1,sum(Wij,2));
+            %[X1dupe,X1mean] = Helpers.CenterData(X1dupe);
+            X1mean = zeros(1,size(X1dupe,2));
             
             reg = obj.configs('reg');
             numVecs = obj.configs('numVecs');
@@ -55,11 +58,11 @@ classdef CCA < DRMethod
                 ci = v2(:,i);
                 v2(:,i) = ci/sqrt(ci'*C22*ci);
             end   
-            v1 = v1(:,1:numVecs);
-            v2 = v2(:,1:numVecs);
+            nv = min(size(v1,2),numVecs);
+            v1 = v1(:,1:nv);
+            v2 = v2(:,1:nv);
             
-            modData = struct();
-            
+            modData = struct();                        
             projections = {v1, v2};
             means = {X1mean,X2mean};
             modData.train = obj.applyProjection(train,setsToUse,projections,means);            
@@ -67,7 +70,7 @@ classdef CCA < DRMethod
             modData.test = obj.applyProjection(test,setsToUse,projections,means);
             
             metadata = struct();
-            metadata.numVecs = numVecs;
+            metadata.numVecs = nv;
             metadata.reg = reg;
             metadata.projections = projections;
         end         

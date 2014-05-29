@@ -27,7 +27,7 @@ classdef HP < CCA
             numVecs = obj.configs('numVecs');
             centerData = obj.configs('centerData');
             options = struct();
-            options.reg = reg;
+            options.reg = reg;            
             
             if centerData == 1
                 [X1,X1mean] = Helpers.CenterData(X1);
@@ -42,6 +42,9 @@ classdef HP < CCA
             else
                 X1mean = zeros(1,size(X1,2));
                 X2mean = zeros(1,size(X2,2));
+                %X2dupe = Helpers.DupeRows(X2,sum(Wij,1));
+                %[~,X2mean] = Helpers.CenterData(X2dupe);
+                %X2 = Helpers.CenterData(X2);
             end
             
             
@@ -66,14 +69,15 @@ classdef HP < CCA
             v2 = K_21*v1;
             modData = struct();
             
-            projections = {v1(:,1:numVecs), v2(:,1:numVecs)};
+            nv = min(size(v1,2),numVecs);
+            projections = {v1(:,1:nv), v2(:,1:nv)};
             means = {X1mean,X2mean};
             modData.train = obj.applyProjection(train,setsToUse,projections,means);
             modData.validate = obj.applyProjection(validate,setsToUse,projections,means);
             modData.test = obj.applyProjection(test,setsToUse,projections,means);
             
             metadata = struct();
-            metadata.numVecs = numVecs;
+            metadata.numVecs = nv;
             metadata.reg = reg;
             metadata.projections = projections;
         end         
@@ -106,10 +110,14 @@ classdef HP < CCA
             %%Should we regularize here?
             if options.reg == 0 || size(C22,1) == 2
                 C22_inv = pinv(C22);
+                K = C22_inv*C21;
             else
-                C22_inv = inv(C22+(options.reg)*eye(size(C22)));
-            end
-            K = C22_inv*C21;
+                C22r = C22+(options.reg)*eye(size(C22));                
+                %C22_inv = inv(C22r);
+                %K = C22_inv*C21;
+                K = C22r\C21;
+            end            
+            
         end
         
         function [Q] = computeQ(obj,X1,X2,W,K)

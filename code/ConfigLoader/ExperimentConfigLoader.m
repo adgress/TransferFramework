@@ -43,6 +43,13 @@ classdef ExperimentConfigLoader < ConfigLoader
             inputFile = [inputDir '/' dataSet '.mat'];           
             obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
             obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
+            display('HACK for PIM');
+
+            X = obj.dataAndSplits.allData.X{1};
+            X2 = X(:,obj.dataAndSplits.metadata.imagesKept);
+            
+            obj.dataAndSplits.allData.X{1} = X2;            
+            
             obj.numSplits = obj.dataAndSplits.configs('numSplits');
             obj.createAllExperiments();
         end
@@ -63,7 +70,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             methodClass = str2func(experimentConfigs.methodClass);
             methodObject = methodClass(obj.configs);
             percTrain = experimentConfigs.trainSize;
-            [train,test,validate] = obj.getSplit(splitIndex);
+            [train,test,validate,featType] = obj.getSplit(splitIndex);
             numTrain = ceil(percTrain*size(train.X,1)); 
             emptyMetadata = struct();
             if isa(train,'DataSet')
@@ -74,13 +81,42 @@ classdef ExperimentConfigLoader < ConfigLoader
             elseif isa(train,'SimilarityDataSet')
                 trainIndex = obj.configs('trainSetIndex');
                 testIndex = obj.configs('testSetIndex');
-                data = struct();              
+                data = struct();
+                
                 if obj.configs('useStandardSampling')
-                    sampledTrain = train.randomSampleInstances(percTrain,trainIndex);
+                    [sampledTrain,keptTrain] = train.randomSampleInstances(percTrain,trainIndex,splitIndex);
+                    [sampledTrainCV,~] = train.randomSampleInstances(percTrain,trainIndex,splitIndex);
+                    [sampledValidate,keptValidate] = validate.randomSampleInstances(percTrain,trainIndex,splitIndex*10);
+                    [sampledValidateCV,~] = validate.randomSampleInstances(percTrain,trainIndex,splitIndex*10);
+                                        
+                    if obj.configs('justKeptFeatures')
+                        isTrainFeat = featType == Constants.TRAIN;
+                        isValidateFeat = featType == Constants.VALIDATE;
+                        trainFeatInds = find(isTrainFeat);
+                        validateFeatInds = find(isValidateFeat);                        
+                        trainFeatKept = trainFeatInds(keptTrain);
+                        validateFeatKept = validateFeatInds(keptValidate);
+                        cvFeats = trainFeatKept;
+
+                        sampledTrainCV.X{1} = sampledTrainCV.X{1}(:,cvFeats);
+                        sampledValidateCV.X{1} = sampledValidateCV.X{1}(:,cvFeats);
+
+                        %trainFeats = [trainFeatKept ; validateFeatKept];
+                        trainFeats = [trainFeatKept];
+
+                        sampledTrain.X{1} = sampledTrain.X{1}(:,trainFeats);
+                        sampledValidate.X{1} = sampledValidate.X{1}(:,trainFeats);
+                        test.X{1} = test.X{1}(:,trainFeats);
+                    end
                 else
-                    sampledTrain = train.randomSampleRelations(percTrain,trainIndex,testIndex);
+                    error('Update!');
+                    sampledTrain = train.randomSampleInstances(percTrain,trainIndex,testIndex);
+                    sampledValidate = validate.randomSampleInstances(percTrain,trainIndex);
                 end
-                data.train = sampledTrain; data.test = test; data.validate = validate;
+                if obj.configs('justKeptFeatures')
+                    
+                end             
+                data.train = sampledTrain; data.test = test; data.validate = sampledValidate;                
                 drMethodName = obj.configs('drMethod');
                 drMethodObj = DRMethod.ConstructObject(drMethodName,obj.configs);
                 cvParams = obj.configs('cvParams');
@@ -90,8 +126,8 @@ classdef ExperimentConfigLoader < ConfigLoader
                     obj.configs('measureClass'),obj.configs);
                 
                 cvData = struct();
-                cvData.train = sampledTrain;
-                cvData.test = validate;
+                cvData.train = sampledTrainCV;
+                cvData.test = sampledValidateCV;
                 cvData.validate = [];
                 assert(length(cvParams) <= 1);
                 for i=1:length(cvParams)
@@ -107,7 +143,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                         cvInput = ExperimentConfigLoader.CreateRunExperimentInput(...
                             projTrain,projTest,[],experimentConfigs,emptyMetadata);                        
                         if obj.configs('tuneNumVecs')
-                            maxVecs = obj.configs('numVecs');
+                            maxVecs = min(obj.configs('numVecs'),size(projTrain.X{trainIndex},2));
                             numVecsResults = cell(maxVecs,1);
                             numVecsAcc = zeros(maxVecs,1);
                             origTrainX = cvInput.train.X;
@@ -147,11 +183,12 @@ classdef ExperimentConfigLoader < ConfigLoader
                     end
                     paramAcc
                     if obj.configs('tuneNumVecs')
-                        bestNumVecs
+                        %bestNumVecs
                     end
                     [~,bestInd] = max(paramAcc);
                     drMethodObj.configs(param) = paramVals{bestInd};    
                     drMethodObj.configs('numVecs') = bestNumVecs(bestInd);
+                    
                 end                
                 [modData,drMetadata] = drMethodObj.performDR(data);
                 projTrain = modData.train; projTest = modData.test; projValidate = modData.validate;
@@ -182,14 +219,28 @@ classdef ExperimentConfigLoader < ConfigLoader
             end
         end
         
-        function [train,test,validate] = getSplit(obj,index)
+        function [train,test,validate,featType] = getSplit(obj,index)
             split = obj.dataAndSplits.allSplits{index};
             dataSet = obj.dataAndSplits.allData;
             if isa(dataSet,'DataSet')
                 [train,test,validate] = dataSet.splitDataSet(split);
             elseif isa(dataSet,'SimilarityDataSet')
                 ind = obj.dataAndSplits.metadata.splitIndex;
+                
                 [dataSets] = dataSet.createDataSetsWithSplit(split,ind);
+                if obj.configs('justKeptFeatures')
+                    trainInds = find(split == Constants.TRAIN);
+                    validateInds = find(split == Constants.VALIDATE);
+                    inds = [ trainInds; validateInds];
+                    featType = [Constants.TRAIN*ones(length(trainInds),1) ; ...
+                        Constants.VALIDATE*ones(length(validateInds),1)];
+                    display('Hack for PIM!');
+                    for i=1:length(dataSets)
+                        Xi = dataSets{i}.X{1};
+                        Xi = Xi(:,inds);
+                        dataSets{i}.X{1} = Xi;
+                    end
+                end
                 train = dataSets{Constants.TRAIN};
                 test = dataSets{Constants.TEST};
                 validate = dataSets{Constants.VALIDATE};
@@ -216,7 +267,14 @@ classdef ExperimentConfigLoader < ConfigLoader
                 keys,obj.configs);
         end
         function [outputFileName] = getOutputFileName(obj)
-            outputDir = [obj.configs('outputDir') '/' obj.configs('dataSet') '/'];
+            outputDir = [obj.configs('outputDir')  '/'];            
+            outputDir = [outputDir obj.configs('dataSet') '/'];
+            if ~exist(outputDir,'dir')
+                mkdir(outputDir);
+            end
+            if obj.configs('justKeptFeatures')                
+                outputDir = [outputDir '/justKeptFeatures/'];
+            end
             if ~exist(outputDir,'dir')
                 mkdir(outputDir);
             end
