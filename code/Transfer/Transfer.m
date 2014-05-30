@@ -6,8 +6,6 @@ classdef Transfer < Saveable
         
     end
     properties
-        %TODO: Get rid of this
-        configs
     end
     
     methods

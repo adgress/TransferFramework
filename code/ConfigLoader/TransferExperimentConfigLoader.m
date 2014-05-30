@@ -89,7 +89,16 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             metadata.numClasses = max(test.Y);
         end
         function [outputFileName] = getOutputFileName(obj)
-            outputDir = [obj.configs('outputDir') '/' obj.configs('dataSet') '/'];
+            s = getProjectConstants();            
+            outputDir = [s.projectDir '/' obj.configs('outputDir') '/' ];
+            if obj.configs('useMeanSigma')
+                outputDir = [outputDir 'useMeanSigma/'];
+                if ~exist(outputDir,'dir')
+                    mkdir(outputDir);
+                end
+            end
+            outputDir = [outputDir obj.configs('dataSet') '/'];
+                
             if ~exist(outputDir,'dir')
                 mkdir(outputDir);
             end
@@ -103,7 +112,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             transferDir = obj.configs('transferDir');
             transferClassName = obj.configs('transferMethodClass');
             transferSaveFileName = Transfer.GetResultFileName(...
-                transferClassName,obj.configs);
+                transferClassName,obj.configs,false);
             transferFileName = [transferDir transferSaveFileName '_' ...
                 dataSet '.mat'];
         end        

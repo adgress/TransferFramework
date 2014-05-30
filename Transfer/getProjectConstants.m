@@ -1,4 +1,4 @@
 function [s] = getProjectConstants()
     s = struct();
-    s.projectDir = 'PIM';
+    s.projectDir = 'Transfer';
 end

@@ -3,7 +3,6 @@ classdef TransferMeasure < Saveable
     %   Detailed explanation goes here
     
     properties
-        configs
     end
     
     methods

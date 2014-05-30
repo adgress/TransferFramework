@@ -43,13 +43,13 @@ classdef ExperimentConfigLoader < ConfigLoader
             inputFile = [inputDir '/' dataSet '.mat'];           
             obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
             obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
-            display('HACK for PIM');
-
-            X = obj.dataAndSplits.allData.X{1};
-            X2 = X(:,obj.dataAndSplits.metadata.imagesKept);
             
-            obj.dataAndSplits.allData.X{1} = X2;            
-            
+            if isa(obj.dataAndSplits,'SimilarityDataSet')
+                X = obj.dataAndSplits.allData.X{1};
+                X2 = X(:,obj.dataAndSplits.metadata.imagesKept);
+                obj.dataAndSplits.allData.X{1} = X2;            
+                display('HACK for PIM');
+            end
             obj.numSplits = obj.dataAndSplits.configs('numSplits');
             obj.createAllExperiments();
         end

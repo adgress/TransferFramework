@@ -85,7 +85,15 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
         end                       
         
         function [outputFileName] = getOutputFileName(obj)
-            outputDir = [obj.configs('outputDir') '/' obj.configs('dataSet')];
+            s = getProjectConstants();            
+            outputDir = [s.projectDir '/' obj.configs('outputDir') '/' ];
+            if obj.configs('useMeanSigma')
+                outputDir = [outputDir 'useMeanSigma/'];
+                if ~exist(outputDir,'dir')
+                    mkdir(outputDir);
+                end
+            end
+            outputDir = [outputDir obj.configs('dataSet') '/'];
             if ~exist(outputDir,'dir')
                 mkdir(outputDir);
             end
