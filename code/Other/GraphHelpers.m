@@ -69,12 +69,12 @@ classdef GraphHelpers
             percCorrect = sum(Ypred == Yactual)/n;
         end
         function [sigma,bestScore,bestAcc] = autoSelectSigma(W,Y,isTrain,useMeanSigma,useHF,type)
-            meanDistance = mean(W(:))^2;
+            meanDistance = mean(W(:));
             
             if nargin < 6
                 useHF = false;
             end
-            expVals = -3:3;
+            expVals = -1:1;
             if useMeanSigma
                 expVals = 0;
             end

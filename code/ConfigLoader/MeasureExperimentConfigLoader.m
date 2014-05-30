@@ -57,9 +57,9 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
         end
         function [outputFileName] = getOutputFileName(obj)
             s = getProjectConstants();            
-            outputDir = [s.projectDir '/' obj.configs('outputDir') '/' ];
+            outputDir = [s.projectDir '/' obj.configs('outputDir')];
             if obj.configs('useMeanSigma')
-                outputDir = [outputDir 'useMeanSigma/'];
+                outputDir = [outputDir '-useMeanSigma/'];
                 if ~exist(outputDir,'dir')
                     mkdir(outputDir);
                 end
