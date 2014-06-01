@@ -2,7 +2,7 @@ function [] = runBatchExperiment(multithread, dataset)
     setPaths;
     configFiles = {};
     runBaseline = 1;
-    runMeasures = 0;
+    runMeasures = 1;
     runRepair = 0;
     
     batchCommon = 'config/batch/batchCommon.cfg';
