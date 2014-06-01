@@ -19,7 +19,7 @@ function [] = runBatchExperiment(multithread, dataset)
     if runMeasures
         configFiles{end+1} = 'config/measure/batchNN.cfg';
         configFiles{end+1} = 'config/measure/batchLLGC.cfg';
-        configFiles{end+1} = 'config/measue/batchHF.cfg';             
+        configFiles{end+1} = 'config/measure/batchHF.cfg';             
     end
     if runRepair
         configFiles{end+1} = 'config/repair/batchFuseLLGC.cfg';
