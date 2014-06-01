@@ -96,6 +96,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 if ~exist(outputDir,'dir')
                     mkdir(outputDir);
                 end
+            else
+                outputDir = [outputDir '/'];
             end
             outputDir = [outputDir obj.configs('dataSet') '/'];
                 

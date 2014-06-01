@@ -63,6 +63,8 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
                 if ~exist(outputDir,'dir')
                     mkdir(outputDir);
                 end
+            else
+                outputDir = [outputDir '/'];
             end
             outputDir = [outputDir obj.configs('dataSet') '/'];
             if ~exist(outputDir,'dir')

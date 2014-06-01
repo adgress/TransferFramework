@@ -74,7 +74,7 @@ classdef GraphHelpers
             if nargin < 6
                 useHF = false;
             end
-            expVals = -1:1;
+            expVals = -3:3;
             if useMeanSigma
                 expVals = 0;
             end

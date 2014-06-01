@@ -5,6 +5,11 @@ function [] = runVisualization(dataset)
     end    
     close all
     
+    showBaselines = 1;
+    showMeasures = 0;
+    showRepair = 0;
+    numColors = 6;
+    
     
     if dataset == Constants.CV_DATA
         axisToUse = [0 5 0 2];
@@ -37,13 +42,8 @@ function [] = runVisualization(dataset)
     
     baselineFiles = {'TO.mat'};    
     fileNames = {};
+        
     
-    showBaselines = 1;
-    showAdvanced10 = 0;
-    showAdvanced20 = 0;
-    showMeasures = 1;
-    
-    showRepair = 0;
     if showRepair
         showBaselines = 0;
         showMeasures = 0;
@@ -71,14 +71,6 @@ function [] = runVisualization(dataset)
         %fileNames{end+1} = 'TO.mat';
         %fileNames{end+1} = 'SO.mat';
         fileNames{end+1} = 'S+T.mat';
-    end
-    if showAdvanced10
-        %fileNames{end+1} = 'GFK_d=10_usePLS=1.mat';
-        %fileNames{end+1} = 'SA_d=10_usePLS=0.mat';
-    end
-    if showAdvanced20
-        fileNames{end+1} = 'GFK_d=20_usePLS=1.mat';
-        fileNames{end+1} = 'SA_d=20_usePLS=0.mat';
     end
     if showMeasures
         %fileNames{end+1} = 'TDAS_autoEps=2.mat';
@@ -131,6 +123,7 @@ function [] = runVisualization(dataset)
             options.binPerformance = binPerformance;
             options.numLabelsToUse = numLabelsToUse;
             options.showRepair = showRepair;
+            options.numColors = numColors;
             if options.showRepair
                 options.yAxisDisplay = 'Measure/Accuracy';
                 options.xAxisDisplay = 'Num Iterations';
