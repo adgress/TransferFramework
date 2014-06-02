@@ -115,7 +115,7 @@ classdef ConfigLoader < handle
                 end
                 e.(key) = configs(key);
             end
-            
+            %{
             allExps = {e};
             for i=1:numel(keys)
                 key = keys{i};
@@ -136,6 +136,24 @@ classdef ConfigLoader < handle
                 allExps = newExperiments;
             end
             experiments= allExps;
+            %}
+            allExps = {e};
+                        
+            for i=1:numel(keys)
+                key = keys{i};
+                values = configs(key);
+                newExperiments = {};
+                for j=1:numel(values)
+                    val = values(j);
+                    for k=1:numel(allExps)
+                        e = allExps{k};
+                        e.(key) = val;
+                        newExperiments{end+1} = e;
+                    end
+                end
+                allExps = newExperiments;
+            end
+            experiments= allExps;                        
         end
     end
     methods(Access=private)

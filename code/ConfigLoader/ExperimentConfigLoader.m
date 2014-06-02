@@ -7,6 +7,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         dataAndSplits   
         allExperiments
         numSplits
+        methodClasses
     end
     
     methods
@@ -265,26 +266,80 @@ classdef ExperimentConfigLoader < ConfigLoader
             end
             obj.allExperiments = ConfigLoader.StaticCreateAllExperiments(paramKeys,...
                 keys,obj.configs);
+            obj.methodClasses = obj.configs('methodClasses');                        
         end
         function [outputFileName] = getOutputFileName(obj)
-            outputDir = [obj.configs('outputDir')  '/'];            
-            outputDir = [outputDir obj.configs('dataSet') '/'];
-            if ~exist(outputDir,'dir')
-                mkdir(outputDir);
+            warning off;
+            s = getProjectConstants();            
+            outputDir = [s.projectDir '/' obj.configs('outputDir')];
+            
+            if isKey(obj.configs,'useMeanSigma') && obj.configs('useMeanSigma')
+                outputDir = [outputDir '-useMeanSigma/'];
+            else
+                outputDir = [outputDir '/'];
             end
-            if obj.configs('justKeptFeatures')                
+            mkdir(outputDir);
+            if isKey(obj.configs,'dataSet')
+                outputDir = [outputDir '/' obj.configs('dataSet')];                
+                mkdir(outputDir);
+            end            
+            if isKey(obj.configs,'justKeptFeatures') && obj.configs('justKeptFeatures')                
                 outputDir = [outputDir '/justKeptFeatures/'];
-            end
-            if ~exist(outputDir,'dir')
                 mkdir(outputDir);
+            end                         
+            outputDir = [outputDir '/'];
+            outputFileName = outputDir;
+            
+            prependHyphen = false;
+            if isKey(obj.configs,'postTransferMeasures')
+                measures = obj.configs('postTransferMeasures');
+                if length(measures) > 0
+                    outputDir = [outputDir '/TM/'];
+                    mkdir(outputDir);
+                    measureClass = str2func(measures{1});
+                    measureObject = measureClass(obj.configs);
+                    %measureFileName = measureObject.getResultFileName();                
+                    measurePrefix = measureObject.getPrefix();                
+                    [outputFileName] = obj.appendToName(outputDir,measurePrefix,prependHyphen);
+                    prependHyphen = true;
+                end
+            end            
+            warning on;
+            if isKey(obj.configs,'drMethod')
+                error('Update!!!');
+                drMethodName = obj.configs('drMethod');
+                drMethodPrefix = DRMethod.GetResultFileName(drMethodName,obj.configs,false);
+                outputFileName = [outputFileName drMethodPrefix];                
+                prependHyphen = true;
             end
-            drMethodName = obj.configs('drMethod');
-            methodName = obj.configs('methodClasses');
-            methodName = methodName{1};
-            drMethodPrefix = DRMethod.GetResultFileName(drMethodName,obj.configs,false);            
-            methodPrefix = Method.GetResultFileName(methodName,obj.configs,false);
-            outputFileName = [getProjectDir() '/' outputDir drMethodPrefix ...
-                '-' methodPrefix '.mat'];
+            if isKey(obj.configs,'transferMethodClass')
+                transferClass = str2func(obj.configs('transferMethodClass'));
+                transferObject = transferClass(obj.configs);
+                %transferMethodPrefix = transferObject.getResultFileName(obj.configs);
+                transferMethodPrefix = transferObject.getPrefix();
+                [outputFileName] = obj.appendToName(outputFileName,transferMethodPrefix,prependHyphen);
+                prependHyphen = true;
+            end
+            if isKey(obj.configs,'repairMethod')
+                repairClassName = obj.configs('repairMethod');
+                repairFileName = TransferRepair.GetResultFileName(repairClassName,obj.configs);
+                [outputFileName] = obj.appendToName(outputFileName,repairFileName,prependHyphen);
+                prependHyphen = true;
+            end            
+            if ~isa(obj,'MeasureExperimentConfigLoader') && isKey(obj.configs,'methodName')
+                methodName = obj.configs('methodName');            
+                methodPrefix = Method.GetResultFileName(methodName,obj.configs,false);
+                [outputFileName] = obj.appendToName(outputFileName,methodPrefix,prependHyphen);
+                prependHyphen = true;
+            end            
+            outputFileName = [outputFileName '.mat'];
+        end
+        function [outputFileName] = appendToName(obj,fileName,s,prependHyphen)
+            if prependHyphen
+                outputFileName = [fileName '-' s];
+            else
+                outputFileName = [fileName s];
+            end
         end
         function [savedDataFileName] = getSavedDataFileName(obj)
             savedDataFileName = '';

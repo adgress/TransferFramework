@@ -9,8 +9,9 @@ classdef HFMethod < Method
         function obj = HFMethod(configs)
             obj = obj@Method(configs);
         end
+        
         function [testResults,metadata] = ...
-                trainAndTest(obj,input)
+                trainAndTestGraphMethod(obj,input,useHF)
             train = input.train;
             test = input.test;
             %validate = input.validate;
@@ -42,41 +43,68 @@ classdef HFMethod < Method
                 W = Helpers.CreateDistanceMatrix(Xall);
                 W = DistanceMatrix(W,Y,type);
             end
-            [W,Y,isTest,type] = W.prepareForHF();
-            useCV = true;
-            useHF = true;
-            if ~useHF
-                display('HFMethod: Not using HF to select sigma');
+            if useHF
+                [W,Y,isTest,type] = W.prepareForHF();
+                Y_testCleared = Y;
+                Y_testCleared(isTest) = -1;
+                sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,obj.configs('useMeanSigma'),useHF,type);
+                W = Helpers.distance2RBF(K,sigma);
+                %TODO: Why was this "working" earlier?
+                %W = Kernel.RBFKernel(W,sigma);
+                isTrainLabeled = Y > 0 & ~isTest;
+                assert(~issorted(isTrainLabeled));
+                YTrain = Y(isTrainLabeled);
+                YLabelMatrix = Helpers.createLabelMatrix(YTrain);
+                addpath(genpath('libraryCode'));
+                [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);
+            else
+                isTest = type == Constants.TARGET_TEST;
+                Y_testCleared = Y;
+                Y_testCleared(isTest) = -1;
+                Ymat = full(Helpers.createLabelMatrix(Y_testCleared));
+                sigma = GraphHelpers.autoSelectSigma(W.W,...
+                    Y_testCleared,...
+                    ~isTest,...
+                    obj.configs('useMeanSigma'),useHF,type);
+                W = Helpers.distance2RBF(W.W,sigma);
+                %W = Kernel.RBFKernel(W.W,sigma);
+                [fu] = llgc(W, Ymat);
             end
-            Y_testCleared = Y;
-            Y_testCleared(isTest) = -1;
-            sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,useCV,useHF,type);
             metadata = struct();
             metadata.sigma = sigma;
-            W = Kernel.RBFKernel(W,sigma);
-            isTrainLabeled = Y > 0 & ~isTest;
-            assert(~issorted(isTrainLabeled));
-            YTrain = Y(isTrainLabeled);
-            YLabelMatrix = Helpers.createLabelMatrix(YTrain);
-            addpath(genpath('libraryCode'));
-            [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);
             [~,predicted] = max(fu,[],2);
-            %[~,predicted] = max(fu_CMN,[],2);
             numNan = sum(isnan(fu(:)));
             if numNan > 0
                 display(['numNan: ' num2str(numNan)]);
             end
-            isYTest = Y > 0 & isTest;
-            YTest = Y(isYTest);            
-            numTrainLabeled = sum(isTrainLabeled);
-            predicted = predicted(isYTest(numTrainLabeled+1:end));
+            if useHF
+                isYTest = Y > 0 & isTest;
+                YTest = Y(isYTest);            
+                numTrainLabeled = sum(isTrainLabeled);
+                predicted = predicted(isYTest(numTrainLabeled+1:end));                
+            else
+                isYTest = Y > 0 & type == Constants.TARGET_TEST;
+                YTest = Y(isYTest);
+                predicted = predicted(isYTest);
+            end
             val = sum(predicted == YTest)/...
-                length(YTest);
-            display(['HFMethod Acc: ' num2str(val)]);
+                    length(YTest);
+            if useHF
+                display(['HFMethod Acc: ' num2str(val)]);
+            else
+                display(['LLGCMethod Acc: ' num2str(val)]);
+            end
             testResults.testPredicted = predicted;
             testResults.testActual = YTest;
             testResults.trainActual = train.Y;
             testResults.trainPredicted = train.Y;
+        end
+        
+        function [testResults,metadata] = ...
+                trainAndTest(obj,input)
+            useHF = true;
+            [testResults,metadata] = ...
+                trainAndTestGraphMethod(obj,input,useHF)
         end
         function [prefix] = getPrefix(obj)
             prefix = 'HF';

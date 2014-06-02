@@ -88,6 +88,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             metadata.numTest = numel(test.Y);
             metadata.numClasses = max(test.Y);
         end
+        %{
         function [outputFileName] = getOutputFileName(obj)
             s = getProjectConstants();            
             outputDir = [s.projectDir '/' obj.configs('outputDir')];
@@ -109,6 +110,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             transferMethodPrefix = transferObject.getResultFileName(obj.configs);
             outputFileName = [outputDir transferMethodPrefix '.mat'];
         end
+        %}
         function [transferFileName] = getTransferFileName(obj)
             dataSet = obj.configs('dataSet');
             transferDir = obj.configs('transferDir');

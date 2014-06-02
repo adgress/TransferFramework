@@ -32,7 +32,10 @@ classdef Kernel < handle
             K = (X * X').^d;
         end
         
-        function [K] = RBFKernel(X,sigma)            
+        function [K] = RBFKernel(X,sigma)  
+            %A hacky check to make sure this isn't already a distance
+            %matrix
+            assert(size(X,1) ~= size(X,2));
             n=size(X,1);
             K = Helpers.CreateDistanceMatrix(X);
             K = Helpers.distance2RBF(K,sigma);

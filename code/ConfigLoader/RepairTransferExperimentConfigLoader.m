@@ -83,7 +83,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                 results.repairResults{i} = repairResults;
             end
         end                       
-        
+        %{
         function [outputFileName] = getOutputFileName(obj)
             s = getProjectConstants();            
             outputDir = [s.projectDir '/' obj.configs('outputDir')];
@@ -109,7 +109,8 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             transferPrefix = Transfer.GetPrefix(transferClassName,obj.configs);
             repairFileName = TransferRepair.GetResultFileName(repairClassName,obj.configs);
             outputFileName = [outputDir repairFileName '-' methodPrefix '-' transferPrefix '.mat'];
-        end          
+        end      
+        %}
     end 
 end
 

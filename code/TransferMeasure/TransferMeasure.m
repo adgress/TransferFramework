@@ -49,7 +49,7 @@ classdef TransferMeasure < Saveable
                 type = type(isTarget);
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);            
-            end
+            end  
             [sigma,score,percCorrect] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,type);            
             metadata.sigma = sigma;
             rerunLOOCV = 1;

@@ -87,7 +87,7 @@ classdef NearestNeighborMethod < Method
             prefix = 'kNN';
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {'k','useKNNSim'};
+            nameParams = {'k'};
         end
         function [d] = getDirectory(obj)
             error('Do we save based on method?');

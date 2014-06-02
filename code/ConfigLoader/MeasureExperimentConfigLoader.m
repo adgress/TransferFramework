@@ -55,6 +55,7 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             results.metadata = obj.constructResultsMetadata(sources,...
                 sampledTrain,test,numPerClass);            
         end
+        %{
         function [outputFileName] = getOutputFileName(obj)
             s = getProjectConstants();            
             outputDir = [s.projectDir '/' obj.configs('outputDir')];
@@ -81,6 +82,7 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             outputFileName = [outputDir measureFileName ...
                 '_' methodPrefix '.mat'];
         end
+        %}
     end
     
 end

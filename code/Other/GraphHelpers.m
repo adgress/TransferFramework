@@ -50,11 +50,13 @@ classdef GraphHelpers
                     ind = labeledTargetInds(i);                    
                     yi = Ymat(ind,:);
                     Ymat(ind,:) = 0;
+                    warning off;
                     if i==1
                         [fu,invM] = llgc(W,Ymat);
                     else
                         [fu,~] = llgc(W,Ymat,invM);
                     end
+                    warning on;
                     Yactual_i = Yactual(i);
                     Yscore(i) = fu(ind,Yactual_i);
                     [~,Ypred(i)] = max(fu(ind,:));
@@ -98,51 +100,7 @@ classdef GraphHelpers
             
             %scores'
             %percCorrect'
-        end
-        function [sigma] = selectBestSigma(W,Ytrain,Ytest,sigmas,useHF)
-            scores = zeros(1,length(sigmas));
-            percCorrect = scores;            
-            if useHF
-                YtrainMat = Helpers.createLabelMatrix(Ytrain); 
-            else
-                Yactual = [Ytrain ; Ytest];
-                isTrain = ...
-                    logical([ones(size(Ytrain)) ; zeros(size(Ytest))]);
-                labeledTest = Yactual > 0 & ~isTrain;                
-                Y = [Ytrain ; -1*ones(size(Ytest))];
-                YtrainMat = Helpers.createLabelMatrix(Y);
-            end
-            for i=1:length(sigmas)                
-                s = sigmas(i);
-                K = Helpers.distance2RBF(W,s);  
-                if useHF                    
-                    warning off;                
-                    [fu, fu_CMN] = harmonic_function(K, YtrainMat);
-                    warning on;
-                    fuCV = fu(1:length(Ytest),:);
-                    fuCMNCV = fu_CMN(1:length(Ytest),:);
-                    fu_test = fuCMNCV;
-                    [percCorrect(i),scores(i)] = Helpers.getAccuracy(fu_test,...
-                        Ytest);
-                else                                            
-                    warning off;
-                    [fu] = llgc(K, YtrainMat);
-                    warning on;
-                    [percCorrect(i),scores(i)] = Helpers.getAccuracy(...
-                        fu(labeledTest,:),Yactual(labeledTest));
-                end                
-            end
-            [bestAcc,bestAccInd] = max(percCorrect);
-            [bestScore,bestScoreInd] = max(scores);
-            %[bestAcc bestScore]
-            %assert(bestAccInd == bestScoreInd);
-            %percCorrect
-            %scores
-            sigma = sigmas(bestAccInd);
-        end
-        function [] = asdf()
-            
-        end
+        end        
     end
     
 end
