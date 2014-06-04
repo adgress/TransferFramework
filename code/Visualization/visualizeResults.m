@@ -83,31 +83,43 @@ function [f] = visualizeResults(options,f)
                 leg{index} = [learnerName ':' 'Repaired Acc'];
                 index = index+1;
             else
-                sizes = getSizes(results,options.xAxisField);
-                if isfield(options,'binPerformance') && options.binPerformance
-                    if hasPostTM
-                        measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
-                        measures = configs.getPostTransferMeasures();
-                        dispName = TransferMeasure.GetDisplayName(measures{1},configs.configs);
-                        leg{index} = [learnerName ';' dispName];
-                        index = index + 1;
-                    elseif hasTestResults
-                        transferPerfVals = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
+                if length(configs.configs('trainSize')) > 1
+                    sizes = getSizes(results,options.xAxisField);
+                    if isfield(options,'binPerformance') && options.binPerformance
+                        if hasPostTM
+                            measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
+                            measures = configs.getPostTransferMeasures();
+                            dispName = TransferMeasure.GetDisplayName(measures{1},configs.configs);
+                            leg{index} = [learnerName ';' dispName];
+                            index = index + 1;
+                        elseif hasTestResults
+                            transferPerfVals = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
+                        else
+                            error('');
+                        end
+                    elseif options.showRelativePerformance && hasTestResults
+                        [index,leg] = plotRelativePerformance(options,...
+                            baselineFiles,results,sizes,configs,colors,index,learnerName,leg);
                     else
-                        error('');
+                        if hasTestResults
+                            [index,leg] = plotTestResults(options,results,sizes,colors,...
+                                index,learnerName,leg);
+                        end
+                        if hasPostTM || hasPreTM
+                            [index,leg] = plotMeasures(options,results,sizes,configs,...
+                                hasPostTM,hasPreTM,colors,index,learnerName,leg);
+                        end
                     end
-                elseif options.showRelativePerformance && hasTestResults
-                    [index,leg] = plotRelativePerformance(options,...
-                        baselineFiles,results,sizes,configs,colors,index,learnerName,leg);
+                elseif length(configs.configs('numVecs')) > 1
+                    numVecs = configs.configs('numVecs');
+                    [index,leg] = plotTestResults(options,results,numVecs,colors,...
+                                index,learnerName,leg);
+                elseif length(configs.configs('tau')) > 1
+                    tau = configs.configs('tau');
+                    [index,leg] = plotTestResults(options,results,tau,colors,...
+                                index,learnerName,leg);
                 else
-                    if hasTestResults
-                        [index,leg] = plotTestResults(options,results,sizes,colors,...
-                            index,learnerName,leg);
-                    end
-                    if hasPostTM || hasPreTM
-                        [index,leg] = plotMeasures(options,results,sizes,configs,...
-                            hasPostTM,hasPreTM,colors,index,learnerName,leg);
-                    end
+                    error('What should we visualize?');
                 end
             end
             if ~hasTestResults
@@ -229,13 +241,15 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
         vars = getVariances(resultsToUse,'testResults',-1);
         means = getMeans(resultsToUse,'testResults',-1);
     end
-    errorbar(sizes,means,vars,'color',colors(index,:));
-    legName = learnerName;
-    if options.showTrain
-        legName = [learnerName ', Test'];
+    if options.showTest
+        errorbar(sizes,means,vars,'color',colors(index,:));
+        legName = learnerName;
+        if options.showTrain
+            legName = [learnerName ', Test'];
+        end
+        leg{index} = legName;
+        index = index+1;
     end
-    leg{index} = legName;
-    index = index+1;
     if options.showTrain
         vars = getVariances(resultsToUse,'trainResults',-1);
         means = getMeans(resultsToUse,'trainResults',-1);

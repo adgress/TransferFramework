@@ -84,7 +84,10 @@ classdef CCA < DRMethod
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'numVecs'};
+            nameParams = {};
+            if length(obj.configs('numVecs')) == 1
+                nameParams = {'numVecs'};
+            end
         end                
     end
     

@@ -45,7 +45,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
             obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
             
-            if isa(obj.dataAndSplits,'SimilarityDataSet')
+            if isa(obj.dataAndSplits.allData,'SimilarityDataSet')
                 X = obj.dataAndSplits.allData.X{1};
                 X2 = X(:,obj.dataAndSplits.metadata.imagesKept);
                 obj.dataAndSplits.allData.X{1} = X2;            
@@ -68,6 +68,10 @@ classdef ExperimentConfigLoader < ConfigLoader
         function [results, metadata] = ...
                 runExperiment(obj,experimentIndex,splitIndex,metadata)            
             experimentConfigs = obj.allExperiments{experimentIndex};
+            f = fields(experimentConfigs);
+            for i=1:length(f)
+                obj.configs(f{i}) = experimentConfigs.(f{i});
+            end
             methodClass = str2func(experimentConfigs.methodClass);
             methodObject = methodClass(obj.configs);
             percTrain = experimentConfigs.trainSize;
@@ -260,6 +264,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         function [] = createAllExperiments(obj)
             paramKeys= {'k'};
             keys = {'trainSize'};
+            keys{end+1} = 'numVecs';
             if isKey(obj.configs,'numPerClass')
                 keys = {'numPerClass'};
             end
@@ -285,7 +290,15 @@ classdef ExperimentConfigLoader < ConfigLoader
             if isKey(obj.configs,'justKeptFeatures') && obj.configs('justKeptFeatures')                
                 outputDir = [outputDir '/justKeptFeatures/'];
                 mkdir(outputDir);
-            end                         
+            end
+            if length(obj.configs('numVecs')) > 1
+                outputDir = [outputDir '/numVecsExp/'];
+                mkdir(outputDir);
+            end
+            if length(obj.configs('tau')) > 1
+                outputDir = [outputDir '/tauExp/'];
+                mkdir(outputDir);
+            end
             outputDir = [outputDir '/'];
             outputFileName = outputDir;
             

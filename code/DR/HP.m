@@ -18,7 +18,7 @@ classdef HP < CCA
             setsToUse = obj.configs('setsToUse');
             trainX = train.X(setsToUse);
             assert(length(setsToUse) == 2 ||...
-                length(setsToUse) == 3);
+                (length(setsToUse) == 3 && obj.configs('useLocs')));
                     
             numSets = length(setsToUse);
             K = cell(numSets,1);
@@ -26,7 +26,8 @@ classdef HP < CCA
                 X1 = trainX{setsToUse(1)};
                 X2 = trainX{setsToUse(i)};   
                 Wij = train.getSubW(setsToUse(1),setsToUse(i));
-
+                m = sum(abs(Wij(:)));
+                Wij = Wij ./ m;
                 reg = obj.configs('reg');
                 numVecs = obj.configs('numVecs');
                 centerData = obj.configs('centerData');
@@ -57,9 +58,9 @@ classdef HP < CCA
                 end
                 Q = Q + Q_12;
                 K{i} = K_21;
-                B = B + X1'*diag(sum(Wij,2))*X1+reg*eye(size(B));
+                B = B + X1'*diag(sum(Wij,2))*X1;
             end
-            
+            B = B+reg*eye(size(B));
             if obj.configs('useIdentity')                
                 B = eye(size(Q));
             end
@@ -190,7 +191,10 @@ classdef HP < CCA
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'useLocs','useIdentity','centerData','numVecs'};
+            nameParams = {'useLocs','useIdentity','centerData'};
+            if length(obj.configs('numVecs')) == 1
+                nameParams{end+1} = 'numVecs';
+            end
         end
     end
     
