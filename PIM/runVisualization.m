@@ -14,11 +14,15 @@ function [] = runVisualization(dataset)
     showBaselines = 1;
     
     numVecs=30;
-    k=1;
+    k=5;
     if showBaselines        
-        fileNames{end+1} = 'justKeptFeatures/CCA_numVecs=%d-kNN_k=%d_useKNNSim=0.mat';
-        fileNames{end+1} = 'justKeptFeatures/HP_useIdentity=0_centerData=0_numVecs=%d-kNN_k=%d_useKNNSim=0.mat';        
-        fileNames{end+1} = 'justKeptFeatures/HP_useIdentity=1_centerData=0_numVecs=%d-kNN_k=%d_useKNNSim=0.mat';        
+        %fileNames{end+1} = 'justKeptFeatures/CCA_numVecs=%d-kNN_k=%d_useKNNSim=0.mat';
+        %fileNames{end+1} = 'justKeptFeatures/HP_useIdentity=0_centerData=0_numVecs=%d-kNN_k=%d_useKNNSim=0.mat';                
+        %fileNames{end+1} = 'justKeptFeatures/HP_useIdentity=1_centerData=0_numVecs=%d-kNN_k=%d_useKNNSim=0.mat';        
+        
+        fileNames{end+1} = 'justKeptFeatures/CCA_numVecs=%d-kNN_k=%d.mat';
+        fileNames{end+1} = 'justKeptFeatures/HP_useLocs=0_useIdentity=0_centerData=0_numVecs=%d-kNN_k=%d.mat';        
+        %fileNames{end+1} = 'justKeptFeatures/HP_useLocs=0_useIdentity=1_centerData=0_numVecs=%d-kNN_k=%d.mat';        
         
         for i=1:length(fileNames)
             fileNames{i} = sprintf(fileNames{i},numVecs,k);

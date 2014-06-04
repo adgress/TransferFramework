@@ -121,7 +121,6 @@ classdef ExperimentConfigLoader < ConfigLoader
                 drMethodName = obj.configs('drMethod');
                 drMethodObj = DRMethod.ConstructObject(drMethodName,obj.configs);
                 cvParams = obj.configs('cvParams');
-                bestParams = cell(length(cvParams),1);
                 
                 measureObj = Measure.ConstructObject(...
                     obj.configs('measureClass'),obj.configs);
@@ -306,7 +305,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             end            
             warning on;
             if isKey(obj.configs,'drMethod')
-                error('Update!!!');
+                %error('Update!!!');
                 drMethodName = obj.configs('drMethod');
                 drMethodPrefix = DRMethod.GetResultFileName(drMethodName,obj.configs,false);
                 outputFileName = [outputFileName drMethodPrefix];                

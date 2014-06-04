@@ -17,44 +17,51 @@ classdef HP < CCA
             
             setsToUse = obj.configs('setsToUse');
             trainX = train.X(setsToUse);
-            assert(length(setsToUse) == 2);            
-                        
-            X1 = trainX{setsToUse(1)};
-            X2 = trainX{setsToUse(2)};   
-            Wij = train.getSubW(setsToUse(1),setsToUse(2));
-            
-            reg = obj.configs('reg');
-            numVecs = obj.configs('numVecs');
-            centerData = obj.configs('centerData');
-            options = struct();
-            options.reg = reg;            
-            
-            if centerData == 1
-                [X1,X1mean] = Helpers.CenterData(X1);
-                [X2,X2mean] = Helpers.CenterData(X2);
-            elseif centerData == 2
-                X1dupe = Helpers.DupeRows(X1,sum(Wij,2));
-                X2dupe = Helpers.DupeRows(X2,sum(Wij,1));
-                [~,X1mean] = Helpers.CenterData(X1dupe);
-                [~,X2mean] = Helpers.CenterData(X2dupe);
-                X1 = Helpers.CenterData(X1,X1mean);
-                X2 = Helpers.CenterData(X2,X2mean);
-            else
-                X1mean = zeros(1,size(X1,2));
-                X2mean = zeros(1,size(X2,2));
-                %X2dupe = Helpers.DupeRows(X2,sum(Wij,1));
-                %[~,X2mean] = Helpers.CenterData(X2dupe);
-                %X2 = Helpers.CenterData(X2);
+            assert(length(setsToUse) == 2 ||...
+                length(setsToUse) == 3);
+                    
+            numSets = length(setsToUse);
+            K = cell(numSets,1);
+            for i=2:numSets
+                X1 = trainX{setsToUse(1)};
+                X2 = trainX{setsToUse(i)};   
+                Wij = train.getSubW(setsToUse(1),setsToUse(i));
+
+                reg = obj.configs('reg');
+                numVecs = obj.configs('numVecs');
+                centerData = obj.configs('centerData');
+                options = struct();
+                options.reg = reg;            
+
+                if centerData == 1
+                    error('Update');
+                    [X1,X1mean] = Helpers.CenterData(X1);
+                    [X2,X2mean] = Helpers.CenterData(X2);
+                elseif centerData == 2
+                    error('Update');
+                    X1dupe = Helpers.DupeRows(X1,sum(Wij,2));
+                    X2dupe = Helpers.DupeRows(X2,sum(Wij,1));
+                    [~,X1mean] = Helpers.CenterData(X1dupe);
+                    [~,X2mean] = Helpers.CenterData(X2dupe);
+                    X1 = Helpers.CenterData(X1,X1mean);
+                    X2 = Helpers.CenterData(X2,X2mean);
+                else
+                    X1mean = zeros(1,size(X1,2));
+                end
+
+                [K_21,C_22] = obj.computeK(X1,X2,Wij,options);
+                [Q_12] = obj.computeQ(X1,X2,Wij,K_21);
+                if i==2
+                    Q = zeros(size(Q_12));
+                    B = zeros(size(Q));
+                end
+                Q = Q + Q_12;
+                K{i} = K_21;
+                B = B + X1'*diag(sum(Wij,2))*X1+reg*eye(size(B));
             end
             
-            
-            [K_21,C_22] = obj.computeK(X1,X2,Wij,options);
-            [Q_12] = obj.computeQ(X1,X2,Wij,K_21);
-            Q = Q_12;
-            
-            B = eye(size(Q));
-            if ~obj.configs('useIdentity')
-                B = X1'*diag(sum(Wij,2))*X1+reg*eye(size(B));
+            if obj.configs('useIdentity')                
+                B = eye(size(Q));
             end
             [v1,vals1] = eig(Q,B);
             [sortedVals,I] = sort(diag(vals1),'ascend');
@@ -66,12 +73,17 @@ classdef HP < CCA
                 v1(:,i) = vi/d;
             end
             
-            v2 = K_21*v1;
-            modData = struct();
-            
             nv = min(size(v1,2),numVecs);
-            projections = {v1(:,1:nv), v2(:,1:nv)};
-            means = {X1mean,X2mean};
+            %projections = {v1(:,1:nv), v2(:,1:nv)};
+            projections = {v1(:,1:nv)};
+            means = {X1mean};
+            for i=2:numSets
+                v2 = K{i}*v1;
+                projections{end+1} = v2(:,1:nv);
+                means{end+1} = zeros(1,size(trainX{setsToUse(i)},2));
+            end
+            modData = struct();
+                                                
             modData.train = obj.applyProjection(train,setsToUse,projections,means);
             modData.validate = obj.applyProjection(validate,setsToUse,projections,means);
             modData.test = obj.applyProjection(test,setsToUse,projections,means);
@@ -178,7 +190,7 @@ classdef HP < CCA
         end
         
         function [nameParams] = getNameParams(obj)
-            nameParams = {'useIdentity','centerData','numVecs'};
+            nameParams = {'useLocs','useIdentity','centerData','numVecs'};
         end
     end
     

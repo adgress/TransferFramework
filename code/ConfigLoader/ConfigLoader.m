@@ -108,6 +108,7 @@ classdef ConfigLoader < handle
         function [experiments] = StaticCreateAllExperiments(...
                 paramKeys, keys,configs)
             e = struct();
+            display('StaticCreateAllExperiments: Multiple paramKeys?');
             for i=1:numel(paramKeys)
                 key = paramKeys{i};
                 if ~isKey(configs,key)

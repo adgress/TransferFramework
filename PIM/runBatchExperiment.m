@@ -1,6 +1,6 @@
 function [] = runBatchExperiment(multithread)
     setPaths;
-    cvx_setup;
+    %cvx_setup;
     configFiles = {};
     runBaseline = 1;        
     
