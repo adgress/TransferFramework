@@ -166,7 +166,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                             %numVecsAcc
                             [~,bestInd] = max(numVecsAcc);
                             cvResults{j} = numVecsResults{bestInd};
-                            bestNumVecs(j) = bestInd;                            
+                            bestNumVecs(j) = bestInd;    
                         else
                             [cvResults{j},~] = ...
                                 methodObject.trainAndTest(cvInput);                            
@@ -295,8 +295,12 @@ classdef ExperimentConfigLoader < ConfigLoader
                 outputDir = [outputDir '/numVecsExp/'];
                 mkdir(outputDir);
             end
-            if length(obj.configs('tau')) > 1
+            if isKey(obj.configs,'tau') && length(obj.configs('tau')) > 1
                 outputDir = [outputDir '/tauExp/'];
+                mkdir(outputDir);
+            end
+            if isKey(obj.configs,'clusterExp') && obj.configs('clusterExp')
+                outputDir = [outputDir '/cluster/'];
                 mkdir(outputDir);
             end
             outputDir = [outputDir '/'];

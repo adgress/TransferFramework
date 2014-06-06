@@ -10,6 +10,7 @@ function [] = runVisualization(dataset)
         
     showTrain = 0;
     showTest = 1;
+    
     options = struct();
     options.baselineFiles = {};
     options.showRelativePerformance = 0;
@@ -30,12 +31,12 @@ function [] = runVisualization(dataset)
     %visualizeResults(options,f);
     kVals = [1 3 5 7];    
     numVecsExp = 0;
-    tauExp = 1;
-    if tauExp
+    tauExp = 0;
+    clusterExp = 1;
+    if tauExp || clusterExp
         kVals = 1;
     end
-    for i=1:length(kVals)
-        
+    for i=1:length(kVals)        
         k = kVals(i);
         if showBaselines
             fileNames = {};
@@ -59,6 +60,18 @@ function [] = runVisualization(dataset)
                 methodsToShow('TauMethod') = 1;
                 options.measure = 'TauMeasure';
                 options.yAxisDisplay = 'Percent < Tau x Mean'; 
+            elseif clusterExp
+                numVecs = 30;
+                numClusters = 5;
+                fileNames{end+1} = 'justKeptFeatures/cluster/CCA_numVecs=%d-KMeans_numClusters=%d.mat';
+                fileNames{end+1} = 'justKeptFeatures/cluster/HP_useLocs=0_useIdentity=0_centerData=0_numVecs=%d-KMeans_numClusters=%d.mat';
+                fileNames{end+1} = 'justKeptFeatures/cluster/HP_useLocs=1_useIdentity=0_centerData=0_numVecs=%d-KMeans_numClusters=%d.mat';
+                options.xAxisDisplay = 'Percent Train';
+                axisToUse = [0 1 0 .2];
+                params = [numVecs numClusters];
+                methodsToShow('KMeansMethod') = 1;
+                options.measure = 'RandIndexMeasure';
+                options.yAxisDisplay = 'TODO'; 
             else
                 numVecs = 30;
                 fileNames{end+1} = 'justKeptFeatures/CCA_numVecs=%d-kNN_k=%d.mat';
