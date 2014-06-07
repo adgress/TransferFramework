@@ -51,7 +51,11 @@ classdef Saveable < handle
         function [name] = GetResultFileName(className,configs,includeDir)
             classFunc = str2func(className);
             o = classFunc(configs);
-            name = o.getResultFileName('_',includeDir);
+            if nargin >= 3
+                name = o.getResultFileName('_',includeDir);
+            else
+                name = o.getResultFileName('_',true);
+            end
         end
         function [name] = GetDisplayName(className,configs)
             classFunc = str2func(className);

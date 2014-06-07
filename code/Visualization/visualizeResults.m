@@ -26,21 +26,30 @@ function [f] = visualizeResults(options,f)
         configs = Configs(allResults.configs);
         methodClasses = configs.getMethodClasses();
         for j=1:numel(methodClasses)            
-            methodClassString = methodClasses{j};            
-            if ~isKey(options.methodsToShow,methodClassString) || ...
-                    ~options.methodsToShow(methodClassString)
-                continue;
-            end            
-            
-            [results] = allResults.getResultsForMethod(methodClassString);
             hasPostTM = configs.hasPreTransferMeasures();
             hasPreTM = configs.hasPostTransferMeasures();
-            hasTransferMethod = configs.hasTransferMethod();
-            hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
+            hasTransferMethod = configs.hasTransferMethod();            
+            hasDR = isKey(configs.configs,'drMethod');
             
+            isMeasureFile = hasPostTM || hasPreTM;
+            
+            methodClassString = methodClasses{j};            
+            if ~isMeasureFile && ...
+                (~isKey(options.methodsToShow,methodClassString) || ...
+                    ~options.methodsToShow(methodClassString))
+                continue;
+            end            
+            [results] = allResults.getResultsForMethod(methodClassString);
+            if ~isMeasureFile && isempty(results)
+                continue;
+            end
+            
+            hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
             learnerName = Method.GetDisplayName(methodClassString,configs.configs);
-            drName = DRMethod.GetDisplayName(configs.configs('drMethod'),configs.configs);
-            learnerName = [drName '-' learnerName];                
+            if hasDR
+                drName = DRMethod.GetDisplayName(configs.configs('drMethod'),configs.configs);
+                learnerName = [drName '-' learnerName];                
+            end
             if hasTransferMethod
                 transferName = ...
                     Transfer.GetDisplayName(configs.getTransferMethod(),allResults.configs);
@@ -83,7 +92,14 @@ function [f] = visualizeResults(options,f)
                 leg{index} = [learnerName ':' 'Repaired Acc'];
                 index = index+1;
             else
-                if length(configs.configs('trainSize')) > 1
+                numTrain = 0;
+                if isKey(configs.configs,'trainSize')
+                    numTrain = configs.configs('trainSize');
+                else
+                    sizes = getSizes(results,options.xAxisField);
+                    numTrain = length(sizes);
+                end
+                if numTrain > 1
                     sizes = getSizes(results,options.xAxisField);
                     if isfield(options,'binPerformance') && options.binPerformance
                         if hasPostTM
@@ -123,7 +139,7 @@ function [f] = visualizeResults(options,f)
                 end
             end
             if ~hasTestResults
-                display('Hack - fix this later');
+                display('visualizeResults.m: Hack for measure results - fix later');
                 break;
             end
         end
@@ -260,7 +276,8 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
 end
 
 function [index,leg] = plotRelativePerformance(options,baselineFiles,results,sizes,configs,colors,index,learnerName,leg)
-    baselineFile = ['results/' options.prefix '/' options.dataSet '/' baselineFiles{1}];
+    d = getProjectDir();
+    baselineFile = [d '/results/' options.prefix '/' options.dataSet '/' baselineFiles{1}];
     baselineResults = load(baselineFile);
     baselineResults = baselineResults.results.allResults;
     for i=1:numel(results)

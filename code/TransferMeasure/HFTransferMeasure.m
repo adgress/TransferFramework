@@ -10,12 +10,14 @@ classdef HFTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,labeledTargetScores,metadata] = computeMeasure(obj,source,target,...
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,...
                 options)            
             useHF = true;
             [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata] = ...
                 obj.computeGraphMeasure(source,target,options,...
                 useHF);
+            metadata.labeledTargetScores = labeledTargetScores;
+            perLabelMeasures = [];
         end
                      
         function [ri] = calculateRandIndex(obj,C,Y,isTarget)

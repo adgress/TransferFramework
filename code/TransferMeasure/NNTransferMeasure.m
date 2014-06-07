@@ -71,7 +71,8 @@ classdef NNTransferMeasure < TransferMeasure
             metadata.Ypred = Ynn;
             metadata.Yactual = Yactual;
             val = mean(numTargetLabeled);
-            obj.displayMeasure(val);            
+            obj.displayMeasure(val);          
+            metadata.labeledTargetScores = [];
         end
                      
         function [name] = getPrefix(obj)

@@ -6,7 +6,7 @@ function [] = runVisualization(dataset)
     close all
     
     showBaselines = 1;
-    showMeasures = 0;
+    showMeasures = 1;
     showRepair = 0;
     numColors = 6;
     
@@ -32,15 +32,16 @@ function [] = runVisualization(dataset)
     showLegend = true;    
     
     measuresToShow = containers.Map();
-    measuresToShow('NNTransferMeasure') = 1;
+    measuresToShow('NNTransferMeasure') = 0;
     measuresToShow('LLGCTransferMeasure') = 1;
-    measuresToShow('HFTransferMeasure') = 1;    
+    measuresToShow('HFTransferMeasure') = 0;
     
     methodsToShow = containers.Map();
-    methodsToShow('NearestNeighborMethod') = 0;
-    methodsToShow('HFMethod') = 1;
+    methodsToShow('NearestNeighborMethod') = 1;
+    methodsToShow('LLGCMethod') = 1;
+    methodsToShow('HFMethod') = 0;
     
-    baselineFiles = {'TO.mat'};    
+    baselineFiles = {'TO-kNN_k=1.mat','TO-LLGC.mat'};    
     fileNames = {};
         
     
@@ -68,19 +69,13 @@ function [] = runVisualization(dataset)
     end
         
     if showBaselines
-        %fileNames{end+1} = 'TO.mat';
-        %fileNames{end+1} = 'SO.mat';
-        fileNames{end+1} = 'S+T.mat';
+        fileNames{end+1} = 'S+T-kNN_k=1.mat';
+        fileNames{end+1} = 'S+T-LLGC.mat';
     end
     if showMeasures
-        %fileNames{end+1} = 'TDAS_autoEps=2.mat';
-        %fileNames{end+1} = 'HDH.mat';
-        %fileNames{end+1} = 'ROD_d=10_usePLS=0.mat';
-        %fileNames{end+1} = 'NN_k=10.mat';
-                
-        fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
-        fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_S+T.mat';
-        %fileNames{end+1} = 'TM/NN_k=1_S+T.mat';                
+        %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
+        fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_useMeanSigma=0_S+T.mat';
+        fileNames{end+1} = 'TM/NN_k=1_S+T.mat';                
     end
     if dataset == Constants.CV_DATA        
         sourceData = {'A','C','D','W'};

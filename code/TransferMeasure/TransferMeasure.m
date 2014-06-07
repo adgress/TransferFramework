@@ -83,7 +83,7 @@ classdef TransferMeasure < Saveable
     end
     
     methods(Abstract)
-        [val,labeledTargetScores,metadata] = computeMeasure(obj,source,target,options)        
+        [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,options)        
     end
     
 end

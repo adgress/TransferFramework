@@ -291,7 +291,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                 outputDir = [outputDir '/justKeptFeatures/'];
                 mkdir(outputDir);
             end
-            if length(obj.configs('numVecs')) > 1
+            if isKey(obj.configs,'numVecs') && length(obj.configs('numVecs')) > 1
                 outputDir = [outputDir '/numVecsExp/'];
                 mkdir(outputDir);
             end
@@ -301,6 +301,10 @@ classdef ExperimentConfigLoader < ConfigLoader
             end
             if isKey(obj.configs,'clusterExp') && obj.configs('clusterExp')
                 outputDir = [outputDir '/cluster/'];
+                mkdir(outputDir);
+            end
+            if isKey(obj.configs,'repairMethod')
+                outputDir = [outputDir '/REP/'];
                 mkdir(outputDir);
             end
             outputDir = [outputDir '/'];
@@ -319,8 +323,14 @@ classdef ExperimentConfigLoader < ConfigLoader
                     [outputFileName] = obj.appendToName(outputDir,measurePrefix,prependHyphen);
                     prependHyphen = true;
                 end
-            end            
+            end                    
             warning on;
+            if isKey(obj.configs,'repairMethod')               
+                repairClassName = obj.configs('repairMethod');
+                repairFileName = TransferRepair.GetResultFileName(repairClassName,obj.configs,false);
+                [outputFileName] = obj.appendToName(outputFileName,repairFileName,prependHyphen);
+                prependHyphen = true;
+            end 
             if isKey(obj.configs,'drMethod')
                 %error('Update!!!');
                 drMethodName = obj.configs('drMethod');
@@ -335,13 +345,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                 transferMethodPrefix = transferObject.getPrefix();
                 [outputFileName] = obj.appendToName(outputFileName,transferMethodPrefix,prependHyphen);
                 prependHyphen = true;
-            end
-            if isKey(obj.configs,'repairMethod')
-                repairClassName = obj.configs('repairMethod');
-                repairFileName = TransferRepair.GetResultFileName(repairClassName,obj.configs);
-                [outputFileName] = obj.appendToName(outputFileName,repairFileName,prependHyphen);
-                prependHyphen = true;
-            end            
+            end                       
             if ~isa(obj,'MeasureExperimentConfigLoader') && isKey(obj.configs,'methodName')
                 methodName = obj.configs('methodName');            
                 methodPrefix = Method.GetResultFileName(methodName,obj.configs,false);

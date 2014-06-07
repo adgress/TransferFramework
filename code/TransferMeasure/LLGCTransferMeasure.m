@@ -10,12 +10,14 @@ classdef LLGCTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,labeledTargetScores,metadata] = computeMeasure(obj,source,target,...
+        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,...
                 options)                        
-            useHF = false;
+            useHF = false;            
             [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata] = ...
                 obj.computeGraphMeasure(source,target,options,...
-                useHF);            
+                useHF);   
+            metadata.labeledTargetScores = labeledTargetScores;
+            perLabelMeasures = [];
         end                    
         
         function [name] = getPrefix(obj)
