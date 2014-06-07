@@ -306,6 +306,9 @@ classdef ExperimentConfigLoader < ConfigLoader
             if isKey(obj.configs,'repairMethod')
                 outputDir = [outputDir '/REP/'];
                 mkdir(outputDir);
+                repairMeasurePrefix = TransferMeasure.GetPrefix(obj.configs('repairTransferMeasure'));
+                outputDir = [outputDir '/' repairMeasurePrefix '/'];
+                mkdir(outputDir);
             end
             outputDir = [outputDir '/'];
             outputFileName = outputDir;

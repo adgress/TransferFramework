@@ -36,28 +36,20 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             measureObject = TransferMeasure.ConstructObject(...
                 obj.configs('repairTransferMeasure'),configsCopy);
                                
-            debugMode = 0;
-            if ~debugMode || ~exist('targetScores.mat','file')
-                [postTransferMeasureVal,~,...
-                    results.transferMeasureMetadata{1}] = ...
-                    measureObject.computeMeasure(...
-                    transferOutput.tSource,...
-                    transferOutput.tTarget,...
-                    transferOutput.metadata);
-                if debugMode
-                    save('targetScores','targetScores');
-                    save('postTransferMeasureVal','postTransferMeasureVal');
-                end
-            else
-                load targetScores
-                load postTransferMeasureVal
-            end
+            [postTransferMeasureVal,~,...
+                results.transferMeasureMetadata{1}] = ...
+                measureObject.computeMeasure(...
+                transferOutput.tSource,...
+                transferOutput.tTarget,...
+                transferOutput.metadata);
+            
             results.labeledTargetScores{1} = results.transferMeasureMetadata{1}.labeledTargetScores;
             results.postTransferMeasureVal{1} = postTransferMeasureVal;
             numIterations = obj.configs('numIterations');
-            percToRemove = obj.configs('percToRemove');
+            %percToRemove = obj.configs('percToRemove');
                         
-            repairObj = LLGCTransferRepair(obj.configs);
+            repairObj = TransferRepair.ConstructObject(...
+                obj.configs('repairMethod'),obj.configs);
             
             for i=1:numIterations+1
                 if i > 1
@@ -68,21 +60,15 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                     targetData = trainTestInput.train.getTargetData();
                     targetData = DataSet.Combine(targetData,...
                         trainTestInput.test);
+                    targetData.removeTestLabels();
                     [results.postTransferMeasureVal{i},~,...
                         results.transferMeasureMetadata{i}] = ...
                         measureObject.computeMeasure(sourceData,...
                         targetData,struct());
                     results.labeledTargetScores{i} = results.transferMeasureMetadata{i}.labeledTargetScores;
                 end
-                if i > 1 || ~debugMode || ~exist('repairResults.mat','file')
-                    [repairResults,results.traintTestMetadata{i}]...
-                        = obj.trainAndTest(trainTestInput,experiment);         
-                    if debugMode && i == 1
-                        save('repairResults','repairResults');
-                    end
-                else
-                    load repairResults
-                end
+                [repairResults,results.traintTestMetadata{i}]...
+                    = obj.trainAndTest(trainTestInput,experiment);
                 results.repairResults{i} = repairResults;
             end
         end                       

@@ -64,6 +64,9 @@ classdef Saveable < handle
         end
         function [name] = GetPrefix(className,configs)
             func = str2func(className);
+            if nargin < 2     
+                configs = containers.Map;
+            end
             o = func(configs);
             name = o.getPrefix();
         end

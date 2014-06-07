@@ -61,7 +61,7 @@ function [f] = visualizeResults(options,f)
                     TransferRepair.GetDisplayName(repairMethodString,configs.configs);
                 learnerName = [transferRepairName ';' learnerName];
                 measureClassName = configs.configs('measureClass');
-                measureObject = Measure.ConstructObject(measureClassName,configs);
+                measureObject = Measure.ConstructObject(measureClassName,configs.configs);
                 results = results{1};
                 numIterations = configs.configs('numIterations');
                 numSplits = results.numSplits;

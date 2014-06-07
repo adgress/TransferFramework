@@ -5,10 +5,10 @@ function [] = runVisualization(dataset)
     end    
     close all
     
-    showBaselines = 1;
-    showMeasures = 1;
-    showRepair = 0;
-    numColors = 6;
+    showBaselines = 0;
+    showMeasures = 0;
+    showRepair = 1;
+    numColors = 4;
     
     
     if dataset == Constants.CV_DATA
@@ -49,13 +49,12 @@ function [] = runVisualization(dataset)
         showBaselines = 0;
         showMeasures = 0;
         binPerformance = 0;
-        showHF = 1;
-        if showHF
-            %fileNames{end+1} = 'REP/LLGC_strategy=NNPrune_percToRemove=0.1_numIterations=3-HF-S+T.mat';
-            fileNames{end+1} = 'REP/LLGC_strategy=Random_percToRemove=0.1_numIterations=3-HF-S+T.mat';
-        else
-            fileNames{end+1} = 'REP/LLGC_strategy=NNPrune_percToRemove=0.1_numIterations=3-kNN-S+T.mat';
-            fileNames{end+1} = 'REP/LLGC_strategy=Random_percToRemove=0.1_numIterations=3-kNN-S+T.mat';
+        numIterations = 3;
+        percToRemove = 1;
+        %fileNames{end+1} = 'REP/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
+        fileNames{end+1} = 'REP/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
+        for i=1:length(fileNames)
+            fileNames{i} = sprintf(fileNames{i},percToRemove,numIterations);
         end
         axisToUse = [0 3 0 1];
     end
