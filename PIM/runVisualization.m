@@ -33,8 +33,11 @@ function [] = runVisualization(dataset)
     numVecsExp = 0;
     tauExp = 0;
     clusterExp = 1;
-    if tauExp || clusterExp
+    if tauExp
         kVals = 1;
+    end
+    if clusterExp
+        kVals = [2 5 10];
     end
     for i=1:length(kVals)        
         k = kVals(i);
@@ -62,16 +65,16 @@ function [] = runVisualization(dataset)
                 options.yAxisDisplay = 'Percent < Tau x Mean'; 
             elseif clusterExp
                 numVecs = 30;
-                numClusters = 5;
+                numClusters = k;
                 fileNames{end+1} = 'justKeptFeatures/cluster/CCA_numVecs=%d-KMeans_numClusters=%d.mat';
                 fileNames{end+1} = 'justKeptFeatures/cluster/HP_useLocs=0_useIdentity=0_centerData=0_numVecs=%d-KMeans_numClusters=%d.mat';
                 fileNames{end+1} = 'justKeptFeatures/cluster/HP_useLocs=1_useIdentity=0_centerData=0_numVecs=%d-KMeans_numClusters=%d.mat';
                 options.xAxisDisplay = 'Percent Train';
-                axisToUse = [0 1 0 .2];
+                axisToUse = [0 1 0 1];
                 params = [numVecs numClusters];
                 methodsToShow('KMeansMethod') = 1;
                 options.measure = 'RandIndexMeasure';
-                options.yAxisDisplay = 'TODO'; 
+                options.yAxisDisplay = 'Rand Index'; 
             else
                 numVecs = 30;
                 fileNames{end+1} = 'justKeptFeatures/CCA_numVecs=%d-kNN_k=%d.mat';

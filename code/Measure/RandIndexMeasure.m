@@ -66,14 +66,14 @@ classdef RandIndexMeasure < Measure
             numN = numTN+numFN;
             P = numTP/numP;
             R = numTP/(numTP + numFN);
-            beta = 1;
+            beta = 2;
             
             %F1 Score
-            val = (beta^2+1)*P*R/(beta^2*P+R);
+            %val = (beta^2+1)*P*R/(beta^2*P+R);
             
             %Rand Index
             numAll = numel(Y);
-            %val = (numTP+numTN) / numAll;
+            val = (numTP+numTN) / numAll;
             
             %Precision
             %val = P;
