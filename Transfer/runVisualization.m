@@ -51,8 +51,10 @@ function [] = runVisualization(dataset)
         binPerformance = 0;
         numIterations = 3;
         percToRemove = 1;
-        %fileNames{end+1} = 'REP/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
-        fileNames{end+1} = 'REP/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
+        %fileNames{end+1} = 'REP/NN/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
+        %fileNames{end+1} = 'REP/NN/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
+        %fileNames{end+1} = 'REP/NN/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
+        fileNames{end+1} = 'REP/NN/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
         for i=1:length(fileNames)
             fileNames{i} = sprintf(fileNames{i},percToRemove,numIterations);
         end
@@ -120,7 +122,7 @@ function [] = runVisualization(dataset)
             options.numColors = numColors;
             if options.showRepair
                 options.yAxisDisplay = 'Measure/Accuracy';
-                options.xAxisDisplay = 'Num Iterations';
+                options.xAxisDisplay = 'Num Repair Iterations';
             elseif options.showRelativePerformance
                 if showCorrelations
                     options.relativeType = Constants.CORRELATION;

@@ -48,9 +48,7 @@ classdef HFMethod < Method
                 Y_testCleared = Y;
                 Y_testCleared(isTest) = -1;
                 sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,obj.configs('useMeanSigma'),useHF,type);
-                W = Helpers.distance2RBF(K,sigma);
-                %TODO: Why was this "working" earlier?
-                %W = Kernel.RBFKernel(W,sigma);
+                W = Helpers.distance2RBF(W,sigma);
                 isTrainLabeled = Y > 0 & ~isTest;
                 assert(~issorted(isTrainLabeled));
                 YTrain = Y(isTrainLabeled);
@@ -104,7 +102,7 @@ classdef HFMethod < Method
                 trainAndTest(obj,input)
             useHF = true;
             [testResults,metadata] = ...
-                trainAndTestGraphMethod(obj,input,useHF)
+                trainAndTestGraphMethod(obj,input,useHF);
         end
         function [prefix] = getPrefix(obj)
             prefix = 'HF';
