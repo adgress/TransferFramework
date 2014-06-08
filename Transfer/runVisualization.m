@@ -54,7 +54,10 @@ function [] = runVisualization(dataset)
         %fileNames{end+1} = 'REP/NN/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
         %fileNames{end+1} = 'REP/NN/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
         %fileNames{end+1} = 'REP/NN/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
-        fileNames{end+1} = 'REP/NN/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
+        %fileNames{end+1} = 'REP/NN/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
+        %fileNames{end+1} = 'REP/LLGC/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
+        %fileNames{end+1} = 'REP/LLGC/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
+        fileNames{end+1} = 'REP/LLGC/TR_strategy=AddvancedNNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
         for i=1:length(fileNames)
             fileNames{i} = sprintf(fileNames{i},percToRemove,numIterations);
         end

@@ -22,7 +22,7 @@ function [] = runBatchExperiment(multithread, dataset)
         configFiles{end+1} = 'config/measure/batchLLGC.cfg';        
     end
     if runRepair
-        configFiles{end+1} = 'config/repair/batchFuseNN.cfg';
+        %configFiles{end+1} = 'config/repair/batchFuseNN.cfg';
         configFiles{end+1} = 'config/repair/batchFuseLLGC.cfg';
     end
     for i=1:numel(configFiles)

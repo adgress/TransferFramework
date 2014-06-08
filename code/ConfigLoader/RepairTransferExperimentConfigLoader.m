@@ -53,6 +53,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             
             for i=1:numIterations+1
                 if i > 1
+                    repairObj.configs('sigma') = results.traintTestMetadata{i-1}.sigma;
                     [trainTestInput] = repairObj.repairTransfer(...
                         trainTestInput,...
                         results.labeledTargetScores{i-1});
