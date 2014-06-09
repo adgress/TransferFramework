@@ -29,7 +29,8 @@ function [] = runVisualization(dataset)
     
     f = figure;
     %visualizeResults(options,f);
-    kVals = [1 3 5 7 10 15];    
+    kVals = [1 3 5 7 10];    
+    %kVals = [10 15];    
     numVecsExp = 0;
     tauExp = 0;
     clusterExp = 0;

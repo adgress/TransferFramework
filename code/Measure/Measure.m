@@ -37,7 +37,8 @@ classdef Measure < Saveable
                 trainPredictedMat = logical(Helpers.createLabelMatrix(trainPredicted));
                 t = split.trainActual(:,1:size(trainPredictedMat,2));
                 trainIsCorrect = t(trainPredictedMat);
-                valTrain = sum(trainIsCorrect(:))/numel(trainPredicted);
+                %valTrain = sum(trainIsCorrect(:))/numel(trainPredicted);
+                valTrain = -1;
                 
                 testPredictedMat = logical(Helpers.createLabelMatrix(testPredicted));
                 n = size(testPredictedMat,1);
@@ -47,9 +48,32 @@ classdef Measure < Saveable
                 
                 numCorrect = sum(testIsCorrect(:));
                 total = sum(testPredictedMat(:) | split.testActual(:));
-                valTest = numCorrect/total;
-                
-                valTest = sum(testIsCorrect(:))/numel(testIsCorrect);
+                useInt = 0;
+                usePrec = 0;
+                useF1 = 1;
+                if useInt
+                    valTest = numCorrect/total;
+                elseif usePrec
+                    valTest = sum(testIsCorrect(:))/numel(testIsCorrect);
+                elseif useF1
+                    testActual = logical(split.testActual);
+                    TP = testPredictedMat & testActual;
+                    TN = ~testPredictedMat & ~testActual;
+                    FP = testPredictedMat & ~testActual;
+                    FN = ~testPredictedMat & testActual;
+                    numTP = sum(TP(:));
+                    numTN = sum(TN(:));
+                    numFP = sum(FP(:));
+                    numFN = sum(FN(:));
+                    numP = numTP+numFP;
+                    numN = numTN+numFN;
+                    P = numTP/numP;
+                    R = numTP/(numTP + numFN);
+                    beta = 1;
+                    valTest = (beta^2+1)*P*R/(beta^2*P+R);
+                else
+                    assert(false);
+                end
             end            
             measureResults.testPerformance = valTest;
             measureResults.trainPerformance = valTrain;
