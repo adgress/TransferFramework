@@ -18,31 +18,37 @@ function [] = createImageFeatures()
         numToUse = length(allFiles);
     end
     
-    
-    keypointToImages = zeros(size(allKeypoints,1),1);
-    fileNames = cell(590,1);
-    index = 1;
-    matInd = 0;
-    for i=1:numToUse
-        if allFiles(i).isdir
-            continue;
+    savedDataFile = [outputDir 'generatedData' num2str(numToUse) '-' num2str(numClusters) '.mat'];
+    if exist(savedDataFile)
+        load(savedDataFile);
+    else
+        keypointToImages = zeros(size(allKeypoints,1),1);
+        fileNames = cell(590,1);
+        index = 1;
+        matInd = 0;
+        for i=1:numToUse
+            if allFiles(i).isdir
+                continue;
+            end
+            index
+            fileNames{index} = allFiles(i).name;
+            file = [inputDir allFiles(i).name];
+
+            keyPoints = load(file);        
+            numVecs = size(keyPoints,1);
+            allKeypoints(matInd+1:matInd+numVecs,:) = keyPoints;
+            keypointToImages(matInd+1:matInd) = index;
+            matInd = matInd + numVecs;
+            index = index+1;
         end
-        fileNames{index} = allFiles(i).name;
-        file = [inputDir allFiles(i).name];
-        
-        keyPoints = load(file);        
-        numVecs = size(keyPoints,1);
-        allKeypoints(matInd+1:matInd+numVecs,:) = keyPoints;
-        keypointToImages(matInd+1:matInd) = index;
-        matInd = matInd + numVecs;
-        index = index+1;
-    end    
+        save(savedDataFile);
+    end
     [IDX,C] = kmeans(allKeypoints(1:matInd,:),numClusters);
     featResults = struct();
     featResults.featIndices = IDX;
     featResults.C = C;
     featResults.fileNames = fileNames;
-    featResults.keyPointToImage = keypointToImages;
-    fileName = sprintf('featResults%d-%d.mat',numToUse,numClusters);
+    featResults.keyPointToImage = keypointToImages(1:matInd);
+    fileName = ['featResults' num2str(numToUse) '-' num2str(numClusters) '.mat'];
     save([outputDir fileName],'featResults');
 end
