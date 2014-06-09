@@ -11,7 +11,7 @@ function [] = createImageFeatures()
         outputDir = 'PIM/Data/featData/';
         allKeypoints = zeros(1000000,128);
         numToUse = -1;
-        numClusters = 100;
+        numClusters = 1000;
     end
     allFiles = dir(inputDir);
     if ~runLaptap
