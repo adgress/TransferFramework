@@ -43,7 +43,10 @@ function [] = createImageFeatures()
         end
         save(savedDataFile);
     end
-    [IDX,C] = kmeans(allKeypoints(1:matInd,:),numClusters);
+    options = struct();
+    options.Display = 'iter';
+    %options.UseParallel = 1;
+    [IDX,C] = kmeans(allKeypoints(1:matInd,:),numClusters,'distance','cosine','options',options);
     featResults = struct();
     featResults.featIndices = IDX;
     featResults.C = C;
