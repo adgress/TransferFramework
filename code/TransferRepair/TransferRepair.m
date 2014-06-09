@@ -36,8 +36,19 @@ classdef TransferRepair < Saveable
                     input.train.type == Constants.TARGET_TRAIN);
                 correctLabels = input.train.Y(labeledTargetTrainInds);
                 isIncorrect = predicted ~= correctLabels;
+                
+                correctLabelMat = Helpers.createLabelMatrix(correctLabels);
+                correctLabelScores = max(targetScores.*correctLabelMat,[],2);                
+                
+                [sortedCorrectScores,sortedInds] = sort(correctLabelScores,'ascend');                
+                
                 incorrectInds = labeledTargetTrainInds(isIncorrect);
                 correctTargetLabels = input.train.Y(incorrectInds);
+                
+                percIncorrectToUse = .2;
+                numIncorrectToUse = ceil(percIncorrectToUse*length(sortedInds));
+                trainIndsToUse = sortedInds(1:numIncorrectToUse );
+                correctTargetLabels = correctLabels(trainIndsToUse);
                 if obj.configs('useECT')
                     sigma = obj.configs('sigma');
                     W = Helpers.CreateDistanceMatrix(input.train.X);
@@ -47,15 +58,16 @@ classdef TransferRepair < Saveable
                     distMat = pinv(L);
                 end
                 if useAdvaned
+                    %trainIndsToUse = labeeldTargetTrainInds;
                     isSource = input.train.type == Constants.SOURCE;
                     sourceLabels = input.train.Y(isSource);
                     sourceLabelsRep = repmat(sourceLabels',length(correctLabels),1);
                     targetLabelsRep = repmat(correctLabels,1,length(sourceLabels));
                     if obj.configs('useECT')
-                        distMat = distMat(labeledTargetTrainInds,isSource);
+                        distMat = distMat(trainIndsToUse,isSource);
                     else
                         distMat = Helpers.CreateDistanceMatrix(...
-                            input.train.X(labeledTargetTrainInds,:),...
+                            input.train.X(trainIndsToUse,:),...
                             input.train.X(isSource,:));
                     end
                     isCorrectRep = sourceLabelsRep == targetLabelsRep;
@@ -66,11 +78,12 @@ classdef TransferRepair < Saveable
                     sourceInds = find(isSource);
                     indsToPrune = sourceInds(sortedScoreInds);
                 else
+                    %trainIndsToUse = incorrectInds;
                     if obj.configs('useECT')
-                        distMat = distMat(incorrectInds,:);
+                        distMat = distMat(trainIndsToUse,:);
                     else
                         distMat = Helpers.CreateDistanceMatrix(...
-                            input.train.X(incorrectInds,:),...
+                            input.train.X(trainIndsToUse,:),...
                             input.train.X);
                     end
                     [sortedD,sortedDInds] = sort(distMat,2);
