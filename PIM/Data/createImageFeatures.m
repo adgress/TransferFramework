@@ -37,7 +37,7 @@ function [] = createImageFeatures()
             keyPoints = load(file);        
             numVecs = size(keyPoints,1);
             allKeypoints(matInd+1:matInd+numVecs,:) = keyPoints;
-            keypointToImages(matInd+1:matInd) = index;
+            keypointToImages(matInd+1:matInd+numVecs) = index;
             matInd = matInd + numVecs;
             index = index+1;
         end
