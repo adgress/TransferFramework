@@ -77,12 +77,10 @@ function [] = runVisualization(dataset)
                 options.yAxisDisplay = 'Rand Index'; 
             else
                 numVecs = 30;
-                %{
                 fileNames{end+1} = 'justKeptFeatures/CCA_numVecs=%d-kNN_k=%d.mat';
                 fileNames{end+1} = 'justKeptFeatures/HP_useLocs=0_useIdentity=0_centerData=0_numVecs=%d-kNN_k=%d.mat';
                 fileNames{end+1} = 'justKeptFeatures/HP_useLocs=1_useIdentity=0_centerData=0_numVecs=%d-kNN_k=%d.mat';
-                %}
-                fileNames{end+1} = 'justKeptFeatures/No-DR-Guess.mat';                
+                fileNames{end+1} = 'justKeptFeatures/No-DR-Guess.mat';
                 options.xAxisDisplay = 'Percent Train';
                 axisToUse = [0 1 0 .3];
                 params = [numVecs k];
