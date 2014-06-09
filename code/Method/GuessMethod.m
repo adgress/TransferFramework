@@ -30,7 +30,7 @@ classdef GuessMethod < Method
                 trainY = [train.getSubW(trainIndex,testIndex) ; ...
                     validate.getSubW(trainIndex,testIndex)];
                 yFreq = sum(trainY);
-                [vals,mostCommonY] = sort(yFreq);
+                [vals,mostCommonY] = sort(yFreq,'descend');
                 numTrain = size(train1,1);                                
                 testResults.trainPredicted = zeros(numTrain,k);
                 

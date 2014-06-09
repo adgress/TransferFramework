@@ -94,7 +94,7 @@ function [f] = visualizeResults(options,f)
             else
                 numTrain = 0;
                 if isKey(configs.configs,'trainSize')
-                    numTrain = configs.configs('trainSize');
+                    numTrain = length(configs.configs('trainSize'));
                 else
                     sizes = getSizes(results,options.xAxisField);
                     numTrain = length(sizes);

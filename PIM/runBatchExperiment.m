@@ -7,10 +7,10 @@ function [] = runBatchExperiment(multithread)
     batchCommon = 'config/batch/batchCommon.cfg';    
     
     if runBaseline
-        %configFiles{end+1} = 'config/batch/batchGuess.cfg';
-        configFiles{end+1} = 'config/batch/batchCCA.cfg';
-        configFiles{end+1} = 'config/batch/batchHP.cfg';
-        configFiles{end+1} = 'config/batch/batchHPlocs.cfg';
+        configFiles{end+1} = 'config/batch/batchGuess.cfg';
+        %configFiles{end+1} = 'config/batch/batchCCA.cfg';
+        %configFiles{end+1} = 'config/batch/batchHP.cfg';
+        %configFiles{end+1} = 'config/batch/batchHPlocs.cfg';
         %configFiles{end+1} = 'config/batch/batchML.cfg';
     end
     

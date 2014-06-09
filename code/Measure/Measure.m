@@ -49,7 +49,7 @@ classdef Measure < Saveable
                 total = sum(testPredictedMat(:) | split.testActual(:));
                 valTest = numCorrect/total;
                 
-                valTest = sum(testIsCorrect(:))/numel(testIsCorrect);
+                %valTest = sum(testIsCorrect(:))/numel(testIsCorrect);
             end            
             measureResults.testPerformance = valTest;
             measureResults.trainPerformance = valTrain;
