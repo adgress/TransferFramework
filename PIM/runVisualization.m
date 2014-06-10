@@ -32,7 +32,7 @@ function [] = runVisualization(dataset)
     %kVals = [1 3 5 7 10];    
     kVals = 10;
     %kVals = [10 15];    
-    numVecsExp = 0;
+    numVecsExp = 1;
     tauExp = 0;
     clusterExp = 0;
     if tauExp

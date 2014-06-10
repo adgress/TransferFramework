@@ -55,7 +55,19 @@ classdef Measure < Saveable
                 if useInt
                     valTest = numCorrect/total;
                 elseif usePrec
-                    valTest = sum(testIsCorrect(:))/numel(testIsCorrect);
+                    %valTest = sum(testIsCorrect(:))/numel(testIsCorrect);
+                    scores = zeros(size(testPredicted,2),1);
+                    for i=1:size(testPredicted,1)
+                        pred = testPredicted(i,:);
+                        actual = split.testActual(i,:);
+                        numTags = sum(actual);   
+                        score = 0;
+                        for j=1:numTags
+                            score = score + actual(pred(j));
+                        end                        
+                        scores(i) = score/numTags;
+                    end
+                    valTest = mean(scores);
                 elseif useF1
                     testActual = logical(split.testActual);
                     TP = testPredictedMat & testActual;

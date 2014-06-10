@@ -2,19 +2,21 @@ function [] = createPIMData()
     [Xl] = loadLocationsFile();
     [Wmt] = loadImageTags();
     [Wml] = loadImageLocations();
-    [Xm] = load('imageSimMat.mat');
+    [Xm] = load('imageSimMat.mat');    
+    %[Xm] = load('ImageLinearKernel1000.mat');
     Xm = Xm.imageSimMat;
         
     numTagsToKeep = 30;
     [tagsKept,imagesKept,locationsKept] = keepTopNTags(Wmt,Wml,numTagsToKeep);
     
     Xm = Xm(imagesKept,:);
+    %Xm = Xm .^ 3;
     Xl = Xl(locationsKept,:);
     Wmt = Wmt(imagesKept,tagsKept);
     Wml = Wml(imagesKept,locationsKept);
     
     Xl = Kernel.Distance(Xl);
-    sigma = mean(Xl(:));
+    sigma = .1*mean(Xl(:));
     Xl = Helpers.distance2RBF(Xl,sigma);
     
     nImages = size(Wmt,1);
@@ -45,6 +47,7 @@ function [] = createPIMData()
     data.metadata.locationsKept = locationsKept;
     data.metadata.imagesKept = imagesKept;
     data.metadata.locSigma = sigma;
+    %f = 'Data/pimData/pimData-cubic.mat';
     f = 'Data/pimData/pimData.mat';
     f = Helpers.MakeProjectURL(f);
     save(f,'data');

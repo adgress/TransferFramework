@@ -5,8 +5,9 @@ function [wordsKept,imagesKept,locationsKept] = ...
     [vals, I] = sort(tagCounts,'descend');
     if n >= length(vals)
         wordsKept = I;
-    else                
-        wordsKept = I(2:n+1);
+    else              
+        toSkip = 5;
+        wordsKept = I(1+toSkip:n+toSkip);
     end
     wordsKept = sort(wordsKept,'ascend');
     imagesKept = sum(imageTagsSimMat(:,wordsKept),2) > 0;

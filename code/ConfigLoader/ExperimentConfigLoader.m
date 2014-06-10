@@ -136,7 +136,13 @@ classdef ExperimentConfigLoader < ConfigLoader
                 assert(length(cvParams) <= 1);
                 for i=1:length(cvParams)
                     param = cvParams{i};
-                    paramVals = obj.configs(param);
+                    paramVals_orig = obj.configs(param);
+                    paramVals = {};
+                    for k=1:length(paramVals_orig)
+                        v = paramVals_orig{k};
+                        paramVals{end+1} = v;
+                        paramVals{end+1} = 5*v;
+                    end
                     paramAcc = zeros(size(paramVals));  
                     cvResults = cell(size(paramVals));
                     bestNumVecs = zeros(size(paramVals));
