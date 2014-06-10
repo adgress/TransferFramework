@@ -50,7 +50,8 @@ classdef Measure < Saveable
                 total = sum(testPredictedMat(:) | split.testActual(:));
                 useInt = 0;
                 usePrec = 0;
-                useF1 = 1;
+                useF1 = 0;
+                useMAP = 1;
                 if useInt
                     valTest = numCorrect/total;
                 elseif usePrec
@@ -71,6 +72,21 @@ classdef Measure < Saveable
                     R = numTP/(numTP + numFN);
                     beta = 1;
                     valTest = (beta^2+1)*P*R/(beta^2*P+R);
+                elseif useMAP
+                    scores = zeros(size(testPredicted,2),1);
+                    for i=1:size(testPredicted,1)
+                        pred = testPredicted(i,:);
+                        actual = split.testActual(i,:);
+                        numTags = sum(actual);                                                
+                        score = actual(pred(1));
+                        maxScore = 1;                        
+                        for j=2:numTags
+                            score = score + actual(pred(j))/log(j+1);
+                            maxScore = maxScore + 1/log(j+1);
+                        end                        
+                        scores(i) = score/maxScore;
+                    end
+                    valTest = mean(scores);
                 else
                     assert(false);
                 end
