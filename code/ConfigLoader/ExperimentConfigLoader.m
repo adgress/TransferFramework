@@ -106,7 +106,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                         sampledTrainCV.X{1} = sampledTrainCV.X{1}(:,cvFeats);
                         sampledValidateCV.X{1} = sampledValidateCV.X{1}(:,cvFeats);
 
-                        %trainFeats = [trainFeatKept ; validateFeatKept];
+                        trainFeats = [trainFeatKept ; validateFeatKept];
                         trainFeats = [trainFeatKept];
 
                         sampledTrain.X{1} = sampledTrain.X{1}(:,trainFeats);
