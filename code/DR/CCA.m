@@ -43,7 +43,11 @@ classdef CCA < DRMethod
             
             %K = X1dupe*X2dupe'*C22_inv*X2dupe*X1dupe';
             K = X1dupe'*X2dupe*(C22\X2dupe'*X1dupe);
+            K(isnan(K) | isinf(K)) = 0;
+            C11(isnan(C11) | isinf(C11)) = 0;
             [vecs,vals] = eig(K,C11);
+            vecs = real(vecs);
+            vals = real(vals);
             vals = diag(vals);
             [sortedVals,I] = sort(vals,'descend');
             v1 = vecs(:,I);

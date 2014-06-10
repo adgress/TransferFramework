@@ -64,7 +64,11 @@ classdef HP < CCA
             if obj.configs('useIdentity')                
                 B = eye(size(Q));
             end
+            Q(isnan(Q) | isinf(Q)) = 0;
+            B(isnan(B) | isinf(B)) = 0;
             [v1,vals1] = eig(Q,B);
+            v1 = real(v1);
+            vals = real(vals);
             [sortedVals,I] = sort(diag(vals1),'ascend');
             v1 = v1(:,I);
             
