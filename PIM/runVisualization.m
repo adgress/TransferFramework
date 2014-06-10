@@ -25,11 +25,12 @@ function [] = runVisualization(dataset)
     options.showTest = showTest;
     
     options.xAxisField = 'percTrain';    
-    options.yAxisDisplay = 'Precision@k';    
+    options.yAxisDisplay = 'NDCG';    
     
     f = figure;
     %visualizeResults(options,f);
-    kVals = [1 3 5 7 10];    
+    %kVals = [1 3 5 7 10];    
+    kVals = 10;
     %kVals = [10 15];    
     numVecsExp = 0;
     tauExp = 0;
