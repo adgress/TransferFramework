@@ -1,5 +1,5 @@
 function [] = createImageKernel()
-    input = 'PIM/Data/featData/featResults8-10.mat';
+    input = 'PIM/Data/featData/featResults500-1000.mat';
     featResults = load(input);   
     featResults = featResults.featResults;
     numImages = max(featResults.keyPointToImage);
