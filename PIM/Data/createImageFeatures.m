@@ -1,5 +1,5 @@
 function [] = createImageFeatures()
-    runLaptap = 0;
+    runLaptap = isequal(computer,'PCWIN');
     if runLaptap
         inputDir = 'C:\Users\Aubrey\Desktop\matlab\imageVectorFiles\';
         outputDir = 'C:\Users\Aubrey\Google Drive\Research\TransferFramework\PIM\Data\featData\';
