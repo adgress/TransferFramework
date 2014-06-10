@@ -68,7 +68,7 @@ classdef HP < CCA
             B(isnan(B) | isinf(B)) = 0;
             [v1,vals1] = eig(Q,B);
             v1 = real(v1);
-            vals = real(vals);
+            vals1 = real(vals1);
             [sortedVals,I] = sort(diag(vals1),'ascend');
             v1 = v1(:,I);
             
