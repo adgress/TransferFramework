@@ -51,21 +51,12 @@ function [] = runVisualization(dataset)
         binPerformance = 0;
         numIterations = 3;
         percToRemove = 1;
-        %fileNames{end+1} = 'REP/NN/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
-        %fileNames{end+1} = 'REP/NN/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-kNN_k=1.mat';
-        
-        %fileNames{end+1} = 'REP/NN/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
-        %fileNames{end+1} = 'REP/NN/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
-        
-        %fileNames{end+1} = 'REP/LLGC/TR_strategy=Random_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
-        %fileNames{end+1} = 'REP/LLGC/TR_strategy=NNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
-        %fileNames{end+1} = 'REP/LLGC/TR_strategy=AddvancedNNPrune_percToRemove=0.%d_numIterations=%d-S+T-LLGC.mat';
-        
-        fileNames{end+1} = 'REP/LLGC/TR_strategy=NNPrune_percToRemove=0.1_numIterations=3_useECT=1-S+T-LLGC.mat';
-        %fileNames{end+1} = 'REP/LLGC/TR_strategy=AddvancedNNPrune_percToRemove=0.1_numIterations=3_useECT=1-S+T-LLGC.mat';
+                
+        fileNames{end+1} = 'TR_strategy=Random_percToRemove=0.1_numIterations=3_useECT=1_fixSigma=1-S+T-LLGC';        
+        fileNames{end+1} = 'TR_strategy=NNPrune_percToRemove=0.1_numIterations=3_useECT=1_fixSigma=1-S+T-LLGC';
         
         for i=1:length(fileNames)
-            fileNames{i} = sprintf(fileNames{i},percToRemove,numIterations);
+            fileNames{i} = ['REP/LLGC/' sprintf(fileNames{i},percToRemove,numIterations) '.mat'] ;
         end
         axisToUse = [0 3 0 1];
     end

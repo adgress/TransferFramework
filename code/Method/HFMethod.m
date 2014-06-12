@@ -39,7 +39,9 @@ classdef HFMethod < Method
                     %}
                 type = [train.type(trainLabeled);...
                     train.type(~trainLabeled);...
-                    test.type];
+                    test.type];                
+                testResults.trainType = type(1:length(train.type));
+                testResults.testType = type(length(train.type)+1:end);
                 W = Helpers.CreateDistanceMatrix(Xall);
                 W = DistanceMatrix(W,Y,type);
             end
@@ -89,11 +91,16 @@ classdef HFMethod < Method
                 isYTest = Y > 0 & isTest;
                 YTest = Y(isYTest);            
                 numTrainLabeled = sum(isTrainLabeled);
-                predicted = predicted(isYTest(numTrainLabeled+1:end));                
+                predicted = predicted(isYTest(numTrainLabeled+1:end));    
+                testResults.trainFU = fu(~isYTest,:);
+                testResults.testFU = fu(isYTest,:);
+                error('Update for unlabeled source, make sure indices are correct!');
             else
                 isYTest = Y > 0 & type == Constants.TARGET_TEST;
                 YTest = Y(isYTest);
                 predicted = predicted(isYTest);
+                testResults.trainFU = fu(~isYTest,:);
+                testResults.testFU = fu(isYTest,:);
             end
             val = sum(predicted == YTest)/...
                     length(YTest);
@@ -104,8 +111,8 @@ classdef HFMethod < Method
             end
             testResults.testPredicted = predicted;
             testResults.testActual = YTest;
-            testResults.trainActual = train.Y;
             testResults.trainPredicted = train.Y;
+            testResults.trainActual = train.Y;            
         end
         
         function [testResults,metadata] = ...
