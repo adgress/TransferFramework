@@ -49,8 +49,12 @@ classdef TransferMeasure < Saveable
                 type = type(isTarget);
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);            
-            end  
-            [sigma,score,percCorrect] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,type);            
+            end
+            if isKey(obj.configs,'sigma')
+                sigma = obj.configs('sigma');
+            else
+                [sigma,~,~] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,type);            
+            end
             metadata.sigma = sigma;
             rerunLOOCV = 1;
             if rerunLOOCV            

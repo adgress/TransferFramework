@@ -47,7 +47,13 @@ classdef HFMethod < Method
                 [W,Y,isTest,type] = W.prepareForHF();
                 Y_testCleared = Y;
                 Y_testCleared(isTest) = -1;
-                sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,obj.configs('useMeanSigma'),useHF,type);
+                if isKey(obj.configs,'sigma')
+                    error('Make sure this is correct!');
+                    sigma = obj.configs('sigma');
+                else
+                    error('Make sure this is correct!');
+                    sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,obj.configs('useMeanSigma'),useHF,type);
+                end
                 W = Helpers.distance2RBF(W,sigma);
                 isTrainLabeled = Y > 0 & ~isTest;
                 assert(~issorted(isTrainLabeled));
@@ -60,10 +66,14 @@ classdef HFMethod < Method
                 Y_testCleared = Y;
                 Y_testCleared(isTest) = -1;
                 Ymat = full(Helpers.createLabelMatrix(Y_testCleared));
-                sigma = GraphHelpers.autoSelectSigma(W.W,...
-                    Y_testCleared,...
-                    ~isTest,...
-                    obj.configs('useMeanSigma'),useHF,type);
+                if isKey(obj.configs,'sigma')
+                    sigma = obj.configs('sigma');
+                else
+                    sigma = GraphHelpers.autoSelectSigma(W.W,...
+                        Y_testCleared,...
+                        ~isTest,...
+                        obj.configs('useMeanSigma'),useHF,type);
+                end
                 W = Helpers.distance2RBF(W.W,sigma);
                 %W = Kernel.RBFKernel(W.W,sigma);
                 [fu] = llgc(W, Ymat);

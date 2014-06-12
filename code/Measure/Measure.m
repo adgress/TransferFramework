@@ -48,11 +48,15 @@ classdef Measure < Saveable
                 
                 numCorrect = sum(testIsCorrect(:));
                 total = sum(testPredictedMat(:) | split.testActual(:));
+                useAcc = 1;
                 useInt = 0;
                 usePrec = 0;
                 useF1 = 0;
-                useMAP = 1;
-                if useInt
+                useMAP = 0;
+                if useAcc
+                    valTest = sum(testIsCorrect(:))/length(testIsCorrect);
+                    error('');
+                elseif useInt
                     valTest = numCorrect/total;
                 elseif usePrec
                     %valTest = sum(testIsCorrect(:))/numel(testIsCorrect);

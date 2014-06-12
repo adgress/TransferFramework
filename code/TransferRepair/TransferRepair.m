@@ -20,8 +20,8 @@ classdef TransferRepair < Saveable
             repairedInput = input;
             strategy = obj.configs('strategy');
             
-            isSource = input.train.type == Constants.SOURCE;
-            sourceInds = find(isSource);
+            isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
+            sourceInds = find(isLabeledSource);
             numSource = length(sourceInds);
             numToPrune = floor(percToRemove*numSource);
             if isequal(strategy,'Random')
@@ -59,23 +59,25 @@ classdef TransferRepair < Saveable
                 end
                 if useAdvaned
                     %trainIndsToUse = labeeldTargetTrainInds;
-                    isSource = input.train.type == Constants.SOURCE;
-                    sourceLabels = input.train.Y(isSource);
+                    isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
+                    sourceLabels = input.train.Y(isLabeledSource);
                     sourceLabelsRep = repmat(sourceLabels',length(correctLabels),1);
-                    targetLabelsRep = repmat(correctLabels,1,length(sourceLabels));
+                    sourceLabelsRep = sourceLabelsRep(trainIndsToUse,:);
+                    targetLabelsRep = repmat(correctLabels,1,length(sourceLabels));                    
+                    targetLabelsRep = targetLabelsRep(trainIndsToUse,:);
                     if obj.configs('useECT')
-                        distMat = distMat(trainIndsToUse,isSource);
+                        distMat = distMat(trainIndsToUse,isLabeledSource);
                     else
                         distMat = Helpers.CreateDistanceMatrix(...
                             input.train.X(trainIndsToUse,:),...
-                            input.train.X(isSource,:));
+                            input.train.X(isLabeledSource,:));
                     end
                     isCorrectRep = sourceLabelsRep == targetLabelsRep;
                     isIncorrectRep = ~isCorrectRep;
                     incorrectDistances = distMat.*isIncorrectRep;                    
                     incorrectSourceScores = sum(incorrectDistances);
                     [sortedScores,sortedScoreInds] = sort(incorrectSourceScores,'ascend');
-                    sourceInds = find(isSource);
+                    sourceInds = find(isLabeledSource);
                     indsToPrune = sourceInds(sortedScoreInds);
                 else
                     %trainIndsToUse = incorrectInds;
@@ -93,7 +95,7 @@ classdef TransferRepair < Saveable
                         currInds = sortedDInds(:,i);                    
                         actualLabels = input.train.Y(currInds);
                         isIncorrect = correctTargetLabels ~= actualLabels;
-                        isNNSource = isSource(currInds);                    
+                        isNNSource = isLabeledSource(currInds);                    
                         shouldPrune = currInds(isNNSource & isIncorrect & ...
                             actualLabels > 0);
                         indsToPrune = [indsToPrune ; shouldPrune];
@@ -104,7 +106,10 @@ classdef TransferRepair < Saveable
                     end   
                 end
                 indsToPrune = indsToPrune(1:numToPrune);
-                repairedInput.train.remove(indsToPrune);
+                %repairedInput.train.remove(indsToPrune);
+                assert(sum(repairedInput.train.Y(indsToPrune) == -1) == 0);
+                assert(sum(repairedInput.train.type(indsToPrune) ~= Constants.SOURCE) == 0);
+                repairedInput.train.Y(indsToPrune) = -1;
             else
                 error(['Unknown Strategy: ' strategy]);
             end
@@ -114,7 +119,7 @@ classdef TransferRepair < Saveable
             prefix = 'TR';
         end        
         function [nameParams] = getNameParams(obj)
-            nameParams = {'strategy','percToRemove','numIterations','useECT'};
+            nameParams = {'strategy','percToRemove','numIterations','useECT','fixSigma'};
         end        
     end    
 end

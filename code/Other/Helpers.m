@@ -117,6 +117,12 @@ classdef Helpers < handle
             end
         end
         
+        function [] = RemoveKey(m,key)
+            if isKey(m,key)
+                remove(m,key);
+            end
+        end
+        
         function [m2] = CopyMap(m)            
             m2 = Helpers.CombineMaps(m,containers.Map);
         end

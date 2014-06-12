@@ -42,7 +42,10 @@ classdef DataSet < handle
         function [n] = numSource(obj)
             n = sum(obj.type == Constants.SOURCE);
         end
-        
+        function [n] = numLabeledSource(obj)
+            n = sum(obj.Y > 0 & ...
+                obj.type == Constants.SOURCE);
+        end
         function [split] = generateSplitArray(obj,percTrain,percTest)            
             percValidate = 1 - percTrain - percTest;
             split = DataSet.generateSplit([percTrain percTest percValidate],...
