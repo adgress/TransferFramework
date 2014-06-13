@@ -17,7 +17,7 @@ function [] = deleteTransferRepairResults()
             continue;
         end
         toRemove = [resultsDir '/' d '/REP/'];
-        rmdir(toRemove,'s');
+        success = rmdir(toRemove,'s');
     end
 end
 
