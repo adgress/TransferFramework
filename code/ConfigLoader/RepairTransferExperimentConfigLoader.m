@@ -55,13 +55,14 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             Helpers.RemoveKey(obj.configs,'sigma');
             Helpers.RemoveKey(measureObj.configs,'sigma');
             
+            results.repairMetadata{1} = struct();
             for i=1:numIterations+1
                 if i > 1
                     repairObj.configs('sigma') = results.trainTestMetadata{i-1}.sigma;
                     if obj.configs('fixSigma')
                         measureObj.configs('sigma') = results.transferMeasureMetadata{i-1}.sigma;
                     end
-                    [trainTestInput] = repairObj.repairTransfer(...
+                    [trainTestInput,results.repairMetadata{i}] = repairObj.repairTransfer(...
                         trainTestInput,...
                         results.labeledTargetScores{i-1});
                     sourceData = trainTestInput.train.getSourceData();

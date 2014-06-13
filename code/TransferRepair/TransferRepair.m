@@ -13,8 +13,10 @@ classdef TransferRepair < Saveable
             d = 'REP';
         end
         
-        function [repairedInput] = ...
+        function [repairedInput,metadata] = ...
                 repairTransfer(obj,input,targetScores)
+            metadata = struct();
+            metadata.targetScores = targetScores;
             percToRemove = obj.configs('percToRemove');
             
             repairedInput = input;
@@ -28,7 +30,7 @@ classdef TransferRepair < Saveable
                 toRemove = randperm(numSource,numToPrune);
                 repairedInput.train.remove(sourceInds(toRemove));
             elseif isequal(strategy,'NNPrune') || isequal(strategy,'AddvancedNNPrune')
-                useAdvaned = isequal(strategy,'AddvancedNNPrune');
+                useAdvanced = isequal(strategy,'AddvancedNNPrune');
                 dataSet = DataSet.Combine(input.train,input.test);
                 dataSet.removeTestLabels();
                 [scores,predicted] = max(targetScores,[],2);
@@ -36,7 +38,7 @@ classdef TransferRepair < Saveable
                     input.train.type == Constants.TARGET_TRAIN);
                 correctLabels = input.train.Y(labeledTargetTrainInds);
                 isIncorrect = predicted ~= correctLabels;
-                
+                metadata.isIncorrect = isIncorrect;
                 correctLabelMat = Helpers.createLabelMatrix(correctLabels);
                 correctLabelScores = max(targetScores.*correctLabelMat,[],2);                
                 
@@ -57,7 +59,7 @@ classdef TransferRepair < Saveable
                     L = D - W;
                     distMat = pinv(L);
                 end
-                if useAdvaned
+                if useAdvanced
                     %trainIndsToUse = labeeldTargetTrainInds;
                     isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
                     sourceLabels = input.train.Y(isLabeledSource);
@@ -104,8 +106,11 @@ classdef TransferRepair < Saveable
                         end
                         i = i + 1;
                     end   
-                end
+                end                
                 indsToPrune = indsToPrune(1:numToPrune);
+                metadata.indsToPrune = indsToPrune;
+                metadata.correctLabelScores = correctLabelScores;
+                %metadata.incorrectTarget = input.train.Y > 0 & input.train.Y ~= 
                 %repairedInput.train.remove(indsToPrune);
                 assert(sum(repairedInput.train.Y(indsToPrune) == -1) == 0);
                 assert(sum(repairedInput.train.type(indsToPrune) ~= Constants.SOURCE) == 0);
@@ -119,7 +124,7 @@ classdef TransferRepair < Saveable
             prefix = 'TR';
         end        
         function [nameParams] = getNameParams(obj)
-            nameParams = {'strategy','percToRemove','numIterations','useECT','fixSigma'};
+            nameParams = {'strategy','percToRemove','numIterations','useECT','fixSigma','saveINV'};
         end        
     end    
 end
