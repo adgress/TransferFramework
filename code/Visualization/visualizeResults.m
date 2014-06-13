@@ -66,14 +66,32 @@ function [f] = visualizeResults(options,f)
                 numIterations = configs.configs('numIterations');
                 numSplits = results.numSplits;
                 if options.showRepairChange
+                    
                     for split=1:numSplits
-                        splitResults = results.splitResults{split};
-                        for itr=2:numIterations+1
-                            preTRResults = splitResults.repairResults{itr-1};
-                            postTRResults = splitResults.repairResults{itr};
+                        splitResults = results.splitResults{split}; 
+                        repairResults1 = splitResults.repairResults{1};
+                        labeledTrainData = find(repairResults1.trainActual > 0 & ...
+                            repairResults1.trainType == Constants.TARGET_TRAIN);
+                        labeledTrainY = repairResults1.trainActual(labeledTrainData);
+                        numLabeledTrain = length(labeledTrainY);
+                        splitMeasureScores = zeros(numLabeledTrain,numIterations+1);
+                        splitTrainFU = zeros(numLabeledTrain,numIterations+1);
+                        splitRepairScores = zeros(numLabeledTrain,numIterations+1);
+                        splitIsIncorrect = zeros(numLabeledTrain,numIterations+1);
+                        for itr=1:numIterations+1
+                            trResults = splitResults.repairResults{itr};
+                            measureResults = splitResults.transferMeasureMetadata{itr};
                             repairMetadata = splitResults.repairMetadata{itr};
-                            
-                            
+                                                        
+                            splitMeasureScores(:,itr) = Helpers.SelectFromRows(...
+                                measureResults.labeledTargetScores,labeledTrainY);                            
+                            splitTrainFU(:,itr) = Helpers.SelectFromRows(...
+                                trResults.trainFU(labeledTrainData,:),labeledTrainY);
+                            if itr > 1
+                                splitRepairScores(:,itr) = Helpers.SelectFromRows(... 
+                                    repairMetadata.targetScores,labeledTrainY);                            
+                                splitIsIncorrect(:,itr) = repairMetadata.isIncorrect;
+                            end
                         end
                     end
                 else
