@@ -1,6 +1,9 @@
-function [] = deleteResults(fileName,dataSet)
+function [] = deleteResults(fileName,dataSet,removeDirs)
     if nargin < 2
         dataSet = Constants.CV_DATA;
+    end
+    if nargin < 3
+        removeDirs = 0;
     end
     s = getProjectConstants();
     projectDir = s.projectDir;
@@ -12,9 +15,10 @@ function [] = deleteResults(fileName,dataSet)
     end
     resultDirectories = ls(resultsDir);
     numDeleted = 0;
+    numDirsDeleted = 0;
     for i=1:length(resultDirectories)
         d = resultDirectories(i,:);
-        if isequal(d,'.') || isequal(d,'..')
+        if isequal(d,'.  ') || isequal(d,'.. ')
             continue;
         end
         currFile = [resultsDir '/' d '/' fileName];
@@ -22,8 +26,17 @@ function [] = deleteResults(fileName,dataSet)
         if exist(currFile,'file')
             delete(currFile);
             numDeleted = numDeleted+1;
-        end
+        else
+            delete(currFile);
+            if removeDirs
+                rmdir(currFile);
+                numDirsDeleted = numDirsDeleted + 1;
+            end
+        end        
     end
     display(sprintf('Deleted %d files',numDeleted));
+    if removeDirs
+        display(sprintf('Deleted %d directories',numDirsDeleted));
+    end
 end
 

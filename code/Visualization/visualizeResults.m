@@ -65,17 +65,30 @@ function [f] = visualizeResults(options,f)
                 results = results{1};
                 numIterations = configs.configs('numIterations');
                 numSplits = results.numSplits;
-                postTransferVals = zeros(numIterations,numSplits);
-                repairedAcc = zeros(numIterations,numSplits);
-                for itr=1:numIterations+1
+                if options.showRepairChange
                     for split=1:numSplits
                         splitResults = results.splitResults{split};
-                        postTransferVals(itr,split) = ...
-                            splitResults.postTransferMeasureVal{itr};
-                        repairResults = splitResults.repairResults{itr};
-                        measureResults = measureObject.evaluate(repairResults);
-                        repairedAcc(itr,split) = ...
-                            measureResults.testPerformance;                            
+                        for itr=2:numIterations+1
+                            preTRResults = splitResults.repairResults{itr-1};
+                            postTRResults = splitResults.repairResults{itr};
+                            repairMetadata = splitResults.repairMetadata{itr};
+                            
+                            
+                        end
+                    end
+                else
+                    postTransferVals = zeros(numIterations,numSplits);
+                    repairedAcc = zeros(numIterations,numSplits);
+                    for itr=1:numIterations+1
+                        for split=1:numSplits
+                            splitResults = results.splitResults{split};
+                            postTransferVals(itr,split) = ...
+                                splitResults.postTransferMeasureVal{itr};
+                            repairResults = splitResults.repairResults{itr};
+                            measureResults = measureObject.evaluate(repairResults);
+                            repairedAcc(itr,split) = ...
+                                measureResults.testPerformance;                            
+                        end
                     end
                 end
                 PTResults = ResultsVector(postTransferVals');
