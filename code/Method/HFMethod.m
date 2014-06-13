@@ -112,7 +112,8 @@ classdef HFMethod < Method
             testResults.testPredicted = predicted;
             testResults.testActual = YTest;
             testResults.trainPredicted = train.Y;
-            testResults.trainActual = train.Y;            
+            testResults.trainActual = train.Y; 
+            testResults.sigma = sigma;
         end
         
         function [testResults,metadata] = ...

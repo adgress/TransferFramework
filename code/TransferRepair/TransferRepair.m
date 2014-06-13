@@ -47,10 +47,9 @@ classdef TransferRepair < Saveable
                 incorrectInds = labeledTargetTrainInds(isIncorrect);
                 correctTargetLabels = input.train.Y(incorrectInds);
                 
-                percIncorrectToUse = .2;
-                numIncorrectToUse = ceil(percIncorrectToUse*length(sortedInds));
-                trainIndsToUse = sortedInds(1:numIncorrectToUse );
-                correctTargetLabels = correctLabels(trainIndsToUse);
+                %numIncorrectToUse = 5;
+                %trainIndsToUse = sortedInds(1:numIncorrectToUse );
+                %correctTargetLabels = correctLabels(trainIndsToUse);
                 if obj.configs('useECT')
                     sigma = obj.configs('sigma');
                     W = Helpers.CreateDistanceMatrix(input.train.X);
@@ -60,6 +59,7 @@ classdef TransferRepair < Saveable
                     distMat = pinv(L);
                 end
                 if useAdvanced
+                    error('Make sure we''re using the correct indices!');
                     %trainIndsToUse = labeeldTargetTrainInds;
                     isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
                     sourceLabels = input.train.Y(isLabeledSource);
@@ -82,7 +82,7 @@ classdef TransferRepair < Saveable
                     sourceInds = find(isLabeledSource);
                     indsToPrune = sourceInds(sortedScoreInds);
                 else
-                    %trainIndsToUse = incorrectInds;
+                    trainIndsToUse = incorrectInds;
                     if obj.configs('useECT')
                         distMat = distMat(trainIndsToUse,:);
                     else

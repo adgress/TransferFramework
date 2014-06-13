@@ -7,6 +7,12 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [v] = SelectFromRows(X,inds)
+            m = size(X,2);
+            inds = logical(Helpers.createLabelMatrix(inds,m));
+            v = X(inds(:));
+        end
+        
         function [X] = AddBias(X)
             X = [X ones(size(X,1),1)];
         end
@@ -230,12 +236,14 @@ classdef Helpers < handle
             [results.train.predicted] = svmpredict(train.Y,XTrain,results.svm,'-q');
             [results.test.predicted] = svmpredict(test.Y,XTest,results.svm,'-q');
         end
-        function [Ymat] = createLabelMatrix(Y)
+        function [Ymat] = createLabelMatrix(Y,m)
+            if nargin < 2
+                m = max(Y(:));
+            end
             %Ymat = zeros(size(Y,1),max(Y));
             %Ymat(:,Y) = 1;
             Ymat = 0;
             n = size(Y,1);
-            m = max(Y(:));
             Y(Y < 0) = m+1;
             for i=1:size(Y,2)            
                 assert(m > 0);                
