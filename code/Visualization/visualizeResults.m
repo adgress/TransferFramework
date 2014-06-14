@@ -66,7 +66,7 @@ function [f] = visualizeResults(options,f)
                 numIterations = configs.configs('numIterations');
                 numSplits = results.numSplits;
                 if options.showRepairChange
-                    
+                    meanMeasureImprovements = zeros(numSplits,numIterations+1);
                     for split=1:numSplits
                         splitResults = results.splitResults{split}; 
                         repairResults1 = splitResults.repairResults{1};
@@ -80,7 +80,8 @@ function [f] = visualizeResults(options,f)
                         splitIsIncorrect = zeros(numLabeledTrain,numIterations+1);
                         trainIndsToUse = zeros(1,numIterations+1);
                         trainIndsToFocusOn = zeros(numLabeledTrain,numIterations+1);
-                        measureScores = zeros(1,numIterations+1);                        
+                        measureScores = zeros(1,numIterations+1);
+                        trainFU = zeros(1,numIterations+1);
                         for itr=1:numIterations+1
                             trResults = splitResults.repairResults{itr};
                             measureResults = splitResults.transferMeasureMetadata{itr};
@@ -100,7 +101,19 @@ function [f] = visualizeResults(options,f)
                                 trainIndsToUse(itr) = repairMetadata.trainIndsToUse;
                             end
                         end
+                        for itr=2:length(trainIndsToUse)
+                            ind = find(trainIndsToFocusOn(:,itr));
+                            measureScores(itr,:) = splitMeasureScores(ind,:);
+                            meanMeasureImprovements(split,itr) = ...
+                                measureScores(itr,itr)-measureScores(itr,itr-1);
+                        end
                     end
+                    measureIncreaseResults = ResultsVector(meanMeasureImprovements);
+                    mMIR = measureIncreaseResults.getMean();
+                    vMIR = measureIncreaseResults.getVar();
+                    errorbar(0:numIterations,mMIR,vMIR,'color',colors(index,:));
+                    leg{index} = [learnerName ':' 'Measure Increase'];
+                    idex = index + 1;
                 else
                     postTransferVals = zeros(numIterations,numSplits);
                     repairedAcc = zeros(numIterations,numSplits);
@@ -115,20 +128,20 @@ function [f] = visualizeResults(options,f)
                                 measureResults.testPerformance;                            
                         end
                     end
-                end
-                PTResults = ResultsVector(postTransferVals');
-                accResults = ResultsVector(repairedAcc');
-                mPT = PTResults.getMean();
-                vPT = PTResults.getVar();                
-                errorbar(0:numIterations,mPT,vPT,'color',colors(index,:));
-                leg{index} = [learnerName ':' 'Transfer Measure'];
-                index = index+1;
-                
-                mAcc = accResults.getMean();
-                vAcc = accResults.getVar();
-                errorbar(0:numIterations,mAcc,vAcc,'color',colors(index,:));
-                leg{index} = [learnerName ':' 'Repaired Acc'];
-                index = index+1;
+                    PTResults = ResultsVector(postTransferVals');
+                    accResults = ResultsVector(repairedAcc');
+                    mPT = PTResults.getMean();
+                    vPT = PTResults.getVar();
+                    errorbar(0:numIterations,mPT,vPT,'color',colors(index,:));
+                    leg{index} = [learnerName ':' 'Transfer Measure'];
+                    index = index+1;
+                    
+                    mAcc = accResults.getMean();
+                    vAcc = accResults.getVar();
+                    errorbar(0:numIterations,mAcc,vAcc,'color',colors(index,:));
+                    leg{index} = [learnerName ':' 'Repaired Acc'];
+                    index = index+1;
+                end                
             else
                 numTrain = 0;
                 if isKey(configs.configs,'trainSize')
