@@ -133,7 +133,7 @@ classdef TransferRepair < Saveable
             else
                 error(['Unknown Strategy: ' strategy]);
             end
-            [metadata.trainIndsToUse metadata.labeledTargetTrainInds(find(metadata.labeledTargetIndsToFocusOn))]
+            %[metadata.trainIndsToUse metadata.labeledTargetTrainInds(find(metadata.labeledTargetIndsToFocusOn))]
         end
         
         function [prefix] = getPrefix(obj)
