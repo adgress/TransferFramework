@@ -1,2 +1,2 @@
 #!/bin/bash
-matlab -nodesktop -nospash -r runTransferExperiments
+matlab -nodesktop -nosplash -r runTransferExperiments
