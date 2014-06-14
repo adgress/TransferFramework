@@ -17,12 +17,17 @@ classdef ExperimentConfigLoader < ConfigLoader
             obj.setDataSet(dataSet);            
         end        
         
-        function [results,metadata] = trainAndTest(obj,input,experiment)
+        function [results,metadata,savedData] = trainAndTest(obj,input,experiment,savedData)
             methodClass = str2func(experiment.methodClass);
             methodObject = methodClass(obj.configs);            
             input.sharedConfigs = obj.configs;
-            [results,metadata] = ...
-                methodObject.trainAndTest(input);            
+            if exist('savedData','var')
+                [results,metadata,savedData] = ...
+                    methodObject.trainAndTest(input,savedData);
+            else
+                [results,metadata] = ...
+                    methodObject.trainAndTest(input);
+            end
         end
         function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
             numClasses = max(test.Y);

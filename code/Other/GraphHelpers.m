@@ -6,8 +6,8 @@ classdef GraphHelpers
     end
     
     methods(Static)
-        function [score,percCorrect,Ypred,Yactual,labeledTargetScores] ...
-                = LOOCV(W,labeledInds,Y,useHF,type)
+        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
+                = LOOCV(W,labeledInds,Y,useHF,type,savedData)
             if nargin < 4
                 useHF = false;
             end
@@ -46,12 +46,15 @@ classdef GraphHelpers
                 Yactual = Y(labeledTargetInds);
                 Ymat = full(Helpers.createLabelMatrix(Y));
                 labeledTargetScores = zeros(length(labeledTargetInds),numClasses);
+                if exist('savedData','var') && isfield(savedData,'invM');
+                    invM = savedData.invM;
+                end
                 for i=1:length(labeledTargetInds)
                     ind = labeledTargetInds(i);                    
                     yi = Ymat(ind,:);
                     Ymat(ind,:) = 0;
                     warning off;
-                    if i==1
+                    if ~exist('invM','var')
                         [fu,invM] = llgc(W,Ymat);
                     else
                         [fu,~] = llgc(W,Ymat,invM);
@@ -62,6 +65,9 @@ classdef GraphHelpers
                     [~,Ypred(i)] = max(fu(ind,:));
                     Ymat(ind,:) = yi;
                     labeledTargetScores(i,:) = fu(ind,:);
+                end
+                if exist('savedData','var')
+                    savedData.invM = invM;
                 end
             end
                      

@@ -10,9 +10,9 @@ classdef TransferMeasure < Saveable
             obj = obj@Saveable(configs);
         end
         
-        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata] = ...
+        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata,savedData] = ...
                 computeGraphMeasure(obj,source,target,options,...
-                useHF)
+                useHF,savedData)
             metadata = struct();
             targetWithLabels = target.Y > 0;
             if sum(targetWithLabels) == 0 || ...
@@ -57,11 +57,16 @@ classdef TransferMeasure < Saveable
             end
             metadata.sigma = sigma;
             rerunLOOCV = 1;
-            if rerunLOOCV            
+            if rerunLOOCV
                 W = Helpers.distance2RBF(W,sigma);
                 addpath(genpath('libraryCode'));
-                [score, percCorrect,Ypred,Yactual,labeledTargetScores] = GraphHelpers.LOOCV(W,...
-                    [],[Ys ; Yt],useHF,type);
+                if exist('savedData','var')
+                    [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] = GraphHelpers.LOOCV(W,...
+                        [],[Ys ; Yt],useHF,type,savedData);
+                else
+                    [score, percCorrect,Ypred,Yactual,labeledTargetScores] = GraphHelpers.LOOCV(W,...
+                        [],[Ys ; Yt],useHF,type);
+                end
             else
                 display('TransferMeasure: Not rerunning LOOCV');
                 labeledTargetScores = [];

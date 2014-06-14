@@ -10,11 +10,16 @@ classdef LLGCMethod < HFMethod
             obj = obj@HFMethod(configs);
         end
         
-        function [testResults,metadata] = ...
-                trainAndTest(obj,input)
+        function [testResults,metadata,savedData] = ...
+                trainAndTest(obj,input,savedData)
             useHF = false;
-            [testResults,metadata] = ...
-                trainAndTestGraphMethod(obj,input,useHF);
+            if exist('savedData','var')
+                [testResults,metadata,savedData] = ...
+                    trainAndTestGraphMethod(obj,input,useHF,savedData);
+            else
+                [testResults,metadata] = ...
+                    trainAndTestGraphMethod(obj,input,useHF);
+            end
         end
         function [prefix] = getPrefix(obj)
             prefix = 'LLGC';

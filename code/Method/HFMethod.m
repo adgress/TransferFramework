@@ -10,8 +10,8 @@ classdef HFMethod < Method
             obj = obj@Method(configs);
         end
         
-        function [testResults,metadata] = ...
-                trainAndTestGraphMethod(obj,input,useHF)
+        function [testResults,metadata,savedData] = ...
+                trainAndTestGraphMethod(obj,input,useHF,savedData)
             train = input.train;
             test = input.test;
             %validate = input.validate;
@@ -22,7 +22,13 @@ classdef HFMethod < Method
                 W = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
             else
-                trainLabeled = train.Y > 0;
+                %Ordering matters for HF - not for LLGC
+                if useHF
+                    error('Make sure this works properly!');
+                    trainLabeled = train.Y > 0;
+                else
+                    trainLabeled = logical(ones(length(train.Y),1));
+                end
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];      
@@ -78,7 +84,19 @@ classdef HFMethod < Method
                 end
                 W = Helpers.distance2RBF(W.W,sigma);
                 %W = Kernel.RBFKernel(W.W,sigma);
-                [fu] = llgc(W, Ymat);
+                if exist('savedData','var') && isfield(savedData,'invM');
+                    %[fu,invM] = llgc(W, Ymat);
+                    %norm(W - savedData.W,inf)
+                    %norm(invM - savedData.invM,inf)
+                    [fu] = llgc(W, Ymat,savedData.invM);                    
+                else
+                    [fu,invM] = llgc(W, Ymat);
+                    if exist('savedData','var')
+                        savedData.invM = invM;
+                        savedData.W = W;
+                        savedData.Ymat = Ymat;
+                    end
+                end
             end
             metadata = struct();
             metadata.sigma = sigma;
