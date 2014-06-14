@@ -113,7 +113,7 @@ function [f] = visualizeResults(options,f)
                     vMIR = measureIncreaseResults.getVar();
                     errorbar(0:numIterations,mMIR,vMIR,'color',colors(index,:));
                     leg{index} = [learnerName ':' 'Measure Increase'];
-                    idex = index + 1;
+                    index = index + 1;
                 else
                     postTransferVals = zeros(numIterations,numSplits);
                     repairedAcc = zeros(numIterations,numSplits);

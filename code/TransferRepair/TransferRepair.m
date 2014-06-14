@@ -56,8 +56,10 @@ classdef TransferRepair < Saveable
                     W = Helpers.CreateDistanceMatrix(input.train.X);
                     W = Helpers.distance2RBF(W,sigma);
                     D = diag(sum(W));
-                    L = D - W;
-                    distMat = pinv(L);
+                    nD = sqrt(inv(D));
+                    L = eye(size(W)) - nD*W*nD;
+                    invL = pinv(L);
+                    distMat = Kernel.ComputeKernelDistance(invL);
                 end
                 if useAdvanced
                     error('Make sure we''re using the correct indices!');
@@ -97,6 +99,15 @@ classdef TransferRepair < Saveable
                     end
                     if obj.configs('useECT')
                         distMat = distMat(trainIndsToUse,:);
+                        %{
+                        d1 = distMat;                        
+                        d2 = Helpers.CreateDistanceMatrix(...
+                            input.train.X(trainIndsToUse,:),...
+                            input.train.X);
+                        [d1Vals,I1] = sort(d1,'ascend');
+                        [d2Vals,I2] = sort(d2,'ascend');
+                        [I1' I2']
+                        %}
                     else
                         distMat = Helpers.CreateDistanceMatrix(...
                             input.train.X(trainIndsToUse,:),...
