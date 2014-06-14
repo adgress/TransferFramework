@@ -41,8 +41,7 @@ classdef TransferRepair < Saveable
                 correctLabels = input.train.Y(labeledTargetTrainInds);
                 isIncorrect = predicted ~= correctLabels;
                 metadata.isIncorrect = isIncorrect;
-                correctLabelMat = Helpers.createLabelMatrix(correctLabels);
-                correctLabelScores = max(targetScores.*correctLabelMat,[],2);                
+                correctLabelScores = Helpers.SelectFromRows(targetScores,correctLabels);
                 
                 [sortedCorrectScores,sortedInds] = sort(correctLabelScores,'ascend');                
                 
@@ -88,8 +87,11 @@ classdef TransferRepair < Saveable
                     labeledTargetIndsToFocusOn = isIncorrect;
                     if useOnly1
                         display('Only using 1 incorrect target!');
-                        trainIndsToUse = incorrectInds(1);
-                        correctTargetLabels = correctTargetLabels(1);
+                        
+                        incorrectInds = labeledTargetTrainInds(sortedInds(1));
+                        correctTargetLabels = input.train.Y(incorrectInds);
+                        
+                        trainIndsToUse = incorrectInds;
                         labeledTargetIndsToFocusOn = zeros(length(correctLabels),1);
                         labeledTargetIndsToFocusOn(sortedInds(1)) = 1;
                     end
@@ -106,9 +108,9 @@ classdef TransferRepair < Saveable
                     while length(indsToPrune) < numToPrune;
                         currInds = sortedDInds(:,i);                    
                         actualLabels = input.train.Y(currInds);
-                        isIncorrect = correctTargetLabels ~= actualLabels;
+                        isMismatch = correctTargetLabels ~= actualLabels;
                         isNNSource = isLabeledSource(currInds);                    
-                        shouldPrune = currInds(isNNSource & isIncorrect & ...
+                        shouldPrune = currInds(isNNSource & isMismatch & ...
                             actualLabels > 0);
                         indsToPrune = [indsToPrune ; shouldPrune];
                         if length(indsToPrune) >= numToPrune
@@ -131,6 +133,7 @@ classdef TransferRepair < Saveable
             else
                 error(['Unknown Strategy: ' strategy]);
             end
+            [metadata.trainIndsToUse metadata.labeledTargetTrainInds(find(metadata.labeledTargetIndsToFocusOn))]
         end
         
         function [prefix] = getPrefix(obj)

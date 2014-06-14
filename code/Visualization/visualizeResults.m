@@ -78,20 +78,26 @@ function [f] = visualizeResults(options,f)
                         splitTrainFU = zeros(numLabeledTrain,numIterations+1);
                         splitRepairScores = zeros(numLabeledTrain,numIterations+1);
                         splitIsIncorrect = zeros(numLabeledTrain,numIterations+1);
-                        
+                        trainIndsToUse = zeros(1,numIterations+1);
+                        trainIndsToFocusOn = zeros(numLabeledTrain,numIterations+1);
+                        measureScores = zeros(1,numIterations+1);                        
                         for itr=1:numIterations+1
                             trResults = splitResults.repairResults{itr};
                             measureResults = splitResults.transferMeasureMetadata{itr};
                             repairMetadata = splitResults.repairMetadata{itr};
-                                                        
+                                                                                    
                             splitMeasureScores(:,itr) = Helpers.SelectFromRows(...
                                 measureResults.labeledTargetScores,labeledTrainY);                            
                             splitTrainFU(:,itr) = Helpers.SelectFromRows(...
                                 trResults.trainFU(labeledTrainData,:),labeledTrainY);
+                            
+                            
                             if itr > 1
                                 splitRepairScores(:,itr) = Helpers.SelectFromRows(... 
                                     repairMetadata.targetScores,labeledTrainY);                            
                                 splitIsIncorrect(:,itr) = repairMetadata.isIncorrect;
+                                trainIndsToFocusOn(:,itr) = repairMetadata.labeledTargetIndsToFocusOn;
+                                trainIndsToUse(itr) = repairMetadata.trainIndsToUse;
                             end
                         end
                     end
