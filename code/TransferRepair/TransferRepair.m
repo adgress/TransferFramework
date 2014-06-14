@@ -82,8 +82,12 @@ classdef TransferRepair < Saveable
                     sourceInds = find(isLabeledSource);
                     indsToPrune = sourceInds(sortedScoreInds);
                 else
-                    display('Only using 1 incorrect target!');
-                    trainIndsToUse = incorrectInds(1);
+                    useOnly1 = 1;
+                    if useOnly1
+                        display('Only using 1 incorrect target!');
+                        trainIndsToUse = incorrectInds(1);
+                        correctTargetLabels = correctTargetLabels(1);
+                    end
                     if obj.configs('useECT')
                         distMat = distMat(trainIndsToUse,:);
                     else
@@ -125,7 +129,7 @@ classdef TransferRepair < Saveable
             prefix = 'TR';
         end        
         function [nameParams] = getNameParams(obj)
-            nameParams = {'strategy','numToRemove','numIterations','useECT','fixSigma','saveINV'};
+            nameParams = {'strategy','percToRemove','numIterations','useECT','fixSigma','saveINV'};
         end        
     end    
 end
