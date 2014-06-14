@@ -83,10 +83,13 @@ classdef TransferRepair < Saveable
                     indsToPrune = sourceInds(sortedScoreInds);
                 else
                     useOnly1 = 1;
+                    labeledTargetIndsToFocusOn = isIncorrect;
                     if useOnly1
                         display('Only using 1 incorrect target!');
                         trainIndsToUse = incorrectInds(1);
                         correctTargetLabels = correctTargetLabels(1);
+                        labeledTargetIndsToFocusOn = zeros(length(correctLabels),1);
+                        labeledTargetIndsToFocusOn(sortedInds(1)) = 1;
                     end
                     if obj.configs('useECT')
                         distMat = distMat(trainIndsToUse,:);
@@ -116,6 +119,8 @@ classdef TransferRepair < Saveable
                 metadata.indsToPrune = indsToPrune;
                 metadata.correctLabelScores = correctLabelScores;
                 metadata.trainIndsToUse = trainIndsToUse;
+                metadata.labeledTargetIndsToFocusOn = labeledTargetIndsToFocusOn;
+                metadata.labeledTargetTrainInds = labeledTargetTrainInds;
                 %metadata.incorrectTarget = input.train.Y > 0 & input.train.Y ~= 
                 %repairedInput.train.remove(indsToPrune);
                 assert(sum(repairedInput.train.Y(indsToPrune) == -1) == 0);

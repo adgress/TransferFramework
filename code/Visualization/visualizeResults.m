@@ -78,6 +78,7 @@ function [f] = visualizeResults(options,f)
                         splitTrainFU = zeros(numLabeledTrain,numIterations+1);
                         splitRepairScores = zeros(numLabeledTrain,numIterations+1);
                         splitIsIncorrect = zeros(numLabeledTrain,numIterations+1);
+                        
                         for itr=1:numIterations+1
                             trResults = splitResults.repairResults{itr};
                             measureResults = splitResults.transferMeasureMetadata{itr};
