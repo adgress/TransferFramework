@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -rf Transfer/results/*/REP
+sudo rm -rf Transfer/results/CV/*/REP
