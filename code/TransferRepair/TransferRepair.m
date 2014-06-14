@@ -26,7 +26,9 @@ classdef TransferRepair < Saveable
             sourceInds = find(isLabeledSource);
             numSource = length(sourceInds);
             numToPrune = floor(percToRemove*numSource);
-            if isequal(strategy,'Random')
+            if isequal(strategy,'None')
+                %Do Nothing
+            elseif isequal(strategy,'Random')
                 toRemove = randperm(numSource,numToPrune);
                 repairedInput.train.remove(sourceInds(toRemove));
             elseif isequal(strategy,'NNPrune') || isequal(strategy,'AddvancedNNPrune')
