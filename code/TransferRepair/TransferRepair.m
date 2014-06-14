@@ -115,6 +115,7 @@ classdef TransferRepair < Saveable
                 indsToPrune = indsToPrune(1:numToPrune);
                 metadata.indsToPrune = indsToPrune;
                 metadata.correctLabelScores = correctLabelScores;
+                metadata.trainIndsToUse = trainIndsToUse;
                 %metadata.incorrectTarget = input.train.Y > 0 & input.train.Y ~= 
                 %repairedInput.train.remove(indsToPrune);
                 assert(sum(repairedInput.train.Y(indsToPrune) == -1) == 0);
