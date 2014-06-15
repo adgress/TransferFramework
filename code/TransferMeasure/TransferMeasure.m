@@ -68,7 +68,7 @@ classdef TransferMeasure < Saveable
                 W = Helpers.distance2RBF(W,sigma);                
                 if exist('savedData','var')
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] = GraphHelpers.LOOCV(W,...
-                        [],[Ys ; Yt],useHF,type,savedData);
+                        [],[Ys ; Yt],useHF,type,savedData,obj.configs);
                 else
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores] = GraphHelpers.LOOCV(W,...
                         [],[Ys ; Yt],useHF,type);

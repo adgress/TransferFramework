@@ -7,7 +7,7 @@ classdef GraphHelpers
     
     methods(Static)
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
-                = LOOCV(W,labeledInds,Y,useHF,type,savedData)
+                = LOOCV(W,labeledInds,Y,useHF,type,savedData,configs)
             if nargin < 4
                 useHF = false;
             end
