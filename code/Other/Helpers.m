@@ -7,6 +7,10 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [] = PrintNum(s,n)
+            display([s num2str(n)]);
+        end
+        
         function [v] = SelectFromRows(X,inds)
             m = size(X,2);
             inds = logical(Helpers.createLabelMatrix(inds,m));

@@ -55,6 +55,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                     transferOutput.tTarget,...
                     transferOutput.metadata);
             end
+            measureSavedData.postTransferMeasureVal = postTransferMeasureVal;
             
             results.labeledTargetScores{1} = results.transferMeasureMetadata{1}.labeledTargetScores;
             results.postTransferMeasureVal{1} = postTransferMeasureVal;
@@ -70,15 +71,16 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             
             results.repairMetadata{1} = struct();
             for i=1:numIterations+1
-                if i > 1
-                    repairObj.configs('sigma') = results.trainTestMetadata{i-1}.sigma;
+                if i > 1                    
                     if obj.configs('fixSigma')
                         measureObj.configs('sigma') = results.transferMeasureMetadata{i-1}.sigma;
-                    end
+                        repairObj.configs('sigma') = results.trainTestMetadata{i-1}.sigma;
+                    end                    
                     [trainTestInput,results.repairMetadata{i}] = ...
                         repairObj.repairTransfer(...
                         trainTestInput,...
-                        results.labeledTargetScores{i-1});
+                        results.labeledTargetScores{i-1},...
+                        measureSavedData);
                     sourceData = trainTestInput.train.getSourceData();
                     targetData = trainTestInput.train.getTargetData();
                     targetData = DataSet.Combine(targetData,...
@@ -98,6 +100,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                             targetData,struct());
                     end
                     results.labeledTargetScores{i} = results.transferMeasureMetadata{i}.labeledTargetScores;
+                    measureSavedData.postTransferMeasureVal = postTransferMeasureVal;
                 end
                 if i > 1 && obj.configs('fixSigma');
                     obj.configs('sigma') = results.trainTestMetadata{i-1}.sigma;

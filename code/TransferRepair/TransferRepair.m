@@ -13,8 +13,8 @@ classdef TransferRepair < Saveable
             d = 'REP';
         end
         
-        function [repairedInput,metadata] = ...
-                repairTransfer(obj,input,targetScores)
+        function [repairedInput,metadata,savedData] = ...
+                repairTransfer(obj,input,targetScores,savedData)
             metadata = struct();
             metadata.targetScores = targetScores;
             percToRemove = obj.configs('percToRemove');
@@ -27,18 +27,56 @@ classdef TransferRepair < Saveable
             numSource = length(sourceInds);
             numToPrune = floor(percToRemove*numSource);
             if isequal(strategy,'None')
-                %Do Nothing
-            elseif isequal(strategy,'Random')
+                return;
+            end
+            if isequal(strategy,'Random')
                 toRemove = randperm(numSource,numToPrune);
                 repairedInput.train.remove(sourceInds(toRemove));
+                return;
+            end            
+            [scores,predicted] = max(targetScores,[],2);
+            labeledTargetTrainInds = find(input.train.Y > 0 & ...
+                input.train.type == Constants.TARGET_TRAIN);
+            correctLabels = input.train.Y(labeledTargetTrainInds);
+            isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
+            if isequal(strategy,'Exhaustive')
+                measureObj = TransferMeasure.ConstructObject(...
+                    obj.configs('repairTransferMeasure'),obj.configs);
+                sourceData = input.train.getSourceData();
+                targetData = input.train.getTargetData();
+                targetData = DataSet.Combine(targetData,...
+                    input.test);
+                targetData.removeTestLabels();
+                
+                [PMTVal,~,~,~] = measureObj.computeMeasure(sourceData,...
+                    targetData,struct(),savedData);
+                Helpers.PrintNum('Original PTMVal: ', savedData.postTransferMeasureVal);
+                Helpers.PrintNum('New PTMVal: ', PMTVal);
+                labeledSourceInds = find(sourceData.Y > 0);
+                repairedScores = zeros(length(labeledSourceInds),1);
+                for sourceIndItr=1:length(labeledSourceInds)
+                    sourceInd = labeledSourceInds(sourceIndItr);
+                    savedY = sourceData.Y(sourceInd);
+                    sourceData.Y(sourceInd) = -1;
+                    repairedScores(sourceIndItr) = measureObj.computeMeasure(sourceData,...
+                        targetData,struct(),savedData);
+                    sourceData.Y(sourceInd) = savedY;
+                end
+                deltaScores = repairedScores - savedData.postTransferMeasureVal;
+                [sortedDeltedScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
+                sourceIndsToPrune = sortedDeltaScoreInds(1:numToPrune);
+                sourceIndsInTrain = find(repairedInput.train.type == Constants.SOURCE);
+                indsToPrune = sourceIndsInTrain(sourceIndsToPrune);
+                
+                sourceData.Y(sourceIndsToPrune) = -1;
+                [PTMValAfterPruning,~,~,~] =  measureObj.computeMeasure(sourceData,...
+                        targetData,struct(),savedData);
+                Helpers.PrintNum('Post Pruning PTMVal: ',PTMValAfterPruning);
+                    
             elseif isequal(strategy,'NNPrune') || isequal(strategy,'AddvancedNNPrune')
-                useAdvanced = isequal(strategy,'AddvancedNNPrune');
                 dataSet = DataSet.Combine(input.train,input.test);
                 dataSet.removeTestLabels();
-                [scores,predicted] = max(targetScores,[],2);
-                labeledTargetTrainInds = find(input.train.Y > 0 & ...
-                    input.train.type == Constants.TARGET_TRAIN);
-                correctLabels = input.train.Y(labeledTargetTrainInds);
+                useAdvanced = isequal(strategy,'AddvancedNNPrune');                                
                 isIncorrect = predicted ~= correctLabels;
                 metadata.isIncorrect = isIncorrect;
                 correctLabelScores = Helpers.SelectFromRows(targetScores,correctLabels);
@@ -63,9 +101,10 @@ classdef TransferRepair < Saveable
                 end
                 if useAdvanced
                     error('Make sure we''re using the correct indices!');
-                    %trainIndsToUse = labeeldTargetTrainInds;
-                    isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
+                    %trainIndsToUse = labeeldTargetTrainInds;                    
                     sourceLabels = input.train.Y(isLabeledSource);
+                    
+                    %TODO: Replace this with coincidence matrix?
                     sourceLabelsRep = repmat(sourceLabels',length(correctLabels),1);
                     sourceLabelsRep = sourceLabelsRep(trainIndsToUse,:);
                     targetLabelsRep = repmat(correctLabels,1,length(sourceLabels));                    
@@ -130,8 +169,7 @@ classdef TransferRepair < Saveable
                         i = i + 1;
                     end   
                 end                
-                indsToPrune = indsToPrune(1:numToPrune);
-                metadata.indsToPrune = indsToPrune;
+                indsToPrune = indsToPrune(1:numToPrune);                
                 metadata.correctLabelScores = correctLabelScores;
                 metadata.trainIndsToUse = trainIndsToUse;
                 metadata.labeledTargetIndsToFocusOn = labeledTargetIndsToFocusOn;
@@ -139,11 +177,12 @@ classdef TransferRepair < Saveable
                 %metadata.incorrectTarget = input.train.Y > 0 & input.train.Y ~= 
                 %repairedInput.train.remove(indsToPrune);
                 assert(sum(repairedInput.train.Y(indsToPrune) == -1) == 0);
-                assert(sum(repairedInput.train.type(indsToPrune) ~= Constants.SOURCE) == 0);
-                repairedInput.train.Y(indsToPrune) = -1;
+                assert(sum(repairedInput.train.type(indsToPrune) ~= Constants.SOURCE) == 0);                
             else
                 error(['Unknown Strategy: ' strategy]);
             end
+            metadata.indsToPrune = indsToPrune;
+            repairedInput.train.Y(indsToPrune) = -1;
             %[metadata.trainIndsToUse metadata.labeledTargetTrainInds(find(metadata.labeledTargetIndsToFocusOn))]
         end
         

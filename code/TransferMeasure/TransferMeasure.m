@@ -40,7 +40,14 @@ classdef TransferMeasure < Saveable
                     ones(numel(target.Y),1)*Constants.TARGET_TRAIN];
                 %}
                 type = [source.type ; target.type];
-                W = Kernel.Distance(Xall);
+                if exist('savedData','var') && isfield(savedData,'W')
+                    W = savedData.W;
+                else
+                    W = Kernel.Distance(Xall);                    
+                    if exist('savedData','var')
+                        savedData.W = W;
+                    end
+                end
                 W = DistanceMatrix(W,Y,type);
             end            
             [W,Ys,Yt,type,isTarget] = W.prepareForSourceHF();                      
@@ -58,8 +65,7 @@ classdef TransferMeasure < Saveable
             metadata.sigma = sigma;
             rerunLOOCV = 1;
             if rerunLOOCV
-                W = Helpers.distance2RBF(W,sigma);
-                addpath(genpath('libraryCode'));
+                W = Helpers.distance2RBF(W,sigma);                
                 if exist('savedData','var')
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] = GraphHelpers.LOOCV(W,...
                         [],[Ys ; Yt],useHF,type,savedData);
