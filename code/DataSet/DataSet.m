@@ -14,9 +14,6 @@ classdef DataSet < handle
     methods
         function obj = DataSet(dataFile,XName,YName,X,Y,type)
             obj.dataFile = '';
-            if nargin < 6
-                display('');
-            end
             if ~isempty(dataFile)
                 obj.dataFile = dataFile;
                 obj.data = load(dataFile);
@@ -46,10 +43,10 @@ classdef DataSet < handle
             n = sum(obj.Y > 0 & ...
                 obj.type == Constants.SOURCE);
         end
-        function [split] = generateSplitArray(obj,percTrain,percTest)            
+        function [split] = generateSplitArray(obj,percTrain,percTest,configs)
             percValidate = 1 - percTrain - percTest;
             split = DataSet.generateSplit([percTrain percTest percValidate],...
-                obj.Y);
+                obj.Y,configs);
         end
         
         function [train,test,validation] = splitDataSet(obj,split)            
@@ -68,7 +65,8 @@ classdef DataSet < handle
         function [sampledDataSet] = stratifiedSample(obj,numItems)
             [selectedItems] = obj.stratifiedSelection(numItems);
             sampledDataSet = DataSet('','','',...
-                obj.X(selectedItems,:),obj.Y(selectedItems,:));
+                obj.X(selectedItems,:),obj.Y(selectedItems,:),...
+                obj.type(selectedItems));
         end
         
         function [sampledDataSet] = stratifiedSampleByLabels(obj,numItems)
@@ -176,7 +174,11 @@ classdef DataSet < handle
     end
     
     methods(Access=private,Static)
-        function [split] = generateSplit(percentageArray,Y)
+        function [split] = generateSplit(percentageArray,Y,configs)
+            maxTrainNumPerLabel = inf;
+            if exist('configs','var') && isKey(configs,'maxTrainNumPerLabel')
+                maxTrainNumPerLabel = configs('maxTrainNumPerLabel');
+            end
             assert(sum(percentageArray) == 1,'Split doesn''t sum to one');
             percentageArray = cumsum(percentageArray);
             dataSize = size(Y,1);
@@ -186,7 +188,10 @@ classdef DataSet < handle
                 numThisClass = numel(thisClass);
                 perm = randperm(numThisClass);
                 thisClassRandomized = thisClass(perm);
-                numEach = [1 ceil(numThisClass*percentageArray)];
+                numToPick = ceil(numThisClass*percentageArray);
+                diff = max(numToPick(1)-maxTrainNumPerLabel,0);
+                numToPick = numToPick-diff;
+                numEach = [1 numToPick];
                 
                 for j=1:numel(percentageArray)       
                     if numEach(j) == numEach(j+1)

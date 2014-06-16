@@ -12,6 +12,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
             obj = obj@ConfigLoader(configs,commonConfigFile);            
         end
         function [] = splitData(obj)            
+            obj.dataAndSplits = struct();
             obj.numSplits = obj.configs('numSplits');
             allSplits = cell(obj.numSplits,1);
             inputFile = obj.configs('inputFile');
@@ -32,17 +33,12 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 f = Helpers.MakeProjectURL(inputFile);
                 allData = dataSetTypeConstructer(f,XName,YName);
                 metadata = struct();
-                normalizeRows = obj.configs('normalizeRows');
-                maxTrain=Inf;
-                if isKey(obj.configs,'maxTrain')
-                    maxTrain = obj.configs('maxTrain');
-                end
-
-                allData.setTarget();
+                normalizeRows = obj.configs('normalizeRows');  
+                allData.setTargetTrain();
                 if normalizeRows
                     allData.X = Helpers.NormalizeRows(allData.X);
                 end                                
-            end
+            end              
             for i=1:obj.numSplits
                 if isa(allData,'SimilarityDataSet')
                     splitIndex = obj.configs('splitIndex');
@@ -51,24 +47,38 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         allData.splitDataAtInd(percentTrain,percentTest,splitIndex);
                 elseif isa(allData,'DataSet')
                     [allSplits{i}] = ...
-                        allData.generateSplitArray(percentTrain,percentTest);                                    
+                        allData.generateSplitArray(percentTrain,percentTest,obj.configs);                                    
                 else
                     error('Unknown DataSet type');
                 end
             end
             if isKey(obj.configs,'sourceFiles')
+                d = getProjectDir();
                 sourceFiles = obj.configs('sourceFiles');
                 obj.dataAndSplits.sourceDataSets = {};
                 for i=1:numel(sourceFiles)
-                    sourceDataSet = DataSet(sourceFiles{i},XName,YName);
+                    sourceFileName = [d '/' sourceFiles{i}];
+                    sourceDataSet = DataSet(sourceFileName,XName,YName);
                     if normalizeRows
                         sourceDataSet.X = Helpers.NormalizeRows(sourceDataSet.X);
                     end
                     sourceDataSet.setSource();
+                    
+                    %{
+                    sourceSplit = sourceDataSet.generateSplitArray(1,0,obj.configs);
+                    sourceToUse = sourceSplit == 1;
+                    sourceDataSet.remove(~sourceToUse);
+                    %}
+                    if isKey(obj.configs,'maxTrainNumPerLabel')
+                        numClasses = max(sourceDataSet.Y);
+                        numItems = numClasses*obj.configs('maxTrainNumPerLabel');
+                        [sampledSource] = sourceDataSet.stratifiedSample(numItems);
+                        sourceDataSet = sampledSource;
+                    end
                     obj.dataAndSplits.sourceDataSets{i} = sourceDataSet;
                 end
-            end
-            obj.dataAndSplits = struct();
+            end     
+                 
             obj.dataAndSplits.allData = allData;
             obj.dataAndSplits.allSplits = allSplits;
             obj.dataAndSplits.metadata = metadata;
@@ -76,6 +86,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
         end
         function [] = saveSplit(obj)
             outputFile = Helpers.MakeProjectURL(obj.configs('outputFile'));
+            Helpers.MakeDirectoryForFile(outputFile);
             dataAndSplits = obj.dataAndSplits;
             save(outputFile,'dataAndSplits');
         end

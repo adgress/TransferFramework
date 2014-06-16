@@ -7,6 +7,15 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        
+        function [] = MakeDirectoryForFile(fileName)
+            inds = strfind(fileName,'/');
+            lastInd = inds(end);
+            d = fileName(1:lastInd);
+            if ~exist(d,'dir')
+                mkdir(d);
+            end
+        end
         function [] = PrintNum(s,n)
             display([s num2str(n)]);
         end
