@@ -137,6 +137,7 @@ function [f] = visualizeResults(options,f)
                     index = index+1;
                     
                     mAcc = accResults.getMean();
+                    mAcc
                     vAcc = accResults.getVar();
                     errorbar(0:numIterations,mAcc,vAcc,'color',colors(index,:));
                     leg{index} = [learnerName ':' 'Repaired Acc'];
@@ -190,7 +191,7 @@ function [f] = visualizeResults(options,f)
                 end
             end
             if ~hasTestResults
-                display('visualizeResults.m: Hack for measure results - fix later');
+                %display('visualizeResults.m: Hack for measure results - fix later');
                 break;
             end
         end

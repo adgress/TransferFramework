@@ -10,12 +10,21 @@ classdef Measure < Saveable
             obj = obj@Saveable(configs);
         end
         function [measureResults] = evaluate(obj,split)
-            measureResults = struct();            
+            measureResults = struct();
+            %Hack for Transfer Experiment
             if size(split.trainActual,2) == 1
+                
                 valTrain = sum(split.trainPredicted==split.trainActual)/...
                     numel(split.trainPredicted); 
                 valTest = sum(split.testPredicted==split.testActual)/...
                     numel(split.testPredicted);                
+                
+                %{
+                testVals = Helpers.SelectFromRows(split.testFU,split.testActual);
+                valTest = mean(testVals);
+                trainVals = Helpers.SelectFromRows(split.trainFU,split.trainActual);
+                valTrain = mean(trainVals);
+                %}
                 numLabels = max(split.testActual);
                 measureResults.trainPerfPerLabel = ResultsVector(zeros(numLabels,1));
                 measureResults.testPerfPerLabel = ResultsVector(zeros(numLabels,1));
