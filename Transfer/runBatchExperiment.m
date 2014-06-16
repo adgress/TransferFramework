@@ -1,8 +1,8 @@
 function [] = runBatchExperiment(multithread, dataset)
     setPaths;
     configFiles = {};
-    runBaseline = 0;
-    runMeasures = 0;
+    runBaseline = 1;
+    runMeasures = 1;
     runRepair = 1;
     
     batchCommon = 'config/batch/batchCommon.cfg';
