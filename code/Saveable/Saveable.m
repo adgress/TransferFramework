@@ -58,6 +58,10 @@ classdef Saveable < handle
             end
         end
         function [name] = GetDisplayName(className,configs)
+            if isequal(className,'Null')
+                name = 'NULL';
+                return;
+            end
             classFunc = str2func(className);
             o = classFunc(configs);
             name = o.getDisplayName();

@@ -7,15 +7,25 @@ function [] = runVisualization(dataset)
     
     showBaselines = 0;
     showMeasures = 0;
-    showRepair = 1;
+    showRepair = 1;    
     
     showRepairChange = 0;
+    
+    useCVSmall = 1;
+    
+    showPostTransferMeasures = 1;
+    showPreTransferMeasures = 1;
+    showRelativePerformance = 1;
+    showRelativeMeasures = 1;
     
     numColors = 4;
     
     
     if dataset == Constants.CV_DATA
-        axisToUse = [0 5 0 2];
+        axisToUse = [0 5 0 1];
+        if showRelativePerformance || showRelativeMeasures
+            axisToUse(end) = 2;
+        end
     else
         axisToUse = [0 20 0 1.2];
     end
@@ -25,13 +35,10 @@ function [] = runVisualization(dataset)
     
     binPerformance = 0;
     numLabelsToUse = 2;
-    
-    showPostTransferMeasures = 1;
-    showPreTransferMeasures = 1;
-    showRelativePerformance = 1;
-    showRelativeMeasures = 1;
+        
     showCorrelations = 0;
     showTrain = false;
+    showTest = true;
     showLegend = true;
     
     measuresToShow = containers.Map();
@@ -80,13 +87,16 @@ function [] = runVisualization(dataset)
     end
     if showMeasures
         %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
-        fileNames{end+1} = 'TM/LLGC_useSoftLoss=1_useMeanSigma=0_S+T.mat';
-        fileNames{end+1} = 'TM/NN_k=1_S+T.mat';
+        fileNames{end+1} = 'TM/LLGC-S+T.mat';
+        fileNames{end+1} = 'TM/NN-S+T.mat';
     end
     if dataset == Constants.CV_DATA
         sourceData = {'A','C','D','W'};
         targetData = {'A','C','D','W'};
         prefix = 'CV';
+        if useCVSmall
+            prefix = 'CV-small';
+        end
     else
         sourceData = {'CR1','CR2','CR3','CR4'};
         targetData = {'CR1','CR2','CR3','CR4'};
@@ -105,6 +115,7 @@ function [] = runVisualization(dataset)
             options.fileNames = fileNames;
             options.showLegend = showLegend;
             options.showTrain = showTrain;
+            options.showTest = showTest;
             options.dataSet = dataSet;
             options.showPostTransferMeasures = showPostTransferMeasures;
             options.showRelativePerformance = showRelativePerformance;
