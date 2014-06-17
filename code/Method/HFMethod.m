@@ -82,7 +82,17 @@ classdef HFMethod < Method
                         ~isTest,...
                         obj.configs('useMeanSigma'),useHF,type);
                 end
+                numSourceLabeled = sum(type == Constants.SOURCE & Y > 0);
+                display(['NumSourceLabeled: ' num2str(numSourceLabeled)]);
                 W = Helpers.distance2RBF(W.W,sigma);
+                isSource = type == Constants.SOURCE;
+                isTrain = type == Constants.TARGET_TRAIN;
+                numSource = sum(isSource);
+                numTrain = sum(isTrain);
+                source2test = W(isSource,isTest);
+                train2test = W(isTrain,isTest);
+                mean(source2test(:))
+                mean(train2test(:))
                 %W = Kernel.RBFKernel(W.W,sigma);
                 if exist('savedData','var') && isfield(savedData,'invM');
                     %[fu,invM] = llgc(W, Ymat);

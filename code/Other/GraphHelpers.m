@@ -81,12 +81,13 @@ classdef GraphHelpers
             if nargin < 6
                 useHF = false;
             end
-            expVals = -3:3;
+            %expVals = -3:3;
+            expVals = -5:5;
             if useMeanSigma
                 expVals = 0;
             end
             sigmas = zeros(length(expVals),1);            
-            base = 5;
+            base = 2;
             for i=1:length(expVals)
                 sigmas(i) = meanDistance*base^expVals(i);
             end
@@ -98,7 +99,8 @@ classdef GraphHelpers
                 S = Helpers.distance2RBF(W,sigmas(i));
                 [scores(i),percCorrect(i),~,~] = GraphHelpers.LOOCV(S,labeledInds,Y,useHF,type);
             end
-            [~,bestInd] = max(scores);
+            %[~,bestInd] = max(scores);
+            [~,bestInd] = max(percCorrect);
             sigma = sigmas(bestInd);
             bestScore = scores(bestInd);
             bestAcc = percCorrect(bestInd);
