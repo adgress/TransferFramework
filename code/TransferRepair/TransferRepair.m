@@ -42,6 +42,7 @@ classdef TransferRepair < Saveable
             if isequal(strategy,'Exhaustive')
                 measureObj = TransferMeasure.ConstructObject(...
                     obj.configs('repairTransferMeasure'),obj.configs);
+                measureObj.configs('quiet') = 1;
                 sourceData = input.train.getSourceData();
                 targetData = input.train.getTargetData();
                 targetData = DataSet.Combine(targetData,...
@@ -49,9 +50,7 @@ classdef TransferRepair < Saveable
                 targetData.removeTestLabels();
                 
                 [PMTVal,~,~,~] = measureObj.computeMeasure(sourceData,...
-                    targetData,struct(),savedData);
-                Helpers.PrintNum('Original PTMVal: ', savedData.postTransferMeasureVal);
-                Helpers.PrintNum('New PTMVal: ', PMTVal);
+                    targetData,struct(),savedData);                
                 labeledSourceInds = find(sourceData.Y > 0);
                 repairedScores = zeros(length(labeledSourceInds),1);
                 
@@ -75,7 +74,9 @@ classdef TransferRepair < Saveable
                 sourceData.Y(sourceIndsToPrune) = -1;
                 [PTMValAfterPruning,~,~,~] =  measureObj.computeMeasure(sourceData,...
                         targetData,struct(),savedData);
-                Helpers.PrintNum('Post Pruning PTMVal: ',PTMValAfterPruning);
+                Helpers.PrintNum('TransferMeasure PTMVal: ', savedData.postTransferMeasureVal);
+                Helpers.PrintNum('Pre-Pruning PTMVal: ', PMTVal);
+                Helpers.PrintNum('Post-Pruning PTMVal: ',PTMValAfterPruning);
                     
             elseif isequal(strategy,'NNPrune') || isequal(strategy,'AddvancedNNPrune')
                 dataSet = DataSet.Combine(input.train,input.test);

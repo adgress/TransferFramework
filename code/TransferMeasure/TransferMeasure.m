@@ -83,8 +83,10 @@ classdef TransferMeasure < Saveable
                 val = score;                                
             else
                 val = percCorrect;                
-            end            
-            obj.displayMeasure(val);
+            end          
+            if ~obj.configs('quiet')
+                obj.displayMeasure(val);
+            end
             metadata.Ypred = Ypred;
             metadata.Yactual = Yactual;
         end         

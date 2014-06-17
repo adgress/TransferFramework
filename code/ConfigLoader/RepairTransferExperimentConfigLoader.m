@@ -37,7 +37,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             %measureObject = LLGCTransferMeasure(configsCopy);
             measureObj = TransferMeasure.ConstructObject(...
                 obj.configs('repairTransferMeasure'),configsCopy);
-                               
+            measureObj.configs('quiet') = 1;
             if obj.configs('saveINV')                
                 [postTransferMeasureVal,~,...
                     results.transferMeasureMetadata{1},...
@@ -55,12 +55,11 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                     transferOutput.tTarget,...
                     transferOutput.metadata);
             end
-            measureSavedData.postTransferMeasureVal = postTransferMeasureVal;
-            
-            results.labeledTargetScores{1} = results.transferMeasureMetadata{1}.labeledTargetScores;
             results.postTransferMeasureVal{1} = postTransferMeasureVal;
+            measureSavedData.postTransferMeasureVal = results.postTransferMeasureVal{1};
+            
+            results.labeledTargetScores{1} = results.transferMeasureMetadata{1}.labeledTargetScores;            
             numIterations = obj.configs('numIterations');
-            %percToRemove = obj.configs('percToRemove');
                         
             repairObj = TransferRepair.ConstructObject(...
                 obj.configs('repairMethod'),obj.configs);
@@ -100,7 +99,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                             targetData,struct());
                     end
                     results.labeledTargetScores{i} = results.transferMeasureMetadata{i}.labeledTargetScores;
-                    measureSavedData.postTransferMeasureVal = postTransferMeasureVal;
+                    measureSavedData.postTransferMeasureVal = results.postTransferMeasureVal{i};
                 end
                 if i > 1 && obj.configs('fixSigma');
                     obj.configs('sigma') = results.trainTestMetadata{i-1}.sigma;

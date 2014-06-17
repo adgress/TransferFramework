@@ -10,8 +10,7 @@ classdef GraphHelpers
                 = LOOCV(W,labeledInds,Y,useHF,type,savedData,configs)
             if nargin < 4
                 useHF = false;
-            end
-            addpath(genpath('libraryCode'));  
+            end             
             numClasses = max(Y);
             if useHF
                 WdistMat = DistanceMatrix(W,Y,type);                
