@@ -1,4 +1,4 @@
 #!/bin/bash
-git add Transfer/results/*
-git commit -m "TR Results"
-git push
+sudo git add Transfer/results/*
+sudo git commit -m "TR Results"
+sudo git push
