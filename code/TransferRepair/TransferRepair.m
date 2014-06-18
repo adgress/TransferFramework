@@ -25,8 +25,7 @@ classdef TransferRepair < Saveable
             isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
             sourceInds = find(isLabeledSource);
             numSource = length(sourceInds);
-            %numToPrune = ceil(percToRemove*numSource);
-            numToPrune = 2;
+            numToPrune = ceil(percToRemove*numSource);
             if isequal(strategy,'None')
                 return;
             end
@@ -68,7 +67,8 @@ classdef TransferRepair < Saveable
                 %measureObj.configs('sourceLOOCV') = 1;
                 %repairedScores = measureObj.computeMeasures(sourceData,targetData,struct(),savedData);
                 deltaScores = repairedScores - savedData.postTransferMeasureVal;
-                [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
+                %[sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
+                [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'ascend');
                 sourceIndsToPrune = sortedDeltaScoreInds(1:numToPrune);
                 sourceIndsInTrain = find(repairedInput.train.type == Constants.SOURCE);
                 indsToPrune = sourceIndsInTrain(sourceIndsToPrune);
