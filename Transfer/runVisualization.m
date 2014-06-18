@@ -59,7 +59,7 @@ function [] = runVisualization(dataset)
         showBaselines = 0;
         showMeasures = 0;
         binPerformance = 0;
-        numIterations = 3;
+        numIterations = 1;
         percToRemove = '0.035';
         fixSigma=1;
         saveInv=1;
@@ -108,7 +108,7 @@ function [] = runVisualization(dataset)
     for i=1:numel(sourceData)
         for j=1:numel(targetData)
             if i == j
-                continue;
+                %continue;
             end
             dataSet = [sourceData{i} '2' targetData{j}];
             
