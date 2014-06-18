@@ -53,7 +53,8 @@ classdef TransferRepair < Saveable
                     targetData,struct(),savedData);                
                 labeledSourceInds = find(sourceData.Y > 0);
                 repairedScores = zeros(length(labeledSourceInds),1);
-                
+                source2unlabeledTarget = Helpers.CreateDistanceMatrix(sourceData.X,...
+                    targetData.X(targetData.Y < 1,:));
                 for sourceIndItr=1:length(labeledSourceInds)
                     sourceInd = labeledSourceInds(sourceIndItr);
                     savedY = sourceData.Y(sourceInd);
@@ -62,11 +63,11 @@ classdef TransferRepair < Saveable
                         targetData,struct(),savedData);
                     sourceData.Y(sourceInd) = savedY;
                 end
-                
+                meanDistances = mean(source2unlabeledTarget,2);
                 %measureObj.configs('sourceLOOCV') = 1;
                 %repairedScores = measureObj.computeMeasures(sourceData,targetData,struct(),savedData);
                 deltaScores = repairedScores - savedData.postTransferMeasureVal;
-                [sortedDeltedScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
+                [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
                 sourceIndsToPrune = sortedDeltaScoreInds(1:numToPrune);
                 sourceIndsInTrain = find(repairedInput.train.type == Constants.SOURCE);
                 indsToPrune = sourceIndsInTrain(sourceIndsToPrune);
