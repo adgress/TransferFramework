@@ -91,7 +91,13 @@ classdef GraphHelpers
                      
             Yscore(isnan(Yscore)) = 0;
             n = length(Yactual);
-            score = sum(Yscore)/n;
+            Yscore = Yscore(Ypred ~= Yactual);
+            if isempty(Yscore)
+                Yscore = 0;
+            else
+                Yscore = mean(Yscore);
+            end
+            %score = sum(Yscore)/n;
             percCorrect = sum(Ypred == Yactual)/n;
         end
         function [sigma,bestScore,bestAcc] = autoSelectSigma(W,Y,isTrain,useMeanSigma,useHF,type)
