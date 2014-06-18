@@ -8,7 +8,7 @@ function [fu,invM] = llgc(W,fl,invM)
         invM = (1-alpha)*inv(I-alpha*WN);        
     end
     fu = invM*fl;
-    %fu = Helpers.normRows(fu);
+    fu = Helpers.normRows(fu);
     %display('llgc: Normalizing fu');
 end
 

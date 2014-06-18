@@ -6,7 +6,7 @@ function [] = deleteTransferRepairResults()
     projectDir = s.projectDir;
     resultsDir = [projectDir '/results'];
     if dataSet == Constants.CV_DATA
-        resultsDir = [resultsDir '/CV'];
+        resultsDir = [resultsDir '/CV-small'];
     else
         error('unknown dataset');
     end
