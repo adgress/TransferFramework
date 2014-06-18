@@ -51,6 +51,19 @@ classdef TransferRepair < Saveable
                 
                 [PMTVal,~,~,~] = measureObj.computeMeasure(sourceData,...
                     targetData,struct(),savedData);                
+                
+                
+                labeledSourceInds = find(input.train.Y > 0 & input.train.type == Constants.SOURCE);
+                repairedScores = zeros(length(labeledSourceInds),1);
+                for sourceIndItr=1:ceil(length(labeledSourceInds))
+                    sourceInd = labeledSourceInds(sourceIndItr);
+                    savedY = input.train.Y(sourceInd);
+                    input.train.Y(sourceInd) = -1;
+                    [r] = savedData.o.trainAndTest(input,savedData.experiment,savedData.methodSavedData);
+                    repairedScores(sourceIndItr) = mean(r.testPredicted == r.testActual);
+                    input.train.Y(sourceInd) = savedY;
+                end
+                %{
                 labeledSourceInds = find(sourceData.Y > 0);
                 repairedScores = zeros(length(labeledSourceInds),1);
                 source2unlabeledTarget = Helpers.CreateDistanceMatrix(sourceData.X,...
@@ -63,11 +76,12 @@ classdef TransferRepair < Saveable
                         targetData,struct(),savedData);
                     sourceData.Y(sourceInd) = savedY;
                 end
-                meanDistances = mean(source2unlabeledTarget,2);
-                %measureObj.configs('sourceLOOCV') = 1;
-                %repairedScores = measureObj.computeMeasures(sourceData,targetData,struct(),savedData);
                 deltaScores = repairedScores - savedData.postTransferMeasureVal;
-                %[sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
+                [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
+                meanDistances = mean(source2unlabeledTarget,2);
+                    %}
+
+                deltaScores = repairedScores;
                 [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'ascend');
                 sourceIndsToPrune = sortedDeltaScoreInds(1:numToPrune);
                 sourceIndsInTrain = find(repairedInput.train.type == Constants.SOURCE);
