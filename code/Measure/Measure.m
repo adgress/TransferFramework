@@ -19,12 +19,12 @@ classdef Measure < Saveable
                 valTest = sum(split.testPredicted==split.testActual)/...
                     numel(split.testPredicted);                
                 
-                %{
+                %display('Using soft loss for measure!');
                 testVals = Helpers.SelectFromRows(split.testFU,split.testActual);
                 valTest = mean(testVals);
                 trainVals = Helpers.SelectFromRows(split.trainFU,split.trainActual);
                 valTrain = mean(trainVals);
-                %}
+                
                 numLabels = max(split.testActual);
                 measureResults.trainPerfPerLabel = ResultsVector(zeros(numLabels,1));
                 measureResults.testPerfPerLabel = ResultsVector(zeros(numLabels,1));

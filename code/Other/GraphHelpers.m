@@ -48,7 +48,7 @@ classdef GraphHelpers
                 if exist('savedData','var') && isfield(savedData,'invM');
                     invM = savedData.invM;
                 end
-                %{
+                
                 for i=1:length(labeledTargetInds)
                     ind = labeledTargetInds(i);
                     Ymat(ind,:) = 0;
@@ -66,8 +66,8 @@ classdef GraphHelpers
                     Yscore(i) = fu(ind,Yactual_i);
                     [~,Ypred(i)] = max(fu(ind,:));
                 end
-                %}
                 
+                %{
                 for i=1:length(labeledTargetInds)
                     ind = labeledTargetInds(i);                    
                     yi = Ymat(ind,:);
@@ -85,7 +85,7 @@ classdef GraphHelpers
                     Ymat(ind,:) = yi;
                     labeledTargetScores(i,:) = fu(ind,:);
                 end
-                
+                %}
                 if exist('savedData','var')
                     savedData.invM = invM;
                 end
