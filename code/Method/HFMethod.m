@@ -83,7 +83,7 @@ classdef HFMethod < Method
                         obj.configs('useMeanSigma'),useHF,type);
                 end
                 numSourceLabeled = sum(type == Constants.SOURCE & Y > 0);
-                display(['NumSourceLabeled: ' num2str(numSourceLabeled)]);
+                %display(['NumSourceLabeled: ' num2str(numSourceLabeled)]);
                 W = Helpers.distance2RBF(W.W,sigma);
                 isSource = type == Constants.SOURCE;
                 isTrain = type == Constants.TARGET_TRAIN;
@@ -91,8 +91,6 @@ classdef HFMethod < Method
                 numTrain = sum(isTrain);
                 source2test = W(isSource,isTest);
                 train2test = W(isTrain,isTest);
-                mean(source2test(:))
-                mean(train2test(:))
                 %W = Kernel.RBFKernel(W.W,sigma);
                 if exist('savedData','var') && isfield(savedData,'invM');
                     %[fu,invM] = llgc(W, Ymat);
@@ -132,10 +130,12 @@ classdef HFMethod < Method
             end
             val = sum(predicted == YTest)/...
                     length(YTest);
-            if useHF
-                display(['HFMethod Acc: ' num2str(val)]);
-            else
-                display(['LLGCMethod Acc: ' num2str(val)]);
+            if ~obj.configs('quiet')
+                if useHF
+                    display(['HFMethod Acc: ' num2str(val)]);
+                else
+                    display(['LLGCMethod Acc: ' num2str(val)]);
+                end
             end
             testResults.testPredicted = predicted;
             testResults.testActual = YTest;

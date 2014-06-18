@@ -52,7 +52,7 @@ classdef TransferRepair < Saveable
                 [PMTVal,~,~,~] = measureObj.computeMeasure(sourceData,...
                     targetData,struct(),savedData);                
                 
-                
+                %{
                 labeledSourceInds = find(input.train.Y > 0 & input.train.type == Constants.SOURCE);
                 repairedScores = zeros(length(labeledSourceInds),1);
                 for sourceIndItr=1:ceil(length(labeledSourceInds))
@@ -63,7 +63,10 @@ classdef TransferRepair < Saveable
                     repairedScores(sourceIndItr) = mean(r.testPredicted == r.testActual);
                     input.train.Y(sourceInd) = savedY;
                 end
-                %{
+                deltaScores = repairedScores;
+                [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'ascend');
+                    %}
+                
                 labeledSourceInds = find(sourceData.Y > 0);
                 repairedScores = zeros(length(labeledSourceInds),1);
                 source2unlabeledTarget = Helpers.CreateDistanceMatrix(sourceData.X,...
@@ -79,10 +82,10 @@ classdef TransferRepair < Saveable
                 deltaScores = repairedScores - savedData.postTransferMeasureVal;
                 [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'descend');
                 meanDistances = mean(source2unlabeledTarget,2);
-                    %}
-
-                deltaScores = repairedScores;
-                [sortedDeltaScores,sortedDeltaScoreInds] = sort(deltaScores,'ascend');
+                meanDistancesBySortedDeltaScores = meanDistances(sortedDeltaScoreInds);
+                sortedMeanDistances = sort(meanDistances,'ascend');
+                [meanDistancesBySortedDeltaScores(1:numToPrune) sortedMeanDistances(1:numToPrune)]
+                    
                 sourceIndsToPrune = sortedDeltaScoreInds(1:numToPrune);
                 sourceIndsInTrain = find(repairedInput.train.type == Constants.SOURCE);
                 indsToPrune = sourceIndsInTrain(sourceIndsToPrune);
@@ -90,9 +93,10 @@ classdef TransferRepair < Saveable
                 sourceData.Y(sourceIndsToPrune) = -1;
                 [PTMValAfterPruning,~,~,~] =  measureObj.computeMeasure(sourceData,...
                         targetData,struct(),savedData);
-                Helpers.PrintNum('TransferMeasure PTMVal: ', savedData.postTransferMeasureVal);
-                Helpers.PrintNum('Pre-Pruning PTMVal: ', PMTVal);
-                Helpers.PrintNum('Post-Pruning PTMVal: ',PTMValAfterPruning);
+                %Helpers.PrintNum('TransferMeasure PTMVal: ', savedData.postTransferMeasureVal);
+                %Helpers.PrintNum('Pre-Pruning PTMVal: ', PMTVal);
+                %Helpers.PrintNum('Post-Pruning PTMVal: ',PTMValAfterPruning);
+                Helpers.PrintNum('PTMVal Diff: ',PTMValAfterPruning - PMTVal);
                     
             elseif isequal(strategy,'NNPrune') || isequal(strategy,'AddvancedNNPrune')
                 dataSet = DataSet.Combine(input.train,input.test);

@@ -21,6 +21,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             results.postTransferMeasureVal = {};
             results.transferMeasureMetadata = {};
             results.trainTestMetadata = {};
+            results.perf = [];
             
             [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData);
@@ -69,6 +70,8 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             Helpers.RemoveKey(measureObj.configs,'sigma');
             
             results.repairMetadata{1} = struct();
+            measureObject = Measure.ConstructObject('Measure',obj.configs);             
+            obj.configs('quiet') = 1;
             for i=1:numIterations+1
                 if i > 1                    
                     if obj.configs('fixSigma')
@@ -113,6 +116,11 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                 else
                     [repairResults,results.trainTestMetadata{i}]...
                         = obj.trainAndTest(trainTestInput,experiment);
+                end
+                s = measureObject.evaluate(repairResults);
+                results.perf(i) = s.testPerformance;
+                if i > 1
+                    Helpers.PrintNum('Method Perf Diff: ', results.perf(i) - results.perf(1));
                 end
                 results.repairResults{i} = repairResults;
             end
