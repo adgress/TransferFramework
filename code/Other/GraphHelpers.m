@@ -93,9 +93,9 @@ classdef GraphHelpers
             n = length(Yactual);
             Yscore = Yscore(Ypred ~= Yactual);
             if isempty(Yscore)
-                Yscore = 0;
+                score = 0;
             else
-                Yscore = mean(Yscore);
+                score = mean(Yscore);
             end
             %score = sum(Yscore)/n;
             percCorrect = sum(Ypred == Yactual)/n;
