@@ -49,6 +49,24 @@ classdef GraphHelpers
                     invM = savedData.invM;
                 end
                 for i=1:length(labeledTargetInds)
+                    ind = labeledTargetInds(i);
+                    Ymat(ind,:) = 0;
+                end
+                warning off;
+                if ~exist('invM','var')
+                    [fu,invM] = llgc(W,Ymat);
+                else
+                    [fu,~] = llgc(W,Ymat,invM);
+                end
+                warning on;
+                for i=1:length(labeledTargetInds)
+                    ind = labeledTargetInds(i);
+                    Yactual_i = Yactual(i);
+                    Yscore(i) = fu(ind,Yactual_i);
+                    [~,Ypred(i)] = max(fu(ind,:));
+                end
+                %{
+                for i=1:length(labeledTargetInds)
                     ind = labeledTargetInds(i);                    
                     yi = Ymat(ind,:);
                     Ymat(ind,:) = 0;
@@ -65,6 +83,7 @@ classdef GraphHelpers
                     Ymat(ind,:) = yi;
                     labeledTargetScores(i,:) = fu(ind,:);
                 end
+                %}
                 if exist('savedData','var')
                     savedData.invM = invM;
                 end
