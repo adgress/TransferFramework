@@ -59,16 +59,18 @@ function [] = runVisualization(dataset)
         showBaselines = 0;
         showMeasures = 0;
         binPerformance = 0;
-        numIterations = 1;
+        numIterations = 3;
         percToRemove = 1;
+        fixSigma=1;
+        saveInv=1;
         
         %fileNames{end+1} = 'TR_strategy=Random_percToRemove=0.1_numIterations=3_useECT=1_fixSigma=1-S+T-LLGC';
         %fileNames{end+1} = 'TR_strategy=NNPrune_percToRemove=0.1_numIterations=3_useECT=1_fixSigma=1_saveINV=0-S+T-LLGC';
         %fileNames{end+1} = 'TR_strategy=NNPrune_percToRemove=0.1_numIterations=3_useECT=0_fixSigma=1_saveINV=1-S+T-LLGC';
         %fileNames{end+1} = 'TR_strategy=None_percToRemove=0.1_numIterations=3_useECT=0_fixSigma=1_saveINV=1-S+T-LLGC';
-        fileNames{end+1} = 'TR_strategy=Exhaustive_percToRemove=0.%d_numIterations=%d_useECT=0_fixSigma=1_saveINV=1-S+T-LLGC';
+        fileNames{end+1} = 'TR_strategy=Exhaustive_percToRemove=0.%d_numIterations=%d_useECT=0_fixSigma=%d_saveINV=%d-S+T-LLGC';
         for i=1:length(fileNames)
-            fileNames{i} = ['REP/LLGC/' sprintf(fileNames{i},percToRemove,numIterations) '.mat'] ;
+            fileNames{i} = ['REP/LLGC/' sprintf(fileNames{i},percToRemove,numIterations,fixSigma,saveInv) '.mat'] ;
         end
         axisToUse = [0 numIterations .2 .9];
     end
