@@ -72,7 +72,7 @@ function [] = runVisualization(dataset)
         for i=1:length(fileNames)
             fileNames{i} = ['REP/LLGC/' sprintf(fileNames{i},percToRemove,numIterations,fixSigma,saveInv) '.mat'] ;
         end
-        axisToUse = [0 numIterations .2 .9];
+        axisToUse = [0 numIterations 0 .9];
     end
     
     if binPerformance
