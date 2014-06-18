@@ -25,7 +25,8 @@ classdef TransferRepair < Saveable
             isLabeledSource = input.train.type == Constants.SOURCE & input.train.Y > 0;
             sourceInds = find(isLabeledSource);
             numSource = length(sourceInds);
-            numToPrune = floor(percToRemove*numSource);
+            %numToPrune = ceil(percToRemove*numSource);
+            numToPrune = 2;
             if isequal(strategy,'None')
                 return;
             end
