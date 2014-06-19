@@ -33,10 +33,7 @@ classdef HFMethod < Method
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];      
                 if input.sharedConfigs('zscore')
-                    %Xall = zscore(Xall);
-                    numComps = 10;
-                    [~,Xall] = princomp(Xall);
-                    Xall = Xall(:,numComps);
+                    Xall = zscore(Xall);
                 end
                 Y = [train.Y(trainLabeled) ; ...
                     train.Y(~trainLabeled) ; ...

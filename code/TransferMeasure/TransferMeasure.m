@@ -32,10 +32,7 @@ classdef TransferMeasure < Saveable
             else                
                 Xall = [source.X ; target.X];  
                 if obj.configs('zscore')
-                    %Xall = zscore(Xall);
-                    numComps = 10;
-                    [~,Xall] = princomp(Xall);
-                    Xall = Xall(:,1:numComps);
+                    Xall = zscore(Xall);
                 end
                 Y = [source.Y ; target.Y];
                 %{
