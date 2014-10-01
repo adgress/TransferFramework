@@ -1,4 +1,5 @@
 function [] = deleteResults(fileName,dataSet)
+%test
     if nargin < 2
         dataSet = Constants.CV_DATA;
     end
