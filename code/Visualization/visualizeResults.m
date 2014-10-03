@@ -110,7 +110,7 @@ function [f] = visualizeResults(options,f)
                     end
                     measureIncreaseResults = ResultsVector(meanMeasureImprovements);
                     mMIR = measureIncreaseResults.getMean();
-                    vMIR = measureIncreaseResults.getVar();
+                    vMIR = measureIncreaseResults.getConfidenceInterval();
                     errorbar(0:numIterations,mMIR,vMIR,'color',colors(index,:));
                     leg{index} = [learnerName ':' 'Measure Increase'];
                     index = index + 1;
@@ -131,14 +131,14 @@ function [f] = visualizeResults(options,f)
                     PTResults = ResultsVector(postTransferVals');
                     accResults = ResultsVector(repairedAcc');
                     mPT = PTResults.getMean();
-                    vPT = PTResults.getVar();
+                    vPT = PTResults.getConfidenceInterval();
                     errorbar(0:numIterations,mPT,vPT,'color',colors(index,:));
                     leg{index} = [learnerName ':' 'Transfer Measure'];
                     index = index+1;
                     
                     mAcc = accResults.getMean();
                     mAcc
-                    vAcc = accResults.getVar();
+                    vAcc = accResults.getConfidenceInterval();
                     errorbar(0:numIterations,mAcc,vAcc,'color',colors(index,:));
                     leg{index} = [learnerName ':' 'Repaired Acc'];
                     index = index+1;
@@ -423,7 +423,7 @@ function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,options)
             relativePerf = ...
                 ResultsVector.GetRelativePerformance(x,y);
             means(i,:) = relativePerf.getMean();
-            vars(i,:) = relativePerf.getVar();        
+            vars(i,:) = relativePerf.getConfidenceInterval();        
         elseif options.relativeType == Constants.CORRELATION
             [means(i),ups(i),lows(i)] = ResultsVector.GetCorrelation(x,y);
         else
@@ -457,10 +457,10 @@ function [vars] = getVariances(results,name,index)
     for i=1:numel(results);
         if index < 0
             vars(i,:) = ...
-                results{i}.aggregatedResults.(name).getVar();
+                results{i}.aggregatedResults.(name).getConfidenceInterval();
         else
             vars(i,:) = ...
-                results{i}.aggregatedResults.(name){index}.getVar();
+                results{i}.aggregatedResults.(name){index}.getConfidenceInterval();
         end
     end
 end

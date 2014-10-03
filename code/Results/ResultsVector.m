@@ -16,6 +16,12 @@ classdef ResultsVector < double
         function [v] = getVar(obj)
             v = var(obj);
         end
+        function [v] = getSTD(obj)
+            v = std(obj);
+        end
+        function [v] = getConfidenceInterval(obj)
+            v = obj.getSTD();
+        end
     end
     
     methods(Static)
