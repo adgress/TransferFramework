@@ -13,7 +13,7 @@ classdef ExperimentConfigLoader < ConfigLoader
     methods
         function obj = ExperimentConfigLoader(configs,commonConfigFile)
             obj = obj@ConfigLoader(configs,commonConfigFile);            
-            dataSet = obj.configs('dataSet');
+            dataSet = obj.configs.get('dataSet');
             obj.setDataSet(dataSet);            
         end        
         
@@ -44,8 +44,8 @@ classdef ExperimentConfigLoader < ConfigLoader
         end  
         
         function [] = setDataSet(obj,dataSet)
-            obj.configs('dataSet') = dataSet;
-            inputDir = obj.configs('inputDir');
+            obj.configs.set('dataSet',dataSet);
+            inputDir = obj.configs.get('inputDir');
             inputFile = [inputDir '/' dataSet '.mat'];           
             obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
             obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
@@ -276,29 +276,29 @@ classdef ExperimentConfigLoader < ConfigLoader
             paramKeys= {'k'};
             keys = {'trainSize'};
             keys{end+1} = 'numVecs';
-            if isKey(obj.configs,'numPerClass')
+            if obj.configs.hasConfig('numPerClass')
                 keys = {'numPerClass'};
             end
             obj.allExperiments = ConfigLoader.StaticCreateAllExperiments(paramKeys,...
                 keys,obj.configs);
-            obj.methodClasses = obj.configs('methodClasses');                        
+            obj.methodClasses = obj.configs.get('methodClasses');                        
         end
         function [outputFileName] = getOutputFileName(obj)
             warning off;
             s = getProjectConstants();            
-            outputDir = [s.projectDir '/' obj.configs('outputDir')];
+            outputDir = [s.projectDir '/' obj.configs.get('outputDir')];
             
-            if isKey(obj.configs,'useMeanSigma') && obj.configs('useMeanSigma')
+            if obj.configs.hasConfig('useMeanSigma') && obj.configs.get('useMeanSigma')
                 outputDir = [outputDir '-useMeanSigma/'];
             else
                 outputDir = [outputDir '/'];
             end
             mkdir(outputDir);
             if isKey(obj.configs,'dataSet')
-                outputDir = [outputDir '/' obj.configs('dataSet')];                
+                outputDir = [outputDir '/' obj.configs.get('dataSet')];                
                 mkdir(outputDir);
             end            
-            if isKey(obj.configs,'justKeptFeatures') && obj.configs('justKeptFeatures')                
+            if obj.configs.hasConfig('justKeptFeatures') && obj.configs.get('justKeptFeatures')                
                 outputDir = [outputDir '/justKeptFeatures/'];
                 mkdir(outputDir);
             end
@@ -326,7 +326,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             
             prependHyphen = false;
             if isKey(obj.configs,'postTransferMeasures')
-                measures = obj.configs('postTransferMeasures');
+                measures = obj.configs.get('postTransferMeasures');
                 if length(measures) > 0
                     outputDir = [outputDir '/TM/'];
                     mkdir(outputDir);
@@ -353,7 +353,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                 prependHyphen = true;
             end
             if isKey(obj.configs,'transferMethodClass')
-                transferClass = str2func(obj.configs('transferMethodClass'));
+                transferClass = str2func(obj.configs.get('transferMethodClass'));
                 transferObject = transferClass(obj.configs);
                 %transferMethodPrefix = transferObject.getResultFileName(obj.configs);
                 transferMethodPrefix = transferObject.getPrefix();
@@ -361,7 +361,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                 prependHyphen = true;
             end                       
             if ~isa(obj,'MeasureExperimentConfigLoader') && isKey(obj.configs,'methodName')
-                methodName = obj.configs('methodName');            
+                methodName = obj.configs.get('methodName');            
                 methodPrefix = Method.GetResultFileName(methodName,obj.configs,false);
                 [outputFileName] = obj.appendToName(outputFileName,methodPrefix,prependHyphen);
                 prependHyphen = true;
@@ -407,7 +407,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         function [e] = CreateConfigLoader(configFile,commonConfigFile)
             experimentLoader = ExperimentConfigLoader(configFile,commonConfigFile);    
             experimentConfigClass = str2func(...
-                experimentLoader.configs('experimentConfigLoader'));
+                experimentLoader.configs.get('experimentConfigLoader'));
             e = experimentConfigClass(configFile,commonConfigFile); 
         end
     end

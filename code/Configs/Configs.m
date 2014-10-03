@@ -1,9 +1,9 @@
-classdef Configs < handle
+classdef Configs < matlab.mixin.Copyable
     %CONFIGS Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
-        configs        
+        configsStruct  
     end
     properties(Constant)
         PostTMKey = 'postTransferMeasures';
@@ -12,53 +12,89 @@ classdef Configs < handle
         TransferMethodClassKey = 'transferMethodClass';
     end
     
-    methods
-        function [obj] = Configs(configs)
-            if isa(configs,'Configs')
-                obj.configs = Helpers.CopyMap(configs.configs);
-            else
-                obj.configs = Helpers.CopyMap(configs);
+    methods               
+        function [obj] = Configs()
+            if nargin < 1
+                obj.configsStruct = struct();
+                return
             end
         end
+        function [] = addConfigs(obj, other)
+            obj.configsStruct = Helpers.CombineStructs(obj.configsStruct,...
+                other.configsStruct);
+        end
+        function display(obj)
+            display(obj.configsStruct);
+        end       
         function [v] = getConfig(obj,key)
-            if isa(obj.configs,'containers.Map')
-                v = obj.configs(key);
+            if isa(obj.configsStruct,'containers.Map')
+                v = obj.configsStruct(key);
             else
-                v = obj.configs.key;
+                error('Why isn''t configs a map?');
+                v = obj.configsStruct.key;               
             end
+        end
+        %{
+        function value = subsref(obj,s)
+            isKey = strcmp(s(1).type, '()');
+            if isKey && ~strcmp(s(1).subs,'configsStruct')
+                value = obj.configsStruct.(s(1).subs);                
+            else
+                value = builtin('subsref', obj, s);     
+            end
+        end
+        function obj = subsasgn(obj, s, value)
+            isKey = strcmp(s(1).type, '()');
+            if isKey && ~strcmp(s(1).subs,'configsStruct')
+                obj.configsStruct.(s(1).subs) = value;
+                %builtin('subsasgn', obj.configs, s, value);
+            else
+                builtin('subsasgn', obj, s, value);
+            end
+        end
+        %}
+        function [v] = get(obj,key)
+            v = obj.configsStruct.(key);
+        end
+        function [] = set(obj,key,value)
+            obj.configsStruct.(key) = value;
         end
         function [b] = hasConfig(obj,key)
-            if isa(obj.configs,'containers.Map')
-                b = isKey(obj.configs,key);
-            else
-                b = isfield(obj.configs,key);
-            end
+            b = isfield(obj.configsStruct,key);
         end        
+        function [b] = isKey(obj,key)
+            b = obj.hasConfig(key);
+        end
         function [m] = getMethodClasses(obj)
-            m = obj.getConfig(Configs.MethodClassesKey);
+            m = obj.get(Configs.MethodClassesKey);
         end
         function [m] = getPostTransferMeasures(obj)
-            m = obj.getConfig(Configs.PostTMKey);
+            m = obj.get(Configs.PostTMKey);
         end
         function [b] = hasPostTransferMeasures(obj)            
             b = obj.hasConfig(Configs.PostTMKey) && ...
             ~isempty(obj.getPostTransferMeasures());
         end
         function [m] = getPreTransferMeasures(obj)
-            m = obj.getConfig(Configs.PreTMKey);                
+            m = obj.get(Configs.PreTMKey);                
         end
         function [b] = hasPreTransferMeasures(obj)
             b = obj.hasConfig(Configs.PreTMKey) && ...
-                ~isempty(obj.getPreTransferMeasures);;
+                ~isempty(obj.getPreTransferMeasures());;
         end
         
         function [m] = getTransferMethod(obj)
-            m = obj.getConfig(Configs.TransferMethodClassKey);
+            m = obj.get(Configs.TransferMethodClassKey);
         end
         function [b] = hasTransferMethod(obj)
             b = obj.hasConfig(Configs.TransferMethodClassKey);
-        end
-    end        
+        end        
+    end
     
+    methods(Access = protected)
+        function cpObj = copyElement(obj)
+            cpObj = copyElement@matlab.mixin.Copyable(obj);
+        end
+    end
 end
 

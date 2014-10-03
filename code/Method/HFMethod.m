@@ -32,7 +32,7 @@ classdef HFMethod < Method
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];      
-                if input.sharedConfigs('zscore')
+                if input.sharedConfigs.get('zscore')
                     Xall = zscore(Xall);
                 end
                 Y = [train.Y(trainLabeled) ; ...
@@ -75,12 +75,12 @@ classdef HFMethod < Method
                 Y_testCleared(isTest) = -1;
                 Ymat = full(Helpers.createLabelMatrix(Y_testCleared));
                 if isKey(obj.configs,'sigma')
-                    sigma = obj.configs('sigma');
+                    sigma = obj.configs.get('sigma');
                 else
                     sigma = GraphHelpers.autoSelectSigma(W.W,...
                         Y_testCleared,...
                         ~isTest,...
-                        obj.configs('useMeanSigma'),useHF,type);
+                        obj.configs.get('useMeanSigma'),useHF,type);
                 end
                 numSourceLabeled = sum(type == Constants.SOURCE & Y > 0);
                 %display(['NumSourceLabeled: ' num2str(numSourceLabeled)]);
@@ -130,7 +130,7 @@ classdef HFMethod < Method
             end
             val = sum(predicted == YTest)/...
                     length(YTest);
-            if ~obj.configs('quiet')
+            if ~obj.configs.get('quiet')
                 if useHF
                     display(['HFMethod Acc: ' num2str(val)]);
                 else

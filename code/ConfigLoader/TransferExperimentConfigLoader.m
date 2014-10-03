@@ -9,7 +9,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         function obj = TransferExperimentConfigLoader(...
                 configs,commonConfigFile)
             obj = obj@ExperimentConfigLoader(configs,commonConfigFile);
-            obj.configs('transferFile') = obj.getTransferFileName();
+            obj.configs.set('transferFile',obj.getTransferFileName());
         end
         
         function [] = preprocessData(obj,targetTrainData, ...
@@ -55,7 +55,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         function [transferOutput,trainTestInput] = ...
                 performTransfer(obj,train,test,sources,validate,m,experiment)
             assert(length(sources) == 1);
-            transferClass = str2func(obj.configs('transferMethodClass'));
+            transferClass = str2func(obj.configs.get('transferMethodClass'));
             transferObject = transferClass(obj.configs);
             [tTrain,tTest,metadata,tSource,tTarget] = ...
                 transferObject.performTransfer(...
@@ -112,9 +112,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         end
         %}
         function [transferFileName] = getTransferFileName(obj)
-            dataSet = obj.configs('dataSet');
-            transferDir = obj.configs('transferDir');
-            transferClassName = obj.configs('transferMethodClass');
+            dataSet = obj.configs.get('dataSet');
+            transferDir = obj.configs.get('transferDir');
+            transferClassName = obj.configs.get('transferMethodClass');
             transferSaveFileName = Transfer.GetResultFileName(...
                 transferClassName,obj.configs,false);
             transferFileName = [transferDir transferSaveFileName '_' ...

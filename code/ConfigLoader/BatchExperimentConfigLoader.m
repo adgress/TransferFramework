@@ -8,16 +8,16 @@ classdef BatchExperimentConfigLoader < ConfigLoader
     methods
         function obj = BatchExperimentConfigLoader(configs,commonConfigFile)          
             obj = obj@ConfigLoader(configs,commonConfigFile);
-            obj.configs('batchCommonFile') = commonConfigFile;
+            obj.configs.set('batchCommonFile',commonConfigFile);
         end
         function [] = runExperiments(obj,multithread)
-            inputFile = obj.configs('inputFile');
-            batchCommonFile = obj.configs('batchCommonFile');
+            inputFile = obj.configs.get('inputFile');
+            batchCommonFile = obj.configs.get('batchCommonFile');
             batchCommonConfigs = ConfigLoader.LoadConfigs(...
-                Helpers.MakeProjectURL(batchCommonFile));
-            obj.configs = Helpers.CombineMaps(obj.configs,batchCommonConfigs);
-            inputCommonFile = obj.configs('inputCommonFile');
-            paramsToVary = obj.configs('paramsToVary');
+                Helpers.MakeProjectURL(batchCommonFile));            
+            obj.configs.addConfigs(batchCommonConfigs);
+            inputCommonFile = obj.configs.get('inputCommonFile');
+            paramsToVary = obj.configs.get('paramsToVary');
             
             experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
                 inputFile,inputCommonFile);
@@ -25,15 +25,15 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             assert(numel(paramsToVary) == 1);
             baseConfigs = experimentLoader.configs;
             if nargin >= 2
-                baseConfigs('multithread') = multithread;
+                baseConfigs.set('multithread',multithread);
             end
             for i=1:numel(paramsToVary)
                 param = paramsToVary{i};
-                values = obj.configs(param);
+                values = obj.configs.get(param);
                 for j=1:numel(values)
                     val = values{j};
-                    configCopy = baseConfigs;
-                    configCopy(param) = val;
+                    configCopy = baseConfigs.copy();
+                    configCopy.set(param,val);
                     valString = val;
                     if ~isa(valString,'char')
                         valString = num2str(valString);

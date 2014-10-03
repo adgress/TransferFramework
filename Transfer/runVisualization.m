@@ -5,9 +5,9 @@ function [] = runVisualization(dataset)
     end
     close all
     
-    showBaselines = 0;
+    showBaselines = 1;
     showMeasures = 0;
-    showRepair = 1;    
+    showRepair = 0;    
     
     showRepairChange = 0;
     
@@ -47,11 +47,12 @@ function [] = runVisualization(dataset)
     measuresToShow('HFTransferMeasure') = 0;
     
     methodsToShow = containers.Map();
-    methodsToShow('NearestNeighborMethod') = 1;
+    methodsToShow('NearestNeighborMethod') = 0;
     methodsToShow('LLGCMethod') = 1;
     methodsToShow('HFMethod') = 0;
     
-    baselineFiles = {'TO-kNN_k=1.mat','TO-LLGC.mat'};
+    %baselineFiles = {'TO-kNN_k=1.mat','TO-LLGC.mat'};
+    baselineFiles = {'TO-LLGC.mat'};
     fileNames = {};
     
     
@@ -84,7 +85,7 @@ function [] = runVisualization(dataset)
     end
     
     if showBaselines
-        fileNames{end+1} = 'S+T-kNN_k=1.mat';
+        %fileNames{end+1} = 'S+T-kNN_k=1.mat';
         fileNames{end+1} = 'S+T-LLGC.mat';
     end
     if showMeasures

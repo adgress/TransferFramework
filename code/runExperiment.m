@@ -11,20 +11,20 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
             configFile,commonConfigFile);
     else
-        experimentConfigClass = str2func(configs('experimentConfigLoader'));
+        experimentConfigClass = str2func(configs.get('experimentConfigLoader'));
         experimentLoader = experimentConfigClass(configs,'');
     end           
     
     for methodItr = 1:length(experimentLoader.methodClasses)
         methodClass = experimentLoader.methodClasses{methodItr};
-        experimentLoader.configs('methodName') = methodClass;
+        experimentLoader.configs.set('methodName',methodClass);
         outputFile = experimentLoader.getOutputFileName();
         if exist(outputFile,'file') && ~configs('rerunExperiments')
             display(['Skipping: ' outputFile]);
             return;
         end
         
-        multithread = experimentLoader.configs('multithread');
+        multithread = experimentLoader.configs.get('multithread');
         if multithread
             %Fix for laptop
             distcomp.feature( 'LocalUseMpiexec', false );
@@ -80,14 +80,14 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         savedData.configs = experimentLoader.configs;
 
         allResults.configs = configs;
-        if experimentLoader.configs('processResults')
-            measureClass = str2func(experimentLoader.configs('measureClass'));
+        if experimentLoader.configs.get('processResults')
+            measureClass = str2func(experimentLoader.configs.get('measureClass'));
             measureObject = measureClass(experimentLoader.configs);
             allResults.processResults(measureObject);
             allResults.aggregateResults(measureObject);
         end
         if isKey(experimentLoader.configs,'processMeasureResults') &&...
-                experimentLoader.configs('processMeasureResults')
+                experimentLoader.configs.get('processMeasureResults')
             allResults.aggregateMeasureResults();        
         end
         allResults.saveResults(outputFile);

@@ -23,13 +23,13 @@ function [f] = visualizeResults(options,f)
         allResults = load(fileName);
         allResults = allResults.results;
                 
-        configs = Configs(allResults.configs);
+        configs = allResults.configs;
         methodClasses = configs.getMethodClasses();
         for j=1:numel(methodClasses)            
             hasPostTM = configs.hasPreTransferMeasures();
             hasPreTM = configs.hasPostTransferMeasures();
             hasTransferMethod = configs.hasTransferMethod();            
-            hasDR = isKey(configs.configs,'drMethod');
+            hasDR = isKey(configs,'drMethod');
             
             isMeasureFile = hasPostTM || hasPreTM;
             
@@ -45,9 +45,9 @@ function [f] = visualizeResults(options,f)
             end
             
             hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
-            learnerName = Method.GetDisplayName(methodClassString,configs.configs);
+            learnerName = Method.GetDisplayName(methodClassString,configs);
             if hasDR
-                drName = DRMethod.GetDisplayName(configs.configs('drMethod'),configs.configs);
+                drName = DRMethod.GetDisplayName(configs.get('drMethod'),configs);
                 learnerName = [drName '-' learnerName];                
             end
             if hasTransferMethod
@@ -56,14 +56,14 @@ function [f] = visualizeResults(options,f)
                 learnerName = [learnerName ';' transferName];
             end                                
             if isfield(options,'showRepair') && options.showRepair
-                repairMethodString = configs.configs('repairMethod');
+                repairMethodString = configs.get('repairMethod');
                 transferRepairName = ...
-                    TransferRepair.GetDisplayName(repairMethodString,configs.configs);
+                    TransferRepair.GetDisplayName(repairMethodString,configs);
                 learnerName = [transferRepairName ';' learnerName];
-                measureClassName = configs.configs('measureClass');
-                measureObject = Measure.ConstructObject(measureClassName,configs.configs);
+                measureClassName = configs.get('measureClass');
+                measureObject = Measure.ConstructObject(measureClassName,configs);
                 results = results{1};
-                numIterations = configs.configs('numIterations');
+                numIterations = configs.get('numIterations');
                 numSplits = results.numSplits;
                 if options.showRepairChange
                     meanMeasureImprovements = zeros(numSplits,numIterations+1);
@@ -145,8 +145,8 @@ function [f] = visualizeResults(options,f)
                 end                
             else
                 numTrain = 0;
-                if isKey(configs.configs,'trainSize')
-                    numTrain = length(configs.configs('trainSize'));
+                if isKey(configs,'trainSize')
+                    numTrain = length(configs.get('trainSize'));
                 else
                     sizes = getSizes(results,options.xAxisField);
                     numTrain = length(sizes);
@@ -157,7 +157,7 @@ function [f] = visualizeResults(options,f)
                         if hasPostTM
                             measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
                             measures = configs.getPostTransferMeasures();
-                            dispName = TransferMeasure.GetDisplayName(measures{1},configs.configs);
+                            dispName = TransferMeasure.GetDisplayName(measures{1},configs);
                             leg{index} = [learnerName ';' dispName];
                             index = index + 1;
                         elseif hasTestResults
@@ -178,12 +178,12 @@ function [f] = visualizeResults(options,f)
                                 hasPostTM,hasPreTM,colors,index,learnerName,leg);
                         end
                     end
-                elseif length(configs.configs('numVecs')) > 1
-                    numVecs = configs.configs('numVecs');
+                elseif length(configs.get('numVecs')) > 1
+                    numVecs = configs.get('numVecs');
                     [index,leg] = plotTestResults(options,results,numVecs,colors,...
                                 index,learnerName,leg);
-                elseif length(configs.configs('tau')) > 1
-                    tau = configs.configs('tau');
+                elseif length(configs.get('tau')) > 1
+                    tau = configs.get('tau');
                     [index,leg] = plotTestResults(options,results,tau,colors,...
                                 index,learnerName,leg);
                 else
@@ -263,7 +263,7 @@ function [index,leg] = plotMeasures(options,results,sizes,configs,...
         end
         errorbar(sizes,means,vars,'color',colors(index,:));
         measures = configs.getPostTransferMeasures();
-        dispName = TransferMeasure.GetDisplayName(measures{1},configs.configs);
+        dispName = TransferMeasure.GetDisplayName(measures{1},configs);
         leg{index} = ['Relative Measure: ' dispName];
         index = index + 1;
     else
@@ -381,7 +381,7 @@ function [leg,index] = plotMeasureResults(options,configs,results,sizes,field,..
         if ~isKey(options.measuresToShow,measures{k})
             continue;
         end
-        dispName = TransferMeasure.GetDisplayName(measures{k},configs.configs);
+        dispName = TransferMeasure.GetDisplayName(measures{k},configs);
         yVals = getMeans(results,resultField,k);
         yValsBars = getVariances(results,resultField,k);
         xVals = sizes;

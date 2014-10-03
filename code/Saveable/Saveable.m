@@ -8,7 +8,7 @@ classdef Saveable < handle
     
     methods
         function obj = Saveable(configs)
-            obj.configs = Helpers.CopyMap(configs);
+            obj.configs = configs.copy();
         end
         function [displayName] = getDisplayName(obj)
             displayName = obj.getResultFileName(',',false);

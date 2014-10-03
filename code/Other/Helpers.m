@@ -131,9 +131,24 @@ classdef Helpers < handle
             while numel(string) > 0
                 [split{end+1}, string] = strtok(string,delim);
             end
+        end       
+        
+        function [sCombined] = CombineStructs(s1,s2)
+            sCombined = struct();
+            structs = {s1, s2};
+            for structIdx = 1:numel(struct)
+                fields = fieldnames(structs{structIdx});
+                currStruct = structs{structIdx};
+                for fieldIdx = 1:numel(fields)
+                    field = fields{fieldIdx};
+                    sCombined.(field) = currStruct.(field);
+                end
+            end
         end
         
         function [map] = CombineMaps(map1,map2)
+            assert(map1,'containers.Map');
+            assert(map2,'containers.Map');
             map = containers.Map();
             maps = {map1,map2};
             for i=1:length(maps)

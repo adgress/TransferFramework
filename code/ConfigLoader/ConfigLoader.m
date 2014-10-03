@@ -16,7 +16,7 @@ classdef ConfigLoader < handle
                 obj.configFile = configs;                
                 obj.loadConfigs();                
             else
-                obj.configs = Helpers.CopyMap(configs);
+                obj.configs = configs.copy();
             end
         end                
         function [configs] = loadConfigs(obj,configFile)
@@ -33,7 +33,7 @@ classdef ConfigLoader < handle
             for i=1:numel(configs.keys)
                 key = keys{i};
                 value = configs(key);
-                obj.configs(key) = value;
+                obj.configs.set(key,value);
             end
             
             configs = obj.configs;
@@ -46,7 +46,7 @@ classdef ConfigLoader < handle
     methods(Static)
        function [configs] = LoadConfigs(fileName)
             fid = ConfigLoader.loadFile(fileName);
-            configs = containers.Map;
+            configs = Configs();
             while ~feof(fid)
                 x = fgetl(fid);
                 if isempty(x) || x(1) == '#' || ...
@@ -62,7 +62,7 @@ classdef ConfigLoader < handle
                 end
                 assert(~isempty(val))
                 val = eval(val);
-                configs(var) = val;
+                configs.set(var,val);
             end
             fclose(fid);
         end    
@@ -111,10 +111,10 @@ classdef ConfigLoader < handle
             display('StaticCreateAllExperiments: Multiple paramKeys?');
             for i=1:numel(paramKeys)
                 key = paramKeys{i};
-                if ~isKey(configs,key)
+                if ~configs.hasConfig(key)
                     continue;
                 end
-                e.(key) = configs(key);
+                e.(key) = configs.get(key);
             end
             %{
             allExps = {e};
@@ -142,7 +142,7 @@ classdef ConfigLoader < handle
                         
             for i=1:numel(keys)
                 key = keys{i};
-                values = configs(key);
+                values = configs.get(key);
                 newExperiments = {};
                 for j=1:numel(values)
                     val = values(j);
