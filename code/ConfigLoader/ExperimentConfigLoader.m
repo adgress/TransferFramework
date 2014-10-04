@@ -31,8 +31,8 @@ classdef ExperimentConfigLoader < ConfigLoader
         end
         function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
             numClasses = max(test.Y);
-            if isfield(experiment,'numPerClass')           
-                numPerClass = experiment.numPerClass;
+            if isfield(experiment,'numLabeledPerClass')           
+                numPerClass = experiment.numLabeledPerClass;
                 numTrain = numClasses*numPerClass;
             else
                 error('What if there is class imalance?');
@@ -45,7 +45,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         
         function [] = setDataSet(obj,dataSet)
             obj.configs.set('dataSet',dataSet);
-            inputDir = obj.configs.get('inputDir');
+            inputDir = obj.configs.dataDirectory;
             inputFile = [inputDir '/' dataSet '.mat'];           
             obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
             obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
@@ -276,8 +276,8 @@ classdef ExperimentConfigLoader < ConfigLoader
             paramKeys= {'k'};
             keys = {'trainSize'};
             keys{end+1} = 'numVecs';
-            if obj.configs.hasConfig('numPerClass')
-                keys = {'numPerClass'};
+            if obj.configs.hasConfig('numLabeledPerClass')
+                keys = {'numLabeledPerClass'};
             end
             obj.allExperiments = ConfigLoader.StaticCreateAllExperiments(paramKeys,...
                 keys,obj.configs);
@@ -286,7 +286,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         function [outputFileName] = getOutputFileName(obj)
             warning off;
             s = getProjectConstants();            
-            outputDir = [s.projectDir '/' obj.configs.get('outputDir')];
+            outputDir = obj.configs.resultsDirectory;
             
             if obj.configs.hasConfig('useMeanSigma') && obj.configs.get('useMeanSigma')
                 outputDir = [outputDir '-useMeanSigma/'];

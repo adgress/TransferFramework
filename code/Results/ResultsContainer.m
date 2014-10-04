@@ -18,9 +18,9 @@ classdef ResultsContainer < handle
             end
         end        
         
-        function [] = processResults(obj,measure)
+        function [] = computeLossFunction(obj,measure)
             for i=1:numel(obj.allResults)
-                obj.allResults{i}.processResults(measure);
+                obj.allResults{i}.computeLossFunction(measure);
             end
         end
         function [] = aggregateResults(obj,measure)

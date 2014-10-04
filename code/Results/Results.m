@@ -26,7 +26,7 @@ classdef Results < handle
             obj.splitMetadata{index} = metaData;
         end
         
-        function [] = processResults(obj,measure)            
+        function [] = computeLossFunction(obj,measure)            
             obj.splitMeasures = cell(numel(obj.splitResults),1);
             for i=1:numel(obj.splitResults)
                 split = obj.splitResults{i};

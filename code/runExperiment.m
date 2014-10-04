@@ -80,10 +80,10 @@ function [] = runExperiment(configFile,commonConfigFile,configs)
         savedData.configs = experimentLoader.configs;
 
         allResults.configs = configs;
-        if experimentLoader.configs.get('processResults')
+        if experimentLoader.configs.get('computeLossFunction')
             measureClass = str2func(experimentLoader.configs.get('measureClass'));
             measureObject = measureClass(experimentLoader.configs);
-            allResults.processResults(measureObject);
+            allResults.computeLossFunction(measureObject);
             allResults.aggregateResults(measureObject);
         end
         if isKey(experimentLoader.configs,'processMeasureResults') &&...

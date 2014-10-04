@@ -12,6 +12,13 @@ classdef Configs < matlab.mixin.Copyable
         TransferMethodClassKey = 'transferMethodClass';
     end
     
+    properties(Dependent)
+        dataDirectory
+        resultsDirectory
+        transferDirectory
+        outputDirectory
+    end
+    
     methods               
         function [obj] = Configs()
             if nargin < 1
@@ -65,6 +72,23 @@ classdef Configs < matlab.mixin.Copyable
         function [b] = isKey(obj,key)
             b = obj.hasConfig(key);
         end
+        
+        function [v] = get.dataDirectory(obj)
+            v = [obj.get('dataDir') '/' obj.get('dataName')];
+        end
+        function [v] = get.resultsDirectory(obj)
+            v = [obj.get('dataDir') '/' obj.get('resultsDir') '/'];
+        end
+        function [v] = get.transferDirectory(obj)
+            v = [obj.get('dataDir') '/' obj.get('transferDir')];
+        end
+        function [v] = get.outputDirectory(obj)
+            v = [obj.get('dataDir') '/' obj.get('outputDir')];
+        end
+        
+        
+        
+        
         function [m] = getMethodClasses(obj)
             m = obj.get(Configs.MethodClassesKey);
         end

@@ -88,32 +88,10 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             metadata.numTest = numel(test.Y);
             metadata.numClasses = max(test.Y);
         end
-        %{
-        function [outputFileName] = getOutputFileName(obj)
-            s = getProjectConstants();            
-            outputDir = [s.projectDir '/' obj.configs('outputDir')];
-            if obj.configs('useMeanSigma')
-                outputDir = [outputDir '-useMeanSigma/'];
-                if ~exist(outputDir,'dir')
-                    mkdir(outputDir);
-                end
-            else
-                outputDir = [outputDir '/'];
-            end
-            outputDir = [outputDir obj.configs('dataSet') '/'];
-                
-            if ~exist(outputDir,'dir')
-                mkdir(outputDir);
-            end
-            transferClass = str2func(obj.configs('transferMethodClass'));
-            transferObject = transferClass(obj.configs);
-            transferMethodPrefix = transferObject.getResultFileName(obj.configs);
-            outputFileName = [outputDir transferMethodPrefix '.mat'];
-        end
-        %}
+        
         function [transferFileName] = getTransferFileName(obj)
             dataSet = obj.configs.get('dataSet');
-            transferDir = obj.configs.get('transferDir');
+            transferDir = obj.configs.transferDirectory;
             transferClassName = obj.configs.get('transferMethodClass');
             transferSaveFileName = Transfer.GetResultFileName(...
                 transferClassName,obj.configs,false);

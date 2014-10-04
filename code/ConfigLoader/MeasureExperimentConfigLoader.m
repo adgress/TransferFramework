@@ -54,35 +54,7 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             end
             results.metadata = obj.constructResultsMetadata(sources,...
                 sampledTrain,test,numPerClass);            
-        end
-        %{
-        function [outputFileName] = getOutputFileName(obj)
-            s = getProjectConstants();            
-            outputDir = [s.projectDir '/' obj.configs('outputDir')];
-            if obj.configs('useMeanSigma')
-                outputDir = [outputDir '-useMeanSigma/'];
-                if ~exist(outputDir,'dir')
-                    mkdir(outputDir);
-                end
-            else
-                outputDir = [outputDir '/'];
-            end
-            outputDir = [outputDir obj.configs('dataSet') '/'];
-            if ~exist(outputDir,'dir')
-                mkdir(outputDir);
-            end
-            measures = obj.configs('postTransferMeasures');
-            measureClass = str2func(measures{1});
-            measureObject = measureClass(obj.configs);
-            measureFileName = measureObject.getResultFileName();
-            
-            transferMethodClass = obj.configs('transferMethodClass');
-            methodPrefix = Transfer.GetPrefix(...
-                transferMethodClass,obj.configs);
-            outputFileName = [outputDir measureFileName ...
-                '_' methodPrefix '.mat'];
-        end
-        %}
+        end       
     end
     
 end

@@ -124,35 +124,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
                 end
                 results.repairResults{i} = repairResults;
             end
-        end                       
-        %{
-        function [outputFileName] = getOutputFileName(obj)
-            s = getProjectConstants();            
-            outputDir = [s.projectDir '/' obj.configs('outputDir')];
-            if obj.configs('useMeanSigma')
-                outputDir = [outputDir '-useMeanSigma/'];
-                if ~exist(outputDir,'dir')
-                    mkdir(outputDir);
-                end
-            else
-                outputDir = [outputDir '/'];
-            end
-            outputDir = [outputDir obj.configs('dataSet') '/'];
-            if ~exist(outputDir,'dir')
-                mkdir(outputDir);
-            end
-            methodClasses = obj.configs('methodClasses');
-            assert(length(methodClasses) == 1);
-            methodClassName = methodClasses{1};
-            
-            transferClassName = obj.configs('transferMethodClass');
-            repairClassName = obj.configs('repairMethod');
-            methodPrefix = Method.GetPrefix(methodClassName,obj.configs);
-            transferPrefix = Transfer.GetPrefix(transferClassName,obj.configs);
-            repairFileName = TransferRepair.GetResultFileName(repairClassName,obj.configs);
-            outputFileName = [outputDir repairFileName '-' methodPrefix '-' transferPrefix '.mat'];
-        end      
-        %}
+        end                               
     end 
 end
 
