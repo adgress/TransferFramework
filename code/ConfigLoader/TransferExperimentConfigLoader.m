@@ -7,8 +7,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
     
     methods
         function obj = TransferExperimentConfigLoader(...
-                configs,commonConfigFile)
-            obj = obj@ExperimentConfigLoader(configs,commonConfigFile);
+                configs,configsClass)
+            obj = obj@ExperimentConfigLoader(configs,configsClass);
             obj.configs.set('transferFile',obj.getTransferFileName());
         end
         

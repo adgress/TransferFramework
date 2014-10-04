@@ -21,10 +21,7 @@ classdef Configs < matlab.mixin.Copyable
     
     methods               
         function [obj] = Configs()
-            if nargin < 1
-                obj.configsStruct = struct();
-                return
-            end
+            obj.configsStruct = struct();
         end
         function [] = addConfigs(obj, other)
             obj.configsStruct = Helpers.CombineStructs(obj.configsStruct,...

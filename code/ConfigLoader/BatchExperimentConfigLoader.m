@@ -6,9 +6,8 @@ classdef BatchExperimentConfigLoader < ConfigLoader
     end
     
     methods
-        function obj = BatchExperimentConfigLoader(configs,commonConfigFile)          
-            obj = obj@ConfigLoader(configs,commonConfigFile);
-            obj.configs.set('batchCommonFile',commonConfigFile);
+        function obj = BatchExperimentConfigLoader(configsFile,configClass)          
+            obj = obj@ConfigLoader(configsFile,configClass);
         end
         function [] = runExperiments(obj,multithread)
             inputFile = obj.configs.get('inputFile');
@@ -16,11 +15,15 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             batchCommonConfigs = ConfigLoader.LoadConfigs(...
                 Helpers.MakeProjectURL(batchCommonFile));            
             obj.configs.addConfigs(batchCommonConfigs);
-            inputCommonFile = obj.configs.get('inputCommonFile');
+            %inputCommonFile = obj.configs.get('inputCommonFile');
+            experimentConfigsClass = obj.configs.get('experimentConfigsClass');
+            if isa(experimentConfigsClass,'char')
+                experimentConfigsClass = str2func(experimentConfigsClass);
+            end
             paramsToVary = obj.configs.get('paramsToVary');
             
             experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
-                inputFile,inputCommonFile);
+                inputFile,experimentConfigsClass);
             
             assert(numel(paramsToVary) == 1);
             baseConfigs = experimentLoader.configs;

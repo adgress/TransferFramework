@@ -11,8 +11,8 @@ classdef ExperimentConfigLoader < ConfigLoader
     end
     
     methods
-        function obj = ExperimentConfigLoader(configs,commonConfigFile)
-            obj = obj@ConfigLoader(configs,commonConfigFile);            
+        function obj = ExperimentConfigLoader(configs,configsClass)
+            obj = obj@ConfigLoader(configs,configsClass);            
             dataSet = obj.configs.get('dataSet');
             obj.setDataSet(dataSet);            
         end        
@@ -404,11 +404,11 @@ classdef ExperimentConfigLoader < ConfigLoader
             s.configs = configs;
             s.metadata = metadata;
         end
-        function [e] = CreateConfigLoader(configFile,commonConfigFile)
-            experimentLoader = ExperimentConfigLoader(configFile,commonConfigFile);    
+        function [e] = CreateConfigLoader(configFile,configsClass)
+            experimentLoader = ExperimentConfigLoader(configFile,configsClass);    
             experimentConfigClass = str2func(...
                 experimentLoader.configs.get('experimentConfigLoader'));
-            e = experimentConfigClass(configFile,commonConfigFile); 
+            e = experimentConfigClass(configFile,configsClass); 
         end
     end
 end

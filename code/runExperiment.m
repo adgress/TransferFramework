@@ -1,18 +1,18 @@
-function [] = runExperiment(configFile,commonConfigFile,configs)    
+function [] = runExperiment(configFile,experimentConfigsClass,configs)    
           
     setPaths;
     if nargin < 1
         configFile = 'config/experiment/saA2C.cfg';
     end
     if nargin < 2
-        commonConfigFile = 'config/experiment/experimentCommon.cfg';
+        experimentConfigsClass = str2func('Configs');
     end        
     if nargin < 3
         experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
-            configFile,commonConfigFile);
+            configFile,experimentConfigsClass);
     else
-        experimentConfigClass = str2func(configs.get('experimentConfigLoader'));
-        experimentLoader = experimentConfigClass(configs,'');
+        experimentConfigLoaderClass = str2func(configs.get('experimentConfigLoader'));
+        experimentLoader = experimentConfigLoaderClass(configs,'');
     end           
     
     for methodItr = 1:length(experimentLoader.methodClasses)

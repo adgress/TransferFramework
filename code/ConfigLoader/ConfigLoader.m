@@ -5,13 +5,13 @@ classdef ConfigLoader < handle
     properties
         configs
         configFile
-        commonConfigFile
+        configsClass
     end
     
     methods
-        function obj = ConfigLoader(configs,commonConfigFile)            
+        function obj = ConfigLoader(configs,configsClass)            
             obj.configFile = '';            
-            obj.commonConfigFile = commonConfigFile;
+            obj.configsClass = configsClass;
             if isa(configs,'char')     
                 obj.configFile = configs;                
                 obj.loadConfigs();                
@@ -19,24 +19,19 @@ classdef ConfigLoader < handle
                 obj.configs = configs.copy();
             end
         end                
-        function [configs] = loadConfigs(obj,configFile)
+        function [] = loadConfigs(obj,configFile)
             obj.configs = containers.Map;
             if nargin >= 2
                 obj.configFile = configFile;
             end
-            if ~isempty(obj.commonConfigFile)
-                obj.configs = ...
-                    ConfigLoader.LoadConfigs(Helpers.MakeProjectURL(obj.commonConfigFile));
-            end
-            configs = ConfigLoader.StaticLoadConfigs(Helpers.MakeProjectURL(obj.configFile));
-            keys = configs.keys;
-            for i=1:numel(configs.keys)
+            obj.configs = obj.configsClass();
+            configsMap = ConfigLoader.StaticLoadConfigs(Helpers.MakeProjectURL(obj.configFile));
+            keys = configsMap.keys;
+            for i=1:numel(configsMap.keys)
                 key = keys{i};
-                value = configs(key);
+                value = configsMap(key);
                 obj.configs.set(key,value);
             end
-            
-            configs = obj.configs;
         end
         function [str] = createConfigString(obj)
             str = '';

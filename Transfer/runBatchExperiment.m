@@ -4,8 +4,9 @@ function [] = runBatchExperiment(multithread, dataset)
     runBaseline = 1;
     runMeasures = 0;
     runRepair = 0;
-    
+    experimentConfigsClass = str2func('ExperimentConfigs');   
     batchCommon = 'config/batch/batchCommon.cfg';
+    batchConfigsClass = str2func('BatchConfigs');
     if nargin >= 2 && dataset == Constants.NG_DATA
         batchCommon = 'config/batch/batchCommonNG.cfg';
     end    
@@ -27,7 +28,7 @@ function [] = runBatchExperiment(multithread, dataset)
         configFiles{end+1} = 'config/repair/batchFuseLLGC.cfg';
     end
     for i=1:numel(configFiles)
-        obj = BatchExperimentConfigLoader(configFiles{i},batchCommon);
+        obj = BatchExperimentConfigLoader(configFiles{i},batchConfigsClass);
         if nargin < 1
             obj.runExperiments();
         else

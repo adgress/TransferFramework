@@ -6,8 +6,8 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
     end
     
     methods
-        function obj = MeasureExperimentConfigLoader(configs,commonConfigFile)
-            obj = obj@TransferExperimentConfigLoader(configs,commonConfigFile);               
+        function obj = MeasureExperimentConfigLoader(configs,configsClass)
+            obj = obj@TransferExperimentConfigLoader(configs,configsClass);               
         end 
         
         function [results, metadata] = ...
