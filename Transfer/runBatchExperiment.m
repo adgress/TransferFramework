@@ -3,12 +3,11 @@ function [] = runBatchExperiment(multithread, dataset)
     configFiles = {};
     runBaseline = 1;
     runMeasures = 0;
-    runRepair = 0;
-    experimentConfigsClass = str2func('ExperimentConfigs');   
-    batchCommon = 'config/batch/batchCommon.cfg';
+    runRepair = 0;    
     batchConfigsClass = str2func('BatchConfigs');
     if nargin >= 2 && dataset == Constants.NG_DATA
-        batchCommon = 'config/batch/batchCommonNG.cfg';
+        error('Create Newsgroup batch configs class!');
+        %batchCommon = 'config/batch/batchCommonNG.cfg';
     end    
     
     if runBaseline

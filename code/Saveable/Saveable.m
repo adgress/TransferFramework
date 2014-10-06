@@ -8,7 +8,21 @@ classdef Saveable < handle
     
     methods
         function obj = Saveable(configs)
+            if nargin < 1
+                obj.configs = [];
+                return
+            end
             obj.configs = configs.copy();
+        end
+        function [] = set.configs(obj, newConfigs)
+            obj.configs = newConfigs;
+        end
+        function [] = addConfigs(obj, newConfigs)
+            if numel(obj.configs) == 0
+                obj.configs = newConfigs.copy();
+            else
+                obj.configs.addConfigs(newConfigs);
+            end
         end
         function [displayName] = getDisplayName(obj)
             displayName = obj.getResultFileName(',',false);

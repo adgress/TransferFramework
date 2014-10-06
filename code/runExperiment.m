@@ -15,9 +15,9 @@ function [] = runExperiment(configFile,experimentConfigsClass,configs)
         experimentLoader = experimentConfigLoaderClass(configs,'');
     end           
     
-    for methodItr = 1:length(experimentLoader.methodClasses)
-        methodClass = experimentLoader.methodClasses{methodItr};
-        experimentLoader.configs.set('methodName',methodClass);
+    for learnerItr = 1:length(experimentLoader.learners)
+        learner = experimentLoader.learners{learnerItr};
+        experimentLoader.configs.set('learner',learner);
         outputFile = experimentLoader.getOutputFileName();
         if exist(outputFile,'file') && ~configs('rerunExperiments')
             display(['Skipping: ' outputFile]);
@@ -40,7 +40,7 @@ function [] = runExperiment(configFile,experimentConfigsClass,configs)
             allResults.allResults{i} = Results(allResults.numSplits);
         end
         for j = 1:experimentLoader.numExperiments
-            experimentLoader.allExperiments{j}.methodClass = methodClass;
+            experimentLoader.allExperiments{j}.learner = learner;
             allResults.allResults{j}.experiment = ...
                 experimentLoader.allExperiments{j};            
         end

@@ -111,30 +111,7 @@ classdef ConfigLoader < handle
                 end
                 e.(key) = configs.get(key);
             end
-            %{
-            allExps = {e};
-            for i=1:numel(keys)
-                key = keys{i};
-                values = configs(key);
-                newExperiments = {};
-                for j=1:numel(values)
-                    val = values(j);
-                    for k=1:numel(allExps)
-                        methodClasses = configs('methodClasses');
-                        for l=1:numel(methodClasses)
-                            e = allExps{k};                        
-                            e.methodClass = methodClasses{l};
-                            e.(key) = val;
-                            newExperiments{end+1} = e;
-                        end
-                    end
-                end
-                allExps = newExperiments;
-            end
-            experiments= allExps;
-            %}
-            allExps = {e};
-                        
+            allExps = {e};                        
             for i=1:numel(keys)
                 key = keys{i};
                 values = configs.get(key);

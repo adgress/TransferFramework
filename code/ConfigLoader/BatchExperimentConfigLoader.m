@@ -10,12 +10,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             obj = obj@ConfigLoader(configsFile,configClass);
         end
         function [] = runExperiments(obj,multithread)
-            inputFile = obj.configs.get('inputFile');
-            batchCommonFile = obj.configs.get('batchCommonFile');
-            batchCommonConfigs = ConfigLoader.LoadConfigs(...
-                Helpers.MakeProjectURL(batchCommonFile));            
-            obj.configs.addConfigs(batchCommonConfigs);
-            %inputCommonFile = obj.configs.get('inputCommonFile');
+            inputFile = obj.configs.get('inputFile');            
             experimentConfigsClass = obj.configs.get('experimentConfigsClass');
             if isa(experimentConfigsClass,'char')
                 experimentConfigsClass = str2func(experimentConfigsClass);

@@ -7,7 +7,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         dataAndSplits   
         allExperiments
         numSplits
-        methodClasses
+        learners
     end
     
     methods
@@ -18,15 +18,14 @@ classdef ExperimentConfigLoader < ConfigLoader
         end        
         
         function [results,metadata,savedData] = trainAndTest(obj,input,experiment,savedData)
-            methodClass = str2func(experiment.methodClass);
-            methodObject = methodClass(obj.configs);            
+            learner = experiment.learner;            
             input.sharedConfigs = obj.configs;
             if exist('savedData','var')
                 [results,metadata,savedData] = ...
-                    methodObject.trainAndTest(input,savedData);
+                    learner.trainAndTest(input,savedData);
             else
                 [results,metadata] = ...
-                    methodObject.trainAndTest(input);
+                    learner.trainAndTest(input);
             end
         end
         function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
@@ -63,9 +62,8 @@ classdef ExperimentConfigLoader < ConfigLoader
         function [] = preprocessData(obj,targetTrainData, ...
                 targetTestData, sourceDataSets,validateData,configs,...
                 savedData,experimentIndex,splitIndex)  
-            methodClass = str2func(experiment.methodClass);
-            methodObject = methodClass();
-            methodObject.preprocessData(targetTrainData,targetTestData,...
+            learner = experiment.learner;
+            learner.preprocessData(targetTrainData,targetTestData,...
                 sourceDataSets,validateData,configs,savedData,...
                 experimentIndex,splitIndex)
         end
@@ -77,8 +75,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             for i=1:length(f)
                 obj.configs(f{i}) = experimentConfigs.(f{i});
             end
-            methodClass = str2func(experimentConfigs.methodClass);
-            methodObject = methodClass(obj.configs);
+            learner = experimentConfigs.learner;
             percTrain = experimentConfigs.trainSize;
             [train,test,validate,featType] = obj.getSplit(splitIndex);
             numTrain = ceil(percTrain*size(train.X,1)); 
@@ -170,7 +167,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                                 projTrain.removeLastKFeatures(numFeats);
                                 projTest.removeLastKFeatures(numFeats);
                                 [numVecsResults{numVecs},~] = ...
-                                    methodObject.trainAndTest(cvInput);
+                                    learner.trainAndTest(cvInput);
                                 measureResults = measureObj.evaluate(numVecsResults{numVecs});
                                 numVecsAcc(numVecs) = measureResults.testPerformance;
                             end
@@ -281,7 +278,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             end
             obj.allExperiments = ConfigLoader.StaticCreateAllExperiments(paramKeys,...
                 keys,obj.configs);
-            obj.methodClasses = obj.configs.get('methodClasses');                        
+            obj.learners = obj.configs.get('learners');
         end
         function [outputFileName] = getOutputFileName(obj)
             warning off;
@@ -360,9 +357,9 @@ classdef ExperimentConfigLoader < ConfigLoader
                 [outputFileName] = obj.appendToName(outputFileName,transferMethodPrefix,prependHyphen);
                 prependHyphen = true;
             end                       
-            if ~isa(obj,'MeasureExperimentConfigLoader') && isKey(obj.configs,'methodName')
-                methodName = obj.configs.get('methodName');            
-                methodPrefix = Method.GetResultFileName(methodName,obj.configs,false);
+            if ~isa(obj,'MeasureExperimentConfigLoader') && isKey(obj.configs,'learner')
+                learnerName = class(obj.configs.get('learner'));
+                methodPrefix = Method.GetResultFileName(learnerName,obj.configs,false);
                 [outputFileName] = obj.appendToName(outputFileName,methodPrefix,prependHyphen);
                 prependHyphen = true;
             end            

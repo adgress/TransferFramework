@@ -16,7 +16,7 @@ classdef HFMethod < Method
             test = input.test;
             %validate = input.validate;
             experiment = input.configs;            
-            
+            learner = input.configs.learner;
             testResults = struct();   
             if isfield(input,'distanceMatrix')
                 W = input.distanceMatrix;
@@ -32,7 +32,7 @@ classdef HFMethod < Method
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];      
-                if input.sharedConfigs.get('zscore')
+                if learner.configs.get('zscore')
                     Xall = zscore(Xall);
                 end
                 Y = [train.Y(trainLabeled) ; ...

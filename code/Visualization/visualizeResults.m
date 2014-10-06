@@ -24,35 +24,36 @@ function [f] = visualizeResults(options,f)
         allResults = allResults.results;
                 
         configs = allResults.configs;
-        methodClasses = configs.getMethodClasses();
-        for j=1:numel(methodClasses)            
-            hasPostTM = configs.hasPreTransferMeasures();
-            hasPreTM = configs.hasPostTransferMeasures();
-            hasTransferMethod = configs.hasTransferMethod();            
+        learners = configs.get('learners');
+        for j=1:numel(learners)            
+            hasPostTM = configs.has('preTransferMeasures');
+            hasPreTM = configs.has('postTransferMeasures');
+            hasTransferMethod = configs.has('hasTransferMethod');            
             hasDR = isKey(configs,'drMethod');
             
             isMeasureFile = hasPostTM || hasPreTM;
             
-            methodClassString = methodClasses{j};            
+            learnerClassString = class(learners{j});            
             if ~isMeasureFile && ...
-                (~isKey(options.methodsToShow,methodClassString) || ...
-                    ~options.methodsToShow(methodClassString))
+                (~isKey(options.methodsToShow,learnerClassString) || ...
+                    ~options.methodsToShow(learnerClassString))
                 continue;
             end            
-            [results] = allResults.getResultsForMethod(methodClassString);
+            [results] = allResults.getResultsForMethod(learnerClassString);
             if ~isMeasureFile && isempty(results)
                 continue;
             end
             
             hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
-            learnerName = Method.GetDisplayName(methodClassString,configs);
+            learnerName = Method.GetDisplayName(learnerClassString,configs);
             if hasDR
                 drName = DRMethod.GetDisplayName(configs.get('drMethod'),configs);
                 learnerName = [drName '-' learnerName];                
             end
             if hasTransferMethod
                 transferName = ...
-                    Transfer.GetDisplayName(configs.getTransferMethod(),allResults.configs);
+                    Transfer.GetDisplayName(configs.get('transferMethodClass'),...
+                    allResults.configs);
                 learnerName = [learnerName ';' transferName];
             end                                
             if isfield(options,'showRepair') && options.showRepair
@@ -156,7 +157,7 @@ function [f] = visualizeResults(options,f)
                     if isfield(options,'binPerformance') && options.binPerformance
                         if hasPostTM
                             measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
-                            measures = configs.getPostTransferMeasures();
+                            measures = configs.get('postTransferMeasures');
                             dispName = TransferMeasure.GetDisplayName(measures{1},configs);
                             leg{index} = [learnerName ';' dispName];
                             index = index + 1;
@@ -262,7 +263,7 @@ function [index,leg] = plotMeasures(options,results,sizes,configs,...
             end
         end
         errorbar(sizes,means,vars,'color',colors(index,:));
-        measures = configs.getPostTransferMeasures();
+        measures = configs.get('postTransferMeasures');
         dispName = TransferMeasure.GetDisplayName(measures{1},configs);
         leg{index} = ['Relative Measure: ' dispName];
         index = index + 1;

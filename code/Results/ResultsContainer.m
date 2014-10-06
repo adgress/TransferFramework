@@ -38,10 +38,10 @@ classdef ResultsContainer < handle
             [~] = mkdir(fileparts(filename));
             save(filename,'results');
         end
-        function [results] = getResultsForMethod(obj,methodClass)
+        function [results] = getResultsForMethod(obj,learnerClass)
             results = {};
             for i=1:numel(obj.allResults)
-                if isequal(methodClass,obj.allResults{i}.experiment.methodClass)
+                if isequal(learnerClass,class(obj.allResults{i}.experiment.learner))
                     results{end+1} = obj.allResults{i};
                 end
             end                        
