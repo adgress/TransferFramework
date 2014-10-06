@@ -12,7 +12,7 @@ classdef LearnerConfigs < Configs
     
     methods               
         function [obj] = LearnerConfigs()
-            obj = obj@Configs();
+            obj = obj@Configs();            
         end        
     end        
 end

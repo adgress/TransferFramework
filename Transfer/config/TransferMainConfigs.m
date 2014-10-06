@@ -31,7 +31,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.measureClass='Measure';
             
             learnerConfigs = LearnerConfigs();
-            learnerConfigs.configsStruct.useCMN=0;
+            %learnerConfigs.configsStruct.trainSize=[.1 .2 .3 .4 .5 .6 .7 .8 .9 1];
             learnerConfigs.configsStruct.zscore=1;
             learnerConfigs.configsStruct.useMeanSigma=0;            
             learnerConfigs.configsStruct.k=1;            
@@ -52,8 +52,7 @@ classdef TransferMainConfigs < MainConfigs
             %obj.configsStruct.methodClasses={'NearestNeighborMethod'};
             %obj.configsStruct.methodClasses={'HFMethod','LLGCMethod','NearestNeighborMethod'};
             %obj.configsStruct.methodClasses={'LLGCMethod','NearestNeighborMethod'};
-            obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';
-            
+            obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';            
         end
     end
     

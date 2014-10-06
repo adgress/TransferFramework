@@ -27,13 +27,6 @@ classdef Transfer < Saveable
             metadata = struct();
         end                                                     
         
-        function [transferData] = loadTransferData(obj,configs)
-            transferFile = configs('transferFile');
-            transferData = struct();
-            if exist(transferFile,'file')
-                load(transferFile);
-            end
-        end
         function [isSame] = areConfigsIdentical(obj,configs1,configs2)
             isSame = true;
             for str=obj.parameters

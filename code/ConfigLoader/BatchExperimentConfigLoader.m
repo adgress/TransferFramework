@@ -6,19 +6,20 @@ classdef BatchExperimentConfigLoader < ConfigLoader
     end
     
     methods
-        function obj = BatchExperimentConfigLoader(configsFile,configClass)          
-            obj = obj@ConfigLoader(configsFile,configClass);
+        function obj = BatchExperimentConfigLoader(configsObj)          
+            obj = obj@ConfigLoader(configsObj);
         end
         function [] = runExperiments(obj,multithread)
-            inputFile = obj.configs.get('inputFile');            
             experimentConfigsClass = obj.configs.get('experimentConfigsClass');
             if isa(experimentConfigsClass,'char')
                 experimentConfigsClass = str2func(experimentConfigsClass);
             end
+            experimentConfigsObj = experimentConfigsClass();
             paramsToVary = obj.configs.get('paramsToVary');
             
             experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
-                inputFile,experimentConfigsClass);
+                experimentConfigsObj.get('experimentConfigLoader'),...
+                experimentConfigsObj);
             
             assert(numel(paramsToVary) == 1);
             baseConfigs = experimentLoader.configs;
@@ -41,7 +42,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         '=' valString '.mat'];
                     outputFileName
                     configCopy('outputFile') = outputFileName;
-                    %}                    
+                    %}
+                    configCopy.set('transferMethodClass', ...
+                        func2str(obj.configs.get('transferMethodClass')));
                     runExperiment('','',configCopy);
                 end
             end

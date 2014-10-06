@@ -12,14 +12,14 @@ function [] = runExperiment(configFile,experimentConfigsClass,configs)
             configFile,experimentConfigsClass);
     else
         experimentConfigLoaderClass = str2func(configs.get('experimentConfigLoader'));
-        experimentLoader = experimentConfigLoaderClass(configs,'');
+        experimentLoader = experimentConfigLoaderClass(configs);
     end           
-    
-    for learnerItr = 1:length(experimentLoader.learners)
-        learner = experimentLoader.learners{learnerItr};
+    learners = experimentLoader.configs.get('learners');
+    for learnerItr = 1:length(learners)
+        learner = learners{learnerItr};
         experimentLoader.configs.set('learner',learner);
         outputFile = experimentLoader.getOutputFileName();
-        if exist(outputFile,'file') && ~configs('rerunExperiments')
+        if exist(outputFile,'file') && ~configs.get('rerunExperiments')
             display(['Skipping: ' outputFile]);
             return;
         end

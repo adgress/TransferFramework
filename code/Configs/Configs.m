@@ -24,6 +24,7 @@ classdef Configs < matlab.mixin.Copyable
                 newConfigs);
         end
         function display(obj)
+            display(class(obj));
             display(obj.configsStruct);
         end       
         function [v] = getConfig(obj,key)

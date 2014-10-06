@@ -14,9 +14,7 @@ classdef BatchConfigs < Configs
             %obj.configsStruct.inputCommonFile='config/experiment/experimentCommon.cfg';
             obj.configsStruct.experimentConfigsClass=str2func('TransferMainConfigs');
             obj.configsStruct.paramsToVary={'dataSet'};
-        end
-        
-        
+        end               
     end
     
 end

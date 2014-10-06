@@ -9,14 +9,14 @@ classdef ConfigLoader < handle
     end
     
     methods
-        function obj = ConfigLoader(configs,configsClass)            
-            obj.configFile = '';            
-            obj.configsClass = configsClass;
-            if isa(configs,'char')     
-                obj.configFile = configs;                
+        function obj = ConfigLoader(configsobj)
+            %obj.configFile = '';            
+            %obj.configsClass = configsClass;
+            if isa(configsobj,'char')     
+                obj.configFile = configsobj;                
                 obj.loadConfigs();                
             else
-                obj.configs = configs.copy();
+                obj.configs = configsobj.copy();
             end
         end                
         function [] = loadConfigs(obj,configFile)

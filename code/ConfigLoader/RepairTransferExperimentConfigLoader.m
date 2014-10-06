@@ -6,9 +6,8 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
     end
     
     methods
-        function obj = RepairTransferExperimentConfigLoader(...
-                configs,configsClass)
-            obj = obj@TransferExperimentConfigLoader(configs,configsClass);
+        function obj = RepairTransferExperimentConfigLoader(configs)
+            obj = obj@TransferExperimentConfigLoader(configs);
         end                
         
         function [results, metadata] = ...

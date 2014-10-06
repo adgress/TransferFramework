@@ -6,17 +6,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
     end
     
     methods
-        function obj = TransferExperimentConfigLoader(...
-                configs,configsClass)
-            obj = obj@ExperimentConfigLoader(configs,configsClass);
-            obj.configs.set('transferFile',obj.getTransferFileName());
-        end
-        
-        function [] = preprocessData(obj,targetTrainData, ...
-                targetTestData, sourceDataSets,validateData,configs,...
-                savedData,experimentIndex,splitIndex)  
-            
-        end
+        function obj = TransferExperimentConfigLoader(configs)
+            obj = obj@ExperimentConfigLoader(configs);
+        end      
         
         function [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData)

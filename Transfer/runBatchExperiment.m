@@ -5,6 +5,7 @@ function [] = runBatchExperiment(multithread, dataset)
     runMeasures = 0;
     runRepair = 0;    
     batchConfigsClass = str2func('BatchConfigs');
+    batchConfigsObj = batchConfigsClass();
     if nargin >= 2 && dataset == Constants.NG_DATA
         error('Create Newsgroup batch configs class!');
         %batchCommon = 'config/batch/batchCommonNG.cfg';
@@ -26,8 +27,15 @@ function [] = runBatchExperiment(multithread, dataset)
         %configFiles{end+1} = 'config/repair/batchFuseNN.cfg';
         configFiles{end+1} = 'config/repair/batchFuseLLGC.cfg';
     end
-    for i=1:numel(configFiles)
-        obj = BatchExperimentConfigLoader(configFiles{i},batchConfigsClass);
+    
+    %transferMethodClassStrings = {'FuseTransfer','Transfer'};
+    transferMethodClassStrings = {'Transfer'};
+    for i=1:numel(transferMethodClassStrings)
+        transferMethodClass = str2func(transferMethodClassStrings{i});
+        batchConfigsObj.set('transferMethodClass', transferMethodClass);
+        batchConfigsObj.set('experimentConfigLoader', ...
+            'TransferExperimentConfigLoader');
+        obj = BatchExperimentConfigLoader(batchConfigsObj);
         if nargin < 1
             obj.runExperiments();
         else

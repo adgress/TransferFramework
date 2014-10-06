@@ -11,8 +11,8 @@ classdef ExperimentConfigLoader < ConfigLoader
     end
     
     methods
-        function obj = ExperimentConfigLoader(configs,configsClass)
-            obj = obj@ConfigLoader(configs,configsClass);            
+        function obj = ExperimentConfigLoader(configs)
+            obj = obj@ConfigLoader(configs);            
             dataSet = obj.configs.get('dataSet');
             obj.setDataSet(dataSet);            
         end        
@@ -57,28 +57,21 @@ classdef ExperimentConfigLoader < ConfigLoader
             end
             obj.numSplits = obj.dataAndSplits.configs('numSplits');
             obj.createAllExperiments();
-        end
-        
-        function [] = preprocessData(obj,targetTrainData, ...
-                targetTestData, sourceDataSets,validateData,configs,...
-                savedData,experimentIndex,splitIndex)  
-            learner = experiment.learner;
-            learner.preprocessData(targetTrainData,targetTestData,...
-                sourceDataSets,validateData,configs,savedData,...
-                experimentIndex,splitIndex)
-        end
+        end   
         
         function [results, metadata] = ...
                 runExperiment(obj,experimentIndex,splitIndex,metadata)            
             experimentConfigs = obj.allExperiments{experimentIndex};
             f = fields(experimentConfigs);
             for i=1:length(f)
-                obj.configs(f{i}) = experimentConfigs.(f{i});
+                obj.configs.set(f{i}, experimentConfigs.(f{i}));
             end
-            learner = experimentConfigs.learner;
-            percTrain = experimentConfigs.trainSize;
+            learner = experimentConfigs.learner;            
             [train,test,validate,featType] = obj.getSplit(splitIndex);
-            numTrain = ceil(percTrain*size(train.X,1)); 
+            if isfield(experimentConfigs,'trainSize')
+                percTrain = experimentConfigs.trainSize;
+                numTrain = ceil(percTrain*size(train.X,1)); 
+            end
             emptyMetadata = struct();
             if isa(train,'DataSet')
                 error('TODO: Update!');
@@ -236,6 +229,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             dataSet = obj.dataAndSplits.allData;
             if isa(dataSet,'DataSet')
                 [train,test,validate] = dataSet.splitDataSet(split);
+                featType = [];
             elseif isa(dataSet,'SimilarityDataSet')
                 ind = obj.dataAndSplits.metadata.splitIndex;
                 
@@ -278,7 +272,6 @@ classdef ExperimentConfigLoader < ConfigLoader
             end
             obj.allExperiments = ConfigLoader.StaticCreateAllExperiments(paramKeys,...
                 keys,obj.configs);
-            obj.learners = obj.configs.get('learners');
         end
         function [outputFileName] = getOutputFileName(obj)
             warning off;
@@ -401,11 +394,15 @@ classdef ExperimentConfigLoader < ConfigLoader
             s.configs = configs;
             s.metadata = metadata;
         end
-        function [e] = CreateConfigLoader(configFile,configsClass)
+        function [e] = CreateConfigLoader(configLoaderName, configs)
+            %{
             experimentLoader = ExperimentConfigLoader(configFile,configsClass);    
             experimentConfigClass = str2func(...
                 experimentLoader.configs.get('experimentConfigLoader'));
-            e = experimentConfigClass(configFile,configsClass); 
+            %}
+            %configsObj = configsClass();
+            configLoaderClass = str2func(configLoaderName);
+            e = configLoaderClass(configs); 
         end
     end
 end
