@@ -20,6 +20,9 @@ function [f] = visualizeResults(options,f)
     transferPerfVals = [];
     for i=1:numel(files)
         fileName = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' files{i}];        
+        if ~exist(fileName,'file')
+            continue
+        end
         allResults = load(fileName);
         allResults = allResults.results;
                 
@@ -196,7 +199,7 @@ function [f] = visualizeResults(options,f)
                 break;
             end
         end
-    end    
+    end   
     if isfield(options,'binPerformance') && options.binPerformance
         [~,inds] = sort(transferPerfVals);
         measureRange = [Inf -Inf];
@@ -221,7 +224,7 @@ function [f] = visualizeResults(options,f)
     elseif isfield(options,'binPerformance') && options.binPerformance
         xAxisLabel = 'Normalized Accuracy';                      
         axisToUse = [0 1 0 1];        
-    else    
+    elseif exist('results','var')      
         numTrain = results{1}.aggregatedResults.trainingDataMetadata.numTrain;
         numTest = results{1}.aggregatedResults.trainingDataMetadata.numTest;
         xAxisLabel = [options.xAxisDisplay ' ('];
@@ -231,6 +234,8 @@ function [f] = visualizeResults(options,f)
             xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
         end
         xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
+    else
+        xAxisLabel = '';
     end
     axis(axisToUse);
     xlabel(xAxisLabel,'FontSize',8);
