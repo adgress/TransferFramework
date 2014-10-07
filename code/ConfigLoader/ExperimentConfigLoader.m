@@ -17,14 +17,14 @@ classdef ExperimentConfigLoader < ConfigLoader
             obj.setDataSet(dataSet);            
         end        
         
-        function [results,metadata,savedData] = trainAndTest(obj,input,experiment,savedData)
+        function [results,savedData] = trainAndTest(obj,input,experiment,savedData)
             learner = experiment.learner;            
             input.sharedConfigs = obj.configs;
             if exist('savedData','var')
-                [results,metadata,savedData] = ...
+                [results,savedData] = ...
                     learner.trainAndTest(input,savedData);
             else
-                [results,metadata] = ...
+                [results] = ...
                     learner.trainAndTest(input);
             end
         end
@@ -59,8 +59,8 @@ classdef ExperimentConfigLoader < ConfigLoader
             obj.createAllExperiments();
         end   
         
-        function [results, metadata] = ...
-                runExperiment(obj,experimentIndex,splitIndex,metadata)            
+        function [results] = ...
+                runExperiment(obj,experimentIndex,splitIndex)            
             experimentConfigs = obj.allExperiments{experimentIndex};
             f = fields(experimentConfigs);
             for i=1:length(f)
@@ -202,25 +202,26 @@ classdef ExperimentConfigLoader < ConfigLoader
             else
                 error('Unknown Data type');
             end
-            [results,metadata] = ...
+            [results] = ...
                 methodObject.trainAndTest(input);
             if exist('drMetadata','var')
+                error('What should we do with drMetadata?');
                 metadata.drMetadata = drMetadata;
             end
-            results.metadata.percTrain = percTrain;
+            results.trainingDataMetadata.percTrain = percTrain;
             if isa(train,'DataSet')            
-                results.metadata.numTrain = numel(sampledTrain.Y);
-                results.metadata.numTest = numel(test.Y);
-                results.metadata.numClasses = max(test.Y);
+                results.trainingDataMetadata.numTrain = numel(sampledTrain.Y);
+                results.trainingDataMetadata.numTest = numel(test.Y);
+                results.trainingDataMetadata.numClasses = max(test.Y);
             else
                 trainIndex = obj.configs('trainSetIndex');
                 testIndex = obj.configs('testSetIndex');
                 Wij = train.getSubW(trainIndex,testIndex);
                 %results.trainActual = Wij;
-                results.metadata.numClasses = size(Wij,2);
-                results.metadata.numTrain = size(train.X{trainIndex},1) + ...
+                results.trainingDataMetadata.numClasses = size(Wij,2);
+                results.trainingDataMetadata.numTrain = size(train.X{trainIndex},1) + ...
                     size(validate.X{trainIndex},1);
-                results.metadata.numTest = size(test.X{trainIndex,1},1);                                
+                results.trainingDataMetadata.numTest = size(test.X{trainIndex,1},1);                                
             end
         end
         

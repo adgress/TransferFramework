@@ -54,7 +54,8 @@ classdef KMeansMethod < Method
             idxTest1 = idxTest(1:size(test1,1));
             idxTest2 = idxTest(size(test1,1)+1:end);
             
-            testResults = struct();
+            error('Update this!');
+            testResults = FoldResults();
             %testResults.centroids = centroids;
             testResults.centroidsTrain = centroidsTrain;
             testResults.centroidsTest = centroidsTest;

@@ -12,14 +12,14 @@ classdef ExperimentManager < handle
         end
         %}
         
-        function [results, metadata] = ...
+        function [results] = ...
                 runExperiment(obj,train,test,validate,experiment)
             learner = experiment.learner;
             percTrain = experiment.trainSize;
             numTrain = ceil(percTrain*size(train.X,1));
             [trainX,trainY] = train.stratifiedSample(numTrain);
             sampledTrain = DataSet('','','',trainX,trainY);
-            [results,metadata] = ...
+            [results] = ...
                 learner.trainAndTest(sampledTrain,test,validate,experiment);
         end
     end

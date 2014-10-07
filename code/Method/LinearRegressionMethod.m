@@ -11,6 +11,7 @@ classdef LinearRegressionMethod < Method
         end
         function [testResults,metadata] = ...
             trainAndTest(obj,train,test,validate,experiment)
+            error('Update this!');
             trainX = train.X;
             trainY = train.Y;
             testX = test.X;

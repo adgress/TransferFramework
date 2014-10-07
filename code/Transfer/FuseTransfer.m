@@ -13,17 +13,18 @@ classdef FuseTransfer < Transfer
         function [transformedTargetTrain,transformedTargetTest,metadata,...
                 tSource,tTarget] = ...
                 performTransfer(obj,targetTrainData, targetTestData,...
-                sourceDataSets,validateData,configs,savedData) 
+                sourceDataSets) 
             transformedTargetTrain = DataSet.Combine(sourceDataSets{1},targetTrainData);
             transformedTargetTest = targetTestData;
+            assert(numel(sourceDataSets) == 1);
             tSource = sourceDataSets{1};  
             
             numTrain = targetTrainData.size();
             numTest = targetTestData.size();
-            type = [DataSet.TargetTrainType(numTrain); ...
+            typeVector = [DataSet.TargetTrainType(numTrain); ...
                 DataSet.TargetTestType(numTest)];
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
-                [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],type);
+                [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],typeVector);
             metadata = struct();
         end  
         function [prefix] = getPrefix(obj)

@@ -222,12 +222,12 @@ function [f] = visualizeResults(options,f)
         xAxisLabel = 'Normalized Accuracy';                      
         axisToUse = [0 1 0 1];        
     else    
-        numTrain = results{1}.aggregatedResults.metadata.numTrain;
-        numTest = results{1}.aggregatedResults.metadata.numTest;
+        numTrain = results{1}.aggregatedResults.trainingDataMetadata.numTrain;
+        numTest = results{1}.aggregatedResults.trainingDataMetadata.numTest;
         xAxisLabel = [options.xAxisDisplay ' ('];
-        if isfield(results{1}.aggregatedResults.metadata,'numSourceLabels')
+        if isfield(results{1}.aggregatedResults.trainingDataMetadata,'numSourceLabels')
             numSourceLabels = ...
-                results{1}.aggregatedResults.metadata.numSourceLabels;
+                results{1}.aggregatedResults.trainingDataMetadata.numSourceLabels;
             xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
         end
         xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
@@ -290,9 +290,9 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
             for j=1:length(r.splitResults)
                 r.splitMeasures{j} = measureObj.evaluate(r.splitResults{j});
             end
-            m = r.aggregatedResults.metadata;
+            m = r.aggregatedResults.trainingDataMetadata;
             r.aggregatedResults = measureObj.aggregateResults(r.splitMeasures);
-            r.aggregatedResults.metadata = m;
+            r.aggregatedResults.trainingDataMetadata = m;
             resultsToUse{i} = r;
         end
     end
@@ -488,6 +488,6 @@ function [sizes] = getSizes(results,sizeField)
     sizes = zeros(numel(results),1);
     for i=1:numel(results);
         sizes(i) = ...
-            results{i}.aggregatedResults.metadata.(sizeField);
+            results{i}.aggregatedResults.trainingDataMetadata.(sizeField);
     end
 end

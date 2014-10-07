@@ -15,8 +15,8 @@ function [] = runVisualization(dataset)
     
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 1;
-    showRelativePerformance = 1;
-    showRelativeMeasures = 1;
+    showRelativePerformance = 0;
+    showRelativeMeasures = 0;
     
     numColors = 4;
     

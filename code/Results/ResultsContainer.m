@@ -9,9 +9,8 @@ classdef ResultsContainer < handle
     end
 
     methods
-        function obj = ResultsContainer(numSplits,allExperiments)
+        function obj = ResultsContainer(numSplits,numExperiments)
             obj.numSplits = numSplits;
-            numExperiments = numel(allExperiments);
             obj.allResults = cell(numExperiments,1);
             for i=1:numExperiments
                 obj.allResults{i} = Results(obj.numSplits);

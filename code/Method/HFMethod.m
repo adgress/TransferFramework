@@ -10,14 +10,14 @@ classdef HFMethod < Method
             obj = obj@Method(configs);
         end
         
-        function [testResults,metadata,savedData] = ...
+        function [testResults,savedData] = ...
                 trainAndTestGraphMethod(obj,input,useHF,savedData)
             train = input.train;
             test = input.test;
             %validate = input.validate;
             experiment = input.configs;            
             learner = input.configs.learner;
-            testResults = struct();   
+            testResults = FoldResults();   
             if isfield(input,'distanceMatrix')
                 W = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
@@ -106,8 +106,6 @@ classdef HFMethod < Method
                     end
                 end
             end
-            metadata = struct();
-            metadata.sigma = sigma;
             [~,predicted] = max(fu,[],2);
             numNan = sum(isnan(fu(:)));
             if numNan > 0
@@ -141,13 +139,13 @@ classdef HFMethod < Method
             testResults.testActual = YTest;
             testResults.trainPredicted = train.Y;
             testResults.trainActual = train.Y; 
-            testResults.sigma = sigma;
+            testResults.learnerMetadata.sigma = sigma;
         end
         
-        function [testResults,metadata] = ...
+        function [testResults] = ...
                 trainAndTest(obj,input)
             useHF = true;
-            [testResults,metadata] = ...
+            [testResults] = ...
                 trainAndTestGraphMethod(obj,input,useHF);
         end
         function [prefix] = getPrefix(obj)

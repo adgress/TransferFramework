@@ -31,7 +31,7 @@ classdef Configs < matlab.mixin.Copyable
             if isa(obj.configsStruct,'containers.Map')
                 error('Why is configs a map?');
             else                
-                v = obj.configsStruct.key;               
+                v = obj.get(key);           
             end
         end
         %{

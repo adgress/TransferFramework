@@ -4,7 +4,6 @@ classdef Results < handle
     
     properties
         splitResults = {};
-        splitMetadata = {};
         splitMeasures = {};
         numSplits
         aggregatedResults
@@ -15,15 +14,11 @@ classdef Results < handle
         function obj = Results(numSplits)
             obj.numSplits = numSplits;
             obj.splitResults = cell(numSplits,1);
-            obj.splitMetadata = cell(numSplits,1);
             obj.aggregatedResults = struct();
         end
         
         function [] = setSplitResults(obj,results,index)            
             obj.splitResults{index} = results;
-        end
-        function [] = setSplitMetadata(obj,metaData,index)
-            obj.splitMetadata{index} = metaData;
         end
         
         function [] = computeLossFunction(obj,measure)            
@@ -36,8 +31,8 @@ classdef Results < handle
         function [] = aggregateResults(obj,measure)
             obj.aggregatedResults = struct();
             obj.aggregatedResults = measure.aggregateResults(obj.splitMeasures);
-            obj.aggregatedResults.metadata = ...
-                obj.splitResults{1}.metadata;
+            obj.aggregatedResults.trainingDataMetadata = ...
+                obj.splitResults{1}.trainingDataMetadata;
         end        
         function [] = aggregateMeasureResults(obj)
             %{

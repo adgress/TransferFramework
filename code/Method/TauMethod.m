@@ -12,6 +12,7 @@ classdef TauMethod < Method
         end
         function [testResults,metadata] = ...
                 trainAndTest(obj,input)
+            error('Update!');
             train = input.train;
             test = input.test;
             validate = input.validate;

@@ -1,19 +1,8 @@
 function [] = runExperiment(configFile,experimentConfigsClass,configs)    
           
-    setPaths;
-    if nargin < 1
-        configFile = 'config/experiment/saA2C.cfg';
-    end
-    if nargin < 2
-        experimentConfigsClass = str2func('Configs');
-    end        
-    if nargin < 3
-        experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
-            configFile,experimentConfigsClass);
-    else
-        experimentConfigLoaderClass = str2func(configs.get('experimentConfigLoader'));
-        experimentLoader = experimentConfigLoaderClass(configs);
-    end           
+    setPaths;    
+    experimentConfigLoaderClass = str2func(configs.get('experimentConfigLoader'));
+    experimentLoader = experimentConfigLoaderClass(configs);        
     learners = experimentLoader.configs.get('learners');
     for learnerItr = 1:length(learners)
         learner = learners{learnerItr};
@@ -32,13 +21,9 @@ function [] = runExperiment(configFile,experimentConfigsClass,configs)
             matlabpool;
         end
         tic
-        
-        
+                
         allResults = ResultsContainer(experimentLoader.numSplits,...
-            experimentLoader.allExperiments);
-        for i=1:numel(allResults)
-            allResults.allResults{i} = Results(allResults.numSplits);
-        end
+            experimentLoader.numExperiments);
         for j = 1:experimentLoader.numExperiments
             experimentLoader.allExperiments{j}.learner = learner;
             allResults.allResults{j}.experiment = ...
@@ -57,24 +42,22 @@ function [] = runExperiment(configFile,experimentConfigsClass,configs)
         end    
         for j=1:experimentLoader.numExperiments
             splitResults = cell(experimentLoader.numSplits,1);
-            splitMetadata = cell(experimentLoader.numSplits,1);        
             if multithread
                 parfor i=1:experimentLoader.numSplits  
                     display(sprintf('%d',i));
-                    [splitResults{i},splitMetadata{i}] = ...
+                    [splitResults{i}] = ...
                         experimentLoader.runExperiment(j,i,...
                         savedData);
                 end            
             else
                 for i=1:experimentLoader.numSplits                
                     display(sprintf('%d',i));
-                    [splitResults{i},splitMetadata{i}] = ...
+                    [splitResults{i}] = ...
                         experimentLoader.runExperiment(j,i,...
                         savedData);
                 end
             end
             allResults.allResults{j}.splitResults = splitResults;
-            allResults.allResults{j}.splitMetadata = splitMetadata;
         end
         toc
         savedData.configs = experimentLoader.configs;

@@ -32,7 +32,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             m.metadata = savedData.metadata{experimentIndex,splitIndex};
         end
         
-        function [results, metadata] = ...
+        function [results] = ...
                 runExperiment(obj,experimentIndex,splitIndex,savedData)                                  
             
             [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
@@ -40,8 +40,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             [transferOutput,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,m,...
                 experiment);                        
-            [results,metadata] = obj.trainAndTest(trainTestInput,experiment);            
-            results.metadata = obj.constructResultsMetadata(sources,...
+            [results] = obj.trainAndTest(trainTestInput,experiment);            
+            results.trainingDataMetadata = obj.constructResultsMetadata(sources,...
                 sampledTrain,test,numPerClass);
         end
         function [transferOutput,trainTestInput] = ...
@@ -51,14 +51,14 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             transferObject = transferClass(obj.configs);
             [tTrain,tTest,metadata,tSource,tTarget] = ...
                 transferObject.performTransfer(...
-                train, test,sources,...
-                validate,obj.configs,m); 
+                train, test,sources); 
             transferOutput = struct();
             transferOutput.tTrain = tTrain;
             transferOutput.tTest = tTest;
             transferOutput.metadata = metadata;
             transferOutput.tSource = tSource;
             transferOutput.tTarget = tTarget;
+            assert(numel(sources) == 1);
             transferOutput.originalSourceData = sources{1};
             trainTestInput = ExperimentConfigLoader.CreateRunExperimentInput(...
                 tTrain,tTest,validate,experiment,metadata);
@@ -79,6 +79,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             metadata.numTrain = numel(sampledTrain.Y);
             metadata.numTest = numel(test.Y);
             metadata.numClasses = max(test.Y);
+            metadata.sources = sources;
+            metadata.sampledTrain = sampledTrain;
+            metadata.test = test;
         end
         
         function [transferFileName] = getTransferFileName(obj)

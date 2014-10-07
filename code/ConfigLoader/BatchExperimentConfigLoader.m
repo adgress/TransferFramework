@@ -14,12 +14,12 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             if isa(experimentConfigsClass,'char')
                 experimentConfigsClass = str2func(experimentConfigsClass);
             end
-            experimentConfigsObj = experimentConfigsClass();
+            mainConfigs = experimentConfigsClass();
             paramsToVary = obj.configs.get('paramsToVary');
             
             experimentLoader = ExperimentConfigLoader.CreateConfigLoader(...
-                experimentConfigsObj.get('experimentConfigLoader'),...
-                experimentConfigsObj);
+                mainConfigs.get('experimentConfigLoader'),...
+                mainConfigs);
             
             assert(numel(paramsToVary) == 1);
             baseConfigs = experimentLoader.configs;
@@ -31,21 +31,15 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 values = obj.configs.get(param);
                 for j=1:numel(values)
                     val = values{j};
-                    configCopy = baseConfigs.copy();
-                    configCopy.set(param,val);
+                    mainConfigsCopy = baseConfigs.copy();
+                    mainConfigsCopy.set(param,val);
                     valString = val;
                     if ~isa(valString,'char')
                         valString = num2str(valString);
                     end
-                    %{
-                    outputFileName = [outputFilePrefix '_' param ...
-                        '=' valString '.mat'];
-                    outputFileName
-                    configCopy('outputFile') = outputFileName;
-                    %}
-                    configCopy.set('transferMethodClass', ...
+                    mainConfigsCopy.set('transferMethodClass', ...
                         func2str(obj.configs.get('transferMethodClass')));
-                    runExperiment('','',configCopy);
+                    runExperiment('','',mainConfigsCopy);
                 end
             end
         end

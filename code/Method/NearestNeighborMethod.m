@@ -17,7 +17,7 @@ classdef NearestNeighborMethod < Method
             experiment = input.configs;                     
             k = experiment.k;
             
-            testResults = struct();
+            testResults = FoldResults();
             if isa(train,'DataSet')
                 assert(k==1);
                 trainX = [train.X ; validate.X];
@@ -81,7 +81,6 @@ classdef NearestNeighborMethod < Method
                 display(['NN Acc: ' num2str(val)]);
             end            
             metadata = struct();
-            testResults.metadata = struct();
         end
         function [prefix] = getPrefix(obj)
             prefix = 'kNN';

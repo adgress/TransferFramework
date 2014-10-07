@@ -10,7 +10,7 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             obj = obj@TransferExperimentConfigLoader(configs);
         end                
         
-        function [results, metadata] = ...
+        function [results] = ...
                 runExperiment(obj,experimentIndex,splitIndex,savedData)
             
             results = struct;
@@ -22,12 +22,12 @@ classdef RepairTransferExperimentConfigLoader < TransferExperimentConfigLoader
             results.trainTestMetadata = {};
             results.perf = [];
             
+            error('What should we do with m?');
             [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData);
             [transferOutput,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,m,...
                 experiment);                
-            metadata = m;
             
             measureSavedData = struct();
             methodSavedData = struct();
