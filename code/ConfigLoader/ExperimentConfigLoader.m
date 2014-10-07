@@ -17,16 +17,10 @@ classdef ExperimentConfigLoader < ConfigLoader
             obj.setDataSet(dataSet);            
         end        
         
-        function [results,savedData] = trainAndTest(obj,input,experiment,savedData)
+        function [results,savedData] = trainAndTest(obj,input,experiment)
             learner = experiment.learner;            
             input.sharedConfigs = obj.configs;
-            if exist('savedData','var')
-                [results,savedData] = ...
-                    learner.trainAndTest(input,savedData);
-            else
-                [results] = ...
-                    learner.trainAndTest(input);
-            end
+            [results] = learner.trainAndTest(input);
         end
         function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
             numClasses = max(test.Y);
@@ -72,12 +66,11 @@ classdef ExperimentConfigLoader < ConfigLoader
                 percTrain = experimentConfigs.trainSize;
                 numTrain = ceil(percTrain*size(train.X,1)); 
             end
-            emptyMetadata = struct();
             if isa(train,'DataSet')
                 error('TODO: Update!');
                 [sampledTrain] = train.stratifiedSample(numTrain);
                 input = ExperimentConfigLoader.CreateRunExperimentInput(...
-                    sampledTrain,test,validate,experimentConfigs,emptyMetadata);
+                    sampledTrain,test,validate,experimentConfigs);
             elseif isa(train,'SimilarityDataSet')
                 trainIndex = obj.configs('trainSetIndex');
                 testIndex = obj.configs('testSetIndex');
@@ -146,7 +139,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                         [modData,drMetadata] = drMethodObj.performDR(cvData);
                         projTrain = modData.train; projTest = modData.test;
                         cvInput = ExperimentConfigLoader.CreateRunExperimentInput(...
-                            projTrain,projTest,[],experimentConfigs,emptyMetadata);                        
+                            projTrain,projTest,[],experimentConfigs);                        
                         if obj.configs('tuneNumVecs')
                             maxVecs = min(obj.configs('numVecs'),size(projTrain.X{trainIndex},2));
                             numVecsResults = cell(maxVecs,1);
@@ -176,7 +169,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                         paramAcc(j) = measureResults.testPerformance;
                         display(['CV Acc: ' num2str(paramAcc(j))]);
                         trainInput = ExperimentConfigLoader.CreateRunExperimentInput(...
-                            projTrain,projTrain,[],experimentConfigs,emptyMetadata);
+                            projTrain,projTrain,[],experimentConfigs);
                         trainResults = methodObject.trainAndTest(trainInput);
                         trainMeasureResults = measureObj.evaluate(trainResults);
                         display(['Train Acc: ' num2str(trainMeasureResults.testPerformance)]);
@@ -198,7 +191,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                 [modData,drMetadata] = drMethodObj.performDR(data);
                 projTrain = modData.train; projTest = modData.test; projValidate = modData.validate;
                 input = ExperimentConfigLoader.CreateRunExperimentInput(...
-                            projTrain,projTest,projValidate,experimentConfigs,emptyMetadata);
+                            projTrain,projTest,projValidate,experimentConfigs);
             else
                 error('Unknown Data type');
             end
@@ -365,35 +358,16 @@ classdef ExperimentConfigLoader < ConfigLoader
             else
                 outputFileName = [fileName s];
             end
-        end
-        function [savedDataFileName] = getSavedDataFileName(obj)
-            savedDataFileName = '';
-        end
-        function [savedData] = loadSavedData(obj)
-            savedData = struct();
-            savedDataFileName = obj.getSavedDataFileName();
-            if ~isempty(savedDataFileName) && ...
-                    exist(savedDataFileName,'file')
-                savedData = load(savedDataFileName);
-                savedData = savedData.savedData;
-            end
-        end
-        function [] = saveData(obj,savedData)
-            savedDataFileName = obj.getSavedDataFileName();
-            if ~isempty(savedDataFileName)               
-                save(savedDataFileName,'savedData');
-            end
-        end
+        end        
     end 
     methods(Static)
         function [s] = CreateRunExperimentInput(train,test,validate,...
-                configs,metadata)
+                configs)
             s = struct();
             s.train = train;
             s.test = test;
             s.validate = validate;
             s.configs = configs;
-            s.metadata = metadata;
         end
         function [e] = CreateConfigLoader(configLoaderName, configs)
             %{

@@ -13,7 +13,7 @@ classdef Transfer < Saveable
             obj = obj@Saveable(configs);
         end
         
-        function [transformedTargetTrain,transformedTargetTest,metadata,...
+        function [transformedTargetTrain,transformedTargetTest,...
                 tSource,tTarget] = ...
                 performTransfer(obj,targetTrainData, targetTestData,...
                 sourceDataSets)
@@ -25,7 +25,6 @@ classdef Transfer < Saveable
                 DataSet.TargetTestType(targetTestData.size())];
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
                 [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],type);
-            metadata = struct();
         end                                                     
         
         function [isSame] = areConfigsIdentical(obj,configs1,configs2)

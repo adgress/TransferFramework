@@ -9,8 +9,8 @@ classdef NearestNeighborMethod < Method
         function obj = NearestNeighborMethod(configs)
             obj = obj@Method(configs);
         end
-        function [testResults,metadata] = ...
-                trainAndTest(obj,input)
+        function [testResults,savedData] = ...
+                trainAndTest(obj,input,savedData)
             train = input.train;
             test = input.test;
             validate = input.validate;
@@ -80,7 +80,6 @@ classdef NearestNeighborMethod < Method
                     length(testResults.testActual);
                 display(['NN Acc: ' num2str(val)]);
             end            
-            metadata = struct();
         end
         function [prefix] = getPrefix(obj)
             prefix = 'kNN';

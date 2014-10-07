@@ -1,4 +1,4 @@
-function [] = runExperiment(configFile,experimentConfigsClass,configs)    
+function [] = runExperiment(configs)    
           
     setPaths;    
     experimentConfigLoaderClass = str2func(configs.get('experimentConfigLoader'));
@@ -29,38 +29,31 @@ function [] = runExperiment(configFile,experimentConfigsClass,configs)
             allResults.allResults{j}.experiment = ...
                 experimentLoader.allExperiments{j};            
         end
-        [savedData] = experimentLoader.loadSavedData();
-        if isempty(fields(savedData))
-            savedData.metadata = cell(experimentLoader.numExperiments, ...
-                experimentLoader.numSplits);
-            savedData.configs = containers.Map;
-            for i=1:numel(savedData.metadata)
-                savedData.metadata{i} = struct();
-            end
-        else
-            display('Loaded saved data');
-        end    
+        savedData = struct();        
+        savedData.metadata = cell(experimentLoader.numExperiments, ...
+            experimentLoader.numSplits);
+        savedData.configs = containers.Map;
+        for i=1:numel(savedData.metadata)
+            savedData.metadata{i} = struct();
+        end
         for j=1:experimentLoader.numExperiments
             splitResults = cell(experimentLoader.numSplits,1);
             if multithread
                 parfor i=1:experimentLoader.numSplits  
                     display(sprintf('%d',i));
                     [splitResults{i}] = ...
-                        experimentLoader.runExperiment(j,i,...
-                        savedData);
+                        experimentLoader.runExperiment(j,i);
                 end            
             else
                 for i=1:experimentLoader.numSplits                
                     display(sprintf('%d',i));
                     [splitResults{i}] = ...
-                        experimentLoader.runExperiment(j,i,...
-                        savedData);
+                        experimentLoader.runExperiment(j,i);
                 end
             end
             allResults.allResults{j}.splitResults = splitResults;
         end
         toc
-        savedData.configs = experimentLoader.configs;
 
         allResults.configs = configs;
         if experimentLoader.configs.get('computeLossFunction')

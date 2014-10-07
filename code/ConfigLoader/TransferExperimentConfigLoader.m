@@ -10,8 +10,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             obj = obj@ExperimentConfigLoader(configs);
         end      
         
-        function [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
-                prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData)
+        function [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
+                prepareDataForTransfer(obj,experimentIndex,splitIndex)
             experiment = obj.allExperiments{experimentIndex};                                    
                                     
             [train,test,validate] = obj.getSplit(splitIndex);            
@@ -27,61 +27,60 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             test.setTargetTest();
             validate.setTargetTrain();
             assert(numel(sources) == 1);
-            m = struct();
-            m.configs = savedData.configs;
-            m.metadata = savedData.metadata{experimentIndex,splitIndex};
+            %m = struct();
+            %m.configs = savedData.configs;
+            %m.metadata = savedData.metadata{experimentIndex,splitIndex};
         end
         
         function [results] = ...
-                runExperiment(obj,experimentIndex,splitIndex,savedData)                                  
+                runExperiment(obj,experimentIndex,splitIndex)                                  
             
-            [sampledTrain,test,sources,validate,m,experiment,numPerClass] = ...
-                prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData);
+            [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
+                prepareDataForTransfer(obj,experimentIndex,splitIndex);
             [transferOutput,trainTestInput] = ...
-                obj.performTransfer(sampledTrain,test,sources,validate,m,...
+                obj.performTransfer(sampledTrain,test,sources,validate,...
                 experiment);                        
             [results] = obj.trainAndTest(trainTestInput,experiment);            
-            results.trainingDataMetadata = obj.constructResultsMetadata(sources,...
+            results.trainingDataMetadata = obj.constructTrainingDataMetadata(sources,...
                 sampledTrain,test,numPerClass);
         end
         function [transferOutput,trainTestInput] = ...
-                performTransfer(obj,train,test,sources,validate,m,experiment)
+                performTransfer(obj,train,test,sources,validate,experiment)
             assert(length(sources) == 1);
             transferClass = str2func(obj.configs.get('transferMethodClass'));
             transferObject = transferClass(obj.configs);
-            [tTrain,tTest,metadata,tSource,tTarget] = ...
+            [tTrain,tTest,tSource,tTarget] = ...
                 transferObject.performTransfer(...
                 train, test,sources); 
             transferOutput = struct();
             transferOutput.tTrain = tTrain;
             transferOutput.tTest = tTest;
-            transferOutput.metadata = metadata;
             transferOutput.tSource = tSource;
             transferOutput.tTarget = tTarget;
             assert(numel(sources) == 1);
             transferOutput.originalSourceData = sources{1};
             trainTestInput = ExperimentConfigLoader.CreateRunExperimentInput(...
-                tTrain,tTest,validate,experiment,metadata);
+                tTrain,tTest,validate,experiment);
             trainTestInput.originalSourceData = sources{1};
             assert(trainTestInput.train.hasTypes());
             assert(trainTestInput.test.isTarget());
             assert(trainTestInput.originalSourceData.isSource());
         end                      
         
-        function [metadata] = constructResultsMetadata(obj,sources,...
+        function [trainingDataMetadata] = constructTrainingDataMetadata(obj,sources,...
                 sampledTrain,test,numPerClass)
-            metadata = struct();
-            metadata.numSourceLabels = ...
+            trainingDataMetadata = struct();
+            trainingDataMetadata.numSourceLabels = ...
                 size(find(sources{1}.Y > 0),1);
-            metadata.numTargetLabels = ...
+            trainingDataMetadata.numTargetLabels = ...
                 size(find(sampledTrain.Y > 0),1);
-            metadata.targetLabelsPerClass = numPerClass;
-            metadata.numTrain = numel(sampledTrain.Y);
-            metadata.numTest = numel(test.Y);
-            metadata.numClasses = max(test.Y);
-            metadata.sources = sources;
-            metadata.sampledTrain = sampledTrain;
-            metadata.test = test;
+            trainingDataMetadata.targetLabelsPerClass = numPerClass;
+            trainingDataMetadata.numTrain = numel(sampledTrain.Y);
+            trainingDataMetadata.numTest = numel(test.Y);
+            trainingDataMetadata.numClasses = max(test.Y);
+            trainingDataMetadata.sources = sources;
+            trainingDataMetadata.sampledTrain = sampledTrain;
+            trainingDataMetadata.test = test;
         end
         
         function [transferFileName] = getTransferFileName(obj)
@@ -93,9 +92,6 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             transferFileName = [transferDir transferSaveFileName '_' ...
                 dataSet '.mat'];
         end        
-        function [savedDataFileName] = getSavedDataFileName(obj)
-            savedDataFileName = obj.getTransferFileName();
-        end
     end 
 end
 

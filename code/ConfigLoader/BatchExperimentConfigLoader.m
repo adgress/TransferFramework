@@ -39,7 +39,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     end
                     mainConfigsCopy.set('transferMethodClass', ...
                         func2str(obj.configs.get('transferMethodClass')));
-                    runExperiment('','',mainConfigsCopy);
+                    runExperiment(mainConfigsCopy);
                 end
             end
         end

@@ -142,8 +142,8 @@ classdef HFMethod < Method
             testResults.learnerMetadata.sigma = sigma;
         end
         
-        function [testResults] = ...
-                trainAndTest(obj,input)
+        function [testResults,savedData] = ...
+                trainAndTest(obj,input,savedData)
             useHF = true;
             [testResults] = ...
                 trainAndTestGraphMethod(obj,input,useHF);

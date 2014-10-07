@@ -10,7 +10,7 @@ classdef FuseTransfer < Transfer
             obj = obj@Transfer(configs);
         end
         
-        function [transformedTargetTrain,transformedTargetTest,metadata,...
+        function [transformedTargetTrain,transformedTargetTest,...
                 tSource,tTarget] = ...
                 performTransfer(obj,targetTrainData, targetTestData,...
                 sourceDataSets) 
@@ -25,7 +25,6 @@ classdef FuseTransfer < Transfer
                 DataSet.TargetTestType(numTest)];
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
                 [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],typeVector);
-            metadata = struct();
         end  
         function [prefix] = getPrefix(obj)
             prefix = 'S+T';

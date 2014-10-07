@@ -13,8 +13,8 @@ classdef Method < Saveable
         end
     end
     methods(Abstract)
-        [testResults,metadata] = ...
-            trainAndTest(obj,input)   
+        [testResults,savedData] = ...
+            trainAndTest(obj,input,savedData)   
     end        
 end
 
