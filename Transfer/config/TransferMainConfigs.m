@@ -20,14 +20,11 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.multithread=1;
             %obj.configsStruct.numLabeledPerClass=[2 3 4 5];
             obj.configsStruct.numLabeledPerClass=2:3;
-            obj.configsStruct.rerunExperiments=0;
+            obj.configsStruct.rerunExperiments=1;
             
             obj.configsStruct.computeLossFunction=1;
-            obj.configsStruct.processMeasureResults=1;
-            obj.configsStruct.useSoftLoss=1;
-            
-            obj.configsStruct.preTransferMeasures={};
-            obj.configsStruct.postTransferMeasures={};
+            obj.configsStruct.processMeasureResults=0;            
+                        
             obj.configsStruct.measureClass='Measure';
             
             learnerConfigs = LearnerConfigs();
@@ -41,18 +38,36 @@ classdef TransferMainConfigs < MainConfigs
             learnerConfigs.configsStruct.saveINV=1;
             learnerConfigs.configsStruct.sourceLOOCV=0;
             learnerConfigs.configsStruct.quiet=0;
+            learnerConfigs.configsStruct.useSoftLoss=0;
             
             % Transfer Repair configs
             learnerConfigs.configsStruct.percToRemove=.035;
-            learnerConfigs.configsStruct.numIterations=3;
+            learnerConfigs.configsStruct.numIterations=3;                        
             
-            llgcObj = LLGCMethod(learnerConfigs);
-            obj.configsStruct.learners={llgcObj};
             %obj.configsStruct.methodClasses={'LLGCMethod'};
             %obj.configsStruct.methodClasses={'NearestNeighborMethod'};
             %obj.configsStruct.methodClasses={'HFMethod','LLGCMethod','NearestNeighborMethod'};
             %obj.configsStruct.methodClasses={'LLGCMethod','NearestNeighborMethod'};
-            obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';            
+            obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
+            obj.configsStruct.preTransferMeasures={};
+            obj.configsStruct.postTransferMeasures={};
+            obj.configsStruct.learners={};
+            
+            runMeasures = 1;
+            
+            if runMeasures
+                obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
+                obj.configsStruct.preTransferMeasures={HFTransferMeasure(learnerConfigs)};
+                obj.configsStruct.postTransferMeasures={HFTransferMeasure(learnerConfigs)};
+                obj.configsStruct.computeLossFunction=0;
+                obj.configsStruct.learners={'Null'};
+                
+                %obj.configsStruct.preTransferMeasures={};
+                %obj.configsStruct.postTransferMeasures={CTTransferMeasure(learnerConfigs)};
+            else
+                llgcObj = LLGCMethod(learnerConfigs);
+                obj.configsStruct.learners={llgcObj};
+            end
         end
     end
     

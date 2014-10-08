@@ -6,22 +6,20 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
     end
     
     methods
-        function obj = MeasureExperimentConfigLoader(configs,configsClass)
-            obj = obj@TransferExperimentConfigLoader(configs,configsClass);               
+        function obj = MeasureExperimentConfigLoader(configs)
+            obj = obj@TransferExperimentConfigLoader(configs);               
         end 
         
         function [results] = ...
-                runExperiment(obj,experimentIndex,splitIndex,savedData)                                    
-            error('What should we do with measureMetadata?');
+                runExperiment(obj,experimentIndex,splitIndex)                                    
+            %error('What should we do with measureMetadata?');
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
-                prepareDataForTransfer(obj,experimentIndex,splitIndex,savedData);
-            measureMetadata = struct();
-            configsCopy = obj.configs;
-            if ~isempty(obj.configs('preTransferMeasures'))
-                configsCopy('useSourceForTransfer') = 0;
-                preTransferMeasures = obj.configs('preTransferMeasures');
-                measureFunc = str2func(preTransferMeasures{1});                
-                measureObj = measureFunc(configsCopy);
+                prepareDataForTransfer(obj,experimentIndex,splitIndex);
+            measureMetadata = struct();            
+            if ~isempty(obj.configs.get('preTransferMeasures'))                
+                preTransferMeasures = obj.configs.get('preTransferMeasures');                
+                measureObj = preTransferMeasures{1};           
+                measureObj.configs.set('useSourceForTransfer',0);
                 type = [DataSet.TargetTrainType(sampledTrain.size()) ;...
                     DataSet.TargetTestType(test.size())];
                 target = DataSet('','','',[sampledTrain.X ; test.X],...
@@ -36,24 +34,26 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
                     target,obj.configs);
             end
             
-            if ~isempty(obj.configs('postTransferMeasures'))
-                configsCopy('useSourceForTransfer') = 1;
+            if ~isempty(obj.configs.get('postTransferMeasures'))                
                 [transferOutput,~] = ...
-                    obj.performTransfer(sampledTrain,test,sources,validate,measureMetadata,...
+                    obj.performTransfer(sampledTrain,test,sources,validate,...
                     experiment);                
-                postTransferMeasures = obj.configs('postTransferMeasures');
-                measureFunc = str2func(postTransferMeasures{1});
-                measureObject = measureFunc(configsCopy);                                
+                postTransferMeasures = obj.configs.get('postTransferMeasures');               
+                measureObject = postTransferMeasures{1};
+                measureObject.configs.set('useSourceForTransfer',1);
                 results.postTransferMeasureVal = {};
                 results.postTransferPerLabelMeasures = {};
+                
                 [results.postTransferMeasureVal{1},...
                     results.postTransferPerLabelMeasures{1},...
                     measureMetadata.postMetadata] = ...
                     measureObject.computeMeasure(transferOutput.tSource,...
-                    transferOutput.tTarget,transferOutput.metadata);                                                
+                    transferOutput.tTarget,obj.configs);                                                
             end
-            results.metadata = obj.constructTrainingDataMetadata(sources,...
-                sampledTrain,test,numPerClass);            
+            measureObj.configs.delete('useSourceForTransfer');
+            results.trainingDataMetadata = obj.constructTrainingDataMetadata(sources,...
+                sampledTrain,test,numPerClass);    
+            results.measureMetadata = measureMetadata;            
         end       
     end
     

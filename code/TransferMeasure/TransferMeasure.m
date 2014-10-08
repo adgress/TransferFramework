@@ -12,7 +12,7 @@ classdef TransferMeasure < Saveable
         
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata,savedData] = ...
                 computeGraphMeasure(obj,source,target,options,...
-                useHF,savedData)
+                useHF,savedData)            
             metadata = struct();
             targetWithLabels = target.Y > 0;
             if sum(targetWithLabels) == 0 || ...
@@ -25,42 +25,39 @@ classdef TransferMeasure < Saveable
                 labeledTargetScores = nan(size(targetWithLabels,1),numLabels);
                 return;
             end
-            useMeanSigma = obj.configs('useMeanSigma');
+            useMeanSigma = obj.configs.get('useMeanSigma');
             if nargin >= 4 && isfield(options,'distanceMatrix')
                 error('Not yet implemented!');
                 W = options.distanceMatrix;                
             else                
-                Xall = [source.X ; target.X];  
-                if obj.configs('zscore')
-                    Xall = zscore(Xall);
+                XallCombined = [source.X ; target.X];  
+                if obj.configs.get('zscore')
+                    XallCombined = zscore(XallCombined);
                 end
-                Y = [source.Y ; target.Y];
-                %{
-                type = [ones(numel(source.Y),1)*Constants.SOURCE ;...
-                    ones(numel(target.Y),1)*Constants.TARGET_TRAIN];
-                %}
-                type = [source.type ; target.type];
+                YCombined = [source.Y ; target.Y];
+                typeCombined = [source.type ; target.type];
                 if exist('savedData','var') && isfield(savedData,'W')
                     W = savedData.W;
                 else
-                    W = Kernel.Distance(Xall);                    
+                    W = Kernel.Distance(XallCombined);                    
                     if exist('savedData','var')
                         savedData.W = W;
                     end
                 end
-                W = DistanceMatrix(W,Y,type);
+                W = DistanceMatrix(W,YCombined,typeCombined);
             end            
-            [W,Ys,Yt,type,isTarget] = W.prepareForSourceHF();                      
-            if ~obj.configs('useSourceForTransfer')                
+            [W,Ys,Yt,typeCombined,isTarget] = W.prepareForSourceHF();                      
+            if ~obj.configs.get('useSourceForTransfer')                
                 W = W(isTarget,isTarget);
-                type = type(isTarget);
+                typeCombined = typeCombined(isTarget);
                 Ys = zeros(0,size(Ys,2));
                 isTarget = isTarget(isTarget);            
             end
             if isKey(obj.configs,'sigma')
-                sigma = obj.configs('sigma');
+                error('Why are we using this sigma?');
+                sigma = obj.configs.get('sigma');
             else
-                [sigma,~,~] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,type);            
+                [sigma,~,~] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,typeCombined);            
             end
             metadata.sigma = sigma;
             rerunLOOCV = 1;
@@ -68,10 +65,10 @@ classdef TransferMeasure < Saveable
                 W = Helpers.distance2RBF(W,sigma);                
                 if exist('savedData','var')
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] = GraphHelpers.LOOCV(W,...
-                        [],[Ys ; Yt],useHF,type,savedData,obj.configs);
+                        [],[Ys ; Yt],useHF,typeCombined,savedData,obj.configs);
                 else
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores] = GraphHelpers.LOOCV(W,...
-                        [],[Ys ; Yt],useHF,type);
+                        [],[Ys ; Yt],useHF,typeCombined);
                 end
             else
                 display('TransferMeasure: Not rerunning LOOCV');
@@ -79,12 +76,12 @@ classdef TransferMeasure < Saveable
                 Ypred = [];
                 Yactual = [];
             end
-            if obj.configs('useSoftLoss')
+            if obj.configs.get('useSoftLoss')
                 val = score;                                
             else
                 val = percCorrect;                
             end          
-            if ~obj.configs('quiet')
+            if ~obj.configs.get('quiet')
                 obj.displayMeasure(val);
             end
             metadata.Ypred = Ypred;

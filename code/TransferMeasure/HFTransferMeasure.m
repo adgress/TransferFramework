@@ -10,13 +10,13 @@ classdef HFTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,perLabelMeasures,metadata] = computeMeasure(obj,source,target,...
+        function [val,perLabelMeasures,measureMetadata] = computeMeasure(obj,source,target,...
                 options)            
             useHF = true;
-            [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata] = ...
+            [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,measureMetadata] = ...
                 obj.computeGraphMeasure(source,target,options,...
                 useHF);
-            metadata.labeledTargetScores = labeledTargetScores;
+            measureMetadata.labeledTargetScores = labeledTargetScores;
             perLabelMeasures = [];
         end
                      

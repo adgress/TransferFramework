@@ -313,9 +313,8 @@ classdef ExperimentConfigLoader < ConfigLoader
                 measures = obj.configs.get('postTransferMeasures');
                 if length(measures) > 0
                     outputDir = [outputDir '/TM/'];
-                    mkdir(outputDir);
-                    measureClass = str2func(measures{1});
-                    measureObject = measureClass(obj.configs);
+                    mkdir(outputDir);                    
+                    measureObject = measures{1};
                     %measureFileName = measureObject.getResultFileName();                
                     measurePrefix = measureObject.getPrefix();                
                     [outputFileName] = obj.appendToName(outputDir,measurePrefix,prependHyphen);

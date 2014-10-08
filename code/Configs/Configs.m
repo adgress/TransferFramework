@@ -68,6 +68,9 @@ classdef Configs < matlab.mixin.Copyable
         function [b] = isKey(obj,key)
             b = obj.hasConfig(key);
         end
+        function [] = delete(obj,key)
+            obj.configsStruct = rmfield(obj.configsStruct,key);
+        end
     end
     
     methods(Access = protected)
