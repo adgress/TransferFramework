@@ -23,7 +23,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.rerunExperiments=1;
             
             obj.configsStruct.computeLossFunction=1;
-            obj.configsStruct.processMeasureResults=0;            
+            obj.configsStruct.processMeasureResults=1;
                         
             obj.configsStruct.measureClass='Measure';
             
@@ -49,7 +49,7 @@ classdef TransferMainConfigs < MainConfigs
             %obj.configsStruct.methodClasses={'HFMethod','LLGCMethod','NearestNeighborMethod'};
             %obj.configsStruct.methodClasses={'LLGCMethod','NearestNeighborMethod'};
             obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
-            obj.configsStruct.preTransferMeasures={};
+            obj.configsStruct.preTransferMeasures=[];
             obj.configsStruct.postTransferMeasures={};
             obj.configsStruct.learners={};
             
@@ -57,13 +57,14 @@ classdef TransferMainConfigs < MainConfigs
             
             if runMeasures
                 obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
-                obj.configsStruct.preTransferMeasures={HFTransferMeasure(learnerConfigs)};
-                obj.configsStruct.postTransferMeasures={HFTransferMeasure(learnerConfigs)};
-                obj.configsStruct.computeLossFunction=0;
-                obj.configsStruct.learners={'Null'};
+                obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
+                obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);
+                obj.configsStruct.learners={};
                 
-                %obj.configsStruct.preTransferMeasures={};
-                %obj.configsStruct.postTransferMeasures={CTTransferMeasure(learnerConfigs)};
+                %{
+                obj.configsStruct.preTransferMeasures=[];
+                obj.configsStruct.postTransferMeasures={CTTransferMeasure(learnerConfigs)};
+                %}
             else
                 llgcObj = LLGCMethod(learnerConfigs);
                 obj.configsStruct.learners={llgcObj};

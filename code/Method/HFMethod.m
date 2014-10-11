@@ -46,8 +46,9 @@ classdef HFMethod < Method
                 type = [train.type(trainLabeled);...
                     train.type(~trainLabeled);...
                     test.type];                
-                testResults.trainType = type(1:length(train.type));
-                testResults.testType = type(length(train.type)+1:end);
+                %testResults.trainType = type(1:length(train.type));
+                %testResults.testType = type(length(train.type)+1:end);
+                testResults.dataType = type;
                 W = Helpers.CreateDistanceMatrix(Xall);
                 W = DistanceMatrix(W,Y,type);
             end
@@ -123,8 +124,7 @@ classdef HFMethod < Method
                 isYTest = Y > 0 & type == Constants.TARGET_TEST;
                 YTest = Y(isYTest);
                 predicted = predicted(isYTest);
-                testResults.trainFU = fu(~isYTest,:);
-                testResults.testFU = fu(isYTest,:);
+                testResults.dataFU = [fu(~isYTest,:) ; fu(isYTest,:)];
             end
             val = sum(predicted == YTest)/...
                     length(YTest);
@@ -134,11 +134,9 @@ classdef HFMethod < Method
                 else
                     display(['LLGCMethod Acc: ' num2str(val)]);
                 end
-            end
-            testResults.testPredicted = predicted;
-            testResults.testActual = YTest;
-            testResults.trainPredicted = train.Y;
-            testResults.trainActual = train.Y; 
+            end            
+            testResults.yPred = [train.Y; predicted];
+            testResults.yActual = [train.Y; YTest];
             testResults.learnerMetadata.sigma = sigma;
         end
         

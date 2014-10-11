@@ -9,51 +9,54 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
         function obj = MeasureExperimentConfigLoader(configs)
             obj = obj@TransferExperimentConfigLoader(configs);               
         end 
-        
+        function [resultsStruct] = runTransferMeasureExperiment(obj, ...
+                measureObj, target, source, measureKey)                           
+            resultsStruct = struct();            
+            [measureResults] = ...
+                measureObj.computeMeasure(source,target,obj.configs);
+            val = measureResults.percCorrect;
+            if measureObj.configs.get('useSoftLoss') 
+                val = measureResults.score;
+            end
+            resultsStruct.transferMeasureVal = val;
+            resultsStruct.transferPerLabelMeasures = ...
+                measureResults.perLabelMeasures;
+            resultsStruct.measureMetadata = measureResults.measureMetadata;
+        end
         function [results] = ...
                 runExperiment(obj,experimentIndex,splitIndex)                                    
             %error('What should we do with measureMetadata?');
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
-                prepareDataForTransfer(obj,experimentIndex,splitIndex);
-            measureMetadata = struct();            
-            if ~isempty(obj.configs.get('preTransferMeasures'))                
-                preTransferMeasures = obj.configs.get('preTransferMeasures');                
-                measureObj = preTransferMeasures{1};           
-                measureObj.configs.set('useSourceForTransfer',0);
+                obj.prepareDataForTransfer(experimentIndex,splitIndex);
+            results = struct();
+            preTransferMeasureKey = 'preTransferMeasures';
+            if ~isempty(obj.configs.get(preTransferMeasureKey))                  
                 type = [DataSet.TargetTrainType(sampledTrain.size()) ;...
                     DataSet.TargetTestType(test.size())];
                 target = DataSet('','','',[sampledTrain.X ; test.X],...
                     [sampledTrain.Y ; -1*ones(size(test.Y))],...
                     type);
-                results.preTransferMeasureVal = {};
-                results.preTransferPerLabelMeasures = {};
-                [results.preTransferMeasureVal{1},...
-                    results.preTransferPerLabelMeasures{1},...
-                    measureMetadata.preMetadata] = ...
-                    measureObj.computeMeasure(sources{1},...
-                    target,obj.configs);
+                source = sources{1};               
+                measureObj = obj.get(preTransferMeasureKey);
+                measureObj.set('useSourceForTransfer',0);
+                [results.preTransferResults] = runTransferMeasureExperiment(obj, ...
+                    measureObj,target, source);      
+                measureObj.delete('useSourceForTransfer');
             end
-            
-            if ~isempty(obj.configs.get('postTransferMeasures'))                
+            postTransferMeasureKey = 'postTransferMeasures';
+            if ~isempty(obj.configs.get(postTransferMeasureKey))
                 [transferOutput,~] = ...
                     obj.performTransfer(sampledTrain,test,sources,validate,...
-                    experiment);                
-                postTransferMeasures = obj.configs.get('postTransferMeasures');               
-                measureObject = postTransferMeasures{1};
-                measureObject.configs.set('useSourceForTransfer',1);
-                results.postTransferMeasureVal = {};
-                results.postTransferPerLabelMeasures = {};
-                
-                [results.postTransferMeasureVal{1},...
-                    results.postTransferPerLabelMeasures{1},...
-                    measureMetadata.postMetadata] = ...
-                    measureObject.computeMeasure(transferOutput.tSource,...
-                    transferOutput.tTarget,obj.configs);                                                
+                    experiment); 
+                measureObj = obj.get(postTransferMeasureKey);
+                measureObj.set('useSourceForTransfer',1);
+                [results.postTransferResults] = runTransferMeasureExperiment(obj, ...
+                    measureObj, transferOutput.tTarget, transferOutput.tSource);  
+                measureObj.delete('useSourceForTransfer');
             end
-            measureObj.configs.delete('useSourceForTransfer');
             results.trainingDataMetadata = obj.constructTrainingDataMetadata(sources,...
                 sampledTrain,test,numPerClass);    
-            results.measureMetadata = measureMetadata;            
+            %results.measureMetadata = measureMetadata;
         end       
     end
     

@@ -35,37 +35,26 @@ classdef Results < handle
                 obj.splitResults{1}.trainingDataMetadata;
         end        
         function [] = aggregateMeasureResults(obj)
-            %{
-            aggregateMeasureResultsForField(obj,'preTransferPerLabelMeasures',...
-                'preTransferPerLabelMeasures');
-            aggregateMeasureResultsForField(obj,'postTransferPerLabelMeasures',...
-                'postTransferPerLabelMeasures');
-            %}
-            aggregateMeasureResultsForField(obj,'postTransferMeasureVal',...
-                'PostTMResults');
-            aggregateMeasureResultsForField(obj,'preTransferMeasureVal',...
-                'PreTMResults');            
+            if isfield(obj.splitResults{1},'preTransferResults')
+                obj.aggregatedResults.PostTMResults = ...
+                    aggregateMeasureResultsForField(obj,'preTransferResults');
+            end
+            if isfield(obj.splitResults{1},'postTransferResults')
+                obj.aggregatedResults.PreTMResults = ...
+                    aggregateMeasureResultsForField(obj,'postTransferResults');
+            end
         end
         
-        function [] = aggregateMeasureResultsForField(obj,field,saveField)
+        function [measureResults] = aggregateMeasureResultsForField(obj,field)
             if ~isfield(obj.splitResults{1},field)
-                return;
+                error('Missing field');
             end
             measures = Helpers.getValuesOfField(obj.splitResults, ...
                 field);
-            obj.aggregatedResults.metadata = ...
-                obj.splitResults{1}.metadata;
-            obj.aggregatedResults.(saveField) = {};
-            for i=1:numel(measures{1})
-                m = length(measures{1}{i});
-                vals = zeros(length(measures),m);
-                for j=1:numel(measures)
-                    v = measures{j}{i};
-                    vals(j,:) = v(:)';
-                end
-                r = ResultsVector(vals);
-                obj.aggregatedResults.(saveField){i} = r;
-            end
+            obj.aggregatedResults.trainingDataMetadata = ...
+                obj.splitResults{1}.trainingDataMetadata;
+            values = Helpers.getValuesOfField(measures,'transferMeasureVal');
+            measureResults = ResultsVector(values);
         end
     end    
     methods(Static)        

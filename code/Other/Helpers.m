@@ -293,13 +293,13 @@ classdef Helpers < handle
         function [vals] = getValuesOfField(cellArray,field)
             vals = [];
             if ~isfield(cellArray{1},field)
-                return;
+                error('Missing field')
             end
-            if isa(cellArray{1}.(field),'cell')
+            if isa(cellArray{1}.(field),'cell') || isa(cellArray{1}.(field),'struct')
                 vals = {};
                 for i=1:numel(cellArray)
                     vals{i} = cellArray{i}.(field);
-                end                
+                end     
             else
                 n = numel(cellArray);
                 l = length(cellArray{1}.(field));

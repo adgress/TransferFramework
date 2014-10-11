@@ -19,7 +19,9 @@ classdef ResultsContainer < handle
         
         function [] = computeLossFunction(obj,measure)
             for i=1:numel(obj.allResults)
-                obj.allResults{i}.computeLossFunction(measure);
+                if numel(obj.allResults{i}.experiment.learner) > 0
+                    obj.allResults{i}.computeLossFunction(measure);
+                end
             end
         end
         function [] = aggregateResults(obj,measure)
@@ -40,7 +42,9 @@ classdef ResultsContainer < handle
         function [results] = getResultsForMethod(obj,learnerClass)
             results = {};
             for i=1:numel(obj.allResults)
-                if isequal(learnerClass,class(obj.allResults{i}.experiment.learner))
+                learner = obj.allResults{i}.experiment.learner;
+                if isequal(learnerClass,class(learner)) || ...
+                        (isempty(learnerClass) && isempty(learner)) 
                     results{end+1} = obj.allResults{i};
                 end
             end                        

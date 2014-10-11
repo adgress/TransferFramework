@@ -10,22 +10,14 @@ classdef LLGCTransferMeasure < TransferMeasure
             obj = obj@TransferMeasure(configs);
         end
         
-        function [val,perLabelMeasures,metadata,savedData] = computeMeasure(obj,source,target,...
-                options,savedData)
+        function [measureResults] = computeMeasure(obj,source,target,...
+                options)            
             useHF = false;
-            if exist('savedData','var')
-                [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata,savedData] = ...
-                    obj.computeGraphMeasure(source,target,options,...
-                    useHF,savedData);   
-            else
-                [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata] = ...
-                    obj.computeGraphMeasure(source,target,options,...
-                    useHF);
-            end
-            metadata.labeledTargetScores = labeledTargetScores;
-            perLabelMeasures = [];
-        end                    
-        
+            [measureResults] = ...
+                obj.computeGraphMeasure(source,target,options,...
+                useHF);            
+        end
+                
         function [name] = getPrefix(obj)
             name = 'LLGC';
         end

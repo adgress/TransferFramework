@@ -1,22 +1,19 @@
-classdef ConfigLoader < handle
+classdef ConfigLoader < Saveable
     %CONFIGLOADER Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
-        configs
         configFile
-        configsClass
     end
     
     methods
         function obj = ConfigLoader(configsobj)
+            obj = obj@Saveable(configsobj);
             %obj.configFile = '';            
             %obj.configsClass = configsClass;
             if isa(configsobj,'char')     
                 obj.configFile = configsobj;                
                 obj.loadConfigs();                
-            else
-                obj.configs = configsobj.copy();
             end
         end                
         function [] = loadConfigs(obj,configFile)
@@ -37,6 +34,20 @@ classdef ConfigLoader < handle
             str = '';
             error('TODO');            
         end
+        
+        function [prefix] = getPrefix(obj)
+            error('TODO')
+            prefix = '';
+        end
+        function [d] = getDirectory(obj)
+            error('TODO')
+            d = '';
+        end
+        function [nameParams] = getNameParams(obj)
+            error('TODO')
+            nameParams = '';            
+        end
+        
     end
     methods(Static)
        function [configs] = LoadConfigs(fileName)

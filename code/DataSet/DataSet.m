@@ -141,6 +141,12 @@ classdef DataSet < handle
             d = DataSet.Combine(obj.getDataOfType(Constants.TARGET_TRAIN),...
                 obj.getDataOfType(Constants.TARGET_TEST));
         end
+        function [d] = getTargetTrainData(obj)
+            d = obj.getDataOfType(Constants.TARGET_TRAIN);
+        end
+        function [d] = getTargetTestData(obj)
+            d = obj.getDataOfType(Constants.TARGET_TEST);
+        end
     end
     
     methods(Static)

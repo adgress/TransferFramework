@@ -6,7 +6,7 @@ function [] = runVisualization(dataset)
     close all
     
     showBaselines = 1;
-    showMeasures = 0;
+    showMeasures = 1;
     showRepair = 0;    
     
     showRepairChange = 0;
@@ -91,6 +91,7 @@ function [] = runVisualization(dataset)
     if showMeasures
         %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
         fileNames{end+1} = 'TM/LLGC-S+T.mat';
+        fileNames{end+1} = 'TM/HF-S+T.mat';
         fileNames{end+1} = 'TM/NN-S+T.mat';
     end
     if dataset == Constants.CV_DATA
@@ -156,7 +157,7 @@ function [] = runVisualization(dataset)
             subplotIndex = (i-1)*numel(sourceData) + j;
             subplot(numel(sourceData),numel(targetData),subplotIndex);
             visualizeResults(options,f);
-            showLegend = false;
+            %showLegend = false;
         end
     end
     

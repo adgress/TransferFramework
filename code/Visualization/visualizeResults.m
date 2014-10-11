@@ -28,18 +28,26 @@ function [f] = visualizeResults(options,f)
                 
         configs = allResults.configs;
         learners = configs.get('learners');
-        for j=1:numel(learners)            
+        
+        %TODO: Find better way to do this loop
+        learnerIdx = 1;
+        while(true)
             hasPostTM = configs.has('preTransferMeasures');
             hasPreTM = configs.has('postTransferMeasures');
             hasTransferMethod = configs.has('hasTransferMethod');            
             hasDR = isKey(configs,'drMethod');
             
             isMeasureFile = hasPostTM || hasPreTM;
-            
-            learnerClassString = class(learners{j});            
+            learnerClassString = '';
+            if numel(learners) > 0
+                learnerClassString = class(learners{learnerIdx});
+            end            
+            learnerIdx = learnerIdx + 1;
             if ~isMeasureFile && ...
-                (~isKey(options.methodsToShow,learnerClassString) || ...
-                    ~options.methodsToShow(learnerClassString))
+                (strcmp(learnerClassString,'') || ...
+                    ~isKey(options.methodsToShow,learnerClassString) || ...
+                    ~options.methodsToShow(learnerClassString) || ...
+                    numel(option.methodsToShow) == 0)
                 continue;
             end            
             [results] = allResults.getResultsForMethod(learnerClassString);
@@ -47,7 +55,8 @@ function [f] = visualizeResults(options,f)
                 continue;
             end
             
-            hasTestResults = isfield(results{1}.aggregatedResults,'testResults');
+            hasTestResults = numel(results) > 0 && ...
+                numel(results{1}.aggregatedResults.testResults) > 0;
             learnerName = Method.GetDisplayName(learnerClassString,configs);
             if hasDR
                 drName = DRMethod.GetDisplayName(configs.get('drMethod'),configs);
@@ -70,6 +79,7 @@ function [f] = visualizeResults(options,f)
                 numIterations = configs.get('numIterations');
                 numSplits = results.numSplits;
                 if options.showRepairChange
+                    error('Update');
                     meanMeasureImprovements = zeros(numSplits,numIterations+1);
                     for split=1:numSplits
                         splitResults = results.splitResults{split}; 
@@ -149,8 +159,8 @@ function [f] = visualizeResults(options,f)
                 end                
             else
                 numTrain = 0;
-                if isKey(configs,'trainSize')
-                    numTrain = length(configs.get('trainSize'));
+                if isKey(configs,'numLabeledPerClass')
+                    numTrain = length(configs.get('numLabeledPerClass'));
                 else
                     sizes = getSizes(results,options.xAxisField);
                     numTrain = length(sizes);
@@ -182,11 +192,11 @@ function [f] = visualizeResults(options,f)
                                 hasPostTM,hasPreTM,colors,index,learnerName,leg);
                         end
                     end
-                elseif length(configs.get('numVecs')) > 1
+                elseif configs.has('numVecs') && length(configs.get('numVecs')) > 1
                     numVecs = configs.get('numVecs');
                     [index,leg] = plotTestResults(options,results,numVecs,colors,...
                                 index,learnerName,leg);
-                elseif length(configs.get('tau')) > 1
+                elseif configs.has('tau') && length(configs.get('tau')) > 1
                     tau = configs.get('tau');
                     [index,leg] = plotTestResults(options,results,tau,colors,...
                                 index,learnerName,leg);
@@ -196,6 +206,10 @@ function [f] = visualizeResults(options,f)
             end
             if ~hasTestResults
                 %display('visualizeResults.m: Hack for measure results - fix later');
+                break;
+            end
+            %TODO: Find better way to do this loop
+            if numel(learners) == 0 || numel(learners) < learnerIdx
                 break;
             end
         end
@@ -215,7 +229,7 @@ function [f] = visualizeResults(options,f)
         plot([0 1],[0 1],'color',colors(i+1,:),'LineStyle','--');
         leg{end+1} = 'Perfect Correlation';
     end
-    if options.showLegend
+    if options.showLegend && ~isempty(leg)
         legend(leg);
     end
     axisToUse = options.axisToUse;    
@@ -225,12 +239,12 @@ function [f] = visualizeResults(options,f)
         xAxisLabel = 'Normalized Accuracy';                      
         axisToUse = [0 1 0 1];        
     elseif exist('results','var')      
-        numTrain = results{1}.aggregatedResults.trainingDataMetadata.numTrain;
-        numTest = results{1}.aggregatedResults.trainingDataMetadata.numTest;
+        numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
+        numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
         xAxisLabel = [options.xAxisDisplay ' ('];
-        if isfield(results{1}.aggregatedResults.trainingDataMetadata,'numSourceLabels')
+        if isfield(results{1}.splitResults{1}.trainingDataMetadata,'numSourceLabels')
             numSourceLabels = ...
-                results{1}.aggregatedResults.trainingDataMetadata.numSourceLabels;
+                results{1}.splitResults{1}.trainingDataMetadata.numSourceLabels;
             xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
         end
         xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
@@ -302,8 +316,8 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
         end
     end
     if isfield(options,'usePerLabel') && options.usePerLabel
-        vars = getVariances(resultsToUse,'testLabelMeasures',-1);
-        means = getMeans(resultsToUse,'testLabelMeasures',-1);
+        vars = getVariances(resultsToUse,'testLabelMeasures');
+        means = getMeans(resultsToUse,'testLabelMeasures');
         if options.labelToShow > 0
             means = means(:,options.labelToShow);
             vars = vars(:,options.labelToShow);
@@ -312,8 +326,8 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
             vars = mean(vars,2);
         end
     else
-        vars = getVariances(resultsToUse,'testResults',-1);
-        means = getMeans(resultsToUse,'testResults',-1);
+        vars = getVariances(resultsToUse,'testResults');
+        means = getMeans(resultsToUse,'testResults');
     end
     if options.showTest
         errorbar(sizes,means,vars,'color',colors(index,:));
@@ -325,8 +339,8 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
         index = index+1;
     end
     if options.showTrain
-        vars = getVariances(resultsToUse,'trainResults',-1);
-        means = getMeans(resultsToUse,'trainResults',-1);
+        vars = getVariances(resultsToUse,'trainResults');
+        means = getMeans(resultsToUse,'trainResults');
         errorbar(sizes,means,vars,'color',colors(index,:));
         leg{index} = [learnerName ', Train'];
         index = index+1;
@@ -382,19 +396,17 @@ end
 
 function [leg,index] = plotMeasureResults(options,configs,results,sizes,field,...
     resultField,displayName,learnerName,leg,index,colors)
-    measures = configs.getConfig(field);
-    for k=1:numel(measures)
-        if ~isKey(options.measuresToShow,measures{k})
-            continue;
-        end
-        dispName = TransferMeasure.GetDisplayName(measures{k},configs);
-        yVals = getMeans(results,resultField,k);
-        yValsBars = getVariances(results,resultField,k);
-        xVals = sizes;
-        errorbar(xVals,yVals,yValsBars,'color',colors(index,:));
-        leg{index} = [displayName ':' learnerName ':' dispName];
-        index = index+1;
+    measureObj = configs.get(field);
+    if ~isKey(options.measuresToShow,class(measureObj))
+        return;
     end
+    dispName = measureObj.getDisplayName();
+    yVals = getMeans(results,resultField);
+    yValsBars = getVariances(results,resultField);
+    xVals = sizes;
+    errorbar(xVals,yVals,yValsBars,'color',colors(index,:));
+    leg{index} = [displayName ':' learnerName ':' dispName];
+    index = index+1;
 end
 
 function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,options)
@@ -453,39 +465,21 @@ function [vals] = getMeasurePerformanceForSize(results,numLabelsToUse,sizes)
     vals = vals(:);
 end
 
-function [vars] = getVariances(results,name,index)
-    if index < 0
-        m = size(results{1}.aggregatedResults.(name),2);
-    else
-        m = size(results{1}.aggregatedResults.(name){index},2);
-    end
+function [vars] = getVariances(results,name)
+    m = size(results{1}.aggregatedResults.(name),2);
     vars = zeros(numel(results),m);
     for i=1:numel(results);
-        if index < 0
-            vars(i,:) = ...
-                results{i}.aggregatedResults.(name).getConfidenceInterval();
-        else
-            vars(i,:) = ...
-                results{i}.aggregatedResults.(name){index}.getConfidenceInterval();
-        end
+        vars(i,:) = ...
+            results{i}.aggregatedResults.(name).getConfidenceInterval();
     end
 end
 
-function [means] = getMeans(results,name,index)
-    if index < 0
-        m = size(results{1}.aggregatedResults.(name),2);
-    else
-        m = size(results{1}.aggregatedResults.(name){index},2);
-    end
+function [means] = getMeans(results,name)
+    m = size(results{1}.aggregatedResults.(name),2);
     means = zeros(numel(results),m);
     for i=1:numel(results);
-        if index < 0
-            means(i,:) = ...
-                results{i}.aggregatedResults.(name).getMean();
-        else
-            means(i,:) = ...
-                results{i}.aggregatedResults.(name){index}.getMean();
-        end
+        means(i,:) = ...
+            results{i}.aggregatedResults.(name).getMean();
     end
 end
 
@@ -493,6 +487,6 @@ function [sizes] = getSizes(results,sizeField)
     sizes = zeros(numel(results),1);
     for i=1:numel(results);
         sizes(i) = ...
-            results{i}.aggregatedResults.trainingDataMetadata.(sizeField);
+            results{i}.splitResults{1}.trainingDataMetadata.(sizeField);
     end
 end

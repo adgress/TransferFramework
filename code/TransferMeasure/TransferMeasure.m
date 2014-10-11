@@ -10,15 +10,16 @@ classdef TransferMeasure < Saveable
             obj = obj@Saveable(configs);
         end
         
-        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,val,metadata,savedData] = ...
+        function [measureResults,savedData] = ...
                 computeGraphMeasure(obj,source,target,options,...
-                useHF,savedData)            
-            metadata = struct();
+                useHF,savedData)                
+            measureMetadata = struct();
             targetWithLabels = target.Y > 0;
             if sum(targetWithLabels) == 0 || ...
                 sum(targetWithLabels) <= max(target.Y)
-                score = nan;
-                percCorrect = nan;
+                error('TODO');
+                score = [];
+                percCorrect = [];
                 Ypred = [];
                 Yactual = [];
                 numLabels = max(source.Y);
@@ -59,7 +60,7 @@ classdef TransferMeasure < Saveable
             else
                 [sigma,~,~] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,typeCombined);            
             end
-            metadata.sigma = sigma;
+            measureMetadata.sigma = sigma;
             rerunLOOCV = 1;
             if rerunLOOCV
                 W = Helpers.distance2RBF(W,sigma);                
@@ -84,8 +85,22 @@ classdef TransferMeasure < Saveable
             if ~obj.configs.get('quiet')
                 obj.displayMeasure(val);
             end
-            metadata.Ypred = Ypred;
-            metadata.Yactual = Yactual;
+            measureMetadata.Ypred = Ypred;
+            measureMetadata.Yactual = Yactual;
+            
+            measureResults = GraphMeasureResults();            
+            measureResults.score = score;
+            measureResults.percCorrect = percCorrect;
+            measureResults.yPred = Ypred;
+            measureResults.yActual = Yactual;
+            measureResults.labeledTargetScores = labeledTargetScores;            
+            measureResults.measureMetadata = measureMetadata;
+            measureResults.perLabelMeasures = [];
+            measureResults.dataType = DataSet.TargetTrainType(length(Ypred));
+            
+            measureResults.sources = {source};
+            measureResults.sampledTrain = target.getTargetTrainData();
+            measureResults.test = target.getTargetTestData();            
         end         
         
         function [d] = getDirectory(obj)

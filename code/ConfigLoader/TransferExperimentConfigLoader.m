@@ -27,9 +27,6 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             test.setTargetTest();
             validate.setTargetTrain();
             assert(numel(sources) == 1);
-            %m = struct();
-            %m.configs = savedData.configs;
-            %m.metadata = savedData.metadata{experimentIndex,splitIndex};
         end
         
         function [results] = ...
@@ -37,7 +34,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex);
-            [transferOutput,trainTestInput] = ...
+            [~,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,...
                 experiment);                        
             [results] = obj.trainAndTest(trainTestInput,experiment);            

@@ -122,16 +122,22 @@ classdef Measure < Saveable
         
         function [aggregatedResults] = aggregateResults(obj,splitMeasures)
             aggregatedResults = struct();
-            testMeasures = ...
-                Helpers.getValuesOfField(splitMeasures,'testPerformance');
-            trainMeasures = ...
-                Helpers.getValuesOfField(splitMeasures,'trainPerformance');                        
-            aggregatedResults.testResults = ResultsVector(testMeasures);
-            aggregatedResults.trainResults = ResultsVector(trainMeasures);
-            aggregatedResults.trainLabelMeasures = ...
-                ResultsVector(Helpers.getValuesOfField(splitMeasures,'trainPerfPerLabel'));
-            aggregatedResults.testLabelMeasures  = ...
-                ResultsVector(Helpers.getValuesOfField(splitMeasures,'testPerfPerLabel'));
+            aggregatedResults.testResults = [];
+            aggregatedResults.trainResults = [];
+            aggregatedResults.trainLabelMeasures = [];
+            aggregatedResults.testLabelMeasures = [];
+            if numel(splitMeasures) > 0
+                testMeasures = ...
+                    Helpers.getValuesOfField(splitMeasures,'testPerformance');
+                trainMeasures = ...
+                    Helpers.getValuesOfField(splitMeasures,'trainPerformance');                        
+                aggregatedResults.testResults = ResultsVector(testMeasures);
+                aggregatedResults.trainResults = ResultsVector(trainMeasures);
+                aggregatedResults.trainLabelMeasures = ...
+                    ResultsVector(Helpers.getValuesOfField(splitMeasures,'trainPerfPerLabel'));
+                aggregatedResults.testLabelMeasures  = ...
+                    ResultsVector(Helpers.getValuesOfField(splitMeasures,'testPerfPerLabel'));
+            end
         end                
         function [prefix] = getPrefix(obj)
             prefix = '0-1 loss';

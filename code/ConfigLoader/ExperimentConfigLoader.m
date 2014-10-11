@@ -310,13 +310,12 @@ classdef ExperimentConfigLoader < ConfigLoader
             
             prependHyphen = false;
             if isKey(obj.configs,'postTransferMeasures')
-                measures = obj.configs.get('postTransferMeasures');
-                if length(measures) > 0
+                measureObj = obj.configs.get('postTransferMeasures');
+                if length(measureObj) > 0
                     outputDir = [outputDir '/TM/'];
                     mkdir(outputDir);                    
-                    measureObject = measures{1};
                     %measureFileName = measureObject.getResultFileName();                
-                    measurePrefix = measureObject.getPrefix();                
+                    measurePrefix = measureObj.getPrefix();                
                     [outputFileName] = obj.appendToName(outputDir,measurePrefix,prependHyphen);
                     prependHyphen = true;
                 end

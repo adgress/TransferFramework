@@ -4,9 +4,16 @@ function [] = runExperiment(configs)
     experimentConfigLoaderClass = str2func(configs.get('experimentConfigLoader'));
     experimentLoader = experimentConfigLoaderClass(configs);        
     learners = experimentLoader.configs.get('learners');
-    for learnerItr = 1:length(learners)
-        learner = learners{learnerItr};
-        experimentLoader.configs.set('learner',learner);
+    
+    %TODO: Figure out better way to do this loop
+    learnerItr = 1;
+    while true
+        learner = [];
+        if numel(learners) > 0
+            learner = learners{learnerItr};
+            experimentLoader.configs.set('learner',learner);
+            learnerItr = learnerItr + 1;
+        end        
         outputFile = experimentLoader.getOutputFileName();
         if exist(outputFile,'file') && ~configs.get('rerunExperiments')
             display(['Skipping: ' outputFile]);
@@ -28,13 +35,6 @@ function [] = runExperiment(configs)
             experimentLoader.allExperiments{j}.learner = learner;
             allResults.allResults{j}.experiment = ...
                 experimentLoader.allExperiments{j};            
-        end
-        savedData = struct();        
-        savedData.metadata = cell(experimentLoader.numExperiments, ...
-            experimentLoader.numSplits);
-        savedData.configs = containers.Map;
-        for i=1:numel(savedData.metadata)
-            savedData.metadata{i} = struct();
         end
         for j=1:experimentLoader.numExperiments
             splitResults = cell(experimentLoader.numSplits,1);
@@ -62,10 +62,14 @@ function [] = runExperiment(configs)
             allResults.computeLossFunction(measureObject);
             allResults.aggregateResults(measureObject);
         end
-        if isKey(experimentLoader.configs,'processMeasureResults') &&...
+        if experimentLoader.configs.has('processMeasureResults') &&...
                 experimentLoader.configs.get('processMeasureResults')
             allResults.aggregateMeasureResults();        
         end
         allResults.saveResults(outputFile);
+        %TODO: Figure out better way to do this loop
+        if numel(learners) == 0 || numel(learners) < learnerItr
+            break;
+        end           
     end
 end

@@ -24,6 +24,20 @@ classdef Saveable < handle
                 obj.configs.addConfigs(newConfigs);
             end
         end
+        function [v] = get(obj,key)
+            v = obj.configs.get(key);
+        end
+        function [] = set(obj,key,value)
+            obj.configs.set(key,value);
+        end
+        function [b] = has(obj,key)
+            b = obj.configs.has(key);
+        end
+        function [] = delete(obj,key)
+            obj.configs.delete(key);
+        end
+        
+        
         function [displayName] = getDisplayName(obj)
             displayName = obj.getResultFileName(',',false);
         end
@@ -39,7 +53,7 @@ classdef Saveable < handle
              for i=1:numel(params)
                  n = params{i};
                  if isKey(obj.configs,n)
-                     v = obj.configs(n);
+                     v = obj.configs.get(n);
                  else
                      v = '0';
                      display([n ' Missing: setting to 0']);
@@ -72,8 +86,8 @@ classdef Saveable < handle
             end
         end
         function [name] = GetDisplayName(className,configs)
-            if isequal(className,'Null')
-                name = 'NULL';
+            if isequal(className,'')
+                name = 'No Learner';
                 return;
             end
             classFunc = str2func(className);
