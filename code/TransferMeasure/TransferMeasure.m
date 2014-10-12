@@ -10,6 +10,28 @@ classdef TransferMeasure < Saveable
             obj = obj@Saveable(configs);
         end
         
+        function [W] = createDistanceMatrix(obj, source, target, savedData)
+            XallCombined = [source.X ; target.X];  
+            if obj.configs.get('zscore')
+                XallCombined = zscore(XallCombined);
+            end
+            YCombined = [source.Y ; target.Y];
+            typeCombined = [source.type ; target.type];
+            if exist('savedData','var') && isfield(savedData,'W')
+                W = savedData.W;
+            else
+                W = Kernel.Distance(XallCombined);                    
+                if exist('savedData','var')
+                    savedData.W = W;
+                end
+            end
+            W = DistanceMatrix(W,YCombined,typeCombined); 
+            W.prepareForSourceHF();                      
+            if ~obj.configs.get('useSourceForTransfer')                
+                W.removeInstances(W.isSource());       
+            end
+        end
+        
         function [measureResults,savedData] = ...
                 computeGraphMeasure(obj,source,target,options,...
                 useHF,savedData)                
@@ -18,76 +40,48 @@ classdef TransferMeasure < Saveable
             if sum(targetWithLabels) == 0 || ...
                 sum(targetWithLabels) <= max(target.Y)
                 error('TODO');
-                score = [];
-                percCorrect = [];
-                Ypred = [];
-                Yactual = [];
-                numLabels = max(source.Y);
-                labeledTargetScores = nan(size(targetWithLabels,1),numLabels);
                 return;
-            end
-            useMeanSigma = obj.configs.get('useMeanSigma');
-            if nargin >= 4 && isfield(options,'distanceMatrix')
+            end            
+            if isfield(options,'distanceMatrix')
                 error('Not yet implemented!');
                 W = options.distanceMatrix;                
             else                
-                XallCombined = [source.X ; target.X];  
-                if obj.configs.get('zscore')
-                    XallCombined = zscore(XallCombined);
-                end
-                YCombined = [source.Y ; target.Y];
-                typeCombined = [source.type ; target.type];
                 if exist('savedData','var') && isfield(savedData,'W')
-                    W = savedData.W;
+                    [W] = obj.createDistanceMatrix(source, target, savedData);
                 else
-                    W = Kernel.Distance(XallCombined);                    
-                    if exist('savedData','var')
-                        savedData.W = W;
-                    end
+                    [W] = obj.createDistanceMatrix(source, target);
                 end
-                W = DistanceMatrix(W,YCombined,typeCombined);
-            end            
-            [W,Ys,Yt,typeCombined,isTarget] = W.prepareForSourceHF();                      
-            if ~obj.configs.get('useSourceForTransfer')                
-                W = W(isTarget,isTarget);
-                typeCombined = typeCombined(isTarget);
-                Ys = zeros(0,size(Ys,2));
-                isTarget = isTarget(isTarget);            
-            end
+            end                                    
             if isKey(obj.configs,'sigma')
                 error('Why are we using this sigma?');
                 sigma = obj.configs.get('sigma');
             else
-                [sigma,~,~] = GraphHelpers.autoSelectSigma(W,[Ys;Yt],isTarget,useMeanSigma,useHF,typeCombined);            
+                useMeanSigma = obj.configs.get('useMeanSigma');
+                [sigma,~,~] = GraphHelpers.autoSelectSigma(W,useMeanSigma,useHF);            
             end
             measureMetadata.sigma = sigma;
             rerunLOOCV = 1;
             if rerunLOOCV
-                W = Helpers.distance2RBF(W,sigma);                
+                rbfKernel = Helpers.distance2RBF(W.W,sigma);
+                distMat = DistanceMatrix(rbfKernel,W.Y,W.type);
                 if exist('savedData','var')
-                    [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] = GraphHelpers.LOOCV(W,...
-                        [],[Ys ; Yt],useHF,typeCombined,savedData,obj.configs);
+                    [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
+                        = GraphHelpers.LOOCV(distMat,useHF,savedData);
                 else
-                    [score, percCorrect,Ypred,Yactual,labeledTargetScores] = GraphHelpers.LOOCV(W,...
-                        [],[Ys ; Yt],useHF,typeCombined);
+                    [score, percCorrect,Ypred,Yactual,labeledTargetScores] ...
+                        = GraphHelpers.LOOCV(distMat,useHF);
                 end
             else
-                display('TransferMeasure: Not rerunning LOOCV');
-                labeledTargetScores = [];
-                Ypred = [];
-                Yactual = [];
-            end
-            if obj.configs.get('useSoftLoss')
-                val = score;                                
-            else
-                val = percCorrect;                
-            end          
+                error('TransferMeasure: Not rerunning LOOCV');
+            end                    
             if ~obj.configs.get('quiet')
+                if obj.configs.get('useSoftLoss')
+                    val = score;                                
+                else
+                    val = percCorrect;                
+                end  
                 obj.displayMeasure(val);
-            end
-            measureMetadata.Ypred = Ypred;
-            measureMetadata.Yactual = Yactual;
-            
+            end            
             measureResults = GraphMeasureResults();            
             measureResults.score = score;
             measureResults.percCorrect = percCorrect;

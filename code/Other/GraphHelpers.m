@@ -6,15 +6,28 @@ classdef GraphHelpers
     end
     
     methods(Static)
+        
+        function [fu] = RunHarmonicFunction(W, Y)
+            YLabelMatrix = Helpers.createLabelMatrix(Y);                   
+            [fu, ~] = harmonic_function(W, YLabelMatrix);
+        end
+        
+        function [fu,invM] = RunLLGC(W,Y,invM)
+            Ymat = full(Helpers.createLabelMatrix(Y));            
+            if exist('invM','var')
+                [fu,invM] = llgc(W,Ymat,invM);
+            else
+                [fu,invM] = llgc(W,Ymat);
+            end
+        end
+        
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
-                = LOOCV(W,labeledInds,Y,useHF,type,savedData,configs)
-            if nargin < 4
+                = LOOCV(distMat,useHF,savedData)
+            if nargin < 2
                 useHF = false;
             end             
-            numClasses = max(Y);
-            if useHF
-                WdistMat = DistanceMatrix(W,Y,type);                
-                [W,Y,type] = WdistMat.prepareForHF_LOOCV() ; 
+            if useHF          
+                [W,Y,type] = distMat.prepareForHF_LOOCV() ; 
                 isLabeled = Y > 0;
                 assert(issorted(~isLabeled));                
                 lastLabeledInd = max(find(isLabeled));
@@ -23,14 +36,13 @@ classdef GraphHelpers
                 Yscore = zeros(lastLabeledTargetInd,1);
                 Ypred = Yscore;
                 Yactual = Y(1:lastLabeledTargetInd);  
-                labeledTargetScores = zeros(lastLabeledTargetInd,numClasses);
+                labeledTargetScores = zeros(lastLabeledTargetInd,distMat.numClasses);
                 for i=1:lastLabeledTargetInd
                     Ycurr = Y(Y > 0);
                     Ycurr(i) = Ycurr(end);
                     Ycurr(end) = [];
-                    YLabelMatrix = Helpers.createLabelMatrix(Ycurr);
                     W = Kernel.swapElements(W,i,lastLabeledInd);
-                    [fu, ~] = harmonic_function(W, YLabelMatrix);
+                    fu = GraphHelpers.RunHarmonicFunction(W,Ycurr);
                     fu_1 = fu(1,:);
                     [~,Ypred(i)] = max(fu_1);                    
                     Yscore(i) = fu_1(Yactual(i));
@@ -38,51 +50,29 @@ classdef GraphHelpers
                     W = Kernel.swapElements(W,lastLabeledInd,i);
                 end                
             else
-                isLabeledTarget = Y > 0 & type == Constants.TARGET_TRAIN;
-                labeledTargetInds = find(isLabeledTarget);
+                labeledTargetInds = find(distMat.isLabeledTarget());
                 Yscore = zeros(size(labeledTargetInds));
                 Ypred = Yscore;
-                Yactual = Y(labeledTargetInds);
-                Ymat = full(Helpers.createLabelMatrix(Y));
-                labeledTargetScores = zeros(length(labeledTargetInds),numClasses);
+                Yactual = distMat.Y(labeledTargetInds);
+                labeledTargetScores = zeros(length(labeledTargetInds),distMat.numClasses);
                 if exist('savedData','var') && isfield(savedData,'invM');
                     invM = savedData.invM;
-                end
-                %{
-                for i=1:length(labeledTargetInds)
-                    ind = labeledTargetInds(i);
-                    Ymat(ind,:) = 0;
-                end
-                warning off;
-                if ~exist('invM','var')
-                    [fu,invM] = llgc(W,Ymat);
-                else
-                    [fu,~] = llgc(W,Ymat,invM);
-                end
-                warning on;
-                for i=1:length(labeledTargetInds)
-                    ind = labeledTargetInds(i);
-                    Yactual_i = Yactual(i);
-                    Yscore(i) = fu(ind,Yactual_i);
-                    [~,Ypred(i)] = max(fu(ind,:));
-                end
-                %}
+                end 
                 
                 for i=1:length(labeledTargetInds)
-                    ind = labeledTargetInds(i);                    
-                    yi = Ymat(ind,:);
-                    Ymat(ind,:) = 0;
+                    ind = labeledTargetInds(i);
+                    Ycurr = distMat.Y;
+                    Ycurr(ind) = -1;
                     warning off;
-                    if ~exist('invM','var')
-                        [fu,invM] = llgc(W,Ymat);
+                    if exist('invM','var')
+                        [fu,invM] = GraphHelpers.RunLLGC(distMat.W,Ycurr,invM);
                     else
-                        [fu,~] = llgc(W,Ymat,invM);
+                        [fu,invM] = GraphHelpers.RunLLGC(distMat.W,Ycurr);
                     end
                     warning on;
                     Yactual_i = Yactual(i);
                     Yscore(i) = fu(ind,Yactual_i);
                     [~,Ypred(i)] = max(fu(ind,:));
-                    Ymat(ind,:) = yi;
                     labeledTargetScores(i,:) = fu(ind,:);
                 end
                 
@@ -99,13 +89,11 @@ classdef GraphHelpers
             else
                 score = mean(Yscore);
             end
-            %score = sum(Yscore)/n;
             percCorrect = sum(Ypred == Yactual)/n;
         end
-        function [sigma,bestScore,bestAcc] = autoSelectSigma(W,Y,isTrain,useMeanSigma,useHF,type)
-            meanDistance = mean(W(:));
+        function [sigma,bestScore,bestAcc] = autoSelectSigma(distMat,useMeanSigma,useHF)
             
-            if nargin < 6
+            if nargin < 3
                 useHF = false;
             end
             %expVals = -3:3;
@@ -116,24 +104,22 @@ classdef GraphHelpers
             sigmas = zeros(length(expVals),1);            
             base = 2;
             for i=1:length(expVals)
-                sigmas(i) = meanDistance*base^expVals(i);
+                sigmas(i) = distMat.meanDistance*base^expVals(i);
             end
 
             scores = zeros(size(sigmas));
             percCorrect = scores;
-            labeledInds = find(Y > 0 & isTrain);
             for i=1:length(sigmas)
-                S = Helpers.distance2RBF(W,sigmas(i));
-                [scores(i),percCorrect(i),~,~] = GraphHelpers.LOOCV(S,labeledInds,Y,useHF,type);
+                S = Helpers.distance2RBF(distMat.W,sigmas(i));
+                rbfDistMat = DistanceMatrix(S,distMat.Y,distMat.type);
+                [scores(i),percCorrect(i)] = ...
+                    GraphHelpers.LOOCV(rbfDistMat,useHF);
             end
             %[~,bestInd] = max(scores);
             [~,bestInd] = max(percCorrect);
             sigma = sigmas(bestInd);
             bestScore = scores(bestInd);
             bestAcc = percCorrect(bestInd);
-            
-            %scores'
-            %percCorrect'
         end        
     end
     

@@ -4,6 +4,12 @@ classdef DistanceMatrix < handle
     
     properties(Constant)
     end
+    
+    properties(Dependent)
+        numClasses
+        meanDistance
+    end
+    
     properties
         Y
         type
@@ -129,17 +135,22 @@ classdef DistanceMatrix < handle
             type = obj.type;
         end
         
-        function [W,Ys,Yt,type,isTarget] = prepareForSourceHF(obj)
-            W = obj.W;
-            sourceInds = find(obj.type == Constants.SOURCE);
-            targetInds = find(obj.type ~= Constants.SOURCE);
+        %function [W,Ys,Yt,type,isTarget] = prepareForSourceHF(obj)
+        function [] = prepareForSourceHF(obj)
+            sourceInds = find(obj.isSource());
+            targetInds = find(obj.isTarget());
             allInds = [sourceInds; targetInds];
             Ys = obj.Y(sourceInds);
             Yt = obj.Y(targetInds);
-            W = W(allInds,allInds);
-            type = obj.type(allInds);
-            isTarget = type == Constants.TARGET_TEST | ...
-                    type == Constants.TARGET_TRAIN;
+            obj.W = obj.W(allInds,allInds);
+            obj.type = obj.type(allInds);
+            obj.Y = [Ys ; Yt];
+        end
+        
+        function[] = removeInstances(obj, shouldRemove)
+            obj.Y = obj.Y(~shouldRemove);
+            obj.W = obj.W(~shouldRemove,~shouldRemove);
+            obj.type = obj.type(~shouldRemove);
         end
         
         function [I] = isTarget(obj)
@@ -167,6 +178,12 @@ classdef DistanceMatrix < handle
             I = obj.Y > 0;
         end
         
+        function [n] = get.numClasses(obj)
+            n = max(obj.Y);
+        end
+        function [n] = get.meanDistance(obj)
+            n = mean(obj.W(:));
+        end
     end
     
 end
