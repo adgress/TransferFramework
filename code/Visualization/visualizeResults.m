@@ -1,4 +1,4 @@
-function [f] = visualizeResults(options,f)
+function [f, returnStruct] = visualizeResults(options,f)
     if nargin < 1
         f = figure;
     end
@@ -26,7 +26,8 @@ function [f] = visualizeResults(options,f)
         allResults = load(fileName);
         allResults = allResults.results;
                 
-        configs = allResults.configs;
+        allResults.aggregateMeasureResults();
+        configs = allResults.mainConfigs;
         learners = configs.get('learners');
         
         %TODO: Find better way to do this loop
@@ -34,7 +35,7 @@ function [f] = visualizeResults(options,f)
         while(true)
             hasPostTM = configs.has('preTransferMeasures');
             hasPreTM = configs.has('postTransferMeasures');
-            hasTransferMethod = configs.has('hasTransferMethod');            
+            hasTransferMethod = configs.has('transferMethodClass');            
             hasDR = isKey(configs,'drMethod');
             
             isMeasureFile = hasPostTM || hasPreTM;
@@ -64,8 +65,8 @@ function [f] = visualizeResults(options,f)
             end
             if hasTransferMethod
                 transferName = ...
-                    Transfer.GetDisplayName(configs.get('transferMethodClass'),...
-                    allResults.configs);
+                    Transfer.GetDisplayName(class(configs.get('transferMethodClass')),...
+                    allResults.mainConfigs);
                 learnerName = [learnerName ';' transferName];
             end                                
             if isfield(options,'showRepair') && options.showRepair
@@ -255,6 +256,8 @@ function [f] = visualizeResults(options,f)
     xlabel(xAxisLabel,'FontSize',8);
         ylabel(options.yAxisDisplay,'FontSize',8);
     hold off;    
+    returnStruct = struct();
+    returnStruct.numItemsInLegend = length(leg);
 end
 
 function [index,leg] = plotMeasures(options,results,sizes,configs,...

@@ -10,7 +10,7 @@ function [] = runBatchExperiment(multithread, dataset)
     %transferMethodClassStrings = {'Transfer'};
     for i=1:numel(transferMethodClassStrings)
         transferMethodClass = str2func(transferMethodClassStrings{i});
-        batchConfigsObj.set('transferMethodClass', transferMethodClass);
+        batchConfigsObj.set('transferMethodClass', transferMethodClass());
         batchConfigsObj.set('experimentConfigLoader', ...
             'TransferExperimentConfigLoader');
         obj = BatchExperimentConfigLoader(batchConfigsObj);

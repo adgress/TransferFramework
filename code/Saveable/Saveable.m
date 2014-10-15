@@ -12,7 +12,11 @@ classdef Saveable < handle
                 obj.configs = [];
                 return
             end
-            obj.configs = configs.copy();
+            if ismethod(configs,'copy')
+                obj.configs = configs.copy();
+            else
+                obj.configs = [];
+            end
         end
         function [] = set.configs(obj, newConfigs)
             obj.configs = newConfigs;

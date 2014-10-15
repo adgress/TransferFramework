@@ -1,4 +1,4 @@
-classdef DistanceMatrix < handle
+classdef DistanceMatrix < LabeledData
     %DISTANCEMATRIX Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -6,13 +6,10 @@ classdef DistanceMatrix < handle
     end
     
     properties(Dependent)
-        numClasses
         meanDistance
     end
     
     properties
-        Y
-        type
         W
     end
     
@@ -153,34 +150,6 @@ classdef DistanceMatrix < handle
             obj.type = obj.type(~shouldRemove);
         end
         
-        function [I] = isTarget(obj)
-            I = obj.type == Constants.TARGET_TRAIN | ...
-                obj.type == Constants.TARGET_TEST;
-        end
-        
-        function [I] = isLabeledTarget(obj)
-            I = obj.isTarget() & obj.isLabeled();
-        end
-        
-        function [I] = isUnlabeledTarget(obj)
-            I = obj.isTarget() & ~obj.isLabeled();
-        end
-        
-        function [I] = isSource(obj)
-            I = obj.type == Constants.SOURCE;
-        end
-        
-        function [I] = isLabeledSource(obj)
-            I = obj.isSource() & obj.isLabeled();
-        end
-        
-        function [I] = isLabeled(obj)
-            I = obj.Y > 0;
-        end
-        
-        function [n] = get.numClasses(obj)
-            n = max(obj.Y);
-        end
         function [n] = get.meanDistance(obj)
             n = mean(obj.W(:));
         end

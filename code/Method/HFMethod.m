@@ -10,12 +10,12 @@ classdef HFMethod < Method
             obj = obj@Method(configs);
         end
         
-        function [distMat] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs)
-            %Ordering matters for HF - not for LLGC
+        function [distMat] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs)            
             if useHF                
                 trainLabeled = train.Y > 0;
             else
-                %TODO: Is this correct?
+                %TODO: Ordering doesn't matter for LLGC - maybe rename
+                %variable to make this code more clear?
                 trainLabeled = true(length(train.Y),1);
             end
             XLabeled = train.X(trainLabeled,:);
@@ -36,6 +36,7 @@ classdef HFMethod < Method
         end
         
         function [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat)
+            error('Make Sure this still works!');
             [distMat,Y,isTest,type] = distMat.prepareForHF();
             Y_testCleared = Y;
             Y_testCleared(isTest) = -1;
@@ -66,14 +67,7 @@ classdef HFMethod < Method
                 sigma = GraphHelpers.autoSelectSigma(WtestCleared, ...
                     obj.configs.get('useMeanSigma'),useHF);
             end
-%             numSourceLabeled = sum(distMat.type == Constants.SOURCE & Y > 0);
             distMat = Helpers.distance2RBF(distMat.W,sigma);
-%             isSource = type == Constants.SOURCE;
-%             isTrain = type == Constants.TARGET_TRAIN;
-%             numSource = sum(isSource);
-%             numTrain = sum(isTrain);
-%             source2test = distMat(isSource,isTest);
-%             train2test = distMat(isTrain,isTest);
             if exist('savedData','var') && isfield(savedData,'invM')
                 [fu] = llgc(distMat, Ymat,savedData.invM);                    
             else
@@ -91,8 +85,7 @@ classdef HFMethod < Method
         function [testResults,savedData] = ...
                 trainAndTestGraphMethod(obj,input,useHF,savedData)
             train = input.train;
-            test = input.test;
-            experiment = input.configs;            
+            test = input.test;   
             learner = input.configs.learner;
             testResults = FoldResults();   
             if isfield(input,'distanceMatrix')

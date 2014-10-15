@@ -18,7 +18,7 @@ function [] = runVisualization(dataset)
     showRelativePerformance = 0;
     showRelativeMeasures = 0;
     
-    numColors = 4;
+    numColors = 3;
     
     
     if dataset == Constants.CV_DATA
@@ -45,6 +45,7 @@ function [] = runVisualization(dataset)
     measuresToShow('NNTransferMeasure') = 0;
     measuresToShow('LLGCTransferMeasure') = 1;
     measuresToShow('HFTransferMeasure') = 0;
+    measuresToShow('CTTransferMeasure') = 1;
     
     methodsToShow = containers.Map();
     methodsToShow('NearestNeighborMethod') = 0;
@@ -70,8 +71,8 @@ function [] = runVisualization(dataset)
         %fileNames{end+1} = 'TR_strategy=NNPrune_percToRemove=0.1_numIterations=3_useECT=0_fixSigma=1_saveINV=1-S+T-LLGC';
         %fileNames{end+1} = 'TR_strategy=None_percToRemove=0.1_numIterations=3_useECT=0_fixSigma=1_saveINV=1-S+T-LLGC';
         fileNames{end+1} = 'TR_strategy=Exhaustive_percToRemove=%s_numIterations=%d_useECT=0_fixSigma=%d_saveINV=%d-S+T-LLGC';
-        for i=1:length(fileNames)
-            fileNames{i} = ['REP/LLGC/' sprintf(fileNames{i},percToRemove,numIterations,fixSigma,saveInv) '.mat'] ;
+        for sourceIdx=1:length(fileNames)
+            fileNames{sourceIdx} = ['REP/LLGC/' sprintf(fileNames{sourceIdx},percToRemove,numIterations,fixSigma,saveInv) '.mat'] ;
         end
         axisToUse = [0 numIterations 0 .9];
     end
@@ -90,9 +91,10 @@ function [] = runVisualization(dataset)
     end
     if showMeasures
         %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
-        fileNames{end+1} = 'TM/LLGC-S+T.mat';
+        %fileNames{end+1} = 'TM/LLGC-S+T.mat';
         fileNames{end+1} = 'TM/HF-S+T.mat';
         fileNames{end+1} = 'TM/NN-S+T.mat';
+        fileNames{end+1} = 'TM/CT-S+T.mat';
     end
     if dataset == Constants.CV_DATA
         sourceData = {'A','C','D','W'};
@@ -107,12 +109,13 @@ function [] = runVisualization(dataset)
         prefix = 'NG';
     end
     f = figure;
-    for i=1:numel(sourceData)
-        for j=1:numel(targetData)
-            if i == j
-                %continue;
+    %annotation('textbox', [0,0.15,0.1,0.1],'String', 'Source');
+    for sourceIdx=1:numel(sourceData)
+        for targetIdx=1:numel(targetData)            
+            if sourceIdx == targetIdx
+                continue;
             end
-            dataSet = [sourceData{i} '2' targetData{j}];
+            dataSet = [targetData{targetIdx} '2' sourceData{sourceIdx}];
             
             options = struct();
             options.prefix = prefix;
@@ -154,10 +157,13 @@ function [] = runVisualization(dataset)
                 end
             end
             
-            subplotIndex = (i-1)*numel(sourceData) + j;
+            subplotIndex = (sourceIdx-1)*numel(sourceData) + targetIdx;
             subplot(numel(sourceData),numel(targetData),subplotIndex);
-            visualizeResults(options,f);
-            %showLegend = false;
+            title(['Target=' targetData{targetIdx} ',Source=' sourceData{sourceIdx}]);
+            [~,returnStruct] = visualizeResults(options,f);
+            if returnStruct.numItemsInLegend > 0
+                showLegend = false;
+            end
         end
     end
     

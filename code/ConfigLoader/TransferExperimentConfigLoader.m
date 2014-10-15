@@ -44,8 +44,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         function [transferOutput,trainTestInput] = ...
                 performTransfer(obj,train,test,sources,validate,experiment)
             assert(length(sources) == 1);
-            transferClass = str2func(obj.configs.get('transferMethodClass'));
-            transferObject = transferClass(obj.configs);
+            transferObject = obj.get('transferMethodClass');
+            transferObject.configs = obj.configs.copy();
             [tTrain,tTest,tSource,tTarget] = ...
                 transferObject.performTransfer(...
                 train, test,sources); 
@@ -60,8 +60,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 tTrain,tTest,validate,experiment);
             trainTestInput.originalSourceData = sources{1};
             assert(trainTestInput.train.hasTypes());
-            assert(trainTestInput.test.isTarget());
-            assert(trainTestInput.originalSourceData.isSource());
+            assert(trainTestInput.test.isTargetDataSet());
+            assert(trainTestInput.originalSourceData.isSourceDataSet());
         end                      
         
         function [trainingDataMetadata] = constructTrainingDataMetadata(obj,sources,...
@@ -83,7 +83,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         function [transferFileName] = getTransferFileName(obj)
             dataSet = obj.configs.get('dataSet');
             transferDir = obj.configs.transferDirectory;
-            transferClassName = obj.configs.get('transferMethodClass');
+            transferClassName = class(obj.configs.get('transferMethodClass'));
             transferSaveFileName = Transfer.GetResultFileName(...
                 transferClassName,obj.configs,false);
             transferFileName = [transferDir transferSaveFileName '_' ...

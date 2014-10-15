@@ -1,4 +1,4 @@
-classdef DataSet < handle
+classdef DataSet < LabeledData
     %DATASET Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -8,8 +8,6 @@ classdef DataSet < handle
         data
         dataFile
         X
-        Y        
-        type
     end    
     methods
         function obj = DataSet(dataFile,XName,YName,X,Y,type)
@@ -33,16 +31,8 @@ classdef DataSet < handle
             end
         end
           
-        function [n] = size(obj)
-            n = length(obj.Y);
-        end
-        function [n] = numSource(obj)
-            n = sum(obj.type == Constants.SOURCE);
-        end
-        function [n] = numLabeledSource(obj)
-            n = sum(obj.Y > 0 & ...
-                obj.type == Constants.SOURCE);
-        end
+        
+        
         function [split] = generateSplitArray(obj,percTrain,percTest,configs)
             percValidate = 1 - percTrain - percTest;
             split = DataSet.generateSplit([percTrain percTest percValidate],...
@@ -92,21 +82,7 @@ classdef DataSet < handle
             Xl = obj.X(indices,:);
             Yl = obj.Y(indices,:);
         end
-        function [Yu] = getBlankLabelVector(obj)
-            Yu = obj.Y;
-            Yu(:) = -1;
-        end
-        function [b] = hasTypes(obj)
-            b = length(obj.Y) == length(obj.type) && ...
-                isempty(find(obj.type == Constants.NO_TYPE));
-        end
-        function [b] = isSource(obj)
-            b = sum(obj.type == Constants.SOURCE) == length(obj.Y);            
-        end
-        function [b] = isTarget(obj)
-            b = sum(obj.type == Constants.TARGET_TRAIN | ...
-                obj.type == Constants.TARGET_TEST) == length(obj.Y);            
-        end
+        
         function [] = remove(obj,shouldRemove)
             if ~islogical(shouldRemove)
                 logArray = false(obj.size(),1);
@@ -117,36 +93,12 @@ classdef DataSet < handle
             obj.Y = obj.Y(~shouldRemove);
             obj.type = obj.type(~shouldRemove);
         end
-        function [] = setTargetTrain(obj)
-            obj.type = DataSet.TargetTrainType(obj.size());
-        end
-        function [] = setTargetTest(obj)
-            obj.type = DataSet.TargetTestType(obj.size());
-        end
-        function [] = setSource(obj)
-            obj.type = DataSet.SourceType(obj.size());
-        end
-        function [] = removeTestLabels(obj)
-            obj.Y(obj.type == Constants.TARGET_TEST) = -1;
-        end 
+        
         function [d] = getDataOfType(obj,dataType)
             isType = obj.type == dataType;
             d = DataSet('','','',obj.X(isType,:),obj.Y(isType),...
                 obj.type(isType));
-        end
-        function [d] = getSourceData(obj)
-            d = obj.getDataOfType(Constants.SOURCE);            
-        end
-        function [d] = getTargetData(obj)
-            d = DataSet.Combine(obj.getDataOfType(Constants.TARGET_TRAIN),...
-                obj.getDataOfType(Constants.TARGET_TEST));
-        end
-        function [d] = getTargetTrainData(obj)
-            d = obj.getDataOfType(Constants.TARGET_TRAIN);
-        end
-        function [d] = getTargetTestData(obj)
-            d = obj.getDataOfType(Constants.TARGET_TEST);
-        end
+        end        
     end
     
     methods(Static)
@@ -154,9 +106,9 @@ classdef DataSet < handle
             split = DataSet.generateSplit(percentageArray,Y);
         end
         function [dataSet] = CreateDataSet(targetTrain,targetTest,source)
-            assert(targetTrain.isTarget());
-            assert(targetTest.isTarget());
-            assert(source.isSource);
+            assert(targetTrain.isTargetDataSet());
+            assert(targetTest.isTargetDataSet());
+            assert(source.isSourceDataSet());
             dataSet = combine(targetTrain,targetTest);
             dataSet = combine(dataSet,source);
         end
@@ -165,18 +117,6 @@ classdef DataSet < handle
                 [d1.type;d2.type]);
         end
         
-        function [v] = TargetTrainType(n)
-            v = Constants.TARGET_TRAIN*ones(n,1);
-        end
-        function [v] = TargetTestType(n)
-            v = Constants.TARGET_TEST*ones(n,1);
-        end
-        function [v] = SourceType(n)
-            v = Constants.SOURCE*ones(n,1);
-        end
-        function [v] = NoType(n)
-            v = Constants.NO_TYPE*ones(n,1); 
-        end
     end
     
     methods(Access=private,Static)

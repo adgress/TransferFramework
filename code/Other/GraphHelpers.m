@@ -13,21 +13,23 @@ classdef GraphHelpers
         end
         
         function [fu,invM] = RunLLGC(W,Y,invM)
+            warning off;
             Ymat = full(Helpers.createLabelMatrix(Y));            
             if exist('invM','var')
                 [fu,invM] = llgc(W,Ymat,invM);
             else
                 [fu,invM] = llgc(W,Ymat);
             end
+            warning on;
         end
         
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
-                = LOOCV(distMat,useHF,savedData)
+                = LOOCV(similarityDistMat,useHF,savedData)
             if nargin < 2
                 useHF = false;
             end             
             if useHF          
-                [W,Y,type] = distMat.prepareForHF_LOOCV() ; 
+                [W,Y,type] = similarityDistMat.prepareForHF_LOOCV() ; 
                 isLabeled = Y > 0;
                 assert(issorted(~isLabeled));                
                 lastLabeledInd = max(find(isLabeled));
@@ -36,7 +38,7 @@ classdef GraphHelpers
                 Yscore = zeros(lastLabeledTargetInd,1);
                 Ypred = Yscore;
                 Yactual = Y(1:lastLabeledTargetInd);  
-                labeledTargetScores = zeros(lastLabeledTargetInd,distMat.numClasses);
+                labeledTargetScores = zeros(lastLabeledTargetInd,similarityDistMat.numClasses);
                 for i=1:lastLabeledTargetInd
                     Ycurr = Y(Y > 0);
                     Ycurr(i) = Ycurr(end);
@@ -50,26 +52,24 @@ classdef GraphHelpers
                     W = Kernel.swapElements(W,lastLabeledInd,i);
                 end                
             else
-                labeledTargetInds = find(distMat.isLabeledTarget());
+                labeledTargetInds = find(similarityDistMat.isLabeledTarget());
                 Yscore = zeros(size(labeledTargetInds));
                 Ypred = Yscore;
-                Yactual = distMat.Y(labeledTargetInds);
-                labeledTargetScores = zeros(length(labeledTargetInds),distMat.numClasses);
+                Yactual = similarityDistMat.Y(labeledTargetInds);
+                labeledTargetScores = zeros(length(labeledTargetInds),similarityDistMat.numClasses);
                 if exist('savedData','var') && isfield(savedData,'invM');
                     invM = savedData.invM;
                 end 
                 
                 for i=1:length(labeledTargetInds)
                     ind = labeledTargetInds(i);
-                    Ycurr = distMat.Y;
+                    Ycurr = similarityDistMat.Y;
                     Ycurr(ind) = -1;
-                    warning off;
                     if exist('invM','var')
-                        [fu,invM] = GraphHelpers.RunLLGC(distMat.W,Ycurr,invM);
+                        [fu,invM] = GraphHelpers.RunLLGC(similarityDistMat.W,Ycurr,invM);
                     else
-                        [fu,invM] = GraphHelpers.RunLLGC(distMat.W,Ycurr);
-                    end
-                    warning on;
+                        [fu,invM] = GraphHelpers.RunLLGC(similarityDistMat.W,Ycurr);
+                    end                    
                     Yactual_i = Yactual(i);
                     Yscore(i) = fu(ind,Yactual_i);
                     [~,Ypred(i)] = max(fu(ind,:));
@@ -91,7 +91,8 @@ classdef GraphHelpers
             end
             percCorrect = sum(Ypred == Yactual)/n;
         end
-        function [sigma,bestScore,bestAcc] = autoSelectSigma(distMat,useMeanSigma,useHF)
+        function [sigma,bestScore,bestAcc] = autoSelectSigma(...
+                distMat,useMeanSigma,useHF)
             
             if nargin < 3
                 useHF = false;
@@ -115,7 +116,6 @@ classdef GraphHelpers
                 [scores(i),percCorrect(i)] = ...
                     GraphHelpers.LOOCV(rbfDistMat,useHF);
             end
-            %[~,bestInd] = max(scores);
             [~,bestInd] = max(percCorrect);
             sigma = sigmas(bestInd);
             bestScore = scores(bestInd);

@@ -6,8 +6,11 @@ classdef FuseTransfer < Transfer
     end
     
     methods
-        function obj = FuseTransfer(configs)            
-            obj = obj@Transfer(configs);
+        function obj = FuseTransfer(configs)
+            if nargin < 1
+                configs = [];
+            end
+            obj = obj@Transfer(configs);            
         end
         
         function [transformedTargetTrain,transformedTargetTest,...

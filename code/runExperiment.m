@@ -55,7 +55,7 @@ function [] = runExperiment(configs)
         end
         toc
 
-        allResults.configs = configs;
+        allResults.mainConfigs = configs;
         if experimentLoader.configs.get('computeLossFunction')
             measureClass = str2func(experimentLoader.configs.get('measureClass'));
             measureObject = measureClass(experimentLoader.configs);
@@ -64,7 +64,7 @@ function [] = runExperiment(configs)
         end
         if experimentLoader.configs.has('processMeasureResults') &&...
                 experimentLoader.configs.get('processMeasureResults')
-            allResults.aggregateMeasureResults();        
+            allResults.aggregateMeasureResults();
         end
         allResults.saveResults(outputFile);
         %TODO: Figure out better way to do this loop

@@ -5,7 +5,7 @@ classdef ResultsContainer < handle
     properties
         numSplits
         allResults        
-        configs
+        mainConfigs
     end
 
     methods

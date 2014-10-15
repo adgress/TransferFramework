@@ -268,87 +268,33 @@ classdef ExperimentConfigLoader < ConfigLoader
                 keys,obj.configs);
         end
         function [outputFileName] = getOutputFileName(obj)
+            outputDir = obj.configs.resultsDirectory;            
             warning off;
-            s = getProjectConstants();            
-            outputDir = obj.configs.resultsDirectory;
-            
-            if obj.configs.hasConfig('useMeanSigma') && obj.configs.get('useMeanSigma')
-                outputDir = [outputDir '-useMeanSigma/'];
-            else
-                outputDir = [outputDir '/'];
-            end
-            mkdir(outputDir);
-            if isKey(obj.configs,'dataSet')
-                outputDir = [outputDir '/' obj.configs.get('dataSet')];                
-                mkdir(outputDir);
-            end            
-            if obj.configs.hasConfig('justKeptFeatures') && obj.configs.get('justKeptFeatures')                
-                outputDir = [outputDir '/justKeptFeatures/'];
-                mkdir(outputDir);
-            end
-            if isKey(obj.configs,'numVecs') && length(obj.configs('numVecs')) > 1
-                outputDir = [outputDir '/numVecsExp/'];
-                mkdir(outputDir);
-            end
-            if isKey(obj.configs,'tau') && length(obj.configs('tau')) > 1
-                outputDir = [outputDir '/tauExp/'];
-                mkdir(outputDir);
-            end
-            if isKey(obj.configs,'clusterExp') && obj.configs('clusterExp')
-                outputDir = [outputDir '/cluster/'];
-                mkdir(outputDir);
-            end
-            if isKey(obj.configs,'repairMethod')
-                outputDir = [outputDir '/REP/'];
-                mkdir(outputDir);
-                repairMeasurePrefix = TransferMeasure.GetPrefix(obj.configs('repairTransferMeasure'));
-                outputDir = [outputDir '/' repairMeasurePrefix '/'];
-                mkdir(outputDir);
-            end
-            outputDir = [outputDir '/'];
-            outputFileName = outputDir;
-            
-            prependHyphen = false;
-            if isKey(obj.configs,'postTransferMeasures')
-                measureObj = obj.configs.get('postTransferMeasures');
-                if length(measureObj) > 0
-                    outputDir = [outputDir '/TM/'];
-                    mkdir(outputDir);                    
-                    %measureFileName = measureObject.getResultFileName();                
-                    measurePrefix = measureObj.getPrefix();                
-                    [outputFileName] = obj.appendToName(outputDir,measurePrefix,prependHyphen);
-                    prependHyphen = true;
+            outputDirParams = obj.configs.getOutputDirectoryParams();
+            for outputParamsIdx=1:length(outputDirParams)
+                params = outputDirParams{outputParamsIdx};
+                configStr = obj.configs.makeOutputForOutputParams(params);
+                if ~isequal(configStr,'')
+                    outputDir = [outputDir configStr '/'];
+                    mkdir(outputDir);
                 end
-            end                    
-            warning on;
-            if isKey(obj.configs,'repairMethod')               
-                repairClassName = obj.configs('repairMethod');
-                repairFileName = TransferRepair.GetResultFileName(repairClassName,obj.configs,false);
-                [outputFileName] = obj.appendToName(outputFileName,repairFileName,prependHyphen);
-                prependHyphen = true;
-            end 
-            if isKey(obj.configs,'drMethod')
-                %error('Update!!!');
-                drMethodName = obj.configs('drMethod');
-                drMethodPrefix = DRMethod.GetResultFileName(drMethodName,obj.configs,false);
-                outputFileName = [outputFileName drMethodPrefix];                
-                prependHyphen = true;
             end
-            if isKey(obj.configs,'transferMethodClass')
-                transferClass = str2func(obj.configs.get('transferMethodClass'));
-                transferObject = transferClass(obj.configs);
-                %transferMethodPrefix = transferObject.getResultFileName(obj.configs);
-                transferMethodPrefix = transferObject.getPrefix();
-                [outputFileName] = obj.appendToName(outputFileName,transferMethodPrefix,prependHyphen);
-                prependHyphen = true;
-            end                       
-            if ~isa(obj,'MeasureExperimentConfigLoader') && isKey(obj.configs,'learner')
-                learnerName = class(obj.configs.get('learner'));
-                methodPrefix = Method.GetResultFileName(learnerName,obj.configs,false);
-                [outputFileName] = obj.appendToName(outputFileName,methodPrefix,prependHyphen);
-                prependHyphen = true;
-            end            
-            outputFileName = [outputFileName '.mat'];
+            warning on;
+            
+            outputFileParams = obj.configs.getOutputFileNameParams();
+            outputFile = '';
+            
+            for outputFileParamsIdx=1:length(outputFileParams)
+                params = outputFileParams{outputFileParamsIdx};
+                configStr = obj.configs.makeOutputForOutputParams(params);
+                if ~isequal(configStr,'')
+                    if ~isequal(outputFile,'')
+                        outputFile = [outputFile '_'];
+                    end
+                    outputFile = [outputFile configStr];
+                end
+            end
+            outputFileName = [outputDir outputFile '.mat'];
         end
         function [outputFileName] = appendToName(obj,fileName,s,prependHyphen)
             if prependHyphen
@@ -368,12 +314,6 @@ classdef ExperimentConfigLoader < ConfigLoader
             s.configs = configs;
         end
         function [e] = CreateConfigLoader(configLoaderName, configs)
-            %{
-            experimentLoader = ExperimentConfigLoader(configFile,configsClass);    
-            experimentConfigClass = str2func(...
-                experimentLoader.configs.get('experimentConfigLoader'));
-            %}
-            %configsObj = configsClass();
             configLoaderClass = str2func(configLoaderName);
             e = configLoaderClass(configs); 
         end

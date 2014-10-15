@@ -2,7 +2,8 @@ classdef TransferMainConfigs < MainConfigs
     %EXPERIMENTCONFIGS Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties
+    properties(Dependent)
+        transferDirectory
     end
     
     methods
@@ -18,12 +19,12 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.dataSet='A2C';
             
             obj.configsStruct.multithread=1;
-            %obj.configsStruct.numLabeledPerClass=[2 3 4 5];
-            obj.configsStruct.numLabeledPerClass=2:3;
+            obj.configsStruct.numLabeledPerClass=[2 3 4 5];
+            %obj.configsStruct.numLabeledPerClass=2:3;
             obj.configsStruct.rerunExperiments=1;
             
             obj.configsStruct.computeLossFunction=1;
-            obj.configsStruct.processMeasureResults=1;
+            obj.configsStruct.processMeasureResults=0;
                         
             obj.configsStruct.measureClass='Measure';
             
@@ -61,15 +62,24 @@ classdef TransferMainConfigs < MainConfigs
                 obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);
                 obj.configsStruct.learners={};
                 
-                %{
+                
                 obj.configsStruct.preTransferMeasures=[];
-                obj.configsStruct.postTransferMeasures={CTTransferMeasure(learnerConfigs)};
-                %}
+                obj.configsStruct.postTransferMeasures=CTTransferMeasure(learnerConfigs);
+                
             else
                 llgcObj = LLGCMethod(learnerConfigs);
                 obj.configsStruct.learners={llgcObj};
             end
         end
+        
+        function [v] = getResultsDirectory(obj)
+            v = [getProjectDir() '/' obj.get('resultsDir') '/' ...
+                 '/' obj.get('dataName') '/'];
+        end
+        function [v] = get.transferDirectory(obj)
+            v = [obj.get('dataDir') '/' obj.get('transferDir') '/'];
+        end
+        
     end
     
 end

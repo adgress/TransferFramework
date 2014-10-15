@@ -36,11 +36,11 @@ classdef Results < handle
         end        
         function [] = aggregateMeasureResults(obj)
             if isfield(obj.splitResults{1},'preTransferResults')
-                obj.aggregatedResults.PostTMResults = ...
+                obj.aggregatedResults.PreTMResults = ...
                     aggregateMeasureResultsForField(obj,'preTransferResults');
             end
             if isfield(obj.splitResults{1},'postTransferResults')
-                obj.aggregatedResults.PreTMResults = ...
+                obj.aggregatedResults.PostTMResults = ...
                     aggregateMeasureResultsForField(obj,'postTransferResults');
             end
         end
@@ -49,12 +49,33 @@ classdef Results < handle
             if ~isfield(obj.splitResults{1},field)
                 error('Missing field');
             end
-            measures = Helpers.getValuesOfField(obj.splitResults, ...
+            measureStructs = Helpers.getValuesOfField(obj.splitResults, ...
                 field);
             obj.aggregatedResults.trainingDataMetadata = ...
                 obj.splitResults{1}.trainingDataMetadata;
-            values = Helpers.getValuesOfField(measures,'transferMeasureVal');
-            measureResults = ResultsVector(values);
+            transferMeasureValueName = 'transferMeasureVal';
+            if Helpers.isFieldNonemptyForArray(measureStructs,transferMeasureValueName)
+                values = Helpers.getValuesOfField(measureStructs,transferMeasureValueName);
+                measureResults = ResultsVector(values);
+            end
+            metadataStructs = Helpers.getValuesOfField(measureStructs,'measureMetadata');            
+            if Helpers.hasFieldForArray(metadataStructs,'fuSourceProp') && ...
+                Helpers.isFieldNonemptyForArray(metadataStructs,'fuSourceProp')                                
+                fuSourcePropArray = Helpers.getValuesOfField(metadataStructs,...
+                    'fuSourceProp');
+                fuTargetPropArray = Helpers.getValuesOfField(metadataStructs,...
+                    'fuTargetProp');
+                scores = [];
+                for propArrayIdx=1:numel(fuSourcePropArray)
+                    sourceProp = fuSourcePropArray{propArrayIdx};
+                    targetProp = fuTargetPropArray{propArrayIdx};
+                    
+                    [~,sourcePropPred] = max(sourceProp,[],2);
+                    [~,targetPropPred] = max(targetProp,[],2);
+                    scores(propArrayIdx) = sum(sourcePropPred==targetPropPred)/length(sourcePropPred);
+                end
+                measureResults = ResultsVector(scores');
+            end            
         end
     end    
     methods(Static)        
