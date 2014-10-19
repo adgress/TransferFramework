@@ -34,18 +34,19 @@ classdef Results < handle
             obj.aggregatedResults.trainingDataMetadata = ...
                 obj.splitResults{1}.trainingDataMetadata;
         end        
-        function [] = aggregateMeasureResults(obj)
+        function [] = aggregateMeasureResults(obj,measureLoss)
             if isfield(obj.splitResults{1},'preTransferResults')
                 obj.aggregatedResults.PreTMResults = ...
-                    aggregateMeasureResultsForField(obj,'preTransferResults');
+                    aggregateMeasureResultsForField(obj,'preTransferResults',measureLoss);
             end
             if isfield(obj.splitResults{1},'postTransferResults')
                 obj.aggregatedResults.PostTMResults = ...
-                    aggregateMeasureResultsForField(obj,'postTransferResults');
+                    aggregateMeasureResultsForField(obj,'postTransferResults',measureLoss);
             end
         end
         
-        function [measureResults] = aggregateMeasureResultsForField(obj,field)
+        function [measureResults] = aggregateMeasureResultsForField(obj,field,...
+                measureLoss)
             if ~isfield(obj.splitResults{1},field)
                 error('Missing field');
             end
@@ -53,29 +54,11 @@ classdef Results < handle
                 field);
             obj.aggregatedResults.trainingDataMetadata = ...
                 obj.splitResults{1}.trainingDataMetadata;
-            transferMeasureValueName = 'transferMeasureVal';
-            if Helpers.isFieldNonemptyForArray(measureStructs,transferMeasureValueName)
-                values = Helpers.getValuesOfField(measureStructs,transferMeasureValueName);
-                measureResults = ResultsVector(values);
+            scores = [];
+            for idx=1:numel(measureStructs)
+                scores(idx) = measureLoss.computeLoss(measureStructs{idx});                
             end
-            metadataStructs = Helpers.getValuesOfField(measureStructs,'measureMetadata');            
-            if Helpers.hasFieldForArray(metadataStructs,'fuSourceProp') && ...
-                Helpers.isFieldNonemptyForArray(metadataStructs,'fuSourceProp')                                
-                fuSourcePropArray = Helpers.getValuesOfField(metadataStructs,...
-                    'fuSourceProp');
-                fuTargetPropArray = Helpers.getValuesOfField(metadataStructs,...
-                    'fuTargetProp');
-                scores = [];
-                for propArrayIdx=1:numel(fuSourcePropArray)
-                    sourceProp = fuSourcePropArray{propArrayIdx};
-                    targetProp = fuTargetPropArray{propArrayIdx};
-                    
-                    [~,sourcePropPred] = max(sourceProp,[],2);
-                    [~,targetPropPred] = max(targetProp,[],2);
-                    scores(propArrayIdx) = sum(sourcePropPred==targetPropPred)/length(sourcePropPred);
-                end
-                measureResults = ResultsVector(scores');
-            end            
+            measureResults = ResultsVector(scores');
         end
     end    
     methods(Static)        

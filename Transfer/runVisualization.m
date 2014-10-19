@@ -8,10 +8,12 @@ function [] = runVisualization(dataset)
     showBaselines = 1;
     showMeasures = 1;
     showRepair = 0;    
+    showDiff = 0;
     
     showRepairChange = 0;
     
-    useCVSmall = 1;
+    %prefix = 'CV-small_10-13';
+    prefix = 'CV-small';
     
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 1;
@@ -32,8 +34,7 @@ function [] = runVisualization(dataset)
     
     usePerLabel = 0;
     labelToShow = 2;
-    
-    binPerformance = 0;
+       
     numLabelsToUse = 2;
         
     showCorrelations = 0;
@@ -52,15 +53,18 @@ function [] = runVisualization(dataset)
     methodsToShow('LLGCMethod') = 1;
     methodsToShow('HFMethod') = 0;
     
+    measureLossConfigs = Configs();
+    measureLossConfigs.set('justTarget',true);
+    measureLoss = FUMeasureLoss(measureLossConfigs);
+    
     %baselineFiles = {'TO-kNN_k=1.mat','TO-LLGC.mat'};
-    baselineFiles = {'TO-LLGC.mat'};
+    baselineFiles = {'TO_LLGC.mat'};
     fileNames = {};
     
     
     if showRepair
         showBaselines = 0;
         showMeasures = 0;
-        binPerformance = 0;
         numIterations = 3;
         percToRemove = '0.035';
         fixSigma=1;
@@ -75,38 +79,28 @@ function [] = runVisualization(dataset)
             fileNames{sourceIdx} = ['REP/LLGC/' sprintf(fileNames{sourceIdx},percToRemove,numIterations,fixSigma,saveInv) '.mat'] ;
         end
         axisToUse = [0 numIterations 0 .9];
-    end
-    
-    if binPerformance
-        showBaselines = 0;
-        showPreTransferMeasures = 0;
-        showRelativePerformance = 0;
-        showRelativeMeasures = 0;
-        axisToUse = [0 3 0 1];
-    end
+    end    
     
     if showBaselines
         %fileNames{end+1} = 'S+T-kNN_k=1.mat';
-        fileNames{end+1} = 'S+T-LLGC.mat';
+        fileNames{end+1} = 'S+T_LLGC.mat';
     end
     if showMeasures
         %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
         %fileNames{end+1} = 'TM/LLGC-S+T.mat';
-        fileNames{end+1} = 'TM/HF-S+T.mat';
-        fileNames{end+1} = 'TM/NN-S+T.mat';
-        fileNames{end+1} = 'TM/CT-S+T.mat';
+        fileNames{end+1} = 'TM/HF_S+T.mat';
+        fileNames{end+1} = 'TM/NN_S+T.mat';
+        fileNames{end+1} = 'TM/CT_S+T.mat';
+    end
+    if showDiff
+        fileNames = {{'TO_LLGC.mat','S+T_LLGC.mat'}}
     end
     if dataset == Constants.CV_DATA
         sourceData = {'A','C','D','W'};
         targetData = {'A','C','D','W'};
-        prefix = 'CV';
-        if useCVSmall
-            prefix = 'CV-small';
-        end
     else
         sourceData = {'CR1','CR2','CR3','CR4'};
-        targetData = {'CR1','CR2','CR3','CR4'};
-        prefix = 'NG';
+        targetData = {'CR1','CR2','CR3','CR4'};        
     end
     f = figure;
     %annotation('textbox', [0,0.15,0.1,0.1],'String', 'Source');
@@ -139,11 +133,12 @@ function [] = runVisualization(dataset)
             options.axisToUse = axisToUse;
             options.usePerLabel = usePerLabel;
             options.labelToShow = labelToShow;
-            options.binPerformance = binPerformance;
             options.numLabelsToUse = numLabelsToUse;
             options.showRepair = showRepair;
             options.numColors = numColors;
             options.showRepairChange = showRepairChange;
+            options.measureLoss = measureLoss;
+            options.showDiff = showDiff;
             if options.showRepair
                 options.yAxisDisplay = 'Measure/Accuracy';
                 options.xAxisDisplay = 'Num Repair Iterations';

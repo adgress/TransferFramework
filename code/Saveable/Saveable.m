@@ -90,9 +90,9 @@ classdef Saveable < handle
             end
         end
         function [name] = GetDisplayName(className,configs)
-            if isequal(className,'')
-                name = 'No Learner';
-                return;
+            if ~isa(className,'char')
+                assert(~isequal(className,''));
+                className = class(className);
             end
             classFunc = str2func(className);
             o = classFunc(configs);

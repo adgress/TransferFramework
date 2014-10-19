@@ -29,9 +29,9 @@ classdef ResultsContainer < handle
                 obj.allResults{i}.aggregateResults(measure);
             end
         end
-        function [] = aggregateMeasureResults(obj)
+        function [] = aggregateMeasureResults(obj,measureLoss)
             for i=1:numel(obj.allResults)
-                obj.allResults{i}.aggregateMeasureResults();
+                obj.allResults{i}.aggregateMeasureResults(measureLoss);
             end
         end
         function [] = saveResults(obj,filename)

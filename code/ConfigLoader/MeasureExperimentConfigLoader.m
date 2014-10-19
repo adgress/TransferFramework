@@ -22,6 +22,7 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             resultsStruct.transferPerLabelMeasures = ...
                 measureResults.perLabelMeasures;
             resultsStruct.measureMetadata = measureResults.measureMetadata;
+            resultsStruct.measureResults = measureResults;
         end
         function [results] = ...
                 runExperiment(obj,experimentIndex,splitIndex)                                    

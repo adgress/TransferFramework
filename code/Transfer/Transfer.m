@@ -10,6 +10,9 @@ classdef Transfer < Saveable
     
     methods
         function obj = Transfer(configs)
+            if nargin < 1
+                configs = [];
+            end
             obj = obj@Saveable(configs);
         end
         

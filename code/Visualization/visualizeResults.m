@@ -26,15 +26,21 @@ function [f, returnStruct] = visualizeResults(options,f)
         allResults = load(fileName);
         allResults = allResults.results;
                 
-        allResults.aggregateMeasureResults();
+        allResults.aggregateMeasureResults(options.measureLoss);
         configs = allResults.mainConfigs;
         learners = configs.get('learners');
         
         %TODO: Find better way to do this loop
         learnerIdx = 1;
         while(true)
-            hasPostTM = configs.has('preTransferMeasures');
-            hasPreTM = configs.has('postTransferMeasures');
+            %TODO: Find better way to do this loop
+            if numel(learners) < learnerIdx && learnerIdx > 1
+                break;
+            end
+            hasPreTM = configs.has('preTransferMeasures') && ...
+                ~isempty(configs.get('preTransferMeasures'));
+            hasPostTM = configs.has('postTransferMeasures') && ...
+                ~isempty(configs.get('postTransferMeasures'));
             hasTransferMethod = configs.has('transferMethodClass');            
             hasDR = isKey(configs,'drMethod');
             
@@ -45,10 +51,7 @@ function [f, returnStruct] = visualizeResults(options,f)
             end            
             learnerIdx = learnerIdx + 1;
             if ~isMeasureFile && ...
-                (strcmp(learnerClassString,'') || ...
-                    ~isKey(options.methodsToShow,learnerClassString) || ...
-                    ~options.methodsToShow(learnerClassString) || ...
-                    numel(option.methodsToShow) == 0)
+                ~shouldShowResults(learnerClassString,options.methodsToShow)
                 continue;
             end            
             [results] = allResults.getResultsForMethod(learnerClassString);
@@ -58,108 +61,29 @@ function [f, returnStruct] = visualizeResults(options,f)
             
             hasTestResults = numel(results) > 0 && ...
                 numel(results{1}.aggregatedResults.testResults) > 0;
-            learnerName = Method.GetDisplayName(learnerClassString,configs);
+            
+            legendName = '';
+            if ~isempty(learnerClassString)
+                legendName = Method.GetDisplayName(learnerClassString,configs);
+            end
             if hasDR
                 drName = DRMethod.GetDisplayName(configs.get('drMethod'),configs);
-                learnerName = [drName '-' learnerName];                
+                legendName = [drName '-' legendName];                
             end
             if hasTransferMethod
                 transferName = ...
-                    Transfer.GetDisplayName(class(configs.get('transferMethodClass')),...
+                    Transfer.GetDisplayName(configs.get('transferMethodClass'),...
                     allResults.mainConfigs);
-                learnerName = [learnerName ';' transferName];
-            end                                
+                legendName = [legendName ';' transferName];
+            end  
+            if hasPostTM
+                measures = configs.get('postTransferMeasures');
+                dispName = TransferMeasure.GetDisplayName(measures,configs);
+                leg{index} = [legendName ';' dispName];
+            end
             if isfield(options,'showRepair') && options.showRepair
-                repairMethodString = configs.get('repairMethod');
-                transferRepairName = ...
-                    TransferRepair.GetDisplayName(repairMethodString,configs);
-                learnerName = [transferRepairName ';' learnerName];
-                measureClassName = configs.get('measureClass');
-                measureObject = Measure.ConstructObject(measureClassName,configs);
-                results = results{1};
-                numIterations = configs.get('numIterations');
-                numSplits = results.numSplits;
-                if options.showRepairChange
-                    error('Update');
-                    meanMeasureImprovements = zeros(numSplits,numIterations+1);
-                    for split=1:numSplits
-                        splitResults = results.splitResults{split}; 
-                        repairResults1 = splitResults.repairResults{1};
-                        labeledTrainData = find(repairResults1.trainActual > 0 & ...
-                            repairResults1.trainType == Constants.TARGET_TRAIN);
-                        labeledTrainY = repairResults1.trainActual(labeledTrainData);
-                        numLabeledTrain = length(labeledTrainY);
-                        splitMeasureScores = zeros(numLabeledTrain,numIterations+1);
-                        splitTrainFU = zeros(numLabeledTrain,numIterations+1);
-                        splitRepairScores = zeros(numLabeledTrain,numIterations+1);
-                        splitIsIncorrect = zeros(numLabeledTrain,numIterations+1);
-                        trainIndsToUse = zeros(1,numIterations+1);
-                        trainIndsToFocusOn = zeros(numLabeledTrain,numIterations+1);
-                        measureScores = zeros(1,numIterations+1);
-                        trainFU = zeros(1,numIterations+1);
-                        for itr=1:numIterations+1
-                            trResults = splitResults.repairResults{itr};
-                            measureResults = splitResults.transferMeasureMetadata{itr};
-                            repairMetadata = splitResults.repairMetadata{itr};
-                                                                                    
-                            splitMeasureScores(:,itr) = Helpers.SelectFromRows(...
-                                measureResults.labeledTargetScores,labeledTrainY);                            
-                            splitTrainFU(:,itr) = Helpers.SelectFromRows(...
-                                trResults.trainFU(labeledTrainData,:),labeledTrainY);
-                            
-                            
-                            if itr > 1
-                                splitRepairScores(:,itr) = Helpers.SelectFromRows(... 
-                                    repairMetadata.targetScores,labeledTrainY);                            
-                                splitIsIncorrect(:,itr) = repairMetadata.isIncorrect;
-                                trainIndsToFocusOn(:,itr) = repairMetadata.labeledTargetIndsToFocusOn;
-                                trainIndsToUse(itr) = repairMetadata.trainIndsToUse;
-                            end
-                        end
-                        for itr=2:length(trainIndsToUse)
-                            ind = find(trainIndsToFocusOn(:,itr));
-                            measureScores(itr,:) = splitMeasureScores(ind,:);
-                            meanMeasureImprovements(split,itr) = ...
-                                measureScores(itr,itr)-measureScores(itr,itr-1);
-                        end
-                    end
-                    measureIncreaseResults = ResultsVector(meanMeasureImprovements);
-                    mMIR = measureIncreaseResults.getMean();
-                    vMIR = measureIncreaseResults.getConfidenceInterval();
-                    errorbar(0:numIterations,mMIR,vMIR,'color',colors(index,:));
-                    leg{index} = [learnerName ':' 'Measure Increase'];
-                    index = index + 1;
-                else
-                    postTransferVals = zeros(numIterations,numSplits);
-                    repairedAcc = zeros(numIterations,numSplits);
-                    for itr=1:numIterations+1
-                        for split=1:numSplits
-                            splitResults = results.splitResults{split};
-                            postTransferVals(itr,split) = ...
-                                splitResults.postTransferMeasureVal{itr};
-                            repairResults = splitResults.repairResults{itr};
-                            measureResults = measureObject.evaluate(repairResults);
-                            repairedAcc(itr,split) = ...
-                                measureResults.testPerformance;                            
-                        end
-                    end
-                    PTResults = ResultsVector(postTransferVals');
-                    accResults = ResultsVector(repairedAcc');
-                    mPT = PTResults.getMean();
-                    vPT = PTResults.getConfidenceInterval();
-                    errorbar(0:numIterations,mPT,vPT,'color',colors(index,:));
-                    leg{index} = [learnerName ':' 'Transfer Measure'];
-                    index = index+1;
-                    
-                    mAcc = accResults.getMean();
-                    mAcc
-                    vAcc = accResults.getConfidenceInterval();
-                    errorbar(0:numIterations,mAcc,vAcc,'color',colors(index,:));
-                    leg{index} = [learnerName ':' 'Repaired Acc'];
-                    index = index+1;
-                end                
+                plotRepairResults();                
             else
-                numTrain = 0;
                 if isKey(configs,'numLabeledPerClass')
                     numTrain = length(configs.get('numLabeledPerClass'));
                 else
@@ -168,39 +92,30 @@ function [f, returnStruct] = visualizeResults(options,f)
                 end
                 if numTrain > 1
                     sizes = getSizes(results,options.xAxisField);
-                    if isfield(options,'binPerformance') && options.binPerformance
-                        if hasPostTM
-                            measureVals{end+1} = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
-                            measures = configs.get('postTransferMeasures');
-                            dispName = TransferMeasure.GetDisplayName(measures{1},configs);
-                            leg{index} = [learnerName ';' dispName];
-                            index = index + 1;
-                        elseif hasTestResults
-                            transferPerfVals = getMeasurePerformanceForSize(results,options.numLabelsToUse,sizes);
-                        else
-                            error('');
-                        end
-                    elseif options.showRelativePerformance && hasTestResults
-                        [index,leg] = plotRelativePerformance(options,...
-                            baselineFiles,results,sizes,configs,colors,index,learnerName,leg);
+                    if options.showRelativePerformance && hasTestResults
+                        plotRelativePerformance(options,...
+                            baselineFiles,results,sizes,configs,colors,index,legendName,leg);
+                        legendName = ['Relative Acc: ' learnerName];
+                        leg{index} = legendName;
+                        index = index + 1;
                     else
                         if hasTestResults
                             [index,leg] = plotTestResults(options,results,sizes,colors,...
-                                index,learnerName,leg);
+                                index,legendName,leg);
                         end
                         if hasPostTM || hasPreTM
                             [index,leg] = plotMeasures(options,results,sizes,configs,...
-                                hasPostTM,hasPreTM,colors,index,learnerName,leg);
+                                hasPostTM,hasPreTM,colors,index,legendName,leg);
                         end
                     end
                 elseif configs.has('numVecs') && length(configs.get('numVecs')) > 1
                     numVecs = configs.get('numVecs');
                     [index,leg] = plotTestResults(options,results,numVecs,colors,...
-                                index,learnerName,leg);
+                                index,legendName,leg);
                 elseif configs.has('tau') && length(configs.get('tau')) > 1
                     tau = configs.get('tau');
                     [index,leg] = plotTestResults(options,results,tau,colors,...
-                                index,learnerName,leg);
+                                index,legendName,leg);
                 else
                     error('What should we visualize?');
                 end
@@ -208,37 +123,15 @@ function [f, returnStruct] = visualizeResults(options,f)
             if ~hasTestResults
                 %display('visualizeResults.m: Hack for measure results - fix later');
                 break;
-            end
-            %TODO: Find better way to do this loop
-            if numel(learners) == 0 || numel(learners) < learnerIdx
-                break;
-            end
+            end            
         end
-    end   
-    if isfield(options,'binPerformance') && options.binPerformance
-        [~,inds] = sort(transferPerfVals);
-        measureRange = [Inf -Inf];
-        for i=1:length(measureVals)
-            measureRange(1) = min(measureRange(1),min(measureVals{i}));
-            measureRange(2) = max(measureRange(1),max(measureVals{i}));
-        end
-        xVals = Helpers.NormalizeRange(transferPerfVals(inds));
-        for i=1:length(measureVals)
-            yVals = Helpers.NormalizeRange(measureVals{i},measureRange);
-            plot(xVals,yVals,'color',colors(i,:),'Marker','x');
-        end
-        plot([0 1],[0 1],'color',colors(i+1,:),'LineStyle','--');
-        leg{end+1} = 'Perfect Correlation';
-    end
+    end       
     if options.showLegend && ~isempty(leg)
         legend(leg);
     end
     axisToUse = options.axisToUse;    
     if isfield(options,'showRepair') && options.showRepair        
-        xAxisLabel = options.xAxisDisplay;
-    elseif isfield(options,'binPerformance') && options.binPerformance
-        xAxisLabel = 'Normalized Accuracy';                      
-        axisToUse = [0 1 0 1];        
+        xAxisLabel = options.xAxisDisplay;     
     elseif exist('results','var')      
         numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
         numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
@@ -290,15 +183,25 @@ function [index,leg] = plotMeasures(options,results,sizes,configs,...
         leg{index} = ['Relative Measure: ' dispName];
         index = index + 1;
     else
-        if options.showPostTransferMeasures && hasPostTM
-            [leg,index] = plotMeasureResults(options,configs,results,sizes,...
-                'postTransferMeasures','PostTMResults','PostTM',...
+        if options.showPostTransferMeasures && hasPostTM  
+            displayName = 'PostTM';
+            plotMeasureResults(options,configs,results,sizes,...
+                'postTransferMeasures','PostTMResults',displayName,...
                 learnerName,leg,index,colors);
+            measureObj = configs.get('postTransferMeasures');    
+            dispName = measureObj.getDisplayName();
+            leg{index} = [displayName ':' learnerName ':' dispName];
+            index = index + 1;
         end
         if options.showPreTransferMeasures && hasPreTM
-            [leg,index] = plotMeasureResults(options,configs,results,sizes,...
-                'preTransferMeasures','PreTMResults','PreTM',...
+            displayName = 'PreTM';
+            plotMeasureResults(options,configs,results,sizes,...
+                'preTransferMeasures','PreTMResults',displayName,...
                 learnerName,leg,index,colors);
+            measureObj = configs.get('preTransferMeasures');    
+            dispName = measureObj.getDisplayName();
+            leg{index} = [displayName ':' learnerName ':' dispName];
+            index = index + 1;
         end
     end
 end
@@ -350,7 +253,7 @@ function [index,leg] = plotTestResults(options,results,sizes,colors,index,learne
     end
 end
 
-function [index,leg] = plotRelativePerformance(options,baselineFiles,results,sizes,configs,colors,index,learnerName,leg)
+function [] = plotRelativePerformance(options,baselineFiles,results,sizes,configs,colors,index,learnerName,leg)
     d = getProjectDir();
     baselineFile = [d '/results/' options.prefix '/' options.dataSet '/' baselineFiles{1}];
     baselineResults = load(baselineFile);
@@ -393,23 +296,23 @@ function [index,leg] = plotRelativePerformance(options,baselineFiles,results,siz
         errorbar(sizes,means,l,u,'color',colors(index,:));
     end
     %dispName = TransferMeasure.GetDisplayName(measures{k},configs);
-    leg{index} = ['Relative Acc: ' learnerName];
-    index = index+1;
+    %leg{index} = ['Relative Acc: ' learnerName];
+    %index = index+1;
 end
 
-function [leg,index] = plotMeasureResults(options,configs,results,sizes,field,...
+function [] = plotMeasureResults(options,configs,results,sizes,field,...
     resultField,displayName,learnerName,leg,index,colors)
     measureObj = configs.get(field);
     if ~isKey(options.measuresToShow,class(measureObj))
         return;
     end
-    dispName = measureObj.getDisplayName();
+    %dispName = measureObj.getDisplayName();
     yVals = getMeans(results,resultField);
     yValsBars = getVariances(results,resultField);
     xVals = sizes;
     errorbar(xVals,yVals,yValsBars,'color',colors(index,:));
-    leg{index} = [displayName ':' learnerName ':' dispName];
-    index = index+1;
+    %leg{index} = [displayName ':' learnerName ':' dispName];
+    %index = index+1;
 end
 
 function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,options)
@@ -491,5 +394,101 @@ function [sizes] = getSizes(results,sizeField)
     for i=1:numel(results);
         sizes(i) = ...
             results{i}.splitResults{1}.trainingDataMetadata.(sizeField);
+    end
+end
+
+function [b] = shouldShowResults(learnerClassString,methodsToShow)
+    b =  isKey(methodsToShow,learnerClassString) && ...
+            methodsToShow(learnerClassString);
+end
+
+function [] = plotRepairResults()
+    repairMethodString = configs.get('repairMethod');
+    transferRepairName = ...
+        TransferRepair.GetDisplayName(repairMethodString,configs);
+    legendName = [transferRepairName ';' legendName];
+    measureClassName = configs.get('measureClass');
+    measureObject = Measure.ConstructObject(measureClassName,configs);
+    results = results{1};
+    numIterations = configs.get('numIterations');
+    numSplits = results.numSplits;
+    if options.showRepairChange
+        error('Update');
+        meanMeasureImprovements = zeros(numSplits,numIterations+1);
+        for split=1:numSplits
+            splitResults = results.splitResults{split}; 
+            repairResults1 = splitResults.repairResults{1};
+            labeledTrainData = find(repairResults1.trainActual > 0 & ...
+                repairResults1.trainType == Constants.TARGET_TRAIN);
+            labeledTrainY = repairResults1.trainActual(labeledTrainData);
+            numLabeledTrain = length(labeledTrainY);
+            splitMeasureScores = zeros(numLabeledTrain,numIterations+1);
+            splitTrainFU = zeros(numLabeledTrain,numIterations+1);
+            splitRepairScores = zeros(numLabeledTrain,numIterations+1);
+            splitIsIncorrect = zeros(numLabeledTrain,numIterations+1);
+            trainIndsToUse = zeros(1,numIterations+1);
+            trainIndsToFocusOn = zeros(numLabeledTrain,numIterations+1);
+            measureScores = zeros(1,numIterations+1);
+            trainFU = zeros(1,numIterations+1);
+            for itr=1:numIterations+1
+                trResults = splitResults.repairResults{itr};
+                measureResults = splitResults.transferMeasureMetadata{itr};
+                repairMetadata = splitResults.repairMetadata{itr};
+
+                splitMeasureScores(:,itr) = Helpers.SelectFromRows(...
+                    measureResults.labeledTargetScores,labeledTrainY);                            
+                splitTrainFU(:,itr) = Helpers.SelectFromRows(...
+                    trResults.trainFU(labeledTrainData,:),labeledTrainY);
+
+
+                if itr > 1
+                    splitRepairScores(:,itr) = Helpers.SelectFromRows(... 
+                        repairMetadata.targetScores,labeledTrainY);                            
+                    splitIsIncorrect(:,itr) = repairMetadata.isIncorrect;
+                    trainIndsToFocusOn(:,itr) = repairMetadata.labeledTargetIndsToFocusOn;
+                    trainIndsToUse(itr) = repairMetadata.trainIndsToUse;
+                end
+            end
+            for itr=2:length(trainIndsToUse)
+                ind = find(trainIndsToFocusOn(:,itr));
+                measureScores(itr,:) = splitMeasureScores(ind,:);
+                meanMeasureImprovements(split,itr) = ...
+                    measureScores(itr,itr)-measureScores(itr,itr-1);
+            end
+        end
+        measureIncreaseResults = ResultsVector(meanMeasureImprovements);
+        mMIR = measureIncreaseResults.getMean();
+        vMIR = measureIncreaseResults.getConfidenceInterval();
+        errorbar(0:numIterations,mMIR,vMIR,'color',colors(index,:));
+        leg{index} = [legendName ':' 'Measure Increase'];
+        index = index + 1;
+    else
+        postTransferVals = zeros(numIterations,numSplits);
+        repairedAcc = zeros(numIterations,numSplits);
+        for itr=1:numIterations+1
+            for split=1:numSplits
+                splitResults = results.splitResults{split};
+                postTransferVals(itr,split) = ...
+                    splitResults.postTransferMeasureVal{itr};
+                repairResults = splitResults.repairResults{itr};
+                measureResults = measureObject.evaluate(repairResults);
+                repairedAcc(itr,split) = ...
+                    measureResults.testPerformance;                            
+            end
+        end
+        PTResults = ResultsVector(postTransferVals');
+        accResults = ResultsVector(repairedAcc');
+        mPT = PTResults.getMean();
+        vPT = PTResults.getConfidenceInterval();
+        errorbar(0:numIterations,mPT,vPT,'color',colors(index,:));
+        leg{index} = [legendName ':' 'Transfer Measure'];
+        index = index+1;
+
+        mAcc = accResults.getMean();
+        mAcc
+        vAcc = accResults.getConfidenceInterval();
+        errorbar(0:numIterations,mAcc,vAcc,'color',colors(index,:));
+        leg{index} = [legendName ':' 'Repaired Acc'];
+        index = index+1;
     end
 end
