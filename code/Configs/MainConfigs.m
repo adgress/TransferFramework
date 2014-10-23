@@ -64,22 +64,33 @@ classdef MainConfigs < Configs
             };
         end
         
-        function [v] = makeOutputForOutputParams(obj,params)
+        function [v] = stringifyFields(obj,paramArray,delim)
             v = '';
-            if obj.has(params.configName) && ...
-                params.shouldShowFunc(obj.get(params.configName))                
-                if params.shouldShowConfigName
-                    configName = params.displayName;
-                    v = [v configName];
+            for paramIdx=1:length(paramArray)
+                params = paramArray{paramIdx};                
+                if obj.has(params.configName) && ...
+                    ( ~isa(params.shouldShowFunc,'function_handle')...
+                    || params.shouldShowFunc(obj.get(params.configName)))
+                    if ~isequal(v,'')
+                        v = [v delim];
+                    end
+                    if params.shouldShowConfigName
+                        configName = params.displayName;
+                        v = [v configName];
+                        if params.shouldShowValue
+                            v = [v '='];
+                        end
+                    end
                     if params.shouldShowValue
-                        v = [v '='];
+                        value = obj.get(params.configName);
+                        v = [v StringHelpers.ConvertToString(value)];
                     end
                 end
-                if params.shouldShowValue
-                    value = obj.get(params.configName);
-                    v = [v Helpers.ConvertToString(value)];
-                end
             end
+        end
+        
+        function [legendName] = makeLegendName(obj)
+            
         end
     end   
     

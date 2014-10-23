@@ -80,6 +80,7 @@ classdef HFMethod < Method
                     savedData = [];
                 end
             end
+            assert(isempty(find(isnan(fu))));
         end
         
         function [testResults,savedData] = ...

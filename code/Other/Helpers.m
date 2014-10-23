@@ -126,13 +126,6 @@ classdef Helpers < handle
             end
         end
         
-        function [split] = split_string(string,delim)
-            split = {};
-            while numel(string) > 0
-                [split{end+1}, string] = strtok(string,delim);
-            end
-        end       
-        
         function [sCombined] = CombineStructs(s1,s2)
             sCombined = struct();
             structs = {s1, s2};
@@ -354,21 +347,38 @@ classdef Helpers < handle
             W = W./(-2*sigma);
             W = exp(W);
         end
-        
-        function [s] = ConvertToString(v)
-            if isa(v,'char')
-                s = v;
-            end
-            if ~exist('s','var')
-                try
-                    s = num2str(v);
-                catch unused
+        function [b] = cellArrayHasValue(c,value)
+            b = false;
+            for cellIdx=1:length(c)
+                if isequal(c{cellIdx},value)
+                    b = true;
+                    break;
                 end
             end
-            if ~exist('s','var')
-                s = v.getResultFileName('-',false);
+        end
+        function [b] = structMatchesQuery(s,queries)
+            b = true;
+            for queryIdx=1:length(queries)
+                query = queries{queryIdx};
+                if ~Helpers.cellArrayHasValue(query.values,s.(query.field))
+                    b = false;
+                    break;
+                end
             end
-            assert(logical(exist('s','var')));
+        end
+        function [m] = MakeQuery(fieldName, values)
+            m = struct();
+            m.field = fieldName;
+            m.values = values;
+        end
+        
+        function [] = AssertInvalidPercent(x,perc)
+            isInvalid = isnan(x(:)) | isinf(x(:));
+            percInvalid = mean(isInvalid);
+            if percInvalid > perc
+                display(['Perc Invalid:' num2str(percInvalid)]);
+                assert(false);                
+            end
         end
     end
     

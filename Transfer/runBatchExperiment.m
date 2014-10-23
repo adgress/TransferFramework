@@ -7,7 +7,7 @@ function [] = runBatchExperiment(multithread, dataset)
     end    
     
     transferMethodClassStrings = {'FuseTransfer','Transfer'};
-    %transferMethodClassStrings = {'Transfer'};
+    %transferMethodClassStrings = {'FuseTransfer'};
     for i=1:numel(transferMethodClassStrings)
         transferMethodClass = str2func(transferMethodClassStrings{i});
         batchConfigsObj.set('transferMethodClass', transferMethodClass());

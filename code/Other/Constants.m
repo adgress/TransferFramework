@@ -5,6 +5,7 @@ classdef Constants < handle
     properties (Constant)
         RELATIVE_PERFORMANCE = 1
         CORRELATION = 2
+        DIFF_PERFORMANCE = 3
         
         CV_DATA = 1
         NG_DATA = 2

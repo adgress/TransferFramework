@@ -17,6 +17,7 @@ classdef CTTransferMeasure < TransferMeasure
                 distMat,useMeanSigma,useHF);
             rbfKernel = Helpers.distance2RBF(distMat.W,sigma);
             [fu,~] = GraphHelpers.RunLLGC(rbfKernel,distMat.Y);            
+            Helpers.AssertInvalidPercent(fu,.1);
         end
         
         function [measureResults] = computeMeasure(obj,source,target,...
@@ -37,7 +38,8 @@ classdef CTTransferMeasure < TransferMeasure
             measureResults = GraphMeasureResults();
             measureResults.measureMetadata.fuSourceProp = fuSourceProp;
             measureResults.measureMetadata.fuTargetProp = fuTargetProp;
-            
+            Helpers.AssertInvalidPercent(fuSourceProp,.1);
+            Helpers.AssertInvalidPercent(fuTargetProp,.1);
             measureResults.dataType = distMat.type;
             measureResults.yActual = distMat.Y;
             %measureResults.sources = {source};
@@ -50,7 +52,15 @@ classdef CTTransferMeasure < TransferMeasure
         
         function [nameParams] = getNameParams(obj)
             nameParams = {};
-        end        
+        end    
+        function [displayName] = getDisplayName(obj)
+            displayName = obj.getResultFileName(',',false);
+            if obj.has('measureLoss')
+                measureLoss = obj.get('measureLoss');
+                measureLossName = measureLoss.getDisplayName();
+                displayName = [displayName ';' measureLossName];
+            end
+        end
     end
     
 end

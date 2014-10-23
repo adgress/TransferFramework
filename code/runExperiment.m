@@ -10,7 +10,7 @@ function [] = runExperiment(configs)
     while true
         learner = [];
         if numel(learners) > 0
-            learner = learners{learnerItr};
+            learner = learners;
             experimentLoader.configs.set('learner',learner);
             learnerItr = learnerItr + 1;
         end        

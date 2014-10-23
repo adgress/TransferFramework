@@ -34,25 +34,6 @@ classdef Configs < matlab.mixin.Copyable
                 v = obj.get(key);           
             end
         end
-        %{
-        function value = subsref(obj,s)
-            isKey = strcmp(s(1).type, '()');
-            if isKey && ~strcmp(s(1).subs,'configsStruct')
-                value = obj.configsStruct.(s(1).subs);                
-            else
-                value = builtin('subsref', obj, s);     
-            end
-        end
-        function obj = subsasgn(obj, s, value)
-            isKey = strcmp(s(1).type, '()');
-            if isKey && ~strcmp(s(1).subs,'configsStruct')
-                obj.configsStruct.(s(1).subs) = value;
-                %builtin('subsasgn', obj.configs, s, value);
-            else
-                builtin('subsasgn', obj, s, value);
-            end
-        end
-        %}
         function [v] = get(obj,key)
             v = obj.configsStruct.(key);
         end
@@ -71,6 +52,13 @@ classdef Configs < matlab.mixin.Copyable
         function [] = delete(obj,key)
             obj.configsStruct = rmfield(obj.configsStruct,key);
         end
+        
+        function [b] = hasNonempty(obj,key)
+            b = obj.has(key) && ~isempty(obj.get(key));
+        end
+        function [b] = hasMoreThanOne(obj,key)
+            b = obj.has(key) && length(obj.get(key)) > 1;
+        end               
     end
     
     methods(Access = protected)

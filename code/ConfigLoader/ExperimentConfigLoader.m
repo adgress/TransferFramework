@@ -264,37 +264,23 @@ classdef ExperimentConfigLoader < ConfigLoader
             if obj.configs.hasConfig('numLabeledPerClass')
                 keys = {'numLabeledPerClass'};
             end
+            if obj.configs.has('numSourcePerClass')
+                keys{end+1} = 'numSourcePerClass';
+            end
             obj.allExperiments = ConfigLoader.StaticCreateAllExperiments(paramKeys,...
                 keys,obj.configs);
         end
         function [outputFileName] = getOutputFileName(obj)
-            outputDir = obj.configs.resultsDirectory;            
+            outputDir = obj.configs.resultsDirectory;
             warning off;
             outputDirParams = obj.configs.getOutputDirectoryParams();
-            for outputParamsIdx=1:length(outputDirParams)
-                params = outputDirParams{outputParamsIdx};
-                configStr = obj.configs.makeOutputForOutputParams(params);
-                if ~isequal(configStr,'')
-                    outputDir = [outputDir configStr '/'];
-                    mkdir(outputDir);
-                end
-            end
+            outputDir = [outputDir obj.configs.stringifyFields(outputDirParams, '/') '/'];
             warning on;
             
-            outputFileParams = obj.configs.getOutputFileNameParams();
-            outputFile = '';
-            
-            for outputFileParamsIdx=1:length(outputFileParams)
-                params = outputFileParams{outputFileParamsIdx};
-                configStr = obj.configs.makeOutputForOutputParams(params);
-                if ~isequal(configStr,'')
-                    if ~isequal(outputFile,'')
-                        outputFile = [outputFile '_'];
-                    end
-                    outputFile = [outputFile configStr];
-                end
-            end
+            outputFileParams = obj.configs.getOutputFileNameParams();            
+            outputFile = obj.configs.stringifyFields(outputFileParams, '_');            
             outputFileName = [outputDir outputFile '.mat'];
+            Helpers.MakeDirectoryForFile(outputFileName);
         end
         function [outputFileName] = appendToName(obj,fileName,s,prependHyphen)
             if prependHyphen

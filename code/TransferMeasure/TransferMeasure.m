@@ -81,7 +81,7 @@ classdef TransferMeasure < Saveable
                     val = percCorrect;                
                 end  
                 obj.displayMeasure(val);
-            end            
+            end                        
             measureResults = GraphMeasureResults();            
             measureResults.score = score;
             measureResults.percCorrect = percCorrect;
@@ -95,6 +95,8 @@ classdef TransferMeasure < Saveable
             measureResults.sources = {source};
             measureResults.sampledTrain = target.getTargetTrainData();
             measureResults.test = target.getTargetTestData();            
+            
+            assert(isempty(find(isnan(measureResults.Ypred))));
         end         
         
         function [d] = getDirectory(obj)

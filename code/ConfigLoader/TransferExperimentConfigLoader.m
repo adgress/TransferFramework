@@ -18,9 +18,14 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             [numTrain,numPerClass] = obj.calculateSampling(experiment,test);
             
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
-            sources = obj.dataAndSplits.sourceDataSets;
-            for i=1:length(sources)
+            sources = {};            
+            for i=1:length(obj.dataAndSplits.sourceDataSets)
+                sources{i} = obj.dataAndSplits.sourceDataSets{i}.copy();                
                 sources{i}.setSource;
+                if isfield(experiment,'numSourcePerClass')
+                    numSource = sources{i}.numClasses*experiment.numSourcePerClass;
+                    sources{i} = sources{i}.stratifiedSample(numSource);
+                end
             end
             sampledTrain.setTargetTrain();
             train.setTargetTrain();

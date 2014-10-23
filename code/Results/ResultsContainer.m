@@ -39,12 +39,15 @@ classdef ResultsContainer < handle
             [~] = mkdir(fileparts(filename));
             save(filename,'results');
         end
-        function [results] = getResultsForMethod(obj,learnerClass)
+        function [results] = getResultsForMethod(obj,learnerClass,resultsQuery)
             results = {};
             for i=1:numel(obj.allResults)
-                learner = obj.allResults{i}.experiment.learner;
-                if isequal(learnerClass,class(learner)) || ...
-                        (isempty(learnerClass) && isempty(learner)) 
+                experiment = obj.allResults{i}.experiment;
+                learner = experiment.learner;
+                shouldAdd = isequal(learnerClass,class(learner)) || ...
+                        (isempty(learnerClass) && isempty(learner));
+                shouldAdd = shouldAdd && Helpers.structMatchesQuery(experiment, resultsQuery);
+                if shouldAdd
                     results{end+1} = obj.allResults{i};
                 end
             end                        

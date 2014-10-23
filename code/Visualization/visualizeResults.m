@@ -3,259 +3,196 @@ function [f, returnStruct] = visualizeResults(options,f)
         f = figure;
     end
     hold on;
-    leg = {};
-    baselineFiles = {};    
-    files = [options.baselineFiles options.fileNames];    
+    leg = {};  
     numColors = options.numColors;
     colors = colormap(hsv(numColors));
-    if options.showRelativePerformance
-        numBaselineFiles = numel(options.baselineFiles);
-        assert(numBaselineFiles > 0);
-        baselineFiles = files(1:numBaselineFiles);
-        files = files(numBaselineFiles+1:end);
-    end
 
-    index = 1;    
-    measureVals = {};
-    transferPerfVals = [];
-    for i=1:numel(files)
-        fileName = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' files{i}];        
+    legendNameParams = {...
+        MainConfigs.OutputNameStruct('learners','',[],true,false),...
+        MainConfigs.OutputNameStruct('drMethod','',[],true,false),...
+        MainConfigs.OutputNameStruct('transferMethodClass','',[],true,false)...
+    };
+    index = 1;   
+    displayVals = {};
+    for i=1:numel(options.plotConfigs)
+        plotConfigs = options.plotConfigs{i};
+        fileName = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' plotConfigs.get('resultFileName')];
+        baselineFile = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' plotConfigs.get('baselineFile')];
         if ~exist(fileName,'file')
             continue
         end
         allResults = load(fileName);
         allResults = allResults.results;
-                
-        allResults.aggregateMeasureResults(options.measureLoss);
-        configs = allResults.mainConfigs;
-        learners = configs.get('learners');
         
-        %TODO: Find better way to do this loop
-        learnerIdx = 1;
-        while(true)
-            %TODO: Find better way to do this loop
-            if numel(learners) < learnerIdx && learnerIdx > 1
-                break;
-            end
-            hasPreTM = configs.has('preTransferMeasures') && ...
-                ~isempty(configs.get('preTransferMeasures'));
-            hasPostTM = configs.has('postTransferMeasures') && ...
-                ~isempty(configs.get('postTransferMeasures'));
-            hasTransferMethod = configs.has('transferMethodClass');            
-            hasDR = isKey(configs,'drMethod');
-            
-            isMeasureFile = hasPostTM || hasPreTM;
-            learnerClassString = '';
-            if numel(learners) > 0
-                learnerClassString = class(learners{learnerIdx});
-            end            
-            learnerIdx = learnerIdx + 1;
-            if ~isMeasureFile && ...
-                ~shouldShowResults(learnerClassString,options.methodsToShow)
-                continue;
-            end            
-            [results] = allResults.getResultsForMethod(learnerClassString);
-            if ~isMeasureFile && isempty(results)
-                continue;
-            end
-            
-            hasTestResults = numel(results) > 0 && ...
-                numel(results{1}.aggregatedResults.testResults) > 0;
-            
-            legendName = '';
-            if ~isempty(learnerClassString)
-                legendName = Method.GetDisplayName(learnerClassString,configs);
-            end
-            if hasDR
-                drName = DRMethod.GetDisplayName(configs.get('drMethod'),configs);
-                legendName = [drName '-' legendName];                
-            end
-            if hasTransferMethod
-                transferName = ...
-                    Transfer.GetDisplayName(configs.get('transferMethodClass'),...
-                    allResults.mainConfigs);
-                legendName = [legendName ';' transferName];
-            end  
-            if hasPostTM
-                measures = configs.get('postTransferMeasures');
-                dispName = TransferMeasure.GetDisplayName(measures,configs);
-                leg{index} = [legendName ';' dispName];
-            end
-            if isfield(options,'showRepair') && options.showRepair
-                plotRepairResults();                
+        measureLoss = plotConfigs.get('measureLoss');
+        allResults.aggregateMeasureResults(plotConfigs.get('measureLoss'));
+        configs = allResults.mainConfigs;
+        hasPreTM = configs.hasNonempty('preTransferMeasures');
+        hasPostTM = configs.hasNonempty('postTransferMeasures');
+        if hasPreTM
+            configs.get('preTransferMeasures').set('measureLoss',measureLoss);
+        end
+        if hasPostTM
+            configs.get('postTransferMeasures').set('measureLoss',measureLoss);
+        end
+        isMeasureFile = hasPostTM || hasPreTM;
+        learners = configs.get('learners');
+        learnerClassString = '';
+        if numel(learners) > 0
+            learnerClassString = class(learners);
+        end                    
+        [results] = allResults.getResultsForMethod(learnerClassString,options.resultQueries);
+        if ~isMeasureFile && isempty(results)
+            continue;
+        end
+
+        hasTestResults = numel(results) > 0 && ...
+            numel(results{1}.aggregatedResults.testResults) > 0;        
+        legendName = configs.stringifyFields(legendNameParams,'-');
+        
+        if isfield(options,'showRepair') && options.showRepair
+            plotRepairResults();                
+        else
+            sizes = getSizes(results,options.xAxisField);                          
+            if configs.hasMoreThanOne('numVecs')
+                error('TODO');
+                numVecs = configs.get('numVecs');
+                displayVals{end+1} = plotResults(results,numVecs,colors(index,:));
+            elseif configs.hasMoreThanOne('tau')
+                error('TODO');
+                tau = configs.get('tau');
+                displayVals{end+1} = plotResults(results,tau,colors(index,:));
             else
-                if isKey(configs,'numLabeledPerClass')
-                    numTrain = length(configs.get('numLabeledPerClass'));
+                numTrain = length(sizes);  
+                if options.showRelativePerformance && hasTestResults
+                    displayVals{end+1} = plotRelativePerformance(options,...
+                        baselineFile,results,sizes,colors(index,:));
+                    legendName = ['Relative Acc: ' legendName];
+                    leg{index} = legendName;
+                    index = index + 1;
                 else
-                    sizes = getSizes(results,options.xAxisField);
-                    numTrain = length(sizes);
-                end
-                if numTrain > 1
-                    sizes = getSizes(results,options.xAxisField);
-                    if options.showRelativePerformance && hasTestResults
-                        plotRelativePerformance(options,...
-                            baselineFiles,results,sizes,configs,colors,index,legendName,leg);
-                        legendName = ['Relative Acc: ' learnerName];
-                        leg{index} = legendName;
-                        index = index + 1;
-                    else
-                        if hasTestResults
-                            [index,leg] = plotTestResults(options,results,sizes,colors,...
-                                index,legendName,leg);
+                    if hasTestResults
+                        if options.showTest
+                            displayVals{end+1} = plotResults(results,sizes,'testResults',colors(index,:));
+                            legName = legendName;
+                            if options.showTrain
+                                legName = [legName ', Test'];
+                            end
+                            leg{index} = legName;
+                            index = index+1;
                         end
-                        if hasPostTM || hasPreTM
-                            [index,leg] = plotMeasures(options,results,sizes,configs,...
-                                hasPostTM,hasPreTM,colors,index,legendName,leg);
+                        if options.showTrain
+                            displayVals{end+1} = plotResults(results,sizes,'trainResults',colors(index,:));
+                            leg{index} = [legendName ', Train'];
+                            index = index+1;
                         end
                     end
-                elseif configs.has('numVecs') && length(configs.get('numVecs')) > 1
-                    numVecs = configs.get('numVecs');
-                    [index,leg] = plotTestResults(options,results,numVecs,colors,...
-                                index,legendName,leg);
-                elseif configs.has('tau') && length(configs.get('tau')) > 1
-                    tau = configs.get('tau');
-                    [index,leg] = plotTestResults(options,results,tau,colors,...
-                                index,legendName,leg);
-                else
-                    error('What should we visualize?');
+                    if hasPostTM && hasPreTM && options.showRelativeMeasures
+                        [index,leg,displayVals{end+1}] = plotRelativeMeasures(options,results,sizes,configs,...
+                            hasPostTM,hasPreTM,colors,index,legendName,leg);
+                    else
+                        if hasPostTM && options.showPostTransferMeasures
+                            measureObj = configs.get('postTransferMeasures');                            
+                            displayVals{end+1} = plotResults(results,sizes,'PostTMResults',colors(index,:));
+                            dispName = measureObj.getDisplayName();
+                            leg{index} = ['PostTM:' legendName ':' dispName];
+                            index = index + 1;
+                        end
+                        if hasPreTM && options.showPreTransferMeasures
+                            measureObj = configs.get('preTransferMeasures');
+                            displayVals{end+1} = plotResults(results,sizes,'PreTMResults',colors(index,:));
+                            dispName = measureObj.getDisplayName();
+                            leg{index} = ['PreTM:' legendName ':' dispName];
+                            index = index + 1;
+                        end
+                    end
                 end
             end
-            if ~hasTestResults
-                %display('visualizeResults.m: Hack for measure results - fix later');
-                break;
-            end            
-        end
+        end        
     end       
-    if options.showLegend && ~isempty(leg)
+    if options.showLegend && ~isempty(leg) && ~options.showTables
         legend(leg);
     end
-    axisToUse = options.axisToUse;    
-    if isfield(options,'showRepair') && options.showRepair        
-        xAxisLabel = options.xAxisDisplay;     
-    elseif exist('results','var')      
-        numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
-        numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
-        xAxisLabel = [options.xAxisDisplay ' ('];
-        if isfield(results{1}.splitResults{1}.trainingDataMetadata,'numSourceLabels')
-            numSourceLabels = ...
-                results{1}.splitResults{1}.trainingDataMetadata.numSourceLabels;
-            xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
+    if options.showTables
+        tableData = makeResultsTableData(displayVals);
+        if isfield(options,'tableColumns') && length(options.tableColumns) > 0
+            assert(length(options.tableColumns) == length(leg));
+            leg = options.tableColumns;
         end
-        xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
+        set(options.table,'Data',tableData,'ColumnName',leg,'RowName',options.dataSet);
     else
-        xAxisLabel = '';
-    end
-    axis(axisToUse);
-    xlabel(xAxisLabel,'FontSize',8);
+        axisToUse = options.axisToUse;    
+        a = axis;
+        a(3:4) = axisToUse(3:4);
+        axis(a);
+        if isfield(options,'showRepair') && options.showRepair        
+            xAxisLabel = options.xAxisDisplay;     
+        elseif exist('results','var')      
+            numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
+            numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
+            xAxisLabel = [options.xAxisDisplay ' ('];
+            if isfield(results{1}.splitResults{1}.trainingDataMetadata,'numSourceLabels')
+                numSourceLabels = ...
+                    results{1}.splitResults{1}.trainingDataMetadata.numSourceLabels;
+                xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
+            end
+            xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
+        else
+            xAxisLabel = '';
+        end    
+        xlabel(xAxisLabel,'FontSize',8);
         ylabel(options.yAxisDisplay,'FontSize',8);
+    end
     hold off;    
     returnStruct = struct();
     returnStruct.numItemsInLegend = length(leg);
 end
 
-function [index,leg] = plotMeasures(options,results,sizes,configs,...
+function [c] = makeResultsTableData(resultStructs)
+    c = {};
+    precision = 2;
+    for idx=1:length(resultStructs)
+        r = resultStructs{idx};
+        c{idx} = [num2str(r.means,precision) '+/-' num2str(r.vars,precision)];
+    end
+end
+
+function [s] = makeResultsStruct(means,vars)
+    s = struct();
+    s.means = means;
+    s.vars = vars;
+end
+
+function [index,leg,displayVal] = plotRelativeMeasures(results,sizes,configs,...
     hasPostTM,hasPreTM,colors,index,learnerName,leg)
-    if hasPostTM && hasPreTM && options.showRelativeMeasures
-        if ~options.usePerLabel
-            field2 = 'PostTMResults';
-            field1 = 'PreTMResults';
-        else
-            field2 = 'postTransferPerLabelMeasures';
-            field1 = 'preTransferPerLabelMeasures';
-        end
-        [means,vars,lows,ups] = getRelativePerf(results,...
-            field1,field2,options);
-        means(isnan(means)) = 0;
-        means(isinf(means)) = 2;
-        vars(isnan(vars)) = 0;
-        if options.usePerLabel
-            if options.labelToShow > 0
-                means = means(:,options.labelToShow);
-                vars = vars(:,options.labelToShow);
-            else
-                means = mean(means,2);
-                vars = mean(vars,2);
-            end
-        end
-        errorbar(sizes,means,vars,'color',colors(index,:));
-        measures = configs.get('postTransferMeasures');
-        dispName = TransferMeasure.GetDisplayName(measures{1},configs);
-        leg{index} = ['Relative Measure: ' dispName];
-        index = index + 1;
-    else
-        if options.showPostTransferMeasures && hasPostTM  
-            displayName = 'PostTM';
-            plotMeasureResults(options,configs,results,sizes,...
-                'postTransferMeasures','PostTMResults',displayName,...
-                learnerName,leg,index,colors);
-            measureObj = configs.get('postTransferMeasures');    
-            dispName = measureObj.getDisplayName();
-            leg{index} = [displayName ':' learnerName ':' dispName];
-            index = index + 1;
-        end
-        if options.showPreTransferMeasures && hasPreTM
-            displayName = 'PreTM';
-            plotMeasureResults(options,configs,results,sizes,...
-                'preTransferMeasures','PreTMResults',displayName,...
-                learnerName,leg,index,colors);
-            measureObj = configs.get('preTransferMeasures');    
-            dispName = measureObj.getDisplayName();
-            leg{index} = [displayName ':' learnerName ':' dispName];
-            index = index + 1;
-        end
-    end
+    assert(hasPostTM && hasPreTM && options.showRelativeMeasures);
+    field2 = 'PostTMResults';
+    field1 = 'PreTMResults';
+    [means,vars,lows,ups] = getRelativePerf(results,...
+        field1,field2,options);
+    means(isnan(means)) = 0;
+    means(isinf(means)) = 2;
+    vars(isnan(vars)) = 0;
+    means = mean(means,2);
+    vars = mean(vars,2);
+    errorbar(sizes,means,vars,'color',colors(index,:));
+    measures = configs.get('postTransferMeasures');
+    dispName = TransferMeasure.GetDisplayName(measures{1},configs);
+    leg{index} = ['Relative Measure: ' dispName];
+    index = index + 1;
+    displayVal = makeResultsStruct(means,vars);
 end
 
-function [index,leg] = plotTestResults(options,results,sizes,colors,index,learnerName,leg)
-    resultsToUse = results;
-    if isfield(options,'measure')
-        measureObj = Measure.ConstructObject(options.measure,options.measureConfigs);
-        for i=1:length(resultsToUse)
-            r = resultsToUse{i};
-            for j=1:length(r.splitResults)
-                r.splitMeasures{j} = measureObj.evaluate(r.splitResults{j});
-            end
-            m = r.aggregatedResults.trainingDataMetadata;
-            r.aggregatedResults = measureObj.aggregateResults(r.splitMeasures);
-            r.aggregatedResults.trainingDataMetadata = m;
-            resultsToUse{i} = r;
-        end
+function [displayVal] = plotResults(results,sizes,field,colors)        
+    vars = getVariances(results,field);
+    means = getMeans(results,field);
+    if length(sizes) > 1
+        errorbar(sizes,means,vars,'color',colors);    
     end
-    if isfield(options,'usePerLabel') && options.usePerLabel
-        vars = getVariances(resultsToUse,'testLabelMeasures');
-        means = getMeans(resultsToUse,'testLabelMeasures');
-        if options.labelToShow > 0
-            means = means(:,options.labelToShow);
-            vars = vars(:,options.labelToShow);
-        else
-            means = mean(means,2);
-            vars = mean(vars,2);
-        end
-    else
-        vars = getVariances(resultsToUse,'testResults');
-        means = getMeans(resultsToUse,'testResults');
-    end
-    if options.showTest
-        errorbar(sizes,means,vars,'color',colors(index,:));
-        legName = learnerName;
-        if options.showTrain
-            legName = [learnerName ', Test'];
-        end
-        leg{index} = legName;
-        index = index+1;
-    end
-    if options.showTrain
-        vars = getVariances(resultsToUse,'trainResults');
-        means = getMeans(resultsToUse,'trainResults');
-        errorbar(sizes,means,vars,'color',colors(index,:));
-        leg{index} = [learnerName ', Train'];
-        index = index+1;
-    end
+    displayVal = makeResultsStruct(means,vars);
 end
 
-function [] = plotRelativePerformance(options,baselineFiles,results,sizes,configs,colors,index,learnerName,leg)
-    d = getProjectDir();
-    baselineFile = [d '/results/' options.prefix '/' options.dataSet '/' baselineFiles{1}];
+function [displayVal] = plotRelativePerformance(options,baselineFile,results,sizes,color)
     baselineResults = load(baselineFile);
     baselineResults = baselineResults.results.allResults;
     for i=1:numel(results)
@@ -265,15 +202,10 @@ function [] = plotRelativePerformance(options,baselineFiles,results,sizes,config
             baselineResults{i}.aggregatedResults.testLabelMeasures;
         
     end
-    if ~options.usePerLabel
-        field2 = 'testResults';
-        field1 = 'baseline';
-    else
-        field2 = 'testLabelMeasures';
-        field1 = 'baselinePerLabel';
-    end
+    field2 = 'testResults';
+	field1 = 'baseline';
     
-    [means,vars,l,u] = getRelativePerf(results,field1,...
+    [means,vars,l,h] = getRelativePerf(results,field1,...
         field2,options);
     means(isnan(means)) = 0;
     means(isinf(means)) = 2;
@@ -282,40 +214,21 @@ function [] = plotRelativePerformance(options,baselineFiles,results,sizes,config
         if sum(isinf(means)) > 0
             display('NaN');
         end
-        if options.usePerLabel
-            if options.labelToShow > 0
-                means = means(:,options.labelToShow);
-                vars = vars(:,options.labelToShow);
-            else
-                means = mean(means,2);
-                vars = mean(vars,2);
-            end
+        if length(sizes) > 1
+            errorbar(sizes,means,vars,'color',color);
         end
-        errorbar(sizes,means,vars,'color',colors(index,:));
+        displayVal = makeResultsStruct(means,vars);
     else
-        errorbar(sizes,means,l,u,'color',colors(index,:));
-    end
-    %dispName = TransferMeasure.GetDisplayName(measures{k},configs);
-    %leg{index} = ['Relative Acc: ' learnerName];
-    %index = index+1;
+        if length(sizes) > 1
+            errorbar(sizes,means,l,h,'color',color);
+        end
+        displayVal = makeResultsStruct(means,[]);
+        displayVal.lows = lows;
+        displayVal.highs = h;
+    end    
 end
 
-function [] = plotMeasureResults(options,configs,results,sizes,field,...
-    resultField,displayName,learnerName,leg,index,colors)
-    measureObj = configs.get(field);
-    if ~isKey(options.measuresToShow,class(measureObj))
-        return;
-    end
-    %dispName = measureObj.getDisplayName();
-    yVals = getMeans(results,resultField);
-    yValsBars = getVariances(results,resultField);
-    xVals = sizes;
-    errorbar(xVals,yVals,yValsBars,'color',colors(index,:));
-    %leg{index} = [displayName ':' learnerName ':' dispName];
-    %index = index+1;
-end
-
-function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,options)
+function [means,vars,lows,highs] = getRelativePerf(results,field1,field2,options)
     t = results{1}.aggregatedResults.(field1);
     if iscell(t)
         t = cell2mat(t);
@@ -323,12 +236,13 @@ function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,options)
     numMeasureFields = size(t,2);
     means = zeros(numel(results),numMeasureFields);
     vars = [];
-    ups = [];
+    highs = [];
     lows = [];
-    if options.relativeType == Constants.RELATIVE_PERFORMANCE
+    if options.relativeType == Constants.RELATIVE_PERFORMANCE || ...
+            options.relativeType == Constants.DIFF_PERFORMANCE
         vars = means;
     else
-        ups = means;
+        highs = means;
         lows = means;
     end
     for i=1:numel(results);        
@@ -343,33 +257,24 @@ function [means,vars,lows,ups] = getRelativePerf(results,field1,field2,options)
         if size(x,1) ~= size(y,1)            
             y = y';
         end
-        if options.relativeType == Constants.RELATIVE_PERFORMANCE
-            relativePerf = ...
-                ResultsVector.GetRelativePerformance(x,y);
+        if options.relativeType == Constants.RELATIVE_PERFORMANCE || ...
+                options.relativeType == Constants.DIFF_PERFORMANCE
+            if options.relativeType == Constants.DIFF_PERFORMANCE                
+                relativePerf = ResultsVector(y - x);                
+            else
+                relativePerf = ...
+                    ResultsVector.GetRelativePerformance(x,y);
+            end
             means(i,:) = relativePerf.getMean();
             vars(i,:) = relativePerf.getConfidenceInterval();        
         elseif options.relativeType == Constants.CORRELATION
-            [means(i),ups(i),lows(i)] = ResultsVector.GetCorrelation(x,y);
+            [means(i),highs(i),lows(i)] = ResultsVector.GetCorrelation(x,y);
         else
             error('Unknown Relative Type');
         end
     end
 end
 
-function [vals] = getMeasurePerformanceForSize(results,numLabelsToUse,sizes)
-    vals = zeros(1,1);
-    resultIndex = find(sizes == numLabelsToUse);
-    assert(length(resultIndex) == 1);
-    r = results{resultIndex};
-    if ~isempty(r.splitResults{1}.postTransferMeasureVal)
-        for i=1:length(r.splitResults)
-            vals(i) = r.splitResults{i}.postTransferMeasureVal{1};
-        end
-    else
-        vals = double(r.aggregatedResults.testResults);
-    end
-    vals = vals(:);
-end
 
 function [vars] = getVariances(results,name)
     m = size(results{1}.aggregatedResults.(name),2);
@@ -393,13 +298,8 @@ function [sizes] = getSizes(results,sizeField)
     sizes = zeros(numel(results),1);
     for i=1:numel(results);
         sizes(i) = ...
-            results{i}.splitResults{1}.trainingDataMetadata.(sizeField);
+            results{i}.experiment.(sizeField);
     end
-end
-
-function [b] = shouldShowResults(learnerClassString,methodsToShow)
-    b =  isKey(methodsToShow,learnerClassString) && ...
-            methodsToShow(learnerClassString);
 end
 
 function [] = plotRepairResults()

@@ -9,7 +9,7 @@ classdef GraphHelpers
         
         function [fu] = RunHarmonicFunction(W, Y)
             YLabelMatrix = Helpers.createLabelMatrix(Y);                   
-            [fu, ~] = harmonic_function(W, YLabelMatrix);
+            [fu, ~] = harmonic_function(W, YLabelMatrix);            
         end
         
         function [fu,invM] = RunLLGC(W,Y,invM)
@@ -19,7 +19,7 @@ classdef GraphHelpers
                 [fu,invM] = llgc(W,Ymat,invM);
             else
                 [fu,invM] = llgc(W,Ymat);
-            end
+            end            
             warning on;
         end
         
@@ -113,8 +113,14 @@ classdef GraphHelpers
             for i=1:length(sigmas)
                 S = Helpers.distance2RBF(distMat.W,sigmas(i));
                 rbfDistMat = DistanceMatrix(S,distMat.Y,distMat.type);
-                [scores(i),percCorrect(i)] = ...
+                [scores(i),percCorrect(i),~,~,labeledTargetScores] = ...
                     GraphHelpers.LOOCV(rbfDistMat,useHF);
+                percNan = sum(isnan(labeledTargetScores(:)))/numel(labeledTargetScores);
+                if percNan > .2
+                    scores(i) = -1;
+                    percCorrect(i) = -1;
+                    display(['Perc Nan: ' num2str(percNan)]);
+                end
             end
             [~,bestInd] = max(percCorrect);
             sigma = sigmas(bestInd);

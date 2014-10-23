@@ -8,7 +8,6 @@ function [] = runVisualization(dataset)
     showBaselines = 1;
     showMeasures = 1;
     showRepair = 0;    
-    showDiff = 0;
     
     showRepairChange = 0;
     
@@ -17,49 +16,41 @@ function [] = runVisualization(dataset)
     
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 1;
-    showRelativePerformance = 0;
+    
+    showRelativePerformance = 1;
     showRelativeMeasures = 0;
     
-    numColors = 3;
-    
+    numColors = 3;    
     
     if dataset == Constants.CV_DATA
         axisToUse = [0 5 0 1];
         if showRelativePerformance || showRelativeMeasures
-            axisToUse(end) = 2;
+            axisToUse = [0 5 0 .5];
         end
     else
         axisToUse = [0 20 0 1.2];
-    end
-    
-    usePerLabel = 0;
-    labelToShow = 2;
+    end   
        
     numLabelsToUse = 2;
         
     showCorrelations = 0;
     showTrain = false;
     showTest = true;
-    showLegend = true;
+    showLegend = true;   
     
-    measuresToShow = containers.Map();
-    measuresToShow('NNTransferMeasure') = 0;
-    measuresToShow('LLGCTransferMeasure') = 1;
-    measuresToShow('HFTransferMeasure') = 0;
-    measuresToShow('CTTransferMeasure') = 1;
+    showTables = 0;
+    tableColumns = {'Relative Transfer Acc','Our Measure','Our Measure Just Targets'};
     
-    methodsToShow = containers.Map();
-    methodsToShow('NearestNeighborMethod') = 0;
-    methodsToShow('LLGCMethod') = 1;
-    methodsToShow('HFMethod') = 0;
+    measureLossConfigs = Configs();    
+    measureLossJustTarget = SoftFUMeasureLoss(measureLossConfigs);
+    measureLossJustTarget.set('justTarget',true);
+    measureLossAll = FUMeasureLoss(measureLossConfigs);
+    measureLossAll.set('justTarget',true);
+    fileNames = {};    
     
-    measureLossConfigs = Configs();
-    measureLossConfigs.set('justTarget',true);
-    measureLoss = FUMeasureLoss(measureLossConfigs);
-    
-    %baselineFiles = {'TO-kNN_k=1.mat','TO-LLGC.mat'};
-    baselineFiles = {'TO_LLGC.mat'};
-    fileNames = {};
+    basePlotConfigs = Configs();
+    basePlotConfigs.set('baselineFile','TO_LLGC.mat');
+    basePlotConfigs.set('measureLoss',measureLossAll);
     
     
     if showRepair
@@ -82,19 +73,27 @@ function [] = runVisualization(dataset)
     end    
     
     if showBaselines
-        %fileNames{end+1} = 'S+T-kNN_k=1.mat';
+        if ~showRelativePerformance
+            fileNames{end+1} = 'TO_LLGC.mat';
+        end
         fileNames{end+1} = 'S+T_LLGC.mat';
     end
     if showMeasures
-        %fileNames{end+1} = 'TM/HF_useCMN=0_useSoftLoss=1_S+T.mat';
-        %fileNames{end+1} = 'TM/LLGC-S+T.mat';
-        fileNames{end+1} = 'TM/HF_S+T.mat';
-        fileNames{end+1} = 'TM/NN_S+T.mat';
+        %fileNames{end+1} = 'TM/LLGC_S+T.mat';
+        %fileNames{end+1} = 'TM/NN_S+T.mat';
         fileNames{end+1} = 'TM/CT_S+T.mat';
     end
-    if showDiff
-        fileNames = {{'TO_LLGC.mat','S+T_LLGC.mat'}}
+    
+    plotConfigs = {};
+    for fileIdx=1:length(fileNames)
+        configs = basePlotConfigs.copy();
+        configs.set('resultFileName',fileNames{fileIdx});
+        plotConfigs{fileIdx} = configs;
     end
+    configs = basePlotConfigs.copy();
+    configs.set('measureLoss',measureLossJustTarget);
+    configs.set('resultFileName','TM/CT_S+T.mat');
+    plotConfigs{end+1} = configs;
     if dataset == Constants.CV_DATA
         sourceData = {'A','C','D','W'};
         targetData = {'A','C','D','W'};
@@ -113,7 +112,7 @@ function [] = runVisualization(dataset)
             
             options = struct();
             options.prefix = prefix;
-            options.fileNames = fileNames;
+            options.plotConfigs = plotConfigs;
             options.showLegend = showLegend;
             options.showTrain = showTrain;
             options.showTest = showTest;
@@ -121,24 +120,24 @@ function [] = runVisualization(dataset)
             options.showPostTransferMeasures = showPostTransferMeasures;
             options.showRelativePerformance = showRelativePerformance;
             options.showPreTransferMeasures = showPreTransferMeasures;
-            options.measuresToShow = measuresToShow;
-            options.methodsToShow = methodsToShow;
             options.showRelativeMeasures = showRelativeMeasures;
             options.relativeType = Constants.RELATIVE_PERFORMANCE;
             options.subPlotField = 'C';
+            
             options.xAxisField = 'targetLabelsPerClass';
             options.xAxisDisplay = 'Target Labels Per Class';
+            %{
+            options.xAxisField = 'numSourcePerClass';
+            options.xAxisDisplay = 'Num Source Instances';
+            axisToUse = [0 20 -.1 .5];
+            %}
             options.yAxisDisplay = 'Accuracy';
-            options.baselineFiles = baselineFiles;
             options.axisToUse = axisToUse;
-            options.usePerLabel = usePerLabel;
-            options.labelToShow = labelToShow;
             options.numLabelsToUse = numLabelsToUse;
             options.showRepair = showRepair;
             options.numColors = numColors;
-            options.showRepairChange = showRepairChange;
-            options.measureLoss = measureLoss;
-            options.showDiff = showDiff;
+            options.resultQueries = {};
+            options.showRepairChange = showRepairChange;            
             if options.showRepair
                 options.yAxisDisplay = 'Measure/Accuracy';
                 options.xAxisDisplay = 'Num Repair Iterations';
@@ -147,14 +146,25 @@ function [] = runVisualization(dataset)
                     options.relativeType = Constants.CORRELATION;
                     options.yAxisDisplay = 'Measure-Accuracy Correlation';
                 else
+                    options.relativeType = Constants.DIFF_PERFORMANCE;
+                    options.yAxisDisplay = 'Measure/Accuracy Difference';
+                    %{
                     options.relativeType = Constants.RELATIVE_PERFORMANCE;
                     options.yAxisDisplay = 'Measure/Accuracy';
+                    %}                    
                 end
             end
-            
-            subplotIndex = (sourceIdx-1)*numel(sourceData) + targetIdx;
-            subplot(numel(sourceData),numel(targetData),subplotIndex);
-            title(['Target=' targetData{targetIdx} ',Source=' sourceData{sourceIdx}]);
+            options.showTables = showTables;            
+            if options.showTables
+                options.tableColumns = tableColumns;
+                options.table = uitable('RowName',[],'units','normalized',...
+                    'pos',[(sourceIdx-1)/4 (4-targetIdx)/4 .25 .25]);
+                options.resultQueries = {Helpers.MakeQuery('numLabeledPerClass',{2})};
+            else
+                subplotIndex = (sourceIdx-1)*numel(sourceData) + targetIdx;
+                subplot(numel(sourceData),numel(targetData),subplotIndex);
+                title(['Target=' targetData{targetIdx} ',Source=' sourceData{sourceIdx}]);
+            end
             [~,returnStruct] = visualizeResults(options,f);
             if returnStruct.numItemsInLegend > 0
                 showLegend = false;

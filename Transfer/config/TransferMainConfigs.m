@@ -19,9 +19,11 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.dataSet='A2C';
             
             obj.configsStruct.multithread=1;
-            obj.configsStruct.numLabeledPerClass=[2 3 4 5];
+            %obj.configsStruct.numLabeledPerClass=[2 3 4 5];
             %obj.configsStruct.numLabeledPerClass=2:3;
-            obj.configsStruct.rerunExperiments=1;
+            obj.configsStruct.numLabeledPerClass=3;
+            obj.configsStruct.numSourcePerClass=15;
+            obj.configsStruct.rerunExperiments=0;
             
             obj.configsStruct.computeLossFunction=1;
             obj.configsStruct.processMeasureResults=0;
@@ -52,15 +54,15 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
             obj.configsStruct.preTransferMeasures=[];
             obj.configsStruct.postTransferMeasures={};
-            obj.configsStruct.learners={};
+            obj.configsStruct.learners=[];
             
-            runMeasures = 1;
+            runMeasures = 0;
             
             if runMeasures
                 obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
                 obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
                 obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);
-                obj.configsStruct.learners={};
+                obj.configsStruct.learners=[];
                 
                 
                 obj.configsStruct.preTransferMeasures=[];
@@ -68,7 +70,7 @@ classdef TransferMainConfigs < MainConfigs
                 
             else
                 llgcObj = LLGCMethod(learnerConfigs);
-                obj.configsStruct.learners={llgcObj};
+                obj.configsStruct.learners=llgcObj;
             end
         end
         
