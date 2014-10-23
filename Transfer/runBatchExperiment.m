@@ -6,8 +6,7 @@ function [] = runBatchExperiment(multithread, dataset)
         error('Create Newsgroup batch configs class!');
     end    
     
-    transferMethodClassStrings = {'FuseTransfer','Transfer'};
-    %transferMethodClassStrings = {'FuseTransfer'};
+    transferMethodClassStrings = batchConfigsObj.get('transferMethodClassStrings');
     for i=1:numel(transferMethodClassStrings)
         transferMethodClass = str2func(transferMethodClassStrings{i});
         batchConfigsObj.set('transferMethodClass', transferMethodClass());

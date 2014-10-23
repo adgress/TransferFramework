@@ -76,7 +76,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 size(find(sources{1}.Y > 0),1);
             trainingDataMetadata.numTargetLabels = ...
                 size(find(sampledTrain.Y > 0),1);
-            trainingDataMetadata.targetLabelsPerClass = numPerClass;
+            trainingDataMetadata.numLabeledPerClass = numPerClass;
             trainingDataMetadata.numTrain = numel(sampledTrain.Y);
             trainingDataMetadata.numTest = numel(test.Y);
             trainingDataMetadata.numClasses = max(test.Y);

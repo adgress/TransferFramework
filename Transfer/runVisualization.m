@@ -13,6 +13,7 @@ function [] = runVisualization(dataset)
     
     %prefix = 'CV-small_10-13';
     prefix = 'CV-small';
+    prefix = 'CV-small_numLabeledPerClass';
     
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 1;
@@ -124,7 +125,7 @@ function [] = runVisualization(dataset)
             options.relativeType = Constants.RELATIVE_PERFORMANCE;
             options.subPlotField = 'C';
             
-            options.xAxisField = 'targetLabelsPerClass';
+            options.xAxisField = 'numLabeledPerClass';
             options.xAxisDisplay = 'Target Labels Per Class';
             %{
             options.xAxisField = 'numSourcePerClass';

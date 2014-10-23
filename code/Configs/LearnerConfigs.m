@@ -12,7 +12,17 @@ classdef LearnerConfigs < Configs
     
     methods               
         function [obj] = LearnerConfigs()
-            obj = obj@Configs();            
+            obj = obj@Configs();    
+            obj.configsStruct.zscore=1;
+            obj.configsStruct.useMeanSigma=0;            
+            obj.configsStruct.k=1;            
+            obj.configsStruct.zscore=1;
+            obj.configsStruct.useECT=0;
+            obj.configsStruct.fixSigma=1;
+            obj.configsStruct.saveINV=1;
+            obj.configsStruct.sourceLOOCV=0;
+            obj.configsStruct.quiet=0;
+            obj.configsStruct.useSoftLoss=0; 
         end        
     end        
 end
