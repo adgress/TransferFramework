@@ -52,10 +52,19 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.dataSet='A2C';
         end
         
+        function [] = setTommasiData(obj)
+            obj.set('dataName','tommasi_data');
+            obj.set('resultsDir','results_tommasi');
+            obj.set('dataSet','tommasi_split_data');
+        end
+        
         function [] = setMeasureConfigs(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
             obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
-            obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
-            obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);
+            %obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
+            %obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);
             obj.configsStruct.learners=[];
             obj.configsStruct.preTransferMeasures=[];
             obj.configsStruct.postTransferMeasures=CTTransferMeasure(learnerConfigs);
@@ -72,6 +81,11 @@ classdef TransferMainConfigs < MainConfigs
         
         function [learnerConfigs] = makeDefaultLearnerConfigs(obj)
             learnerConfigs = LearnerConfigs();            
+        end
+        
+        function [s] = getDataFileName(obj)
+            s = [getProjectDir() '/' obj.get('dataDir') '/' ...
+                 '/' obj.get('dataName') '/' obj.get('dataSet') '.mat'];
         end
         
         function [v] = getResultsDirectory(obj)

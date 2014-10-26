@@ -13,15 +13,15 @@ function [] = runVisualization(dataset)
     
     %prefix = 'CV-small_10-13';
     prefix = 'CV-small';
-    prefix = 'CV-small_numLabeledPerClass';
+    %prefix = 'CV-small_numLabeledPerClass';
     
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 1;
     
-    showRelativePerformance = 1;
+    showRelativePerformance = 0;
     showRelativeMeasures = 0;
     
-    numColors = 3;    
+    numColors = 4;    
     
     if dataset == Constants.CV_DATA
         axisToUse = [0 5 0 1];

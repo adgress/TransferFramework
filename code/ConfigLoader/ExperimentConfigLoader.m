@@ -6,14 +6,21 @@ classdef ExperimentConfigLoader < ConfigLoader
         names
         dataAndSplits   
         allExperiments
-        numSplits
         learners
+    end
+    
+    properties(Dependent)
+        numSplits
     end
     
     methods
         function obj = ExperimentConfigLoader(configs)
             obj = obj@ConfigLoader(configs);            
-            dataSet = obj.configs.get('dataSet');
+            dataSet = obj.configs.get('dataSet');            
+            if obj.has('dataAndSplits')
+                obj.configs.set('dataSet',dataSet);
+                dataSet = obj.get('dataAndSplits');
+            end
             obj.setDataSet(dataSet);            
         end        
         
@@ -37,19 +44,21 @@ classdef ExperimentConfigLoader < ConfigLoader
         end  
         
         function [] = setDataSet(obj,dataSet)
-            obj.configs.set('dataSet',dataSet);
-            inputDir = obj.configs.dataDirectory;
-            inputFile = [inputDir '/' dataSet '.mat'];           
-            obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
-            obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
-            
-            if isa(obj.dataAndSplits.allData,'SimilarityDataSet')
+            if ~isa(dataSet,'char')
+                obj.dataAndSplits = dataSet;
+            else
+                obj.configs.set('dataSet',dataSet);
+                inputDir = obj.configs.dataDirectory;
+                inputFile = [inputDir '/' dataSet '.mat'];           
+                obj.dataAndSplits = load(Helpers.MakeProjectURL(inputFile));
+                obj.dataAndSplits = obj.dataAndSplits.dataAndSplits;
+            end
+            if isfield(obj.dataAndSplits,'allData') && isa(obj.dataAndSplits.allData,'SimilarityDataSet')
                 X = obj.dataAndSplits.allData.X{1};
                 X2 = X(:,obj.dataAndSplits.metadata.imagesKept);
                 obj.dataAndSplits.allData.X{1} = X2;            
                 display('HACK for PIM');
-            end
-            obj.numSplits = obj.dataAndSplits.configs('numSplits');
+            end            
             obj.createAllExperiments();
         end   
         
@@ -219,12 +228,18 @@ classdef ExperimentConfigLoader < ConfigLoader
         end
         
         function [train,test,validate,featType] = getSplit(obj,index)
-            split = obj.dataAndSplits.allSplits{index};
+            splitStruct = obj.dataAndSplits.allSplits{index};
+            %{
             dataSet = obj.dataAndSplits.allData;
+            dataSet = obj.dataAndSplits.allSplits{index};
+            %}
+            dataSet = splitStruct.targetData;
+            split = splitStruct.targetType;
             if isa(dataSet,'DataSet')
                 [train,test,validate] = dataSet.splitDataSet(split);
                 featType = [];
             elseif isa(dataSet,'SimilarityDataSet')
+                error('TODO!!!');
                 ind = obj.dataAndSplits.metadata.splitIndex;
                 
                 [dataSets] = dataSet.createDataSetsWithSplit(split,ind);
@@ -289,6 +304,9 @@ classdef ExperimentConfigLoader < ConfigLoader
                 outputFileName = [fileName s];
             end
         end        
+        function [v] = get.numSplits(obj)
+            v = obj.dataAndSplits.configs.get('numSplits');
+        end
     end 
     methods(Static)
         function [s] = CreateRunExperimentInput(train,test,validate,...

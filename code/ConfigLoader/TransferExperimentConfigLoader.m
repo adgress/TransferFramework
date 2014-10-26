@@ -15,13 +15,15 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             experiment = obj.allExperiments{experimentIndex};                                    
                                     
             [train,test,validate] = obj.getSplit(splitIndex);            
-            [numTrain,numPerClass] = obj.calculateSampling(experiment,test);
-            
+            [numTrain,numPerClass] = obj.calculateSampling(experiment,test);            
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
+            
+            splitStruct = obj.dataAndSplits.allSplits{splitIndex};
+            sourceDataSets = {splitStruct.sourceData};
             sources = {};            
-            for i=1:length(obj.dataAndSplits.sourceDataSets)
-                sources{i} = obj.dataAndSplits.sourceDataSets{i}.copy();                
-                sources{i}.setSource;
+            for i=1:length(sourceDataSets)
+                sources{i} = sourceDataSets{i}.copy();                
+                sources{i}.setSource();
                 if isfield(experiment,'numSourcePerClass')
                     numSource = sources{i}.numClasses*experiment.numSourcePerClass;
                     sources{i} = sources{i}.stratifiedSample(numSource);

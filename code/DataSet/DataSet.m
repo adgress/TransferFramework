@@ -8,11 +8,19 @@ classdef DataSet < LabeledData
         data
         dataFile
         X
+        featureNames
+        featureIDs
     end    
     methods
         function obj = DataSet(dataFile,XName,YName,X,Y,type)
             obj.dataFile = '';
-            if ~isempty(dataFile)
+            if ~exist('X','var')
+                X = [];
+            end
+            if ~exist('Y','var')
+                Y = [];
+            end
+            if exist('dataFile','var') && ~isempty(dataFile)
                 obj.dataFile = dataFile;
                 obj.data = load(dataFile);
                 if isfield(obj.data,'data')
@@ -23,20 +31,21 @@ classdef DataSet < LabeledData
             else
                 obj.X = X;
                 obj.Y = Y;
-            end                                             
-            assert(size(obj.X,1) == size(obj.Y,1));
-            if nargin > 3
-                obj.type = type;
-                assert(length(obj.type) == length(obj.Y));
+            end              
+            
+            if exist('type','var')
+                obj.type = type;                
+            else
+                obj.type = LabeledData.NoType(length(obj.Y));
             end
+            assert(length(obj.type) == length(obj.Y));
+            assert(size(obj.X,1) == size(obj.Y,1));
         end
-          
-        
         
         function [split] = generateSplitArray(obj,percTrain,percTest,configs)
             percValidate = 1 - percTrain - percTest;
             split = DataSet.generateSplit([percTrain percTest percValidate],...
-                obj.Y,configs);
+                obj.Y,configs);            
         end
         
         function [train,test,validation] = splitDataSet(obj,split)            
@@ -54,17 +63,24 @@ classdef DataSet < LabeledData
         
         function [sampledDataSet] = stratifiedSample(obj,numItems)
             [selectedItems] = obj.stratifiedSelection(numItems);
+            %{
             sampledDataSet = DataSet('','','',...
                 obj.X(selectedItems,:),obj.Y(selectedItems,:),...
                 obj.type(selectedItems));
+            %}
+            sampledDataSet = DataSet.CreateNewDataSet(obj,selectedItems);
         end
         
         function [sampledDataSet] = stratifiedSampleByLabels(obj,numItems)
             [selectedItems] = obj.stratifiedSelection(numItems);
-            YCopy = obj.Y;
+            %{
+            YCopy = obj.Y;            
             YCopy(~selectedItems) = -1;
             dataType = DataSet.NoType(length(YCopy));
             sampledDataSet = DataSet('','','',obj.X,YCopy,dataType);
+            %}
+            sampledDataSet = DataSet.CreateNewDataSet(obj);
+            sampledDataSet.Y(~selectedItems) = -1;
         end
         
         function [selectedItems] = stratifiedSelection(obj,numItems)
@@ -96,9 +112,25 @@ classdef DataSet < LabeledData
         
         function [d] = getDataOfType(obj,dataType)
             isType = obj.type == dataType;
+            %{
             d = DataSet('','','',obj.X(isType,:),obj.Y(isType),...
                 obj.type(isType));
-        end        
+            %}
+            d = DataSet.CreateNewDataSet(obj,isType);
+        end
+        function [] = applyPermutation(obj,permutation)
+            assert(length(permutation) == length(obj.type));
+            obj.X = obj.X(permutation,:);
+            obj.Y = obj.Y(permutation);
+            obj.type = obj.type(permutation);
+        end
+        function [inds] = hasLabel(obj,labels)
+            labels = unique(labels);
+            labels = labels(:)';
+            labelMat = repmat(labels,obj.size(),1);
+            YMat = repmat(obj.Y,1,length(labels));
+            inds = logical(sum(labelMat == YMat,2));
+        end
     end
     
     methods(Static)
@@ -123,14 +155,15 @@ classdef DataSet < LabeledData
         function [split] = generateSplit(percentageArray,Y,configs)
             maxTrainNumPerLabel = inf;
             if exist('configs','var') && isKey(configs,'maxTrainNumPerLabel')
-                maxTrainNumPerLabel = configs('maxTrainNumPerLabel');
+                maxTrainNumPerLabel = configs.get('maxTrainNumPerLabel');
             end
             assert(sum(percentageArray) == 1,'Split doesn''t sum to one');
             percentageArray = cumsum(percentageArray);
             dataSize = size(Y,1);
             split = zeros(dataSize,1);
-            for i=1:max(Y)
-                thisClass = find(Y == i);
+            uniqueY = unique(Y);
+            for i=1:length(uniqueY)
+                thisClass = find(Y == uniqueY(i));
                 numThisClass = numel(thisClass);
                 perm = randperm(numThisClass);
                 thisClassRandomized = thisClass(perm);
@@ -155,6 +188,21 @@ classdef DataSet < LabeledData
             for i=1:3
                 allSplits{i} = mat(splits == i,:);
             end
+        end                
+    end
+    methods(Static)
+        function [newData] = CreateNewDataSet(data,inds)
+            if ~exist('inds','var')
+                inds = 1:data.size();
+            end
+            newData = DataSet('','','',data.X(inds,:),data.Y(inds,:),data.type(inds,:));
+            newData.featureNames = data.featureNames;
+            newData.featureIDs = data.featureIDs;
+        end
+        function [data] = MakeDataFromStruct(dataStruct)
+            data = DataSet('','','',dataStruct.X,dataStruct.Y);
+            data.featureNames = dataStruct.directories;
+            data.featureIDs = dataStruct.featureIDs;
         end
     end
 end

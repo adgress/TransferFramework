@@ -27,7 +27,14 @@ classdef StringHelpers
                 s = v.getResultFileName('-',false);
             end
             assert(logical(exist('s','var')));
-        end        
+        end
+        
+        function [s] = RemoveSuffix(s,suffix)
+            inds = strfind(s,suffix);
+            if ~isempty(inds)
+                s = s(1:inds(end)-1);
+            end
+        end
     end
     
 end
