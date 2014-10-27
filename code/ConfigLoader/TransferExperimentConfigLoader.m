@@ -82,9 +82,11 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             trainingDataMetadata.numTrain = numel(sampledTrain.Y);
             trainingDataMetadata.numTest = numel(test.Y);
             trainingDataMetadata.numClasses = test.numClasses;
+            %{
             trainingDataMetadata.sources = sources;
             trainingDataMetadata.sampledTrain = sampledTrain;
             trainingDataMetadata.test = test;
+            %}
         end
         
         function [transferFileName] = getTransferFileName(obj)

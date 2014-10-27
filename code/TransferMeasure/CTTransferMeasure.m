@@ -40,8 +40,8 @@ classdef CTTransferMeasure < TransferMeasure
             fuTargetProp = obj.runLabelPropagation(distMatTargetProp);            
 
             measureResults = GraphMeasureResults();
-            measureResults.measureMetadata.fuSourceProp = fuSourceProp;
-            measureResults.measureMetadata.fuTargetProp = fuTargetProp;
+            measureResults.measureMetadata.fuSourceProp = sparse(fuSourceProp);
+            measureResults.measureMetadata.fuTargetProp = sparse(fuTargetProp);
             Helpers.AssertInvalidPercent(fuSourceProp,.1);
             Helpers.AssertInvalidPercent(fuTargetProp,.1);
             measureResults.dataType = distMat.type;

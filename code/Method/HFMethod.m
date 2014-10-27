@@ -116,14 +116,14 @@ classdef HFMethod < Method
                 YTest = Y(isYTest);            
                 numTrainLabeled = sum(isTrainLabeled);
                 predicted = predicted(isYTest(numTrainLabeled+1:end));    
-                testResults.trainFU = fu(~isYTest,:);
-                testResults.testFU = fu(isYTest,:);
+                testResults.trainFU = sparse(fu(~isYTest,:));
+                testResults.testFU = sparse(fu(isYTest,:));
                 error('Update for unlabeled source, make sure indices are correct!');
             else
                 isYTest = distMat.Y > 0 & distMat.type == Constants.TARGET_TEST;
                 YTest = distMat.Y(isYTest);
                 predicted = predicted(isYTest);
-                testResults.dataFU = [fu(~isYTest,:) ; fu(isYTest,:)];
+                testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
             end
             val = sum(predicted == YTest)/...
                     length(YTest);

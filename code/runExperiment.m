@@ -26,11 +26,11 @@ function [] = runExperiment(configs)
     tic
 
     allResults = ResultsContainer(experimentLoader.numSplits,...
-        experimentLoader.numExperiments);
+        experimentLoader.numExperiments);    
     for j = 1:experimentLoader.numExperiments
         experimentLoader.allExperiments{j}.learner = learner;
         allResults.allResults{j}.experiment = ...
-            experimentLoader.allExperiments{j};            
+            experimentLoader.allExperiments{j};                   
     end
     for j=1:experimentLoader.numExperiments
         splitResults = cell(experimentLoader.numSplits,1);
@@ -38,7 +38,7 @@ function [] = runExperiment(configs)
             parfor i=1:experimentLoader.numSplits  
                 display(sprintf('%d',i));
                 [splitResults{i}] = ...
-                    experimentLoader.runExperiment(j,i);
+                    experimentLoader.runExperiment(j,i);               
             end            
         else
             for i=1:experimentLoader.numSplits                
@@ -51,7 +51,8 @@ function [] = runExperiment(configs)
     end
     toc
 
-    allResults.mainConfigs = configs;
+    allResults.mainConfigs = configs.copy();
+    allResults.mainConfigs.delete('dataAndSplits');
     if experimentLoader.configs.get('computeLossFunction')
         measureClass = str2func(experimentLoader.configs.get('measureClass'));
         measureObject = measureClass(experimentLoader.configs);
