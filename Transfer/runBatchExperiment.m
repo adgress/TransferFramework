@@ -6,7 +6,7 @@ function [] = runBatchExperiment(multithread, dataset)
     end    
     batchConfigsObj = BatchConfigs();
     batchConfigsObj.setTommasiData();
-    batchConfigsObj.setMeasureConfigs();
+    %batchConfigsObj.setMeasureConfigs();
     transferMethodClassStrings = batchConfigsObj.get('transferMethodClassStrings');
     for i=1:numel(transferMethodClassStrings)
         transferMethodClass = str2func(transferMethodClassStrings{i});

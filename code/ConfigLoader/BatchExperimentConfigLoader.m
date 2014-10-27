@@ -42,14 +42,22 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             targetDataCopy.remove(~targetClassInds);  
                             
                             backgroundIndsToRemove = find(targetDataCopy.hasLabel(backgroundLabel));
+                            assert(length(backgroundIndsToRemove) >= numBackground);
                             backgroundIndsToRemove = backgroundIndsToRemove(numBackground+1:end);
                             targetDataCopy.remove(backgroundIndsToRemove);
                             
                             sourceDataCopy = dataAndSplits.allData.copy();
                             sourceDataCopy.applyPermutation(split.permutation);
-                            sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
+                            sourceClassInds = sourceDataCopy.hasLabel([sourceLabel backgroundLabel]);
                             sourceDataCopy.remove(~sourceClassInds);
-                            sourceDataCopy.Y(:) = targetLabel;
+                            sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel) = targetLabel;
+                            
+                            sourceBackgroundIndsToRemove = find(sourceDataCopy.hasLabel(backgroundLabel));
+                            
+                            sourceDataCopy.remove(sourceBackgroundIndsToRemove(2*numBackground+1:end));
+                            sourceDataCopy.remove(sourceBackgroundIndsToRemove(1:100));
+                            assert(sum(sourceDataCopy.hasLabel(backgroundLabel)) == numBackground);
+                            
                             newSplit.targetData = targetDataCopy;
                             newSplit.sourceData = sourceDataCopy;                            
                             newSplit.targetType = split.split(split.permutation);
@@ -61,7 +69,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             
                             dataAndSplitsCopy.allSplits{end+1} = newSplit;
                         end         
-                        mainConfigs.set('classesToKeep',backgroundLabel);
+                        %mainConfigs.set('classesToKeep',backgroundLabel);
                         mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
                         mainConfigs.set('sourceClass',sourceLabel);
                         mainConfigs.set('targetClass',targetLabel);

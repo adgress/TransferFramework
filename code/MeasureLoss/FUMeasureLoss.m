@@ -13,8 +13,8 @@ classdef FUMeasureLoss < MeasureLoss
         function [value] = computeLoss(obj, measureStruct)
             value = computeLoss@MeasureLoss(obj,measureStruct);                        
             if isfield(measureStruct.measureMetadata,'fuSourceProp')
-                fuSource = measureStruct.measureMetadata.fuSourceProp;
-                fuTarget = measureStruct.measureMetadata.fuTargetProp;
+                fuSource = full(measureStruct.measureMetadata.fuSourceProp);
+                fuTarget = full(measureStruct.measureMetadata.fuTargetProp);
                 assert(~isempty(fuSource) && ~isempty(fuTarget));
                 value = obj.getFUScore(fuSource,fuTarget,measureStruct.measureResults);
             end
