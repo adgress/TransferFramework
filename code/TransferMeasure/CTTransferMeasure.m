@@ -27,8 +27,12 @@ classdef CTTransferMeasure < TransferMeasure
             distMatSourceProp = distMat.copy();
             distMatTargetProp = distMat.copy();
             
-            distMatSourceProp.clearLabels(distMatSourceProp.isTarget());                        
-            distMatTargetProp.clearLabels(distMatTargetProp.isSource());
+            distMatTargetProp.clearLabels(distMatTargetProp.isSource());                        
+            toClear = distMatSourceProp.isTarget();
+            if options.has('classesToKeep')
+                toClear = toClear & ~distMatSourceProp.isClass(options.get('classesToKeep'));
+            end
+            distMatSourceProp.clearLabels(toClear);
             
             distMatSourceProp.swapSourceAndTarget();
             fuSourceProp = obj.runLabelPropagation(distMatSourceProp);

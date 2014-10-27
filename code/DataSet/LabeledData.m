@@ -100,6 +100,12 @@ classdef LabeledData < matlab.mixin.Copyable
         function [] = removeTestLabels(obj)
             obj.Y(obj.type == Constants.TARGET_TEST) = -1;
         end 
+        function [inds] = isClass(obj,class)
+            inds = false(length(obj.Y),1);
+            for i=class
+                inds = inds | obj.Y == i;
+            end
+        end
     end
 
     methods(Static)        
