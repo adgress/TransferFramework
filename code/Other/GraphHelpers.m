@@ -56,7 +56,9 @@ classdef GraphHelpers
                 Yscore = zeros(size(labeledTargetInds));
                 Ypred = Yscore;
                 Yactual = similarityDistMat.Y(labeledTargetInds);
-                labeledTargetScores = zeros(length(labeledTargetInds),similarityDistMat.numClasses);
+                largestClass = max(similarityDistMat.Y);
+                %labeledTargetScores = zeros(length(labeledTargetInds),similarityDistMat.numClasses);
+                labeledTargetScores = zeros(length(labeledTargetInds),largestClass);
                 if exist('savedData','var') && isfield(savedData,'invM');
                     invM = savedData.invM;
                 end 

@@ -63,33 +63,30 @@ classdef DataSet < LabeledData
         
         function [sampledDataSet] = stratifiedSample(obj,numItems)
             [selectedItems] = obj.stratifiedSelection(numItems);
-            %{
-            sampledDataSet = DataSet('','','',...
-                obj.X(selectedItems,:),obj.Y(selectedItems,:),...
-                obj.type(selectedItems));
-            %}
             sampledDataSet = DataSet.CreateNewDataSet(obj,selectedItems);
         end
         
-        function [sampledDataSet] = stratifiedSampleByLabels(obj,numItems)
-            [selectedItems] = obj.stratifiedSelection(numItems);
-            %{
-            YCopy = obj.Y;            
-            YCopy(~selectedItems) = -1;
-            dataType = DataSet.NoType(length(YCopy));
-            sampledDataSet = DataSet('','','',obj.X,YCopy,dataType);
-            %}
+        function [sampledDataSet] = stratifiedSampleByLabels(obj,numItems,classesToKeep)
+            if ~exist('classesToKeep','var')
+                classesToKeep = [];
+            end
+            [selectedItems] = obj.stratifiedSelection(numItems,classesToKeep);
             sampledDataSet = DataSet.CreateNewDataSet(obj);
             sampledDataSet.Y(~selectedItems) = -1;
         end
         
-        function [selectedItems] = stratifiedSelection(obj,numItems)
-            numClasses = max(obj.Y);
-            itemsPerClass = ceil(numItems/numClasses);
-            selectedItems = logical(zeros(size(obj.X,1),1));
-            for i=1:numClasses
-                XWithClass = find(obj.Y==i);
-                itemsToUse = min([itemsPerClass size(XWithClass,1)]);
+        function [selectedItems] = stratifiedSelection(obj,numItems,classesToKeep)
+            if ~exist('classesToKeep','var')
+                classesToKeep = [];
+            end
+            itemsPerClass = ceil(numItems/obj.numClasses);
+            selectedItems = false(size(obj.X,1),1);
+            for i=obj.classes()'               
+                XWithClass = find(obj.Y==i);                
+                itemsToUse = size(XWithClass,1);                
+                if isempty(intersect(classesToKeep,i))
+                    itemsToUse = min(itemsPerClass, itemsToUse);
+                end
                 selectedItems(XWithClass(1:itemsToUse)) = 1;                
             end
         end
@@ -130,6 +127,15 @@ classdef DataSet < LabeledData
             labelMat = repmat(labels,obj.size(),1);
             YMat = repmat(obj.Y,1,length(labels));
             inds = logical(sum(labelMat == YMat,2));
+        end
+        function [] = keepFeatures(obj,featureIDsToKeep)
+            shouldKeep = false(1,size(obj.X,2));
+            for i=featureIDsToKeep
+                shouldKeep = shouldKeep | obj.featureIDs == i;
+            end
+            obj.X = obj.X(:,shouldKeep);
+            obj.featureIDs = obj.featureIDs(shouldKeep);
+            obj.featureNames = obj.featureNames(featureIDsToKeep);
         end
     end
     

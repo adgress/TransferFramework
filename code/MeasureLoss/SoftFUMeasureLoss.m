@@ -20,6 +20,9 @@ classdef SoftFUMeasureLoss < FUMeasureLoss
             for idx=1:size(fuSource,1)
                 si = fuSource(idx,:);
                 ti = fuTarget(idx,:);
+                maxDim = max(length(si),length(ti));
+                si = [si zeros(1,maxDim-length(si))];
+                ti = [ti zeros(1,maxDim-length(ti))];
                 values(idx) = 1 - pdist2(si,ti,'cityblock')/2;
             end            
             value = mean(values);

@@ -20,9 +20,13 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 dataAndSplits = load(obj.configs.get('experimentConfigsClass').getDataFileName());
                 dataAndSplits = dataAndSplits.dataAndSplits;
                 labels = unique(dataAndSplits.allData.Y);
+                labels = labels(1:4);
                 backgroundLabel = 257;
-                for sourceLabel=labels'
-                    for targetLabel=labels'
+                numBackground = 100;
+                featuresToUse = 1;
+                dataAndSplits.allData.keepFeatures(featuresToUse);
+                for targetLabel=labels'
+                    for sourceLabel=labels'                    
                         if sourceLabel == targetLabel
                             continue
                         end
@@ -35,18 +39,33 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             targetDataCopy = dataAndSplits.allData.copy();
                             targetDataCopy.applyPermutation(split.permutation);
                             targetClassInds = targetDataCopy.hasLabel([targetLabel backgroundLabel]);
-                            targetDataCopy.remove(~targetClassInds);                            
+                            targetDataCopy.remove(~targetClassInds);  
+                            
+                            backgroundIndsToRemove = find(targetDataCopy.hasLabel(backgroundLabel));
+                            backgroundIndsToRemove = backgroundIndsToRemove(numBackground+1:end);
+                            targetDataCopy.remove(backgroundIndsToRemove);
+                            
                             sourceDataCopy = dataAndSplits.allData.copy();
                             sourceDataCopy.applyPermutation(split.permutation);
                             sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
                             sourceDataCopy.remove(~sourceClassInds);
+                            sourceDataCopy.Y(:) = targetLabel;
                             newSplit.targetData = targetDataCopy;
                             newSplit.sourceData = sourceDataCopy;                            
                             newSplit.targetType = split.split(split.permutation);
                             newSplit.targetType = newSplit.targetType(targetClassInds);
+                            
+                            backgroundShouldRemove = false(length(newSplit.targetType));
+                            backgroundShouldRemove(backgroundIndsToRemove) = true;
+                            newSplit.targetType(backgroundShouldRemove) = [];
+                            
                             dataAndSplitsCopy.allSplits{end+1} = newSplit;
-                        end                     
+                        end         
+                        mainConfigs.set('classesToKeep',backgroundLabel);
                         mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
+                        mainConfigs.set('sourceClass',sourceLabel);
+                        mainConfigs.set('targetClass',targetLabel);
+                        mainConfigs.set('dataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
                         runExperiment(mainConfigs);
                     end
                 end                                                

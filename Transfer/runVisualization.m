@@ -11,9 +11,12 @@ function [] = runVisualization(dataset)
     
     showRepairChange = 0;
     
-    %prefix = 'CV-small_10-13';
-    prefix = 'CV-small';
-    %prefix = 'CV-small_numLabeledPerClass';
+    %prefix = 'results/CV-small_10-13';
+    %prefix = 'results/CV-small';
+    %prefix = 'results/CV-small_numLabeledPerClass';
+    
+    prefix = 'results_tommasi/tommasi_data';
+    dataset = Constants.TOMMASI_DATA;
     
     showPostTransferMeasures = 1;
     showPreTransferMeasures = 1;
@@ -23,7 +26,7 @@ function [] = runVisualization(dataset)
     
     numColors = 4;    
     
-    if dataset == Constants.CV_DATA
+    if dataset == Constants.CV_DATA || dataset == Constants.TOMMASI_DATA
         axisToUse = [0 5 0 1];
         if showRelativePerformance || showRelativeMeasures
             axisToUse = [0 5 0 .5];
@@ -98,6 +101,9 @@ function [] = runVisualization(dataset)
     if dataset == Constants.CV_DATA
         sourceData = {'A','C','D','W'};
         targetData = {'A','C','D','W'};
+    elseif dataset == Constants.TOMMASI_DATA
+        sourceData = {'10', '15', '23','25'};
+        targetData = {'10', '15', '23','25'};
     else
         sourceData = {'CR1','CR2','CR3','CR4'};
         targetData = {'CR1','CR2','CR3','CR4'};        
@@ -109,7 +115,11 @@ function [] = runVisualization(dataset)
             if sourceIdx == targetIdx
                 continue;
             end
-            dataSet = [targetData{targetIdx} '2' sourceData{sourceIdx}];
+            delim = '2';
+            if dataset == Constants.TOMMASI_DATA
+                delim = '-to-';
+            end
+            dataSet = [targetData{targetIdx} delim sourceData{sourceIdx}];
             
             options = struct();
             options.prefix = prefix;

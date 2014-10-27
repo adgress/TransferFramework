@@ -16,7 +16,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                                     
             [train,test,validate] = obj.getSplit(splitIndex);            
             [numTrain,numPerClass] = obj.calculateSampling(experiment,test);            
-            [sampledTrain] = train.stratifiedSampleByLabels(numTrain);
+            [sampledTrain] = train.stratifiedSampleByLabels(numTrain,obj.get('classesToKeep'));
             
             splitStruct = obj.dataAndSplits.allSplits{splitIndex};
             sourceDataSets = {splitStruct.sourceData};
@@ -24,7 +24,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             for i=1:length(sourceDataSets)
                 sources{i} = sourceDataSets{i}.copy();                
                 sources{i}.setSource();
-                if isfield(experiment,'numSourcePerClass')
+                if isfield(experiment,'numSourcePerClass') && ~isinf(experiment.numSourcePerClass)
                     numSource = sources{i}.numClasses*experiment.numSourcePerClass;
                     sources{i} = sources{i}.stratifiedSample(numSource);
                 end
@@ -81,7 +81,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             trainingDataMetadata.numLabeledPerClass = numPerClass;
             trainingDataMetadata.numTrain = numel(sampledTrain.Y);
             trainingDataMetadata.numTest = numel(test.Y);
-            trainingDataMetadata.numClasses = max(test.Y);
+            trainingDataMetadata.numClasses = test.numClasses;
             trainingDataMetadata.sources = sources;
             trainingDataMetadata.sampledTrain = sampledTrain;
             trainingDataMetadata.test = test;

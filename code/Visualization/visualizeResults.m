@@ -16,7 +16,7 @@ function [f, returnStruct] = visualizeResults(options,f)
     displayVals = {};
     for i=1:numel(options.plotConfigs)
         plotConfigs = options.plotConfigs{i};
-        fileName = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' plotConfigs.get('resultFileName')];
+        fileName = [getProjectDir() '/' options.prefix '/' options.dataSet '/' plotConfigs.get('resultFileName')];
         baselineFile = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' plotConfigs.get('baselineFile')];
         if ~exist(fileName,'file')
             continue

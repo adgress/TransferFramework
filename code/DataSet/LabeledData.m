@@ -9,6 +9,7 @@ classdef LabeledData < matlab.mixin.Copyable
     
     properties(Dependent)
         numClasses
+        classes
     end
     
     methods
@@ -52,7 +53,11 @@ classdef LabeledData < matlab.mixin.Copyable
         end
         
         function [n] = get.numClasses(obj)
-            n = length(unique(obj.Y(obj.isLabeled)));
+            n = length(obj.classes());
+        end
+        
+        function [v] = get.classes(obj)
+            v = unique(obj.Y(obj.isLabeled));
         end
         
         function [n] = size(obj)

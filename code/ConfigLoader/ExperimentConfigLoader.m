@@ -30,7 +30,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             [results] = learner.trainAndTest(input);
         end
         function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
-            numClasses = max(test.Y);
+            numClasses = test.numClasses;
             if isfield(experiment,'numLabeledPerClass')           
                 numPerClass = experiment.numLabeledPerClass;
                 numTrain = numClasses*numPerClass;

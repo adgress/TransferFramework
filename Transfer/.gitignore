@@ -1,6 +1,6 @@
-results/*.mat
-results/*/*.mat
-results/*/*/*.mat
-results/*/*/*/*.mat
+results*/*.mat
+results*/*/*.mat
+results*/*/*/*.mat
+results*/*/*/*/*.mat
 
 Data/CV-small/*.mat
