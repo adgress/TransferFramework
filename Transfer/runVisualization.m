@@ -119,7 +119,7 @@ function [] = runVisualization(dataset)
             if dataset == Constants.TOMMASI_DATA
                 delim = '-to-';
             end
-            dataSet = [targetData{targetIdx} delim sourceData{sourceIdx}];
+            dataSet = [sourceData{sourceIdx} delim targetData{targetIdx}];
             
             options = struct();
             options.prefix = prefix;

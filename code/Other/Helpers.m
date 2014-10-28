@@ -380,6 +380,70 @@ classdef Helpers < handle
                 assert(false);                
             end
         end
+        
+        function [v,inds] = MakeCrossProductOrdered(varargin)
+            [v,inds] = Helpers.MakeCrossProductNoDupe(varargin{:});
+            vNew = {};
+            indsNew = {};
+            for idx=1:length(inds)
+                currInds = inds{idx};
+                if ~issorted(currInds)
+                    continue;
+                end
+                vNew{end+1} = v{idx};
+                indsNew{end+1} = inds{idx};
+            end
+            v = vNew;
+            inds = indsNew;
+        end
+        
+        function [v,inds] = MakeCrossProductNoDupe(varargin)
+            [v,inds] = Helpers.MakeCrossProduct(varargin{:});
+            vNew = {};
+            indsNew = {};
+            for idx=1:length(inds)
+                currInds = inds{idx};
+                if length(unique(currInds)) ~= length(currInds)
+                    continue;
+                end
+                vNew{end+1} = v{idx};
+                indsNew{end+1} = inds{idx};
+            end
+            v = vNew;
+            inds = indsNew;
+        end
+        
+        function [v,inds] = MakeCrossProduct(varargin)
+            v = {};
+            inds = {[]};
+            isCellArray = isa(varargin{1},'cell');
+            if isCellArray
+                v{1} = {};
+            else
+                v{1} = [];
+            end
+            for i=1:length(varargin)
+                vNew = {};
+                indsNew = {};
+                currArray=varargin{i};
+                for vIdx=1:length(v)
+                    vCurr = v{vIdx};
+                    indsCurr = inds{vIdx};
+                    for currArrayIdx=1:length(currArray)
+                        vCurrNew = vCurr;                        
+                        if isCellArray
+                            vCurrNew{end+1} = currArray{currArrayIdx};
+                        else
+                            vCurrNew(end+1) = currArray(currArrayIdx);
+                        end
+                        vNew{end+1} = vCurrNew;
+                        indsNew{end+1} = [indsCurr currArrayIdx];
+                    end
+                end
+                v = vNew;
+                inds = indsNew;
+            end
+        end
     end
     
 end
