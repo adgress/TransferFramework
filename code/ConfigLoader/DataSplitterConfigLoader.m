@@ -107,6 +107,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
             Helpers.MakeDirectoryForFile(outputFile);
             dataAndSplits = obj.dataAndSplits;
             save(outputFile,'dataAndSplits');
+	    display(outputFile);
         end
     end
 end
