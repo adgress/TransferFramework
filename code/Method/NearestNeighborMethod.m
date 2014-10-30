@@ -15,7 +15,7 @@ classdef NearestNeighborMethod < Method
             test = input.test;
             validate = input.validate;
             experiment = input.configs;                     
-            k = experiment.k;
+            k = obj.get('k');
             
             testResults = FoldResults();
             if isa(train,'DataSet')
@@ -24,9 +24,9 @@ classdef NearestNeighborMethod < Method
                 trainY = [train.Y; validate.Y];
                 testX = test.X;
                 testY = test.Y;
-                if isfield(input.metadata,'distanceMatrix')
+                if isfield(input,'distanceMatrix')
                     testResults.testPredicted = ...
-                        input.metadata.distanceMatrix.getTestToLabeledNN(k);
+                        input.distanceMatrix.getTestToLabeledNN(k);
                     testResults.trainPredicted = trainY;
                 else
                     withLabels = trainY > 0;
@@ -37,11 +37,14 @@ classdef NearestNeighborMethod < Method
                         testResults.testPredicted = ones(size(testX,1),1);
                     else
                         %idx = knnsearch(XWithLabels,testX,'k',k);
-                        idx = Helpers.KNN(XWithLabels,testX,k);
-                        testResults.testPredicted = YWithLabels(idx);
+                        idxTest = Helpers.KNN(XWithLabels,testX,k);
+                        %testResults.testPredicted = YWithLabels(idx);
                         %idx = knnsearch(XWithLabels,trainX,'k',k);
-                        idx = Helpers.KNN(XWithLabels,trainX,k);
-                        testResults.trainPredicted = YWithLabels(idx);
+                        idxTrain = Helpers.KNN(XWithLabels,trainX,k);
+                        %testResults.trainPredicted = YWithLabels(idx);
+                        testResults.yPred = [YWithLabels(idxTrain) ; ...
+                            YWithLabels(idxTest)];
+                        testResults.dataType = [train.type ; test.type];
                     end
                 end
             elseif isa(train,'SimilarityDataSet')
@@ -68,18 +71,17 @@ classdef NearestNeighborMethod < Method
                 error('Unknown Data Set type');
             end
                         
-            assert(~isempty(testResults.testPredicted));
-            assert(~isempty(testResults.trainPredicted));
-            testResults.testActual = testY;
-            testResults.trainActual = trainY;
+            assert(~isempty(testResults.yPred));
+            %testResults.testActual = testY;
+            %testResults.trainActual = trainY;
+            testResults.yActual = [train.Y ; test.Y];
             %testResults.testPredicted = Helpers.getMode(testResults.testPredicted);
             %testResults.trainPredicted = Helpers.getMode(testResults.trainPredicted);            
             
-            if size(testResults.testActual,2) == 1
-                val = sum(testResults.testActual == testResults.testPredicted)/...
-                    length(testResults.testActual);
-                display(['NN Acc: ' num2str(val)]);
-            end            
+            isTest = testResults.dataType == Constants.TARGET_TEST;
+            val = sum(testResults.yPred(isTest) == testResults.yActual(isTest))/...
+                sum(isTest);
+            display(['NN Acc: ' num2str(val)]);            
         end
         function [prefix] = getPrefix(obj)
             prefix = 'kNN';

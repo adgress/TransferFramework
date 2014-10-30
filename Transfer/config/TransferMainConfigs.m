@@ -56,7 +56,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.set('dataName','tommasi_data');
             obj.set('resultsDir','results_tommasi');
             obj.set('dataSet','tommasi_split_data');
-            obj.configsStruct.numLabeledPerClass=5:5:20;
+            obj.configsStruct.numLabeledPerClass=2:2:8;
             obj.configsStruct.numSourcePerClass=Inf;
         end
         
@@ -77,8 +77,12 @@ classdef TransferMainConfigs < MainConfigs
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
             obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
+            %{
             llgcObj = LLGCMethod(learnerConfigs);
             obj.configsStruct.learners=llgcObj;
+            %}
+            nnObj = NearestNeighborMethod(learnerConfigs);
+            obj.configsStruct.learners=nnObj;
         end
         
         function [learnerConfigs] = makeDefaultLearnerConfigs(obj)

@@ -40,18 +40,22 @@ classdef FoldResults < handle
             obj.test = [];
         end    
         function [v] = get.trainType(obj)
+            %{
             if isequal(obj.dataFU, [])
                 v = [];
                 return;
             end
+            %}
             v = obj.dataType(obj.isTrain());
             obj.assertSize();
         end
         function [v] = get.testType(obj)
+            %{
             if isequal(obj.dataFU, [])
                 v = [];
                 return;
             end
+            %}
             v = obj.dataType(obj.isTest());
             obj.assertSize();
         end                
@@ -72,34 +76,42 @@ classdef FoldResults < handle
             obj.assertSize();
         end        
         function [v] = get.trainPredicted(obj)
+            %{
             if isequal(obj.dataFU, [])
                 v = [];
                 return;
             end
+            %}
             v = obj.yPred(obj.isTrain(),:);
             obj.assertSize();
         end        
         function [v] = get.testPredicted(obj)
+            %{
             if isequal(obj.dataFU, [])
                 v = [];
                 return;
             end
+            %}
             v = obj.yPred(obj.isTest(),:);
             obj.assertSize();
         end        
         function [v] = get.trainActual(obj)
+            %{
             if isequal(obj.dataFU, [])
                 v = [];
                 return;
             end
+            %}
             v = obj.yActual(obj.isTrain(),:);
             obj.assertSize();
         end      
         function [v] = get.testActual(obj)
+            %{
             if isequal(obj.dataFU, [])
                 v = [];
                 return;
             end
+            %}
             v = obj.yActual(obj.isTest(),:);
             obj.assertSize();
         end 

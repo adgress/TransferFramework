@@ -4,7 +4,7 @@ function [f, returnStruct] = visualizeResults(options,f)
     end
     hold on;
     leg = {};  
-    numColors = options.numColors;
+    numColors = options.c.numColors;
     colors = colormap(hsv(numColors));
 
     legendNameParams = {...
@@ -14,10 +14,11 @@ function [f, returnStruct] = visualizeResults(options,f)
     };
     index = 1;   
     displayVals = {};
-    for i=1:numel(options.plotConfigs)
-        plotConfigs = options.plotConfigs{i};
-        fileName = [getProjectDir() '/' options.prefix '/' options.dataSet '/' plotConfigs.get('resultFileName')];
-        baselineFile = [getProjectDir() '/results/' options.prefix '/' options.dataSet '/' plotConfigs.get('baselineFile')];
+    allPlotConfigs = options.get('plotConfigs');
+    for i=1:numel(allPlotConfigs)
+        plotConfigs = allPlotConfigs{i};
+        fileName = [getProjectDir() '/' options.c.prefix '/' options.c.dataSet '/' plotConfigs.get('resultFileName')];
+        baselineFile = [getProjectDir() '/' options.c.prefix '/' options.c.dataSet '/' plotConfigs.get('baselineFile')];
         if ~exist(fileName,'file')
             continue
         end
@@ -41,7 +42,7 @@ function [f, returnStruct] = visualizeResults(options,f)
         if numel(learners) > 0
             learnerClassString = class(learners);
         end                    
-        [results] = allResults.getResultsForMethod(learnerClassString,options.resultQueries);
+        [results] = allResults.getResultsForMethod(learnerClassString,options.c.resultQueries);
         if ~isMeasureFile && isempty(results)
             continue;
         end
@@ -50,10 +51,10 @@ function [f, returnStruct] = visualizeResults(options,f)
             numel(results{1}.aggregatedResults.testResults) > 0;        
         legendName = configs.stringifyFields(legendNameParams,'-');
         
-        if isfield(options,'showRepair') && options.showRepair
+        if isfield(options,'showRepair') && options.c.showRepair
             plotRepairResults();                
         else
-            sizes = getSizes(results,options.xAxisField);                          
+            sizes = getSizes(results,options.c.xAxisField);                          
             if configs.hasMoreThanOne('numVecs')
                 error('TODO');
                 numVecs = configs.get('numVecs');
@@ -64,7 +65,7 @@ function [f, returnStruct] = visualizeResults(options,f)
                 displayVals{end+1} = plotResults(results,tau,colors(index,:));
             else
                 numTrain = length(sizes);  
-                if options.showRelativePerformance && hasTestResults
+                if options.c.showRelativePerformance && hasTestResults
                     displayVals{end+1} = plotRelativePerformance(options,...
                         baselineFile,results,sizes,colors(index,:));
                     legendName = ['Relative Acc: ' legendName];
@@ -72,33 +73,33 @@ function [f, returnStruct] = visualizeResults(options,f)
                     index = index + 1;
                 else
                     if hasTestResults
-                        if options.showTest
+                        if options.c.showTest
                             displayVals{end+1} = plotResults(results,sizes,'testResults',colors(index,:));
                             legName = legendName;
-                            if options.showTrain
+                            if options.c.showTrain
                                 legName = [legName ', Test'];
                             end
                             leg{index} = legName;
                             index = index+1;
                         end
-                        if options.showTrain
+                        if options.c.showTrain
                             displayVals{end+1} = plotResults(results,sizes,'trainResults',colors(index,:));
                             leg{index} = [legendName ', Train'];
                             index = index+1;
                         end
                     end
-                    if hasPostTM && hasPreTM && options.showRelativeMeasures
+                    if hasPostTM && hasPreTM && options.c.showRelativeMeasures
                         [index,leg,displayVals{end+1}] = plotRelativeMeasures(options,results,sizes,configs,...
                             hasPostTM,hasPreTM,colors,index,legendName,leg);
                     else
-                        if hasPostTM && options.showPostTransferMeasures
+                        if hasPostTM && options.c.showPostTransferMeasures
                             measureObj = configs.get('postTransferMeasures');                            
                             displayVals{end+1} = plotResults(results,sizes,'PostTMResults',colors(index,:));
                             dispName = measureObj.getDisplayName();
                             leg{index} = ['PostTM:' legendName ':' dispName];
                             index = index + 1;
                         end
-                        if hasPreTM && options.showPreTransferMeasures
+                        if hasPreTM && options.c.showPreTransferMeasures
                             measureObj = configs.get('preTransferMeasures');
                             displayVals{end+1} = plotResults(results,sizes,'PreTMResults',colors(index,:));
                             dispName = measureObj.getDisplayName();
@@ -110,27 +111,27 @@ function [f, returnStruct] = visualizeResults(options,f)
             end
         end        
     end       
-    if options.showLegend && ~isempty(leg) && ~options.showTables
+    if options.c.showLegend && ~isempty(leg) && ~options.c.showTable
         legend(leg);
     end
-    if options.showTables
+    if options.c.showTable
         tableData = makeResultsTableData(displayVals);
-        if isfield(options,'tableColumns') && length(options.tableColumns) > 0
-            assert(length(options.tableColumns) == length(leg));
-            leg = options.tableColumns;
+        if isfield(options,'tableColumns') && length(options.c.tableColumns) > 0
+            assert(length(options.c.tableColumns) == length(leg));
+            leg = options.c.tableColumns;
         end
-        set(options.table,'Data',tableData,'ColumnName',leg,'RowName',options.dataSet);
+        set(options.c.table,'Data',tableData,'ColumnName',leg,'RowName',options.c.dataSet);
     else
-        axisToUse = options.axisToUse;    
+        %axisToUse = options.c.axisToUse;    
         a = axis;
-        a(3:4) = axisToUse(3:4);
+        %a(3:4) = axisToUse(3:4);
         axis(a);
-        if isfield(options,'showRepair') && options.showRepair        
-            xAxisLabel = options.xAxisDisplay;     
+        if isfield(options,'showRepair') && options.c.showRepair        
+            xAxisLabel = options.c.xAxisDisplay;     
         elseif exist('results','var')      
             numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
             numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
-            xAxisLabel = [options.xAxisDisplay ' ('];
+            xAxisLabel = [options.c.xAxisDisplay ' ('];
             if isfield(results{1}.splitResults{1}.trainingDataMetadata,'numSourceLabels')
                 numSourceLabels = ...
                     results{1}.splitResults{1}.trainingDataMetadata.numSourceLabels;
@@ -141,7 +142,7 @@ function [f, returnStruct] = visualizeResults(options,f)
             xAxisLabel = '';
         end    
         xlabel(xAxisLabel,'FontSize',8);
-        ylabel(options.yAxisDisplay,'FontSize',8);
+        ylabel(options.c.yAxisDisplay,'FontSize',8);
     end
     hold off;    
     returnStruct = struct();

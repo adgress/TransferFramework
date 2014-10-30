@@ -34,7 +34,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 
                 numBackground = 0;                
                 numTarget = 2;
-                numSource = 4;
+                numSource = 5;
                 labelSet1 = labels(1:numTarget);
                 labelSet2 = labels(numTarget+1:numTarget+numSource);
                 targetDomains = Helpers.MakeCrossProductOrdered(labelSet1,labelSet1);

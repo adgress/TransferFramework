@@ -9,6 +9,7 @@ classdef Configs < matlab.mixin.Copyable
     end
     
     properties(Dependent)
+        c
     end
     
     methods               
@@ -58,7 +59,11 @@ classdef Configs < matlab.mixin.Copyable
         end
         function [b] = hasMoreThanOne(obj,key)
             b = obj.has(key) && length(obj.get(key)) > 1;
-        end               
+        end     
+        
+        function [v] = get.c(obj)
+            v = obj.configsStruct;
+        end
     end
     
     methods(Access = protected)
