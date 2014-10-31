@@ -13,8 +13,14 @@ classdef BatchConfigs < Configs
             obj.configsStruct.paramsToVary={'dataSet'};
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer','Transfer'};            
             obj.configsStruct.experimentConfigsClass.setNumLabeled();
-            %obj.configsStruct.experimentConfigsClass.setLLGCConfigs();
-            %obj.configsStruct.experimentConfigsClass.setMeasureConfigs();
+        end
+        
+        function [] = setNNConfigs(obj)
+            obj.configsStruct.experimentConfigsClass.setNNConfigs();
+        end
+        
+        function [] = setLLGCConfigs(obj)
+            obj.configsStruct.experimentConfigsClass.setLLGCConfigs();
         end
         
         function [] = setTommasiData(obj)

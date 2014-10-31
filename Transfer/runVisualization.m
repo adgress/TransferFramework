@@ -1,8 +1,9 @@
 function [] = runVisualization()
     setPaths;
     close all
-    vizConfigs = VisualizationConfigs();
-    vizConfigs.setTommasi();
+    %vizConfigs = VisualizationConfigs();
+    %vizConfigs.setTommasi();
+    vizConfigs = ProjectConfigs.VisualizationConfigs();
     f = figure;
     %annotation('textbox', [0,0.15,0.1,0.1],'String', 'Source');
     subplotIndex = 1;

@@ -77,10 +77,15 @@ classdef TransferMainConfigs < MainConfigs
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
             obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
-            %{
             llgcObj = LLGCMethod(learnerConfigs);
             obj.configsStruct.learners=llgcObj;
-            %}
+        end
+        
+        function [] = setNNConfigs(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
             nnObj = NearestNeighborMethod(learnerConfigs);
             obj.configsStruct.learners=nnObj;
         end

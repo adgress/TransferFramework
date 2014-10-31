@@ -1,7 +1,8 @@
 function [] = runBatchSplit(dataSet)
     if nargin < 1 || dataSet == Constants.CV_DATA
-        configs = SplitConfigs();
-        configs.setTommasi();
+        configs = ProjectConfigs.SplitConfigs();
+        %configs = SplitConfigs();
+        %configs.setTommasi();
         o = BatchDataSplitterConfigLoader(configs);
     else
         error('TODO');

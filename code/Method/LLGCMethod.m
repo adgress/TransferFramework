@@ -15,10 +15,10 @@ classdef LLGCMethod < HFMethod
             useHF = false;
             if exist('savedData','var')
                 [testResults,savedData] = ...
-                    trainAndTestGraphMethod(obj,input,useHF,savedData);
+                    obj.trainAndTestGraphMethod(input,useHF,savedData);
             else
                 [testResults] = ...
-                    trainAndTestGraphMethod(obj,input,useHF);
+                    obj.trainAndTestGraphMethod(input,useHF);
             end
         end
         function [prefix] = getPrefix(obj)
