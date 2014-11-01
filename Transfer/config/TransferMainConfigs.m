@@ -24,7 +24,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.setLLGCConfigs(learnerConfigs);
             
             obj.configsStruct.multithread=1;                  
-            obj.configsStruct.rerunExperiments=1;
+            obj.configsStruct.rerunExperiments=0;
             
             obj.configsStruct.computeLossFunction=1;
             obj.configsStruct.processMeasureResults=0;
@@ -50,6 +50,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.transferDir='Data/transferData';
             obj.configsStruct.outputDir='results';
             obj.configsStruct.dataSet='A2C';
+            obj.configsStruct.labelsToUse = [1 2];
         end
         
         function [] = setTommasiData(obj)
@@ -60,7 +61,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.numSourcePerClass=Inf;
         end
         
-        function [] = setMeasureConfigs(obj, learnerConfigs)
+        function [] = setCTMeasureConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
@@ -71,6 +72,16 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.preTransferMeasures=[];
             obj.configsStruct.postTransferMeasures=CTTransferMeasure(learnerConfigs);
         end
+        
+        function [] = setLLGCMeasureConfigs(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.learners=[];
+            obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
+            obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
+            obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);                        
+        end        
         
         function [] = setLLGCConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')

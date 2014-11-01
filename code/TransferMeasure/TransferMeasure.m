@@ -38,7 +38,7 @@ classdef TransferMeasure < Saveable
             measureMetadata = struct();
             targetWithLabels = target.Y > 0;
             if sum(targetWithLabels) == 0 || ...
-                sum(targetWithLabels) <= max(target.Y)
+                sum(targetWithLabels) <= target.numClasses
                 error('TODO');
                 return;
             end            
@@ -92,11 +92,12 @@ classdef TransferMeasure < Saveable
             measureResults.perLabelMeasures = [];
             measureResults.dataType = DataSet.TargetTrainType(length(Ypred));
             
+            %{
             measureResults.sources = {source};
             measureResults.sampledTrain = target.getTargetTrainData();
             measureResults.test = target.getTargetTestData();            
-            
-            assert(isempty(find(isnan(measureResults.Ypred))));
+            %}
+            assert(isempty(find(isnan(measureResults.yPred))));
         end         
         
         function [d] = getDirectory(obj)
@@ -104,6 +105,17 @@ classdef TransferMeasure < Saveable
         end
         function [] = displayMeasure(obj,val)
             display([obj.getPrefix() ' TransferMeasure: ' num2str(val)]); 
+        end
+        function [nameParams] = getNameParams(obj)
+            nameParams = {};
+        end    
+        function [displayName] = getDisplayName(obj)
+            displayName = obj.getResultFileName(',',false);
+            if obj.has('measureLoss')
+                measureLoss = obj.get('measureLoss');
+                measureLossName = measureLoss.getDisplayName();
+                displayName = [displayName ';' measureLossName];
+            end
         end
     end
     

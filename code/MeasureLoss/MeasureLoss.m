@@ -20,6 +20,8 @@ classdef MeasureLoss < Saveable
                 fuTarget = measureStruct.fuTargetProp;
                 assert(~isempty(fuSource) && ~isempty(fuTarget));
                 value = obj.getFUScore(fuSource,fuTarget);
+            else
+                '';
             end
         end
         function [value] = getFUScore(obj,fuSource,fuTarget)
@@ -33,8 +35,8 @@ classdef MeasureLoss < Saveable
 
         function [nameParams] = getNameParams(obj)
             nameParams = {};
-        end
-
+        end       
+        
         function [d] = getDirectory(obj)
             error('not necessary');
         end

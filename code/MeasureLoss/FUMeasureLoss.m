@@ -17,6 +17,12 @@ classdef FUMeasureLoss < MeasureLoss
                 fuTarget = full(measureStruct.measureMetadata.fuTargetProp);
                 assert(~isempty(fuSource) && ~isempty(fuTarget));
                 value = obj.getFUScore(fuSource,fuTarget,measureStruct.measureResults);
+            else
+                fu = measureStruct.measureResults.labeledTargetScores;
+                yActual = measureStruct.measureResults.yActual;
+                labelMat = Helpers.createLabelMatrix(yActual);
+                scores = fu.*labelMat;
+                value = sum(scores(:))/nnz(labelMat);
             end
         end
         function [value] = getFUScore(obj,fuSource,fuTarget,measureResults)

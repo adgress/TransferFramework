@@ -39,7 +39,15 @@ classdef Configs < matlab.mixin.Copyable
             v = obj.configsStruct.(key);
         end
         function [] = set(obj,key,value)
-            obj.configsStruct.(key) = value;
+            if isa(key,'cell') && isa(value,'cell')                
+                for i=1:length(key)
+                    k = key{i};
+                    v = value{i};
+                    obj.set(k,v);
+                end
+            else
+                obj.configsStruct.(key) = value;
+            end
         end
         function [b] = has(obj,key)
             b = obj.hasConfig(key);

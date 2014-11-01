@@ -20,11 +20,7 @@ classdef LLGCTransferMeasure < TransferMeasure
                 
         function [name] = getPrefix(obj)
             name = 'LLGC';
-        end
-        
-        function [nameParams] = getNameParams(obj)
-            nameParams = {'useSoftLoss','useMeanSigma'};
-        end
+        end      
     end    
 end
 

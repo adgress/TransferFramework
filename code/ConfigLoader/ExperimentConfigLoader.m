@@ -262,6 +262,13 @@ classdef ExperimentConfigLoader < ConfigLoader
             else
                 error('Unknown DataSet')
             end
+            if obj.has('labelsToUse')
+                labelsToUse = obj.get('labelsToUse');
+                assert(length(labelsToUse) > 1);
+                train.keep(train.hasLabel(labelsToUse));
+                test.keep(test.hasLabel(labelsToUse));
+                validate.keep(validate.hasLabel(labelsToUse));
+            end
         end
         
         function [nExperiments] = numExperiments(obj)

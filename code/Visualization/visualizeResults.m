@@ -24,19 +24,21 @@ function [f, returnStruct] = visualizeResults(options,f)
         end
         allResults = load(fileName);
         allResults = allResults.results;
-        
-        measureLoss = plotConfigs.get('measureLoss');
-        allResults.aggregateMeasureResults(plotConfigs.get('measureLoss'));
-        configs = allResults.mainConfigs;
+                        
+        configs = allResults.mainConfigs;        
         hasPreTM = configs.hasNonempty('preTransferMeasures');
         hasPostTM = configs.hasNonempty('postTransferMeasures');
-        if hasPreTM
-            configs.get('preTransferMeasures').set('measureLoss',measureLoss);
-        end
-        if hasPostTM
-            configs.get('postTransferMeasures').set('measureLoss',measureLoss);
-        end
         isMeasureFile = hasPostTM || hasPreTM;
+        if isMeasureFile
+            measureLoss = plotConfigs.get('measureLoss');
+            if hasPreTM                
+                configs.get('preTransferMeasures').set('measureLoss',measureLoss);
+            end
+            if hasPostTM
+                configs.get('postTransferMeasures').set('measureLoss',measureLoss);
+            end
+            allResults.aggregateMeasureResults(plotConfigs.get('measureLoss'));
+        end
         learners = configs.get('learners');
         learnerClassString = '';
         if numel(learners) > 0
@@ -122,9 +124,9 @@ function [f, returnStruct] = visualizeResults(options,f)
         end
         set(options.c.table,'Data',tableData,'ColumnName',leg,'RowName',options.c.dataSet);
     else
-        %axisToUse = options.c.axisToUse;    
+        axisToUse = options.c.axisToUse;    
         a = axis;
-        %a(3:4) = axisToUse(3:4);
+        a(3:4) = axisToUse(3:4);
         axis(a);
         if isfield(options,'showRepair') && options.c.showRepair        
             xAxisLabel = options.c.xAxisDisplay;     
@@ -164,9 +166,9 @@ function [s] = makeResultsStruct(means,vars)
     s.vars = vars;
 end
 
-function [index,leg,displayVal] = plotRelativeMeasures(results,sizes,configs,...
+function [index,leg,displayVal] = plotRelativeMeasures(options,results,sizes,configs,...
     hasPostTM,hasPreTM,colors,index,learnerName,leg)
-    assert(hasPostTM && hasPreTM && options.showRelativeMeasures);
+    assert(hasPostTM && hasPreTM && options.c.showRelativeMeasures);
     field2 = 'PostTMResults';
     field1 = 'PreTMResults';
     [means,vars,lows,ups] = getRelativePerf(results,...
@@ -178,7 +180,7 @@ function [index,leg,displayVal] = plotRelativeMeasures(results,sizes,configs,...
     vars = mean(vars,2);
     errorbar(sizes,means,vars,'color',colors(index,:));
     measures = configs.get('postTransferMeasures');
-    dispName = TransferMeasure.GetDisplayName(measures{1},configs);
+    dispName = TransferMeasure.GetDisplayName(measures,configs);
     leg{index} = ['Relative Measure: ' dispName];
     index = index + 1;
     displayVal = makeResultsStruct(means,vars);
@@ -239,8 +241,8 @@ function [means,vars,lows,highs] = getRelativePerf(results,field1,field2,options
     vars = [];
     highs = [];
     lows = [];
-    if options.relativeType == Constants.RELATIVE_PERFORMANCE || ...
-            options.relativeType == Constants.DIFF_PERFORMANCE
+    if options.c.relativeType == Constants.RELATIVE_PERFORMANCE || ...
+            options.c.relativeType == Constants.DIFF_PERFORMANCE
         vars = means;
     else
         highs = means;
@@ -258,9 +260,9 @@ function [means,vars,lows,highs] = getRelativePerf(results,field1,field2,options
         if size(x,1) ~= size(y,1)            
             y = y';
         end
-        if options.relativeType == Constants.RELATIVE_PERFORMANCE || ...
-                options.relativeType == Constants.DIFF_PERFORMANCE
-            if options.relativeType == Constants.DIFF_PERFORMANCE                
+        if options.c.relativeType == Constants.RELATIVE_PERFORMANCE || ...
+                options.c.relativeType == Constants.DIFF_PERFORMANCE
+            if options.c.relativeType == Constants.DIFF_PERFORMANCE                
                 relativePerf = ResultsVector(y - x);                
             else
                 relativePerf = ...

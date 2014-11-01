@@ -9,6 +9,14 @@ classdef SoftFUMeasureLoss < FUMeasureLoss
         function [obj] = SoftFUMeasureLoss(configs)
             obj = obj@FUMeasureLoss(configs);
         end
+        
+        function [value] = computeLoss(obj, measureStruct)
+            value = computeLoss@FUMeasureLoss(obj,measureStruct);                        
+            if isfield(measureStruct.measureMetadata,'fuSourceProp')
+                '';
+            end
+        end
+        
         function [value] = getFUScore(obj,fuSource,fuTarget,measureResults)
             if obj.configs.get('justTarget')                
                 isTarget = measureResults.dataType == Constants.TARGET_TRAIN | ...

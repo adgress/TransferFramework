@@ -52,19 +52,7 @@ classdef CTTransferMeasure < TransferMeasure
         
         function [name] = getPrefix(obj)
             name = 'CT';
-        end
-        
-        function [nameParams] = getNameParams(obj)
-            nameParams = {};
-        end    
-        function [displayName] = getDisplayName(obj)
-            displayName = obj.getResultFileName(',',false);
-            if obj.has('measureLoss')
-                measureLoss = obj.get('measureLoss');
-                measureLossName = measureLoss.getDisplayName();
-                displayName = [displayName ';' measureLossName];
-            end
-        end
+        end                        
     end
     
 end

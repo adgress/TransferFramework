@@ -30,9 +30,14 @@ classdef BatchConfigs < Configs
             obj.set('makeSubDomains',true);
         end
         
-        function [] = setMeasureConfigs(obj)
+        function [] = setCTMeasureConfigs(obj)
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer'};
-            obj.configsStruct.experimentConfigsClass.setMeasureConfigs();
+            obj.configsStruct.experimentConfigsClass.setCTMeasureConfigs();
+        end
+        
+        function [] = setLLGCMeasureConfigs(obj)
+            obj.configsStruct.transferMethodClassStrings = {'FuseTransfer'};
+            obj.configsStruct.experimentConfigsClass.setLLGCMeasureConfigs();
         end
     end
 end

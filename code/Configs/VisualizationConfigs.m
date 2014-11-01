@@ -8,6 +8,7 @@ classdef VisualizationConfigs < Configs
     methods
         function obj = VisualizationConfigs()
             obj = obj@Configs();            
+            obj.configsStruct.axisToUse = [0 10 0 1];
             obj.configsStruct.showCorrelation = false;
             obj.configsStruct.showTrain = false;
             obj.configsStruct.showTest = true;
@@ -17,10 +18,9 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.showPostTransferMeasures = true;
             obj.configsStruct.showPreTransferMeasures = true;
             obj.configsStruct.showRelativePerformance = false;
-            obj.configsStruct.showRelativeMeasures = false;
-            obj.configsStruct.numColors = 4;
-            obj.configsStruct.axisToUse = [];
-            obj.configsStruct.relativeType = Constants.RELATIVE_PERFORMANCE;
+            obj.configsStruct.showRelativeMeasures = true;
+            obj.configsStruct.numColors = 5;
+            obj.configsStruct.relativeType = Constants.DIFF_PERFORMANCE ;
             obj.configsStruct.xAxisField = 'numLabeledPerClass';
             obj.configsStruct.xAxisDisplay = 'Target Labels Per Class';
             obj.configsStruct.yAxisDisplay = 'Accuracy';
@@ -36,50 +36,42 @@ classdef VisualizationConfigs < Configs
                     obj.configsStruct.yAxisDisplay = 'Measure/Accuracy';
                     %}                    
                 end
-            end
+            end    
+            obj.configsStruct.showKNN = false;
+            obj.configsStruct.showSoftMeasures = true;
+            obj.configsStruct.showHardMeasures = false;
+            obj.configsStruct.showLLGCMeasure = true;
             
-            fileNames = {};            
-            showKNN = true;            
-            if ~showKNN                        
-                if ~showRelativePerformance
-                    fileNames{end+1} = 'TO_LLGC.mat';
-                end
-                fileNames{end+1} = 'S+T_LLGC.mat';
-            else
-                fileNames{end+1} = 'TO_kNN-k=1.mat';
-                fileNames{end+1} = 'S+T_kNN-k=1.mat';        
-            end
-            fileNames{end+1} = 'TM/CT_S+T.mat';            
-            
-            obj.makePlotConfigs(fileNames);                                                                        
+            obj.makePlotConfigs();
             
             obj.configsStruct.resultQueries = {};
-        end
+        end        
         
         function [] = setTommasi(obj)
             obj.configsStruct.datasetToViz = Constants.TOMMASI_DATA;
             obj.configsStruct.dataSet = 'tommasi_data';
             obj.configsStruct.prefix = 'results_tommasi/tommasi_data';
-             %{
-            sourceData = {'10', '15', '23','25'};
-            targetData = {'10', '15', '23','25'};
-            %}
-            obj.configsStruct.targetData = {[10 15]};
-            sourceLabels = [23 25 26 30 41];
-            sourceData = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);
-            obj.configsStruct.sourceData = sourceData;
             obj.configsStruct.numSubplotRows = 5;
             obj.configsStruct.numSubplotCols = 5;
+            
+            
+            [obj.configsStruct.targetData,obj.configsStruct.sourceData] = ...
+                ProjectConfigs.MakeDomains();
+            
         end
         
         function [] = setCV(obj)
             %prefix = 'results/CV-small_10-13';
             %prefix = 'results/CV-small';
             %prefix = 'results/CV-small_numLabeledPerClass';        
-            obj.configsStruct.sourceData = {'A','C','D','W'};
-            obj.configsStruct.targetData = {'A','C','D','W'};
+            sourceData = {'A','C','D','W'};
+            targetData = {'A','C','D','W'};
+            obj.configsStruct.sourceData = sourceData;
+            obj.configsStruct.targetData = targetData;
             obj.configsStruct.numSubplotRows = numel(sourceData);
             obj.configsStruct.numSubplotCols = numel(targetData);
+            obj.configsStruct.datasetToViz = Constants.CV_DATA;
+            obj.configsStruct.prefix = 'results/CV-small';
         end
         
         function [] = setNumSourcePerClass(obj)
@@ -87,27 +79,64 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.xAxisDisplay = 'Num Source Instances';
         end
         
-        function [] = makePlotConfigs(obj,fileNames)
-            measureLossConfigs = Configs();    
-            measureLossJustTarget = SoftFUMeasureLoss(measureLossConfigs);
-            measureLossJustTarget.set('justTarget',true);
-            measureLossAll = FUMeasureLoss(measureLossConfigs);
-            measureLossAll.set('justTarget',true); 
-            
+        function [] = makePlotConfigs(obj)                                           
             basePlotConfigs = Configs();
-            basePlotConfigs.set('baselineFile','TO_LLGC.mat');
-            basePlotConfigs.set('measureLoss',measureLossAll);
+            methodResultsFileNames = {};            
+            if obj.c.showKNN
+                basePlotConfigs.set('baselineFile','TO_kNN-k=1.mat');
+                if ~obj.c.showRelativePerformance
+                    methodResultsFileNames{end+1} = 'TO_kNN-k=1.mat';
+                end
+                methodResultsFileNames{end+1} = 'S+T_kNN-k=1.mat';   
+            else
+                basePlotConfigs.set('baselineFile','TO_LLGC.mat');
+                if ~obj.c.showRelativePerformance
+                    methodResultsFileNames{end+1} = 'TO_LLGC.mat';
+                end
+                methodResultsFileNames{end+1} = 'S+T_LLGC.mat';
+            end                        
             
             plotConfigs = {};
-            for fileIdx=1:length(fileNames)
+            for fileIdx=1:length(methodResultsFileNames)
                 configs = basePlotConfigs.copy();
-                configs.set('resultFileName',fileNames{fileIdx});
-                plotConfigs{fileIdx} = configs;
+                configs.set('resultFileName',methodResultsFileNames{fileIdx});
+                plotConfigs{end+1} = configs;
             end
-            configs = basePlotConfigs.copy();
-            configs.set('measureLoss',measureLossJustTarget);
-            configs.set('resultFileName','TM/CT_S+T.mat');
-            plotConfigs{end+1} = configs;
+            
+            measureLossConfigs = Configs();    
+            measureLossSoft = SoftFUMeasureLoss(measureLossConfigs);
+            measureLossSoft.set('justTarget',true);
+            measureLossHard = FUMeasureLoss(measureLossConfigs);
+            measureLossHard.set('justTarget',true); 
+            
+            %basePlotConfigs.set('measureLoss',measureLossAll);
+            
+            softMeasureFiles = {'TM/CT_S+T.mat'};
+            hardMeasureFiles = {'TM/CT_S+T.mat'};
+            if obj.c.showLLGCMeasure
+                llgcMeasureFile = 'TM/LLGC-useSoftLoss=0-useMeanSigma=0_S+T.mat';
+                softMeasureFiles{end+1} = llgcMeasureFile;
+                hardMeasureFiles{end+1} = llgcMeasureFile;                    
+            end
+            
+            if obj.c.showSoftMeasures
+                for fileIdx=1:length(softMeasureFiles)
+                    configs = basePlotConfigs.copy();                
+                    configs.set('resultFileName',softMeasureFiles{fileIdx});
+                    configs.set('measureLoss',measureLossSoft);                
+                    plotConfigs{end+1} = configs;
+                end
+            end
+            
+            if obj.c.showHardMeasures
+                for fileIdx=1:length(hardMeasureFiles)
+                    configs = basePlotConfigs.copy();                
+                    configs.set('resultFileName',hardMeasureFiles{fileIdx});
+                    configs.set('measureLoss',measureLossHard);
+                    plotConfigs{end+1} = configs;
+                end
+            end
+            
             obj.configsStruct.plotConfigs = plotConfigs;
         end
         

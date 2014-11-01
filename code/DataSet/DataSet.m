@@ -96,6 +96,15 @@ classdef DataSet < LabeledData
             Yl = obj.Y(indices,:);
         end
         
+        function [] = keep(obj,shouldKeep)
+            if ~islogical(shouldKeep)
+                logArray = false(obj.size(),1);
+                logArray(shouldKeep) = true;
+                shouldKeep = logArray;
+            end
+            obj.remove(~shouldKeep);
+        end
+        
         function [] = remove(obj,shouldRemove)
             if ~islogical(shouldRemove)
                 logArray = false(obj.size(),1);
@@ -174,19 +183,22 @@ classdef DataSet < LabeledData
                 perm = randperm(numThisClass);
                 thisClassRandomized = thisClass(perm);
                 numToPick = ceil(numThisClass*percentageArray);
-                diff = max(numToPick(1)-maxTrainNumPerLabel,0);
-                numToPick = numToPick-diff;
-                numEach = [1 numToPick];
-                
+                %diff = max(numToPick(1)-maxTrainNumPerLabel,0);
+                numToPick(1) = min(numToPick(1),maxTrainNumPerLabel);
+                %numToPick = numToPick-diff;
+                numEach = [0 numToPick];
+                assert(numToPick(2)-numToPick(1) > 0);
                 for j=1:numel(percentageArray)       
                     if numEach(j) == numEach(j+1)
                         display('TODO: Potential off by one error');
                         continue;
                     end
-                    indices = thisClassRandomized(numEach(j):numEach(j+1));
-                    split(indices) = j;
+                    indices = thisClassRandomized(numEach(j)+1:numEach(j+1));
+                    split(indices) = j;                    
                 end
-            end            
+                assert(sum(split(thisClassRandomized) == 1) == numToPick(1));
+            end
+            assert(sum(split==0) == 0);
         end
         
         function [allSplits] = splitMatrix(mat,splits)

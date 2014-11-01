@@ -6,11 +6,12 @@ function [] = runVisualization()
     vizConfigs = ProjectConfigs.VisualizationConfigs();
     f = figure;
     %annotation('textbox', [0,0.15,0.1,0.1],'String', 'Source');
-    subplotIndex = 1;
+    subplotIndex = 0;
     sourceData = vizConfigs.get('sourceData');
     targetData = vizConfigs.get('targetData');
     for sourceIdx=1:numel(sourceData)
         for targetIdx=1:numel(targetData)
+            subplotIndex = subplotIndex + 1;
             if isequal(sourceIdx,targetIdx)
                 continue;
             end
@@ -24,8 +25,7 @@ function [] = runVisualization()
             vizConfigs.set('dataSet',dataSet);
             if ~vizConfigs.get('showTable')
                 subplot(vizConfigs.get('numSubplotRows'),...
-                    vizConfigs.get('numSubplotCols'),subplotIndex);
-                subplotIndex = subplotIndex + 1;
+                    vizConfigs.get('numSubplotCols'),subplotIndex);                
                 title(['Target=' targetStr ',Source=' sourceStr]);
             end
             [~,returnStruct] = visualizeResults(vizConfigs,f);

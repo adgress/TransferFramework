@@ -10,17 +10,27 @@ classdef SplitConfigs < Configs
             obj = obj@Configs();
             obj.set('numSplits',10);
             obj.set('percentTrain',.8);
-            obj.set('percentTest',.2);
+            obj.set('percentTest',.2);         
+            obj.set('maxTrainNumPerLabel',Inf);
+            obj.set('normalizeRows',0);
+        end
+        
+        function [] = setCVSmall(obj)
+            obj.setCV();
+            obj.set('outputFilePrefix','Transfer/Data/CV-small/');
+            obj.set('maxTrainNumPerLabel',15);
+        end
+        
+        function [] = setCV(obj)
             obj.set('dataSetType','DataSet');
             obj.set('XName','fts');
             obj.set('YName','labels');
-            obj.set('normalizeRows',0);
-            obj.set('maxTrainNumPerLabel',15);
             
+            obj.set('maxTrainNumPerLabel',Inf);            
             obj.set('inputFilePrefix','Data/GFK/data/');
             obj.set('inputDataSets',{'amazon_SURF_L10.mat','Caltech10_SURF_L10.mat','dslr_SURF_L10.mat','webcam_SURF_L10.mat'});
             obj.set('dataSetAcronyms',{'A','C','D','W'});
-            obj.set('outputFilePrefix','Transfer/Data/CV-small/');
+            obj.set('outputFilePrefix','Transfer/Data/CV/');
         end
         
         function [] = setTommasi(obj)
