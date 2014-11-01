@@ -63,6 +63,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     [split] = ...
                         allDataCopy.generateSplitArray(percentTrain,percentTest,obj.configs);                    
                     allSplits{i}.split = split;                    
+                    [train,test,~] = allDataCopy.splitDataSet(split);
+                    assert(train.numClasses == allDataCopy.numClasses);
+                    assert(test.numClasses == allDataCopy.numClasses);
                 else
                     error('Unknown DataSet type');
                 end

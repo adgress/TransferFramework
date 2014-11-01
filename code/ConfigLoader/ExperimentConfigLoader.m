@@ -41,6 +41,8 @@ classdef ExperimentConfigLoader < ConfigLoader
                 numPerClass = ceil(numTrain/numClasses);
                 numTrain = numPerClass*numClasses;
             end 
+            assert(numTrain == numPerClass*test.numClasses);
+            assert(test.numClasses > 1);
         end  
         
         function [] = setDataSet(obj,dataSet)

@@ -21,7 +21,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 classesToKeep = obj.get('classesToKeep');
             end
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain,classesToKeep);
-            
+            assert(sampledTrain.numClasses == train.numClasses);
+            assert(sum(sampledTrain.Y > 0) == sampledTrain.numClasses*numPerClass);
+            assert(numPerClass > 1);
             splitStruct = obj.dataAndSplits.allSplits{splitIndex};
             sourceDataSets = {splitStruct.sourceData};
             sources = {};            

@@ -114,29 +114,25 @@ classdef VisualizationConfigs < Configs
             softMeasureFiles = {'TM/CT_S+T.mat'};
             hardMeasureFiles = {'TM/CT_S+T.mat'};
             if obj.c.showLLGCMeasure
-                llgcMeasureFile = 'TM/LLGC-useSoftLoss=0-useMeanSigma=0_S+T.mat';
+                llgcMeasureFile = 'TM/LLGC_S+T.mat';
                 softMeasureFiles{end+1} = llgcMeasureFile;
                 hardMeasureFiles{end+1} = llgcMeasureFile;                    
             end
-            
-            if obj.c.showSoftMeasures
-                for fileIdx=1:length(softMeasureFiles)
+                        
+            for fileIdx=1:length(softMeasureFiles)
+                if obj.c.showSoftMeasures
                     configs = basePlotConfigs.copy();                
                     configs.set('resultFileName',softMeasureFiles{fileIdx});
                     configs.set('measureLoss',measureLossSoft);                
                     plotConfigs{end+1} = configs;
                 end
-            end
-            
-            if obj.c.showHardMeasures
-                for fileIdx=1:length(hardMeasureFiles)
+                if obj.c.showHardMeasures
                     configs = basePlotConfigs.copy();                
                     configs.set('resultFileName',hardMeasureFiles{fileIdx});
                     configs.set('measureLoss',measureLossHard);
-                    plotConfigs{end+1} = configs;
+                    plotConfigs{end+1} = configs; 
                 end
-            end
-            
+            end                                    
             obj.configsStruct.plotConfigs = plotConfigs;
         end
         

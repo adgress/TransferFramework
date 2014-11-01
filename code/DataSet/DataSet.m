@@ -73,6 +73,7 @@ classdef DataSet < LabeledData
             [selectedItems] = obj.stratifiedSelection(numItems,classesToKeep);
             sampledDataSet = DataSet.CreateNewDataSet(obj);
             sampledDataSet.Y(~selectedItems) = -1;
+            assert(sum(sampledDataSet.Y > 0) == numItems);
         end
         
         function [selectedItems] = stratifiedSelection(obj,numItems,classesToKeep)
@@ -89,6 +90,9 @@ classdef DataSet < LabeledData
                 end
                 selectedItems(XWithClass(1:itemsToUse)) = 1;                
             end
+            c = obj.classes;
+            assert(isequal(i,c(end)));
+            %assert(sum(selectedItems) == itemsPerClass*length(obj.classes()));
         end
         function [Xl, Yl, indices] = getLabeledData(obj)
             indices = obj.Y > 0;
@@ -194,7 +198,10 @@ classdef DataSet < LabeledData
                         continue;
                     end
                     indices = thisClassRandomized(numEach(j)+1:numEach(j+1));
-                    split(indices) = j;                    
+                    split(indices) = j;  
+                    if j < 3
+                        assert(length(indices) > 0);
+                    end
                 end
                 assert(sum(split(thisClassRandomized) == 1) == numToPick(1));
             end

@@ -133,10 +133,12 @@ classdef Measure < Saveable
                     Helpers.getValuesOfField(splitMeasures,'trainPerformance');                        
                 aggregatedResults.testResults = ResultsVector(testMeasures);
                 aggregatedResults.trainResults = ResultsVector(trainMeasures);
+                %{
                 aggregatedResults.trainLabelMeasures = ...
                     ResultsVector(Helpers.getValuesOfField(splitMeasures,'trainPerfPerLabel'));
                 aggregatedResults.testLabelMeasures  = ...
                     ResultsVector(Helpers.getValuesOfField(splitMeasures,'testPerfPerLabel'));
+                %}
             end
         end                
         function [prefix] = getPrefix(obj)
