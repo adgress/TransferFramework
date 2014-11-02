@@ -4,3 +4,5 @@ results*/*/*/*.mat
 results*/*/*/*/*.mat
 
 Data/CV-small/*.mat
+Data/CV/*.mat
+Data/*/*.mat
