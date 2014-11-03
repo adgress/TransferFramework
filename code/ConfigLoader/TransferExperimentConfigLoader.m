@@ -25,7 +25,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             assert(sum(sampledTrain.Y > 0) == sampledTrain.numClasses*numPerClass);
             assert(numPerClass > 1);
             splitStruct = obj.dataAndSplits.allSplits{splitIndex};
-            sourceDataSets = {splitStruct.sourceData};
+            sourceDataSets = splitStruct.sourceData;
             sources = {};            
             for i=1:length(sourceDataSets)
                 sources{i} = sourceDataSets{i}.copy();                
@@ -44,7 +44,6 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             train.setTargetTrain();
             test.setTargetTest();
             validate.setTargetTrain();
-            assert(numel(sources) == 1);
         end
         
         function [results] = ...
@@ -61,7 +60,6 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         end
         function [transferOutput,trainTestInput] = ...
                 performTransfer(obj,train,test,sources,validate,experiment)
-            assert(length(sources) == 1);
             transferObject = obj.get('transferMethodClass');
             transferObject.configs = obj.configs.copy();
             [tTrain,tTest,tSource,tTarget] = ...
@@ -72,14 +70,15 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             transferOutput.tTest = tTest;
             transferOutput.tSource = tSource;
             transferOutput.tTarget = tTarget;
-            assert(numel(sources) == 1);
-            transferOutput.originalSourceData = sources{1};
+            transferOutput.originalSourceData = sources;
             trainTestInput = ExperimentConfigLoader.CreateRunExperimentInput(...
                 tTrain,tTest,validate,experiment);
-            trainTestInput.originalSourceData = sources{1};
+            trainTestInput.originalSourceData = sources;
             assert(trainTestInput.train.hasTypes());
             assert(trainTestInput.test.isTargetDataSet());
-            assert(trainTestInput.originalSourceData.isSourceDataSet());
+            isSource = cellfun(@isSourceDataSet,trainTestInput.originalSourceData);
+            assert(all(isSource));
+            %assert(trainTestInput.originalSourceData.isSourceDataSet());
         end                      
         
         function [trainingDataMetadata] = constructTrainingDataMetadata(obj,sources,...
