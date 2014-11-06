@@ -16,11 +16,11 @@ classdef ProjectConfigs
             if ProjectConfigs.dataSet == Constants.TOMMASI_DATA
                 c.setTommasiData();
             else
-                c.get('experimentConfigsClass').configsStruct.labelsToUse = 2:3;
+                c.get('experimentConfigsClass').configsStruct.labelsToUse = 1:10;
             end
-            %c.setLLGCConfigs();
+            c.setLLGCConfigs();
             %c.setCTMeasureConfigs();
-            c.setLLGCMeasureConfigs();            
+            %c.setLLGCMeasureConfigs();            
         end
         
         function [c] = SplitConfigs()
@@ -45,7 +45,8 @@ classdef ProjectConfigs
             c.configsStruct.showSoftMeasures = true;
             c.configsStruct.showHardMeasures = true;
             c.configsStruct.showLLGCMeasure = false;
-            c.configsStruct.showRelativePerformance = true;
+            c.configsStruct.showRelativePerformance = false;
+            c.configsStruct.numColors = 2;
             c.makePlotConfigs();            
         end
                 

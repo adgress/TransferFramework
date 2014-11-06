@@ -16,18 +16,27 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
             outputFilePrefix = obj.get('outputFilePrefix');
             if length(inputDataSets) > 1
                 for i=1:numel(inputDataSets)
+                    configCopy = configs.copy();
+                    configCopy.set('inputFile',[inputFilePrefix inputDataSets{i}]);
+                    sourceFiles = {};
+                    sourceAcronym = '';
+                    sourceNames = {};
                     for j=1:numel(inputDataSets)
                         if i==j
                             continue;
                         end
-                        configCopy = configs.copy();
-                        configCopy.set('inputFile',[inputFilePrefix inputDataSets{i}]);
-                        configCopy.set('outputFile',[dataSetAcronyms{i} '2' dataSetAcronyms{j} '.mat']);
-                        configCopy.set('sourceFiles', {[inputFilePrefix inputDataSets{j}]});
-                        o = DataSplitterConfigLoader(configCopy);
-                        o.splitData();
-                        o.saveSplit();
+                        sourceNames{end+1} = dataSetAcronyms{j};
+                        sourceFiles{end+1} = [inputFilePrefix inputDataSets{j}];
+                        sourceAcronym = [sourceAcronym dataSetAcronyms{j}];
+                        
                     end
+                    configCopy.set('targetName',dataSetAcronyms{i});
+                    configCopy.set('sourceFiles', sourceFiles);
+                    configCopy.set('outputFile',[sourceAcronym '2' dataSetAcronyms{i} '.mat']);
+                    configCopy.set('sourceNames', sourceNames);
+                    o = DataSplitterConfigLoader(configCopy);
+                    o.splitData();
+                    o.saveSplit();
                 end
             else
                 data = load(Helpers.MakeProjectURL([inputFilePrefix inputDataSets{1}]));

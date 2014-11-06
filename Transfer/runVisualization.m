@@ -12,15 +12,23 @@ function [] = runVisualization()
     for sourceIdx=1:numel(sourceData)
         for targetIdx=1:numel(targetData)
             subplotIndex = subplotIndex + 1;
-            if isequal(sourceIdx,targetIdx)
-                continue;
+            currSource = sourceData{sourceIdx};
+            currTarget = targetData{targetIdx};
+            if isequal(currSource,currTarget) 
+                if vizConfigs.get('datasetToViz') == Constants.CV_DATA
+                    currSource = sourceData;
+                    currSource(targetIdx) = [];
+                    currSource = [currSource{:}];
+                else
+                    continue;
+                end
             end
             delim = '2';
             if vizConfigs.get('datasetToViz') == Constants.TOMMASI_DATA
                 delim = '-to-';
             end
-            sourceStr = StringHelpers.ConvertToString(sourceData{sourceIdx});
-            targetStr = StringHelpers.ConvertToString(targetData{targetIdx});
+            sourceStr = StringHelpers.ConvertToString(currSource);
+            targetStr = StringHelpers.ConvertToString(currTarget);
             dataSet = [sourceStr delim targetStr];                                                                        
             vizConfigs.set('dataSet',dataSet);
             if ~vizConfigs.get('showTable')

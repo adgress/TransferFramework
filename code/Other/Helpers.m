@@ -413,6 +413,33 @@ classdef Helpers < handle
             inds = indsNew;
         end
         
+        function [inds] = IsMember(cellArray,toFind)
+            inds = zeros(size(cellArray));
+            for idx=1:length(toFind)
+                inds = inds | ismember(cellArray,toFind{idx});
+            end
+        end
+        
+        function [v] = IntersectCellArrays(c1,c2)
+            v = {};
+            for idx=1:length(c1)
+                val = c1{idx};
+                if ismember(c2,val)
+                    v{end+1} = val;
+                end
+            end
+        end
+        
+        function [v] = MapCellArray(func,c)
+            v = cell(size(c));
+            for idx=1:numel(c)
+                if exist('v','var')
+                    v{idx} = func(c{idx});
+                else
+                    func(c{idx});
+                end
+            end
+        end
         function [v,inds] = MakeCrossProduct(varargin)
             v = {};
             inds = {[]};

@@ -70,8 +70,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         assert(sum(sourceDataCopy.hasLabel(backgroundLabel)) == numBackground);
 
                         newSplit.targetData = targetDataCopy;
-                        newSplit.sourceData = sourceDataCopy;                            
-                        newSplit.targetType = split.split(split.permutation);
+                        newSplit.sourceData = sourceDataCopy;  
+                        display('Not applying permutation to split - is this correct?');
+                        %newSplit.targetType = split.split(split.permutation);
+                        newSplit.targetType = split.split;
                         newSplit.targetType = newSplit.targetType(targetClassInds);
 
                         backgroundShouldRemove = false(length(newSplit.targetType),1);
@@ -102,6 +104,19 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigsCopy.set(paramsToVary,params);                    
                     dataAndSplits = load(mainConfigsCopy.getDataFileName());
                     dataAndSplits = dataAndSplits.dataAndSplits;
+                    
+                    allSourceNames = dataAndSplits.sourceNames;
+                    currSourceNames = mainConfigsCopy.c.sourceDataSetToUse;
+                    targetName = dataAndSplits.allData.name;   
+                    shouldUseSource = Helpers.IsMember(allSourceNames,currSourceNames) ...
+                        & ~ismember(allSourceNames,targetName);                                         
+                    if isempty(find(shouldUseSource))
+                        continue;
+                    end
+                    dataAndSplits.sourceDataSets = dataAndSplits.sourceDataSets(shouldUseSource);
+                    dataAndSplits.sourceNames = dataAndSplits.sourceNames(shouldUseSource);
+                    transferDataSetName = [[dataAndSplits.sourceNames{:}] '2' targetName];
+                    mainConfigsCopy.set('transferDataSetName',transferDataSetName);
                     dataAndSplitsCopy = struct();
                     dataAndSplitsCopy.allSplits = {};
                     dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
@@ -111,8 +126,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         targetDataCopy = dataAndSplits.allData.copy();
                         targetDataCopy.applyPermutation(split.permutation);                        
                         newSplit.targetData = targetDataCopy;
-                        newSplit.sourceData = dataAndSplits.sourceDataSets{1}.copy();
-                        newSplit.targetType = split.split(split.permutation);                        
+                        newSplit.sourceData = Helpers.MapCellArray(@copy,dataAndSplits.sourceDataSets);
+                        display('Not applying permutation to split - is this correct?');
+                        %newSplit.targetType = split.split(split.permutation);
+                        newSplit.targetType = split.split;
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
                     end
                     mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);

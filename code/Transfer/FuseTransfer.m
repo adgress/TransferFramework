@@ -16,11 +16,14 @@ classdef FuseTransfer < Transfer
         function [transformedTargetTrain,transformedTargetTest,...
                 tSource,tTarget] = ...
                 performTransfer(obj,targetTrainData, targetTestData,...
-                sourceDataSets) 
-            transformedTargetTrain = DataSet.Combine(sourceDataSets{1},targetTrainData);
+                sourceDataSets)             
+            transformedTargetTrain = targetTrainData;
+            for idx=1:length(sourceDataSets)
+                transformedTargetTrain = DataSet.Combine(sourceDataSets{idx},transformedTargetTrain);
+            end
             transformedTargetTest = targetTestData;
-            assert(numel(sourceDataSets) == 1);
-            tSource = sourceDataSets{1};  
+            %assert(numel(sourceDataSets) == 1);
+            tSource = sourceDataSets;  
             
             numTrain = targetTrainData.size();
             numTest = targetTestData.size();

@@ -8,7 +8,7 @@ classdef VisualizationConfigs < Configs
     methods
         function obj = VisualizationConfigs()
             obj = obj@Configs();            
-            obj.configsStruct.axisToUse = [0 10 0 1];
+            obj.configsStruct.axisToUse = [0 10 0 1.1];
             obj.configsStruct.showCorrelation = false;
             obj.configsStruct.showTrain = false;
             obj.configsStruct.showTest = true;

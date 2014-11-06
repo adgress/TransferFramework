@@ -25,6 +25,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 if normalizeRows
                     allData.X = Helpers.NormalizeRows(allData.X);
                 end  
+                allData.name = obj.get('targetName');
             else
                 inputFile = obj.get('inputFile');
                 if isequal(dataSetType,'SimilarityDataSet')
@@ -46,7 +47,8 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     if normalizeRows
                         allData.X = Helpers.NormalizeRows(allData.X);
                     end                                
-                end              
+                end  
+                allData.name = obj.get('targetName');
             end
             for i=1:obj.numSplits
                 if isa(allData,'SimilarityDataSet')
@@ -75,9 +77,10 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 d = getProjectDir();
                 sourceFiles = obj.get('sourceFiles');
                 obj.dataAndSplits.sourceDataSets = {};
+                obj.dataAndSplits.sourceNames = obj.get('sourceNames');
                 for i=1:numel(sourceFiles)
                     sourceFileName = [d '/' sourceFiles{i}];
-                    sourceDataSet = DataSet(sourceFileName,XName,YName);
+                    sourceDataSet = DataSet(sourceFileName,XName,YName);                    
                     if normalizeRows
                         sourceDataSet.X = Helpers.NormalizeRows(sourceDataSet.X);
                     end
@@ -94,8 +97,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         [sampledSource] = sourceDataSet.stratifiedSample(numItems);
                         sourceDataSet = sampledSource;
                     end
+                    sourceDataSet.name = obj.dataAndSplits.sourceNames{i};
                     obj.dataAndSplits.sourceDataSets{i} = sourceDataSet;
-                end
+                end                
             end     
                  
             obj.dataAndSplits.allData = allData;

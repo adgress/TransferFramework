@@ -5,6 +5,7 @@ classdef LabeledData < matlab.mixin.Copyable
     properties
         Y
         type
+        name
     end
     
     properties(Dependent)
@@ -16,6 +17,7 @@ classdef LabeledData < matlab.mixin.Copyable
         function [obj] = LabeledData()
             obj.Y = [];
             obj.type = [];
+            obj.name = '';
         end
         
         function [] = clearLabels(obj, shouldClearLabels)

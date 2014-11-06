@@ -22,8 +22,8 @@ classdef Transfer < Saveable
                 sourceDataSets)
             transformedTargetTrain = targetTrainData;            
             transformedTargetTest = targetTestData;
-            assert(numel(sourceDataSets) == 1);
-            tSource = sourceDataSets{1};            
+            %assert(numel(sourceDataSets) == 1);
+            tSource = sourceDataSets;
             type = [DataSet.TargetTrainType(targetTrainData.size());...
                 DataSet.TargetTestType(targetTestData.size())];
             tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...

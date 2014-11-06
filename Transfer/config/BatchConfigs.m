@@ -8,9 +8,12 @@ classdef BatchConfigs < Configs
     methods
         function [obj] = BatchConfigs()
             obj = obj@Configs();
-            obj.configsStruct.dataSet={'W2D','A2C','A2D','A2W','C2A','C2D','C2W','D2A','D2C','D2W','W2A','W2C'};            
+            %obj.configsStruct.dataSet={'W2D','A2C','A2D','A2W','C2A','C2D','C2W','D2A','D2C','D2W','W2A','W2C'};            
+            obj.configsStruct.dataSet={'ACD2W','ACW2D','ADW2C','CDW2A'};
+            obj.configsStruct.sourceDataSetToUse = {{'A'},{'C'},{'D'},{'W'},{'A','C','D','W'}};
+            %obj.configsStruct.sourceDataSetToUse = {{'A','C','D','W'}};
             obj.configsStruct.experimentConfigsClass=TransferMainConfigs();
-            obj.configsStruct.paramsToVary={'dataSet'};
+            obj.configsStruct.paramsToVary={'dataSet','sourceDataSetToUse'};
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer','Transfer'};            
             obj.configsStruct.experimentConfigsClass.setNumLabeled();
         end
