@@ -9,9 +9,13 @@ function [] = runVisualization()
     subplotIndex = 0;
     sourceData = vizConfigs.get('sourceData');
     targetData = vizConfigs.get('targetData');
-    for sourceIdx=1:numel(sourceData)
-        for targetIdx=1:numel(targetData)
-            subplotIndex = subplotIndex + 1;
+    vizMultiple = true;
+    for targetIdx=1:numel(targetData)
+        dataSets = {};
+        for sourceIdx=1:numel(sourceData)   
+            if ~vizMultiple
+                subplotIndex = subplotIndex + 1;
+            end
             currSource = sourceData{sourceIdx};
             currTarget = targetData{targetIdx};
             if isequal(currSource,currTarget) 
@@ -29,16 +33,33 @@ function [] = runVisualization()
             end
             sourceStr = StringHelpers.ConvertToString(currSource);
             targetStr = StringHelpers.ConvertToString(currTarget);
-            dataSet = [sourceStr delim targetStr];                                                                        
-            vizConfigs.set('dataSet',dataSet);
+            dataSet = [sourceStr delim targetStr];       
+            if vizMultiple
+                dataSets{end+1} = dataSet;
+            else
+                vizConfigs.set('dataSet',{dataSet});
+                if ~vizConfigs.get('showTable')
+                    subplot(vizConfigs.get('numSubplotRows'),...
+                        vizConfigs.get('numSubplotCols'),subplotIndex);                
+                    title(['Target=' targetStr ',Source=' sourceStr]);
+                end
+                [~,returnStruct] = visualizeResults(vizConfigs,f);
+                if returnStruct.numItemsInLegend > 0
+                    vizConfigs.set('showLegend',false);
+                end
+            end            
+        end
+        if vizMultiple
+            subplotIndex = subplotIndex + 1;
+            vizConfigs.set('dataSet',dataSets);
             if ~vizConfigs.get('showTable')
                 subplot(vizConfigs.get('numSubplotRows'),...
                     vizConfigs.get('numSubplotCols'),subplotIndex);                
-                title(['Target=' targetStr ',Source=' sourceStr]);
+                title(['Target=' targetStr]);
             end
             [~,returnStruct] = visualizeResults(vizConfigs,f);
             if returnStruct.numItemsInLegend > 0
-                vizConfigs.set('showLegend',false);
+                %vizConfigs.set('showLegend',false);
             end
         end
     end

@@ -57,6 +57,7 @@ classdef Results < handle
             scores = [];
             for idx=1:numel(measureStructs)
                 scores(idx) = measureLoss.computeLoss(measureStructs{idx});                
+                obj.splitResults{idx}.(field).measureVal = scores(idx);
             end
             measureResults = ResultsVector(scores');
         end

@@ -7,6 +7,9 @@ classdef Measure < Saveable
     
     methods
         function obj = Measure(configs)
+            if ~exist('configs','var')
+                configs = [];
+            end
             obj = obj@Saveable(configs);
         end
         function [measureResults] = evaluate(obj,split)

@@ -16,16 +16,47 @@ function [f, returnStruct] = visualizeResults(options,f)
     displayVals = {};
     allPlotConfigs = options.get('plotConfigs');
     for i=1:numel(allPlotConfigs)
-        plotConfigs = allPlotConfigs{i};
-        fileName = [getProjectDir() '/' options.c.prefix '/' options.c.dataSet '/' plotConfigs.get('resultFileName')];
-        baselineFile = [getProjectDir() '/' options.c.prefix '/' options.c.dataSet '/' plotConfigs.get('baselineFile')];
-        if ~exist(fileName,'file')
-            continue
+        plotConfigs = allPlotConfigs{i};        
+        if length(options.c.dataSet) > 1
+            results = struct();
+            results.measureResults = {};
+            results.baselineResults = {};
+            results.methodResults = {};
+            for dataSetIdx=1:length(options.c.dataSet)
+                dataSet = options.c.dataSet{dataSetIdx};
+                fileName = options.makeResultsFileName(dataSet,...
+                    plotConfigs.get('resultFileName'));
+                baselineFileName = options.makeResultsFileName(dataSet,...
+                    plotConfigs.get('baselineFile'));
+                methodFileName = options.makeResultsFileName(dataSet,...
+                    plotConfigs.get('methodFileName'));
+                if ~exist(fileName,'file')
+                    continue;
+                end
+                r = load(fileName);
+                %configs.get('postTransferMeasures').set('measureLoss',measureLoss);                                
+                r.results.aggregateMeasureResults(plotConfigs.get('measureLoss'));
+                results.measureResults{end+1} = r.results;
+                r = load(baselineFileName);
+                results.baselineResults{end+1} = r.results;
+                r = load(methodFileName);
+                results.methodResults{end+1} = r.results;
+            end
+            allResults = plotConfigs.c.multiMeasure.computeMeasure(results);
+            configs = r.results.mainConfigs;
+        else
+            fileName = options.makeResultsFileName(options.c.dataSet{1},...
+                plotConfigs.get('resultFileName'));
+            baselineFile = options.makeResultsFileName(options.c.dataSet{1},...
+                plotConfigs.get('baselineFile'));
+            if ~exist(fileName,'file')
+                continue
+            end
+            allResults = load(fileName);
+            allResults = allResults.results;
+            configs = allResults.mainConfigs;
         end
-        allResults = load(fileName);
-        allResults = allResults.results;
-                        
-        configs = allResults.mainConfigs;        
+                                
         hasPreTM = configs.hasNonempty('preTransferMeasures');
         hasPostTM = configs.hasNonempty('postTransferMeasures');
         isMeasureFile = hasPostTM || hasPreTM;
@@ -80,6 +111,9 @@ function [f, returnStruct] = visualizeResults(options,f)
                             legName = legendName;
                             if options.c.showTrain
                                 legName = [legName ', Test'];
+                            end
+                            if plotConfigs.has('multiMeasure')
+                                legName = [plotConfigs.c.multiMeasure.getPrefix() ':' legName];
                             end
                             leg{index} = legName;
                             index = index+1;

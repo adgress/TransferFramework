@@ -72,6 +72,11 @@ classdef Configs < matlab.mixin.Copyable
         function [v] = get.c(obj)
             v = obj.configsStruct;
         end
+        
+        function [s] = makeResultsFileName(obj, dataSet, fileName)
+            s = [getProjectDir() '/' obj.c.prefix '/' ...
+                dataSet '/' fileName];
+        end
     end
     
     methods(Access = protected)

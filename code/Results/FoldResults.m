@@ -82,6 +82,10 @@ classdef FoldResults < handle
                 return;
             end
             %}
+            v = [];
+            if isempty(obj.yPred)
+                return;
+            end
             v = obj.yPred(obj.isTrain(),:);
             obj.assertSize();
         end        
@@ -92,8 +96,12 @@ classdef FoldResults < handle
                 return;
             end
             %}
+            v = [];
+            if isempty(obj.yPred)
+                return;
+            end
             v = obj.yPred(obj.isTest(),:);
-            obj.assertSize();
+            obj.assertSize();            
         end        
         function [v] = get.trainActual(obj)
             %{

@@ -38,7 +38,7 @@ classdef ProjectConfigs
                 c.setTommasi();           
             else
                 c.setCV();
-                %c.configsStruct.prefix = 'results/CV-small_10classes';
+                c.configsStruct.prefix = 'results/CV-small_10classes';
             end
             
             c.configsStruct.showKNN = false;
@@ -46,7 +46,7 @@ classdef ProjectConfigs
             c.configsStruct.showHardMeasures = true;
             c.configsStruct.showLLGCMeasure = false;
             c.configsStruct.showRelativePerformance = false;
-            c.configsStruct.numColors = 2;
+            c.configsStruct.numColors = 4;
             c.makePlotConfigs();            
         end
                 
