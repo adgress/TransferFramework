@@ -10,7 +10,8 @@ classdef TransferMeasure < Saveable
             obj = obj@Saveable(configs);
         end
         
-        function [W] = createDistanceMatrix(obj, source, target, savedData)
+        function [W] = createDistanceMatrix(obj, sources, target, savedData)
+            source = DataSet.Combine(sources{:});
             XallCombined = [source.X ; target.X];  
             if obj.configs.get('zscore')
                 XallCombined = zscore(XallCombined);

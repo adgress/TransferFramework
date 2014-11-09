@@ -8,12 +8,11 @@ function [] = runVisualization()
     %annotation('textbox', [0,0.15,0.1,0.1],'String', 'Source');
     subplotIndex = 0;
     sourceData = vizConfigs.get('sourceData');
-    targetData = vizConfigs.get('targetData');
-    vizMultiple = true;
+    targetData = vizConfigs.get('targetData'); 
     for targetIdx=1:numel(targetData)
         dataSets = {};
         for sourceIdx=1:numel(sourceData)   
-            if ~vizMultiple
+            if ~vizConfigs.c.vizMultiple
                 subplotIndex = subplotIndex + 1;
             end
             currSource = sourceData{sourceIdx};
@@ -34,7 +33,7 @@ function [] = runVisualization()
             sourceStr = StringHelpers.ConvertToString(currSource);
             targetStr = StringHelpers.ConvertToString(currTarget);
             dataSet = [sourceStr delim targetStr];       
-            if vizMultiple
+            if vizConfigs.c.vizMultiple
                 dataSets{end+1} = dataSet;
             else
                 vizConfigs.set('dataSet',{dataSet});
@@ -49,7 +48,7 @@ function [] = runVisualization()
                 end
             end            
         end
-        if vizMultiple
+        if vizConfigs.c.vizMultiple
             subplotIndex = subplotIndex + 1;
             vizConfigs.set('dataSet',dataSets);
             if ~vizConfigs.get('showTable')

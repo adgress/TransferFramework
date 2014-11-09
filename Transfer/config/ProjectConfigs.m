@@ -7,7 +7,8 @@ classdef ProjectConfigs
         numSource = 5;
         tommasiLabels = [10 15 23 25 26 30 41 56 57];
         cvLabels = 1:10;
-        dataSet = Constants.CV_DATA
+        %dataSet = Constants.CV_DATA
+        dataSet = Constants.TOMMASI_DATA
     end
     
     methods(Static)                
@@ -38,16 +39,25 @@ classdef ProjectConfigs
                 c.setTommasi();           
             else
                 c.setCV();
-                c.configsStruct.prefix = 'results/CV-small_10classes';
+                %c.configsStruct.prefix = 'results/CV-small_10classes';
             end
             
             c.configsStruct.showKNN = false;
             c.configsStruct.showSoftMeasures = true;
             c.configsStruct.showHardMeasures = true;
-            c.configsStruct.showLLGCMeasure = false;
+            c.configsStruct.showLLGCMeasure = true;
             c.configsStruct.showRelativePerformance = false;
-            c.configsStruct.numColors = 4;
-            c.makePlotConfigs();            
+            c.configsStruct.numColors = 5;
+            
+            %c.configsStruct.axisToUse = [1.5 2.5 0 .3];            
+            c.configsStruct.vizMultiple = true;
+            %c.makePlotConfigs();            
+            
+            if c.c.vizMultiple
+                c.delete('axisToUse');
+                c.configsStruct.showSoftMeasures = false;
+                c.makeMultiMeasurePlotConfigs();
+            end
         end
                 
         function [labelProduct] = MakeLabelProduct()

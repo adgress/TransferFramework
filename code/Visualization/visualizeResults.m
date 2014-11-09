@@ -15,7 +15,8 @@ function [f, returnStruct] = visualizeResults(options,f)
     index = 1;   
     displayVals = {};
     allPlotConfigs = options.get('plotConfigs');
-    for i=1:numel(allPlotConfigs)
+    for i=1:length(allPlotConfigs)
+        legendName = '';
         plotConfigs = allPlotConfigs{i};        
         if length(options.c.dataSet) > 1
             results = struct();
@@ -33,17 +34,19 @@ function [f, returnStruct] = visualizeResults(options,f)
                 if ~exist(fileName,'file')
                     continue;
                 end
-                r = load(fileName);
+                measureResults = load(fileName);
                 %configs.get('postTransferMeasures').set('measureLoss',measureLoss);                                
-                r.results.aggregateMeasureResults(plotConfigs.get('measureLoss'));
-                results.measureResults{end+1} = r.results;
-                r = load(baselineFileName);
-                results.baselineResults{end+1} = r.results;
-                r = load(methodFileName);
-                results.methodResults{end+1} = r.results;
+                measureResults.results.aggregateMeasureResults(plotConfigs.get('measureLoss'));
+                results.measureResults{end+1} = measureResults.results;
+                baselineResults = load(baselineFileName);
+                results.baselineResults{end+1} = baselineResults.results;
+                methodResults = load(methodFileName);
+                results.methodResults{end+1} = methodResults.results;
             end
             allResults = plotConfigs.c.multiMeasure.computeMeasure(results);
-            configs = r.results.mainConfigs;
+            configs = methodResults.results.mainConfigs;
+            measureObj = measureResults.results.mainConfigs.get('postTransferMeasures');
+            legendName = measureObj.getDisplayName();
         else
             fileName = options.makeResultsFileName(options.c.dataSet{1},...
                 plotConfigs.get('resultFileName'));
@@ -82,7 +85,7 @@ function [f, returnStruct] = visualizeResults(options,f)
 
         hasTestResults = numel(results) > 0 && ...
             numel(results{1}.aggregatedResults.testResults) > 0;        
-        legendName = configs.stringifyFields(legendNameParams,'-');
+        legendName = [legendName ',' configs.stringifyFields(legendNameParams,'-')];
         
         if isfield(options,'showRepair') && options.c.showRepair
             plotRepairResults();                
@@ -158,10 +161,12 @@ function [f, returnStruct] = visualizeResults(options,f)
         end
         set(options.c.table,'Data',tableData,'ColumnName',leg,'RowName',options.c.dataSet);
     else
-        axisToUse = options.c.axisToUse;    
-        a = axis;
-        a(3:4) = axisToUse(3:4);
-        axis(a);
+        if options.has('axisToUse')
+            axisToUse = options.c.axisToUse;    
+            a = axis;
+            a(3:4) = axisToUse(3:4);
+            axis(a);
+        end
         if isfield(options,'showRepair') && options.c.showRepair        
             xAxisLabel = options.c.xAxisDisplay;     
         elseif exist('results','var')      

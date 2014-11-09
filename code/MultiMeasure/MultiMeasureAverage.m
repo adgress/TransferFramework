@@ -11,7 +11,7 @@ classdef MultiMeasureAverage < MultiMeasure
             %score = changesInPerf(ind) - min(changesInPerf);
             ind = -1;
             measureVal = mean(measureVals);
-            score = mean(changesInPerf);
+            score = mean(changesInPerf - min(changesInPerf));
         end
         
         function [prefix] = getPrefix(obj)

@@ -29,7 +29,6 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
             %error('What should we do with measureMetadata?');
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 obj.prepareDataForTransfer(experimentIndex,splitIndex);
-            assert(length(sources) == 1);
             results = struct();
             preTransferMeasureKey = 'preTransferMeasures';
             if ~isempty(obj.configs.get(preTransferMeasureKey))                  
@@ -37,12 +36,11 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
                     DataSet.TargetTestType(test.size())];
                 target = DataSet('','','',[sampledTrain.X ; test.X],...
                     [sampledTrain.Y ; -1*ones(size(test.Y))],...
-                    type);                
-                source = sources{1};               
+                    type);                               
                 measureObj = obj.get(preTransferMeasureKey);
                 measureObj.set('useSourceForTransfer',0);
                 [results.preTransferResults] = runTransferMeasureExperiment(obj, ...
-                    measureObj,target, source);      
+                    measureObj,target, sources);      
                 measureObj.delete('useSourceForTransfer');
             end
             postTransferMeasureKey = 'postTransferMeasures';

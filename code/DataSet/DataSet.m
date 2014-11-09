@@ -163,9 +163,13 @@ classdef DataSet < LabeledData
             dataSet = combine(targetTrain,targetTest);
             dataSet = combine(dataSet,source);
         end
-        function [f] = Combine(d1,d2)
-            f = DataSet('','','',[d1.X ; d2.X],[d1.Y;d2.Y],...
-                [d1.type;d2.type]);
+        function [f] = Combine(varargin)
+            f = varargin{1}.copy();
+            for i=2:length(varargin)
+                f.X = [f.X ; varargin{i}.X];
+                f.Y = [f.Y ; varargin{i}.Y];
+                f.type = [f.type ; varargin{i}.type];
+            end
         end
         
     end

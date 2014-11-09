@@ -2,7 +2,8 @@ classdef VisualizationConfigs < Configs
     %VISUALIZATIONCONFIGS Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties
+    properties(Constant)
+        
     end
     
     methods
@@ -41,7 +42,7 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.showSoftMeasures = true;
             obj.configsStruct.showHardMeasures = false;
             obj.configsStruct.showLLGCMeasure = true;
-            
+            obj.configsStruct.vizMultiple = false;
             obj.makePlotConfigs();
             
             obj.configsStruct.resultQueries = {};
@@ -52,12 +53,9 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.dataSet = 'tommasi_data';
             obj.configsStruct.prefix = 'results_tommasi/tommasi_data';
             obj.configsStruct.numSubplotRows = 5;
-            obj.configsStruct.numSubplotCols = 5;
-            
-            
+            obj.configsStruct.numSubplotCols = 5;                        
             [obj.configsStruct.targetData,obj.configsStruct.sourceData] = ...
-                ProjectConfigs.MakeDomains();
-            
+                ProjectConfigs.MakeDomains();            
         end
         
         function [] = setCV(obj)
@@ -79,8 +77,67 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.xAxisDisplay = 'Num Source Instances';
         end
         
-        function [] = makePlotConfigs(obj)                                           
+        function [softMeasureFiles,hardMeasureFiles] = getMeasureFiles(obj)
+            softMeasureFiles = {'TM/CT_S+T.mat'};
+            hardMeasureFiles = {'TM/CT_S+T.mat'};
+            
+            if obj.c.showLLGCMeasure
+                llgcMeasureFile = 'TM/LLGC_S+T.mat';
+                softMeasureFiles{end+1} = llgcMeasureFile;
+                hardMeasureFiles{end+1} = llgcMeasureFile;                    
+            end
+        end
+        
+        function [] = makeMultiMeasurePlotConfigs(obj)                         
+            measureLossConfigs = Configs();
+            if obj.c.showSoftMeasures
+                measureLoss = SoftFUMeasureLoss(measureLossConfigs);
+            else
+                measureLoss = FUMeasureLoss(measureLossConfigs);
+            end
+            measureLoss.set('justTarget',true);
+            
+            basePlotConfigs = obj.makeBasePlotConfigs();
+            basePlotConfigs.set('measureLoss',measureLoss);
+            if obj.c.showKNN
+                basePlotConfigs.set('methodFileName','S+T_kNN-k=1.mat');
+            else
+                basePlotConfigs.set('methodFileName','S+T_LLGC.mat')
+            end
+            plotConfigs = {};
+            multiMeasureFiles = {'TM/CT_S+T.mat'};
+            if obj.c.showLLGCMeasure
+                multiMeasureFiles{end+1} = 'TM/LLGC_S+T.mat';;
+            end
+            
+            multiMeasureObjects = {MultiMeasureBest(),...
+                MultiMeasureWorst(),MultiMeasureAverage()};
+            for idx=1:length(multiMeasureObjects)
+                configs = basePlotConfigs.copy();                
+                configs.set('resultFileName',multiMeasureFiles{1});                
+                configs.set('multiMeasure',multiMeasureObjects{idx});
+                plotConfigs{end+1} = configs;           
+            end
+            for idx=1:length(multiMeasureFiles)
+                configs = basePlotConfigs.copy();
+                configs.set('resultFileName',multiMeasureFiles{idx});
+                configs.set('multiMeasure',MultiMeasure());
+                plotConfigs{end+1} = configs;           
+            end
+            obj.configsStruct.plotConfigs = plotConfigs;
+        end
+        
+        function [basePlotConfigs] = makeBasePlotConfigs(obj)
             basePlotConfigs = Configs();
+            if obj.c.showKNN
+                basePlotConfigs.set('baselineFile','TO_kNN-k=1.mat');
+            else
+                basePlotConfigs.set('baselineFile','TO_LLGC.mat');
+            end                        
+        end
+        
+        function [] = makePlotConfigs(obj)                                           
+            basePlotConfigs = obj.makeBasePlotConfigs();
             methodResultsFileNames = {};            
             if obj.c.showKNN
                 basePlotConfigs.set('baselineFile','TO_kNN-k=1.mat');
@@ -96,30 +153,21 @@ classdef VisualizationConfigs < Configs
                 methodResultsFileNames{end+1} = 'S+T_LLGC.mat';
             end                        
             
+            
             plotConfigs = {};
-            %{
             for fileIdx=1:length(methodResultsFileNames)
                 configs = basePlotConfigs.copy();
                 configs.set('resultFileName',methodResultsFileNames{fileIdx});
                 plotConfigs{end+1} = configs;
             end
-            %}
+            
             measureLossConfigs = Configs();    
             measureLossSoft = SoftFUMeasureLoss(measureLossConfigs);
             measureLossSoft.set('justTarget',true);
             measureLossHard = FUMeasureLoss(measureLossConfigs);
             measureLossHard.set('justTarget',true); 
-            
-            %basePlotConfigs.set('measureLoss',measureLossAll);
-            
-            softMeasureFiles = {'TM/CT_S+T.mat'};
-            hardMeasureFiles = {'TM/CT_S+T.mat'};
-            if obj.c.showLLGCMeasure
-                llgcMeasureFile = 'TM/LLGC_S+T.mat';
-                softMeasureFiles{end+1} = llgcMeasureFile;
-                hardMeasureFiles{end+1} = llgcMeasureFile;                    
-            end
-            %{
+                                                
+            [softMeasureFiles,hardMeasureFiles] = obj.getMeasureFiles();
             for fileIdx=1:length(softMeasureFiles)
                 if obj.c.showSoftMeasures
                     configs = basePlotConfigs.copy();                
@@ -135,50 +183,7 @@ classdef VisualizationConfigs < Configs
                     configs.set('methodFileName','S+T_LLGC.mat')
                     plotConfigs{end+1} = configs; 
                 end
-            end      
-            %}
-            multiMeasureFiles = {'TM/CT_S+T.mat'};
-            for fileIdx=1:length(multiMeasureFiles)
-                if obj.c.showSoftMeasures                                                            
-                    configs = basePlotConfigs.copy();                
-                    configs.set('resultFileName',softMeasureFiles{fileIdx});
-                    configs.set('measureLoss',measureLossSoft);
-                    configs.set('methodFileName','S+T_LLGC.mat')
-                    configs.set('multiMeasure',MultiMeasureBest());
-                    plotConfigs{end+1} = configs;
-                    
-                    configs = basePlotConfigs.copy();                
-                    configs.set('resultFileName',softMeasureFiles{fileIdx});
-                    configs.set('measureLoss',measureLossSoft);
-                    configs.set('methodFileName','S+T_LLGC.mat')
-                    configs.set('multiMeasure',MultiMeasure());
-                    plotConfigs{end+1} = configs;
-                    
-                    configs = basePlotConfigs.copy();                
-                    configs.set('resultFileName',softMeasureFiles{fileIdx});
-                    configs.set('measureLoss',measureLossSoft);
-                    configs.set('methodFileName','S+T_LLGC.mat')
-                    configs.set('multiMeasure',MultiMeasureWorst());
-                    plotConfigs{end+1} = configs;
-                    
-                    configs = basePlotConfigs.copy();                
-                    configs.set('resultFileName',softMeasureFiles{fileIdx});
-                    configs.set('measureLoss',measureLossSoft);
-                    configs.set('methodFileName','S+T_LLGC.mat')
-                    configs.set('multiMeasure',MultiMeasureAverage());
-                    plotConfigs{end+1} = configs;
-                    
-                end
-                %{
-                if obj.c.showHardMeasures
-                    configs = basePlotConfigs.copy();                
-                    configs.set('resultFileName',hardMeasureFiles{fileIdx});
-                    configs.set('measureLoss',measureLossHard);
-                    configs.set('methodFileName','S+T_LLGC.mat')
-                    plotConfigs{end+1} = configs; 
-                end
-                %}
-            end
+            end                            
             obj.configsStruct.plotConfigs = plotConfigs;
         end
         
