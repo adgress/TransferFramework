@@ -59,7 +59,9 @@ classdef Configs < matlab.mixin.Copyable
             b = obj.hasConfig(key);
         end
         function [] = delete(obj,key)
-            obj.configsStruct = rmfield(obj.configsStruct,key);
+            if obj.has(key)
+                obj.configsStruct = rmfield(obj.configsStruct,key);
+            end
         end
         
         function [b] = hasNonempty(obj,key)

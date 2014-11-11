@@ -70,7 +70,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         assert(sum(sourceDataCopy.hasLabel(backgroundLabel)) == numBackground);
 
                         newSplit.targetData = targetDataCopy;
-                        newSplit.sourceData = sourceDataCopy;  
+                        newSplit.sourceData = {sourceDataCopy};
                         display('Not applying permutation to split - is this correct?');
                         %newSplit.targetType = split.split(split.permutation);
                         newSplit.targetType = split.split;
@@ -88,7 +88,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
                     mainConfigs.set('sourceClass',sourceLabel);
                     mainConfigs.set('targetClass',targetLabel);
-                    mainConfigs.set('dataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
+                    mainConfigs.set('transferDataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
                     runExperiment(mainConfigs);
                 end
             else

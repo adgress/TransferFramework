@@ -49,8 +49,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.resultsDir='results';
             obj.configsStruct.transferDir='Data/transferData';
             obj.configsStruct.outputDir='results';
-            obj.configsStruct.dataSet='A2C';
-            obj.configsStruct.labelsToUse = [1 2];
+            obj.configsStruct.dataSet='A2C';            
         end
         
         function [] = setTommasiData(obj)
@@ -59,6 +58,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.set('dataSet','tommasi_split_data');
             obj.configsStruct.numLabeledPerClass=2:2:8;
             obj.configsStruct.numSourcePerClass=Inf;
+            obj.delete('labelsToUse');
         end
         
         function [] = setCTMeasureConfigs(obj, learnerConfigs)
