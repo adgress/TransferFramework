@@ -39,11 +39,15 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                     o.saveSplit();
                 end
             else
-                data = load(Helpers.MakeProjectURL([inputFilePrefix inputDataSets{1}]));
-                allFields = fields(data);
-                data = data.(allFields{1});
+                data = load(Helpers.MakeProjectURL([inputFilePrefix '/' inputDataSets{1}]));
+                newData = struct();
+                newData.X = data.(configs.get('XName'));
+                newData.Y = data.(configs.get('YName'));
+                %TODO: Why did we need this?
+                %allFields = fields(data);
+                %data = data.(allFields{1});
                 configCopy = configs.copy();
-                configCopy.set('data',data);
+                configCopy.set('data',newData);
                 o = DataSplitterConfigLoader(configCopy);
                 o.splitData();
                 o.saveSplit();

@@ -230,8 +230,12 @@ classdef DataSet < LabeledData
         end
         function [data] = MakeDataFromStruct(dataStruct)
             data = DataSet('','','',dataStruct.X,dataStruct.Y);
-            data.featureNames = dataStruct.directories;
-            data.featureIDs = dataStruct.featureIDs;
+            if isfield(dataStruct,'directories')
+                data.featureNames = dataStruct.directories;
+            end
+            if isfield(dataStruct,'featureIDs')
+                data.featureIDs = dataStruct.featureIDs;
+            end
         end
     end
 end

@@ -19,7 +19,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
             percentTest = obj.get('percentTest');
             dataSetType = obj.get('dataSetType');
             if obj.has('data')
-                dataStruct = obj.get('data');                
+                dataStruct = obj.get('data');
                 allData = DataSet.MakeDataFromStruct(dataStruct);
                 normalizeRows = obj.get('normalizeRows');
                 if normalizeRows
@@ -110,11 +110,13 @@ classdef DataSplitterConfigLoader < ConfigLoader
             obj.dataAndSplits.configs = obj.configs;                        
         end
         function [] = saveSplit(obj)
-            outputFile = [obj.get('outputFilePrefix') '/' obj.get('outputFile')];
+            c = getProjectConstants();
+            outputFile = [c.projectDir '/' ...
+                obj.get('outputFilePrefix') '/' obj.get('outputFile')];
             Helpers.MakeDirectoryForFile(outputFile);
             dataAndSplits = obj.dataAndSplits;
-            save(outputFile,'dataAndSplits');
-	    display(outputFile);
+            display(['Saving splits to:' outputFile]);
+            save(outputFile,'dataAndSplits');            
         end
     end
 end

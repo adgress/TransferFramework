@@ -10,8 +10,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             obj = obj@ConfigLoader(configsObj);
         end
         function [] = runExperiments(obj,multithread)
-            mainConfigs = obj.configs.get('experimentConfigsClass').copy();            
-            mainConfigs.set('transferMethodClass', obj.get('transferMethodClass'));
+            mainConfigs = obj.configs.get('experimentConfigsClass').copy();      
+            if obj.has('transferMethodClass')
+                mainConfigs.set('transferMethodClass', obj.get('transferMethodClass'));
+            end
             if nargin >= 2
                 mainConfigs.set('multithread',multithread);
             end
@@ -105,18 +107,20 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     dataAndSplits = load(mainConfigsCopy.getDataFileName());
                     dataAndSplits = dataAndSplits.dataAndSplits;
                     
-                    allSourceNames = dataAndSplits.sourceNames;
-                    currSourceNames = mainConfigsCopy.c.sourceDataSetToUse;
-                    targetName = dataAndSplits.allData.name;   
-                    shouldUseSource = Helpers.IsMember(allSourceNames,currSourceNames) ...
-                        & ~ismember(allSourceNames,targetName);                                         
-                    if isempty(find(shouldUseSource))
-                        continue;
+                    if isfield(dataAndSplits,'sourceNames')
+                        allSourceNames = dataAndSplits.sourceNames;
+                        currSourceNames = mainConfigsCopy.c.sourceDataSetToUse;
+                        targetName = dataAndSplits.allData.name;   
+                        shouldUseSource = Helpers.IsMember(allSourceNames,currSourceNames) ...
+                            & ~ismember(allSourceNames,targetName);                                         
+                        if isempty(find(shouldUseSource))
+                            continue;
+                        end
+                        dataAndSplits.sourceDataSets = dataAndSplits.sourceDataSets(shouldUseSource);
+                        dataAndSplits.sourceNames = dataAndSplits.sourceNames(shouldUseSource);
+                        transferDataSetName = [[dataAndSplits.sourceNames{:}] '2' targetName];
+                        mainConfigsCopy.set('transferDataSetName',transferDataSetName);
                     end
-                    dataAndSplits.sourceDataSets = dataAndSplits.sourceDataSets(shouldUseSource);
-                    dataAndSplits.sourceNames = dataAndSplits.sourceNames(shouldUseSource);
-                    transferDataSetName = [[dataAndSplits.sourceNames{:}] '2' targetName];
-                    mainConfigsCopy.set('transferDataSetName',transferDataSetName);
                     dataAndSplitsCopy = struct();
                     dataAndSplitsCopy.allSplits = {};
                     dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
@@ -126,7 +130,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         targetDataCopy = dataAndSplits.allData.copy();
                         targetDataCopy.applyPermutation(split.permutation);                        
                         newSplit.targetData = targetDataCopy;
-                        newSplit.sourceData = Helpers.MapCellArray(@copy,dataAndSplits.sourceDataSets);
+                        if isfield(dataAndSplitsCopy, 'sourceDataSets')
+                            newSplit.sourceData = Helpers.MapCellArray(@copy,dataAndSplits.sourceDataSets);
+                        end
                         display('Not applying permutation to split - is this correct?');
                         %newSplit.targetType = split.split(split.permutation);
                         newSplit.targetType = split.split;
