@@ -55,7 +55,7 @@ classdef TransferMainConfigs < MainConfigs
         function [] = setTommasiData(obj)
             obj.set('dataName','tommasi_data');
             obj.set('resultsDir','results_tommasi');
-            obj.set('dataSet','tommasi_split_data');
+            obj.set('dataSet','tommasi_split_data');            
             obj.configsStruct.numLabeledPerClass=2:2:8;
             obj.configsStruct.numSourcePerClass=Inf;
             obj.delete('labelsToUse');

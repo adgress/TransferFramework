@@ -14,7 +14,10 @@ classdef GraphHelpers
         
         function [fu,invM] = RunLLGC(W,Y,invM)
             warning off;
-            Ymat = full(Helpers.createLabelMatrix(Y));            
+            Ymat = Helpers.createLabelMatrix(Y);
+            if size(Ymat,2) == length(unique(Y(Y > 0)))
+                Ymat = full(Ymat);
+            end
             if exist('invM','var')
                 [fu,invM] = llgc(W,Ymat,invM);
             else

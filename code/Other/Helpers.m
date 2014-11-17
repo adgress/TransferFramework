@@ -239,7 +239,7 @@ classdef Helpers < handle
             end
             %Ymat = zeros(size(Y,1),max(Y));
             %Ymat(:,Y) = 1;
-            Ymat = 0;
+            Ymat = sparse(length(Y),m);
             n = size(Y,1);
             Y(Y < 0) = m+1;
             for i=1:size(Y,2)            

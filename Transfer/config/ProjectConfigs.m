@@ -7,8 +7,8 @@ classdef ProjectConfigs
         numSource = 5;
         tommasiLabels = [10 15 23 25 26 30 41 56 57];
         cvLabels = 1:10;
-        %dataSet = Constants.CV_DATA
-        dataSet = Constants.TOMMASI_DATA
+        dataSet = Constants.CV_DATA
+        %dataSet = Constants.TOMMASI_DATA
     end
     
     methods(Static)                
@@ -19,8 +19,8 @@ classdef ProjectConfigs
             else
                 c.get('experimentConfigsClass').configsStruct.labelsToUse = 1:10;
             end
-            c.setLLGCConfigs();
-            %c.setCTMeasureConfigs();
+            %c.setLLGCConfigs();
+            c.setCTMeasureConfigs();
             %c.setLLGCMeasureConfigs();            
         end
         

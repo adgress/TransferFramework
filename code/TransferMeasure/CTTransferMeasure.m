@@ -8,6 +8,7 @@ classdef CTTransferMeasure < TransferMeasure
     methods
         function obj = CTTransferMeasure(configs)
             obj = obj@TransferMeasure(configs);
+            obj.set('saveFeatures',true);
         end
         
         function [fu] = runLabelPropagation(obj,distMat)
@@ -22,7 +23,7 @@ classdef CTTransferMeasure < TransferMeasure
         
         function [measureResults] = computeMeasure(obj,source,target,...
                 options)            
-            
+            tic
             distMat = obj.createDistanceMatrix(source,target);
             distMatSourceProp = distMat.copy();
             distMatTargetProp = distMat.copy();
@@ -46,9 +47,16 @@ classdef CTTransferMeasure < TransferMeasure
             Helpers.AssertInvalidPercent(fuTargetProp,.1);
             measureResults.dataType = distMat.type;
             measureResults.yActual = distMat.Y;
-            %measureResults.sources = {source};
-            %measureResults.sampledTrain = target;
+            if obj.get('saveFeatures')
+                measureResults.sources = source;
+                measureResults.sampledTrain = target;
+            end
+            toc
         end    
+        
+        function [nameParams] = getNameParams(obj)
+            nameParams = {'saveFeatures'};
+        end  
         
         function [name] = getPrefix(obj)
             name = 'CT';

@@ -95,6 +95,7 @@ classdef VisualizationConfigs < Configs
             else
                 measureLoss = FUMeasureLoss(measureLossConfigs);
             end
+            measureLoss = MMDMeasureLoss(measureLossConfigs);
             measureLoss.set('justTarget',true);
             
             basePlotConfigs = obj.makeBasePlotConfigs();
@@ -105,7 +106,8 @@ classdef VisualizationConfigs < Configs
                 basePlotConfigs.set('methodFileName','S+T_LLGC.mat')
             end
             plotConfigs = {};
-            multiMeasureFiles = {'TM/CT_S+T.mat'};
+            %multiMeasureFiles = {'TM/CT_S+T.mat'};
+            multiMeasureFiles = {'TM/CT-saveFeatures=1_S+T.mat'};
             if obj.c.showLLGCMeasure
                 multiMeasureFiles{end+1} = 'TM/LLGC_S+T.mat';;
             end
