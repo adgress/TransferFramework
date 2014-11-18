@@ -10,6 +10,7 @@ function [] = runExperiment(configs)
         learner = learners;
         experimentLoader.configs.set('learner',learner);
     end        
+    learner.updateConfigs(configs);
     outputFile = experimentLoader.getOutputFileName();
     if exist(outputFile,'file') && ~configs.get('rerunExperiments')
         display(['Skipping: ' outputFile]);

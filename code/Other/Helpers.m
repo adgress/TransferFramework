@@ -70,21 +70,35 @@ classdef Helpers < handle
             if nargin < 2
                 Y = X;
             end
-            %{
+            %tic
             X=X';
             Y=Y';
             D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 
-            D = real(D.^.5);     
-            D2 = zeros(size(X,2),size(Y,2));
-            for i=1:size(D2,1)
-                xi = X(:,i);
-                for j=1:size(D2,2);
-                    yj = Y(:,i);
-                    D2(i,j) = sqrt(norm(xi-yj));
-                end
-            end
-            %}
+            D = real(D.^.5); 
+            %toc
+            %{
+            tic
             D = pdist2(X,Y);
+            toc
+            %}
+        end
+        
+        function [S] = SparsifyDistanceMatrix(W ,k)
+            assert(all(size(W) == size(W,1)));
+            if k >= size(W,1)
+                S = W;
+                return;
+            end
+            [V,I] = sort(W,2,'descend');
+            toKeep = I(:,1:k+1); %k+1 to account for self
+            K = zeros(size(W));
+            for i=1:size(toKeep,2);
+                Ii = I(:,i);
+                linearInds = sub2ind(size(W),(1:size(W,1))',Ii);
+                K(linearInds) = 1;
+            end       
+            K = (K + K') > 0;
+            S = W.*K;
         end
         
         function [perf] = getAllLabelAccuracy(pred,act)

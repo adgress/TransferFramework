@@ -53,6 +53,7 @@ function [f, returnStruct] = visualizeResults(options,f)
             baselineFile = options.makeResultsFileName(options.c.dataSet{1},...
                 plotConfigs.get('baselineFile'));
             if ~exist(fileName,'file')
+                display([fileName ' doesn''t exist - skipping']);
                 continue
             end
             allResults = load(fileName);

@@ -25,6 +25,11 @@ classdef LLGCMainConfigs < MainConfigs
             obj.configsStruct.measureClass='Measure';
         end           
         
+        function [] = setUSPSSmall(obj)
+            obj.setUSPS();
+            obj.configsStruct.dataName='USPS-small';
+        end
+        
         function [] = setUSPS(obj)            
             obj.configsStruct.dataName='USPS';
             obj.configsStruct.dataDir='Data';

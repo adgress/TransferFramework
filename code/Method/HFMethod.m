@@ -31,7 +31,7 @@ classdef HFMethod < Method
                 train.type(~trainLabeled);...
                 test.type];                                
             
-            W = Helpers.CreateDistanceMatrix(Xall);
+            W = Helpers.CreateDistanceMatrix(Xall);            
             distMat = DistanceMatrix(W,Y,type);
         end
         
@@ -62,17 +62,22 @@ classdef HFMethod < Method
             useHF = false;
             if isKey(obj.configs,'sigma')
                 sigma = obj.configs.get('sigma');
+            elseif isKey(obj.configs,'sigmaScale')
+                sigma = obj.configs.get('sigmaScale')*distMat.meanDistance;
             else
                 WtestCleared = DistanceMatrix(distMat.W,Y_testCleared,distMat.type);
                 sigma = GraphHelpers.autoSelectSigma(WtestCleared, ...
                     obj.configs.get('useMeanSigma'),useHF);
             end
             distMat = Helpers.distance2RBF(distMat.W,sigma);
+            distMat = Helpers.SparsifyDistanceMatrix(distMat,obj.get('k'));
             if exist('savedData','var') && isfield(savedData,'invM')
-                [fu] = llgc(distMat, Ymat,savedData.invM);                    
+                error('TODO');
+                [fu] = LLGC.llgc(distMat, Ymat,savedData.invM);
             else
-                [fu,invM] = llgc(distMat, Ymat);
+                [fu] = LLGC.llgc_LS(distMat, Ymat);
                 if exist('savedData','var')
+                    error('TODO!');
                     savedData.invM = invM;
                     savedData.W = distMat;
                     savedData.Ymat = Ymat;
@@ -80,6 +85,7 @@ classdef HFMethod < Method
                     savedData = [];
                 end
             end
+            fu(isnan(fu(:))) = .5;
             assert(isempty(find(isnan(fu))));
         end
         
@@ -87,13 +93,14 @@ classdef HFMethod < Method
                 trainAndTestGraphMethod(obj,input,useHF,savedData)
             train = input.train;
             test = input.test;   
-            learner = input.configs.learner;
+            %learner = input.configs.learner;
             testResults = FoldResults();   
             if isfield(input,'distanceMatrix')
                 distMat = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
             else                
-                [distMat] = createDistanceMatrix(obj,train,test,useHF,learner.configs);
+                %[distMat] = createDistanceMatrix(obj,train,test,useHF,learner.configs);
+                [distMat] = createDistanceMatrix(obj,train,test,useHF,obj.configs);
                 testResults.dataType = distMat.type;
             end
             if useHF

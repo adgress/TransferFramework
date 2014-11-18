@@ -41,6 +41,9 @@ classdef Saveable < handle
             obj.configs.delete(key);
         end
         
+        function [] = updateConfigsWithKeys(obj, newConfigs, keys)
+            obj.configs.addConfigsWithKeys(newConfigs,keys);
+        end
         
         function [displayName] = getDisplayName(obj)
             displayName = obj.getResultFileName(',',false);
@@ -59,8 +62,10 @@ classdef Saveable < handle
                  if isKey(obj.configs,n)
                      v = obj.configs.get(n);
                  else
-                     v = '0';
-                     display([n ' Missing: setting to 0']);
+                     display([n ' Missing, skipping']);
+                     continue;
+                     %v = '0';
+                     %display([n ' Missing: setting to 0']);
                  end
                  if ~isa(v,'char')
                      v = num2str(v);

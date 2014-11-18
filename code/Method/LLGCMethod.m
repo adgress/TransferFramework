@@ -21,11 +21,16 @@ classdef LLGCMethod < HFMethod
                     obj.trainAndTestGraphMethod(input,useHF);
             end
         end
+        function [] = updateConfigs(obj, newConfigs)
+            keys = {'sigma', 'sigmaScale','k'};
+            obj.updateConfigsWithKeys(newConfigs,keys);
+        end                
+        
         function [prefix] = getPrefix(obj)
             prefix = 'LLGC';
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {};
+            nameParams = {'sigma','sigmaScale','k'};
         end
         function [d] = getDirectory(obj)
             error('Do we save based on method?');

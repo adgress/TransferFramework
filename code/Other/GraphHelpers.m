@@ -19,9 +19,9 @@ classdef GraphHelpers
                 Ymat = full(Ymat);
             end
             if exist('invM','var')
-                [fu,invM] = llgc(W,Ymat,invM);
+                [fu,invM] = LLGC.llgc_inv(W,Ymat,invM);
             else
-                [fu,invM] = llgc(W,Ymat);
+                [fu,invM] = LLGC.llgc_inv(W,Ymat);
             end            
             warning on;
         end

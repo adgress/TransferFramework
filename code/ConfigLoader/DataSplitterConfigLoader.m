@@ -50,6 +50,10 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 end  
                 allData.name = obj.get('targetName');
             end
+            if obj.has('numToUsePerLabel')
+                n = obj.get('numToUsePerLabel');
+                allData = allData.stratifiedSample(n*allData.numClasses);
+            end
             for i=1:obj.numSplits
                 if isa(allData,'SimilarityDataSet')
                     splitIndex = obj.get('splitIndex');

@@ -21,11 +21,13 @@ classdef ExperimentConfigLoader < ConfigLoader
                 obj.configs.set('dataSet',dataSet);
                 dataSet = obj.get('dataAndSplits');
             end
-            obj.setDataSet(dataSet);            
+            obj.createAllExperiments();
+            obj.setDataSet(dataSet);
         end        
         
         function [results,savedData] = trainAndTest(obj,input,experiment)
-            learner = experiment.learner;            
+            learner = input.learner;          
+            %learner.updateConfigs(obj.configs);
             input.sharedConfigs = obj.configs;
             [results] = learner.trainAndTest(input);
         end
@@ -60,29 +62,33 @@ classdef ExperimentConfigLoader < ConfigLoader
                 X2 = X(:,obj.dataAndSplits.metadata.imagesKept);
                 obj.dataAndSplits.allData.X{1} = X2;            
                 display('HACK for PIM');
-            end            
-            obj.createAllExperiments();
+            end                        
         end   
         
         function [results] = ...
                 runExperiment(obj,experimentIndex,splitIndex)            
-            experimentConfigs = obj.allExperiments{experimentIndex};
-            f = fields(experimentConfigs);
+            experiment = obj.allExperiments{experimentIndex};
+            f = fields(experiment);
+            learner = experiment.learner;
             for i=1:length(f)
-                obj.configs.set(f{i}, experimentConfigs.(f{i}));
-            end
-            learner = experimentConfigs.learner;            
+                obj.configs.set(f{i}, experiment.(f{i}));
+                learner.configs.set(f{i}, experiment.(f{i}));
+            end            
             [train,test,validate,featType] = obj.getSplit(splitIndex);
-            if isfield(experimentConfigs,'trainSize')
-                percTrain = experimentConfigs.trainSize;
+            train.setTargetTrain();
+            test.setTargetTest();
+            if isfield(experiment,'trainSize')
+                percTrain = experiment.trainSize;
                 numTrain = ceil(percTrain*size(train.X,1)); 
             end
             if isa(train,'DataSet')
-                error('TODO: Update!');
-                [sampledTrain] = train.stratifiedSample(numTrain);
+                %error('TODO: Update!');
+                [numTrain,numPerClass] = obj.calculateSampling(experiment,test);
+                [sampledTrain] = train.stratifiedSampleByLabels(numTrain,[]);
                 input = ExperimentConfigLoader.CreateRunExperimentInput(...
-                    sampledTrain,test,validate,experimentConfigs);
+                    sampledTrain,test,validate,experiment);
             elseif isa(train,'SimilarityDataSet')
+                error('TODO: Update!');
                 trainIndex = obj.configs('trainSetIndex');
                 testIndex = obj.configs('testSetIndex');
                 data = struct();
@@ -150,7 +156,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                         [modData,drMetadata] = drMethodObj.performDR(cvData);
                         projTrain = modData.train; projTest = modData.test;
                         cvInput = ExperimentConfigLoader.CreateRunExperimentInput(...
-                            projTrain,projTest,[],experimentConfigs);                        
+                            projTrain,projTest,[],experiment);                        
                         if obj.configs('tuneNumVecs')
                             maxVecs = min(obj.configs('numVecs'),size(projTrain.X{trainIndex},2));
                             numVecsResults = cell(maxVecs,1);
@@ -180,7 +186,7 @@ classdef ExperimentConfigLoader < ConfigLoader
                         paramAcc(j) = measureResults.testPerformance;
                         display(['CV Acc: ' num2str(paramAcc(j))]);
                         trainInput = ExperimentConfigLoader.CreateRunExperimentInput(...
-                            projTrain,projTrain,[],experimentConfigs);
+                            projTrain,projTrain,[],experiment);
                         trainResults = methodObject.trainAndTest(trainInput);
                         trainMeasureResults = measureObj.evaluate(trainResults);
                         display(['Train Acc: ' num2str(trainMeasureResults.testPerformance)]);
@@ -202,10 +208,18 @@ classdef ExperimentConfigLoader < ConfigLoader
                 [modData,drMetadata] = drMethodObj.performDR(data);
                 projTrain = modData.train; projTest = modData.test; projValidate = modData.validate;
                 input = ExperimentConfigLoader.CreateRunExperimentInput(...
-                            projTrain,projTest,projValidate,experimentConfigs);
+                            projTrain,projTest,projValidate,experiment);
             else
                 error('Unknown Data type');
             end
+            input = struct();
+            input.train = sampledTrain;
+            input.test = test;
+            input.learner = learner;
+            [results] = obj.trainAndTest(input,experiment);            
+            results.trainingDataMetadata = obj.constructTrainingDataMetadata(...
+                sampledTrain,test,numPerClass);
+            %{
             [results] = ...
                 methodObject.trainAndTest(input);
             if exist('drMetadata','var')
@@ -227,6 +241,23 @@ classdef ExperimentConfigLoader < ConfigLoader
                     size(validate.X{trainIndex},1);
                 results.trainingDataMetadata.numTest = size(test.X{trainIndex,1},1);                                
             end
+            %}
+        end
+        
+        function [trainingDataMetadata] = constructTrainingDataMetadata(obj,...
+                sampledTrain,test,numPerClass)
+            trainingDataMetadata = struct();            
+            trainingDataMetadata.numTargetLabels = ...
+                size(find(sampledTrain.Y > 0),1);
+            trainingDataMetadata.numLabeledPerClass = numPerClass;
+            trainingDataMetadata.numTrain = numel(sampledTrain.Y);
+            trainingDataMetadata.numTest = numel(test.Y);
+            trainingDataMetadata.numClasses = test.numClasses;
+            %{
+            trainingDataMetadata.sources = sources;
+            trainingDataMetadata.sampledTrain = sampledTrain;
+            trainingDataMetadata.test = test;
+            %}
         end
         
         function [train,test,validate,featType] = getSplit(obj,index)
@@ -282,7 +313,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             expManager = expManagerCtr();
         end
         function [] = createAllExperiments(obj)
-            paramKeys= {'k'};
+            paramKeys= {};
             keys = {'trainSize'};
             keys{end+1} = 'numVecs';
             if obj.configs.hasConfig('numLabeledPerClass')

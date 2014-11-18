@@ -19,8 +19,9 @@ classdef SplitConfigs < Configs
         function [] = setUSPSSmall(obj)
             obj.setUSPS();
             obj.set('outputFilePrefix','Data/USPS-small/');
-            obj.set('maxTrainNumPerLabel',15);
-            obj.set('outputFile','small-splits.mat');
+            %obj.set('maxTrainNumPerLabel',500);
+            obj.set('numToUsePerLabel',300);
+            obj.set('outputFile','splits.mat');
         end
         
         function [] = setUSPS(obj)

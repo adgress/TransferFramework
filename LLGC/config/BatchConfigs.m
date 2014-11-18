@@ -7,13 +7,11 @@ classdef BatchConfigs < Configs
     
     methods
         function [obj] = BatchConfigs()
-            obj = obj@Configs();            
-            obj.configsStruct.dataSet={'ACD2W','ACW2D','ADW2C','CDW2A'};                        
-            obj.configsStruct.paramsToVary={'sigma','k'};
-            obj.configsStruct.sigma = {.1, .001, .0001};
-            obj.configsStruct.k = {5, 10, 20};
+            obj = obj@Configs();
+            obj.configsStruct.paramsToVary={'sigmaScale','k'};
+            obj.configsStruct.sigmaScale = num2cell(ProjectConfigs.sigmaScale);
+            obj.configsStruct.k = num2cell(ProjectConfigs.k);
             obj.configsStruct.experimentConfigsClass=LLGCMainConfigs();
-            %obj.configsStruct.experimentConfigsClass.setNumLabeled();
         end        
     end
 end

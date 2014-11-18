@@ -1,66 +1,28 @@
 function [] = runVisualization()
     setPaths;
-    close all
-    %vizConfigs = VisualizationConfigs();
-    %vizConfigs.setTommasi();
+    close all    
     vizConfigs = ProjectConfigs.VisualizationConfigs();
     f = figure;
-    %annotation('textbox', [0,0.15,0.1,0.1],'String', 'Source');
     subplotIndex = 0;
-    sourceData = vizConfigs.get('sourceData');
-    targetData = vizConfigs.get('targetData'); 
-    for targetIdx=1:numel(targetData)
-        dataSets = {};
-        for sourceIdx=1:numel(sourceData)   
-            if ~vizConfigs.c.vizMultiple
-                subplotIndex = subplotIndex + 1;
-            end
-            currSource = sourceData{sourceIdx};
-            currTarget = targetData{targetIdx};
-            if isequal(currSource,currTarget) 
-                if vizConfigs.get('datasetToViz') == Constants.CV_DATA
-                    currSource = sourceData;
-                    currSource(targetIdx) = [];
-                    currSource = [currSource{:}];
-                else
-                    continue;
-                end
-            end
-            delim = '2';
-            if vizConfigs.get('datasetToViz') == Constants.TOMMASI_DATA
-                delim = '-to-';
-            end
-            sourceStr = StringHelpers.ConvertToString(currSource);
-            targetStr = StringHelpers.ConvertToString(currTarget);
-            dataSet = [sourceStr delim targetStr];       
-            if vizConfigs.c.vizMultiple
-                dataSets{end+1} = dataSet;
-            else
-                vizConfigs.set('dataSet',{dataSet});
-                if ~vizConfigs.get('showTable')
-                    subplot(vizConfigs.get('numSubplotRows'),...
-                        vizConfigs.get('numSubplotCols'),subplotIndex);                
-                    title(['Target=' targetStr ',Source=' sourceStr]);
-                end
-                [~,returnStruct] = visualizeResults(vizConfigs,f);
-                if returnStruct.numItemsInLegend > 0
-                    vizConfigs.set('showLegend',false);
-                end
-            end            
+    plotConfigs = vizConfigs.c.plotConfigs;
+    
+    dataSet = 'USPS-small';       
+    vizConfigs.set('dataSet',{dataSet});
+    vizConfigs.set('prefix','results');
+    title(dataSet);
+    for k=ProjectConfigs.k         
+        subplotIndex = subplotIndex + 1;
+        subplot(1,length(ProjectConfigs.k),subplotIndex);                
+        newPlotConfigs = cell(size(plotConfigs));
+        for idx=1:length(plotConfigs)
+            p = plotConfigs{idx}.copy();
+            p.set('resultFileName', sprintf(p.c.resultFileName,num2str(k)));
+            %p.c.resultFileName
+            newPlotConfigs{idx} = p;
         end
-        if vizConfigs.c.vizMultiple
-            subplotIndex = subplotIndex + 1;
-            vizConfigs.set('dataSet',dataSets);
-            if ~vizConfigs.get('showTable')
-                subplot(vizConfigs.get('numSubplotRows'),...
-                    vizConfigs.get('numSubplotCols'),subplotIndex);                
-                title(['Target=' targetStr]);
-            end
-            [~,returnStruct] = visualizeResults(vizConfigs,f);
-            if returnStruct.numItemsInLegend > 0
-                %vizConfigs.set('showLegend',false);
-            end
-        end
+        vizConfigs.set('plotConfigs',newPlotConfigs);        
+        [~,returnStruct] = visualizeResults(vizConfigs,f);            
+        %vizConfigs.set('showLegend',false);
     end
     
 end

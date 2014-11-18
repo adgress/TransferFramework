@@ -16,6 +16,16 @@ classdef Configs < matlab.mixin.Copyable
         function [obj] = Configs()
             obj.configsStruct = struct();
         end
+        
+        function [] = addConfigsWithKeys(obj, other, keys)
+            for idx=1:length(keys)
+                k = keys{idx};
+                if other.has(k)
+                    obj.set(k,other.get(k));
+                end
+            end
+        end
+        
         function [] = addConfigs(obj, other)
             newConfigs = other;
             if isa(other, 'Configs')
