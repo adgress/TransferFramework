@@ -10,11 +10,13 @@ classdef LLGCMainConfigs < MainConfigs
         function [obj] = LLGCMainConfigs()
             obj = obj@MainConfigs();            
             obj.setUSPS();
-            obj.configsStruct.numLabeledPerClass=2:2:8;
+            %obj.configsStruct.numLabeledPerClass=2:2:8;
+            obj.configsStruct.numLabeledPerClass=ProjectConfigs.numLabeledPerClass;
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
                         
             obj.configsStruct.learners=[];
-            obj.setLLGCConfigs(learnerConfigs);
+            %obj.setLLGCConfigs(learnerConfigs);
+            obj.setLLGCWeightedConfigs(learnerConfigs);
             
             obj.configsStruct.multithread=1;                  
             obj.configsStruct.rerunExperiments=0;
@@ -37,7 +39,25 @@ classdef LLGCMainConfigs < MainConfigs
             obj.configsStruct.outputDir='results';
             obj.configsStruct.dataSet='splits';
         end
+        
+        function [] = setCOIL20(obj)            
+            obj.configsStruct.dataName='COIL20';
+            obj.configsStruct.dataDir='Data';
+            obj.configsStruct.resultsDir='results';
+            obj.configsStruct.outputDir='results';
+            obj.configsStruct.dataSet='splits';
+        end
       
+        
+        function [] = setLLGCWeightedConfigs(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
+            llgcObj = LLGCWeightedMethod(learnerConfigs);
+            obj.configsStruct.learners=llgcObj;
+        end
+        
         
         function [] = setLLGCConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')

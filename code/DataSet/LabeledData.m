@@ -108,9 +108,57 @@ classdef LabeledData < matlab.mixin.Copyable
                 inds = inds | obj.Y == i;
             end
         end
+        
+        function [split] = generateSplitArray(obj,percTrain,percTest,configs)
+            percValidate = 1 - percTrain - percTest;
+            if ~exist('configs','var')
+                split = DataSet.generateSplit([percTrain percTest percValidate],...
+                    obj.Y);            
+            else
+                split = DataSet.generateSplit([percTrain percTest percValidate],...
+                    obj.Y,configs);            
+            end
+        end
     end
 
-    methods(Static)        
+    methods(Static)  
+        function [split] = generateSplit(percentageArray,Y,configs)
+            maxTrainNumPerLabel = inf;
+            if exist('configs','var') && isKey(configs,'maxTrainNumPerLabel')
+                maxTrainNumPerLabel = configs.get('maxTrainNumPerLabel');
+            end
+            assert(sum(percentageArray) == 1,'Split doesn''t sum to one');
+            percentageArray = cumsum(percentageArray);
+            dataSize = size(Y,1);
+            split = zeros(dataSize,1);
+            uniqueY = unique(Y);
+            for i=1:length(uniqueY)
+                thisClass = find(Y == uniqueY(i));
+                numThisClass = numel(thisClass);
+                perm = randperm(numThisClass);
+                thisClassRandomized = thisClass(perm);
+                numToPick = ceil(numThisClass*percentageArray);
+                %diff = max(numToPick(1)-maxTrainNumPerLabel,0);
+                numToPick(1) = min(numToPick(1),maxTrainNumPerLabel);
+                %numToPick = numToPick-diff;
+                numEach = [0 numToPick];
+                assert(numToPick(2)-numToPick(1) > 0);
+                for j=1:numel(percentageArray)       
+                    if numEach(j) == numEach(j+1)
+                        display('TODO: Potential off by one error');
+                        continue;
+                    end
+                    indices = thisClassRandomized(numEach(j)+1:numEach(j+1));
+                    split(indices) = j;  
+                    if j < 3
+                        assert(length(indices) > 0);
+                    end
+                end
+                assert(sum(split(thisClassRandomized) == 1) == numToPick(1));
+            end
+            assert(sum(split==0) == 0);
+        end
+        
         function [v] = TargetTrainType(n)
             v = Constants.TARGET_TRAIN*ones(n,1);
         end

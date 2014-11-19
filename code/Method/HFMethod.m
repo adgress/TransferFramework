@@ -54,11 +54,11 @@ classdef HFMethod < Method
             [fu, fu_CMN] = harmonic_function(distMat, YLabelMatrix);
         end
         
-        function [fu,savedData,sigma] = runLLGC(obj,distMat,savedData)
+        function [Wrbf,YtrainMat,sigma,Y_testCleared] = makeLLGCMatrices(obj,distMat)
             isTest = distMat.type == Constants.TARGET_TEST;
             Y_testCleared = distMat.Y;
             Y_testCleared(isTest) = -1;
-            Ymat = full(Helpers.createLabelMatrix(Y_testCleared));
+            YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
             useHF = false;
             if isKey(obj.configs,'sigma')
                 sigma = obj.configs.get('sigma');
@@ -69,18 +69,36 @@ classdef HFMethod < Method
                 sigma = GraphHelpers.autoSelectSigma(WtestCleared, ...
                     obj.configs.get('useMeanSigma'),useHF);
             end
-            distMat = Helpers.distance2RBF(distMat.W,sigma);
-            distMat = Helpers.SparsifyDistanceMatrix(distMat,obj.get('k'));
+            Wrbf = Helpers.distance2RBF(distMat.W,sigma);
+            Wrbf = Helpers.SparsifyDistanceMatrix(Wrbf,obj.get('k'));
+        end
+        
+        function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
+                = LOOCV(similarityDistMat,useHF,savedData)
+            if ~exist('useHF','var')
+                useHF = false;
+            end
+            if exist('savedData','var')
+                [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
+                = GraphHelpers.LOOCV(similarityDistMat,useHF,savedData);
+            else
+                [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
+                = GraphHelpers.LOOCV(similarityDistMat,useHF);
+            end
+        end
+        
+        function [fu,savedData,sigma] = runLLGC(obj,distMat,savedData)
+            [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat);
             if exist('savedData','var') && isfield(savedData,'invM')
                 error('TODO');
-                [fu] = LLGC.llgc(distMat, Ymat,savedData.invM);
+                [fu] = LLGC.llgc(Wrbf, YtrainMat, savedData.invM);
             else
-                [fu] = LLGC.llgc_LS(distMat, Ymat);
+                [fu] = LLGC.llgc_LS(Wrbf, YtrainMat);
                 if exist('savedData','var')
                     error('TODO!');
                     savedData.invM = invM;
-                    savedData.W = distMat;
-                    savedData.Ymat = Ymat;
+                    savedData.W = W;
+                    savedData.Ymat = YtrainMat;
                 else
                     savedData = [];
                 end

@@ -3,21 +3,32 @@ classdef ProjectConfigs
     %   Detailed explanation goes here
     
     properties(Constant)
-         sigmaScale = .2:.2:1;
+         %sigmaScale = .2:.2:1;
+         sigmaScale = .2
+         k=inf
+         alpha=.9
+         labelsToUse = [1 2]
+         classNoise = .2
+         numLabeledPerClass=10
+         %labelsTouse = [3 5 8 9]
+         %{
          k = [10,30,60,120, inf];
          alpha = .1:.2:.9;
+         %}
     end
     
     methods(Static)                
         function [c] = BatchConfigs()
             c = BatchConfigs();
-            c.get('experimentConfigsClass').configsStruct.labelsToUse = [3 5 8 9];
-            c.get('experimentConfigsClass').setUSPSSmall();
+            c.get('experimentConfigsClass').configsStruct.labelsToUse = ProjectConfigs.labelsToUse;
+            %c.get('experimentConfigsClass').setUSPSSmall();
+            c.get('experimentConfigsClass').setCOIL20();
         end
         
         function [c] = SplitConfigs()
             c = SplitConfigs();            
-            c.setUSPSSmall();
+            %c.setUSPSSmall();
+            c.setCOIL20();
         end
         
         function [c] = VisualizationConfigs()
