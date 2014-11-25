@@ -22,7 +22,7 @@ classdef LLGCMethod < HFMethod
             end
         end
         function [] = updateConfigs(obj, newConfigs)
-            keys = {'sigma', 'sigmaScale','k'};
+            keys = {'sigma', 'sigmaScale','k','alpha'};
             obj.updateConfigsWithKeys(newConfigs,keys);
         end                
         
@@ -30,7 +30,7 @@ classdef LLGCMethod < HFMethod
             prefix = 'LLGC';
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {'sigma','sigmaScale','k'};
+            nameParams = {'sigma','sigmaScale','k','alpha'};
         end
         function [d] = getDirectory(obj)
             error('Do we save based on method?');

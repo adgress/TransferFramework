@@ -8,9 +8,10 @@ classdef BatchConfigs < Configs
     methods
         function [obj] = BatchConfigs()
             obj = obj@Configs();
-            obj.configsStruct.paramsToVary={'sigmaScale','k'};
+            obj.configsStruct.paramsToVary={'sigmaScale','k','alpha'};
             obj.configsStruct.sigmaScale = num2cell(ProjectConfigs.sigmaScale);
             obj.configsStruct.k = num2cell(ProjectConfigs.k);
+            obj.configsStruct.alpha = num2cell(ProjectConfigs.alpha);
             obj.configsStruct.experimentConfigsClass=LLGCMainConfigs();
         end        
     end

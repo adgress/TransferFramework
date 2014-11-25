@@ -91,9 +91,9 @@ classdef HFMethod < Method
             [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat);
             if exist('savedData','var') && isfield(savedData,'invM')
                 error('TODO');
-                [fu] = LLGC.llgc(Wrbf, YtrainMat, savedData.invM);
+                [fu] = LLGC.llgc(Wrbf, YtrainMat, obj.get('alpha'), savedData.invM);
             else
-                [fu] = LLGC.llgc_LS(Wrbf, YtrainMat);
+                [fu] = LLGC.llgc_LS(Wrbf, YtrainMat,obj.get('alpha'));
                 if exist('savedData','var')
                     error('TODO!');
                     savedData.invM = invM;

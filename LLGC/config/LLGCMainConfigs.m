@@ -15,8 +15,8 @@ classdef LLGCMainConfigs < MainConfigs
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
                         
             obj.configsStruct.learners=[];
-            %obj.setLLGCConfigs(learnerConfigs);
-            obj.setLLGCWeightedConfigs(learnerConfigs);
+            obj.setLLGCConfigs(learnerConfigs);
+            %obj.setLLGCWeightedConfigs(learnerConfigs);
             
             obj.configsStruct.multithread=1;                  
             obj.configsStruct.rerunExperiments=0;

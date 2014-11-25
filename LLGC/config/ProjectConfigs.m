@@ -3,18 +3,23 @@ classdef ProjectConfigs
     %   Detailed explanation goes here
     
     properties(Constant)
-         %sigmaScale = .2:.2:1;
+         
+        %{
          sigmaScale = .2
          k=inf
          alpha=.9
-         labelsToUse = [1 2]
-         classNoise = .2
-         numLabeledPerClass=10
-         %labelsTouse = [3 5 8 9]
-         %{
-         k = [10,30,60,120, inf];
-         alpha = .1:.2:.9;
-         %}
+         labelsToUse = 1:3
+         classNoise = 0
+         numLabeledPerClass=50
+         reg = 10
+        %}
+         
+         sigmaScale = .2:.2:1;
+         %k = [10,30,60,120, inf];
+         k=inf
+         alpha = [.1:.2:.9 .95 .99];
+         labelsToUse=1:20
+         numLabeledPerClass=2:2:8
     end
     
     methods(Static)                
@@ -23,6 +28,7 @@ classdef ProjectConfigs
             c.get('experimentConfigsClass').configsStruct.labelsToUse = ProjectConfigs.labelsToUse;
             %c.get('experimentConfigsClass').setUSPSSmall();
             c.get('experimentConfigsClass').setCOIL20();
+            %c.get('experimentConfigsClass').setLLGCWeightedConfigs();
         end
         
         function [c] = SplitConfigs()
@@ -48,12 +54,19 @@ classdef ProjectConfigs
             basePlotConfigs = Configs();
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};
+            k=inf;
+            alpha=.9;
+            sigmaScale='%s';
+            %for s=ProjectConfigs.sigmaScale
             %for k=ProjectConfigs.k
-                for s=ProjectConfigs.sigmaScale
+            for alpha=ProjectConfigs.alpha                
                     methodResultsFileNames{end+1} = ...
-                        ['LLGC-sigmaScale=' num2str(s) '-k=%s.mat'];
-                end                   
+                        ['LLGC-sigmaScale=' sigmaScale ...
+                        '-k=' num2str(k)...
+                        '-alpha=' num2str(alpha) '.mat'];
+            end                   
             %end
+            %end            
             
             plotConfigs = {};
             for fileIdx=1:length(methodResultsFileNames)

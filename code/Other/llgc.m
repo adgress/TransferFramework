@@ -1,7 +1,7 @@
 classdef LLGC < handle    
     methods(Static)
-        function [fu,invM] = llgc_inv(W,fl,invM)
-            alpha = .5;       
+        function [fu,invM] = llgc_inv(W,fl,alpha,invM)
+            %alpha = .5;       
             W(logical(speye(size(W)))) = 0;
 
             if nargin < 3
@@ -16,6 +16,7 @@ classdef LLGC < handle
         end
 
         function [fu,invM] = llgc_chol(W,fl)
+            error('Need to set alpha');
         tic
             alpha = .5;   
             W(logical(speye(size(W)))) = 0;
@@ -33,9 +34,9 @@ classdef LLGC < handle
         end
 
 
-        function [fu] = llgc_LS(W,fl)
+        function [fu] = llgc_LS(W,fl,alpha)
         %tic
-            alpha = .5;   
+            %alpha = .5;   
             W(logical(speye(size(W)))) = 0;   
             %Disq = spdiags(sum(W).^-.5);
             Disq = diag(sum(W).^-.5);
