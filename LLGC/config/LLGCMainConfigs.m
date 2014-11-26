@@ -40,12 +40,16 @@ classdef LLGCMainConfigs < MainConfigs
             obj.configsStruct.dataSet='splits';
         end
         
-        function [] = setCOIL20(obj)            
+        function [] = setCOIL20(obj,classNoise)            
             obj.configsStruct.dataName='COIL20';
             obj.configsStruct.dataDir='Data';
             obj.configsStruct.resultsDir='results';
             obj.configsStruct.outputDir='results';
             obj.configsStruct.dataSet='splits';
+            if classNoise > 0
+                obj.configsStruct.dataSet = [obj.configsStruct.dataSet ...
+                    '-classNoise=' num2str(classNoise)];
+            end
         end
       
         
@@ -55,6 +59,8 @@ classdef LLGCMainConfigs < MainConfigs
             end
             obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
             llgcObj = LLGCWeightedMethod(learnerConfigs);
+           	%llgcObj.set('unweighted',true);
+            llgcObj.set('oracle',true);
             obj.configsStruct.learners=llgcObj;
         end
         

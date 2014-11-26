@@ -11,14 +11,18 @@ classdef DataSet < LabeledData
         featureNames
         featureIDs
     end    
+    
     methods
-        function obj = DataSet(dataFile,XName,YName,X,Y,type)
+        function obj = DataSet(dataFile,XName,YName,X,Y,type,trueY)
             obj.dataFile = '';
             if ~exist('X','var')
                 X = [];
             end
             if ~exist('Y','var')
                 Y = [];
+            end
+            if ~exist('trueY','var')
+                trueY = [];
             end
             if exist('dataFile','var') && ~isempty(dataFile)
                 obj.dataFile = dataFile;
@@ -31,6 +35,7 @@ classdef DataSet < LabeledData
             else
                 obj.X = X;
                 obj.Y = Y;
+                obj.trueY = trueY;
             end              
             
             if exist('type','var')
@@ -45,10 +50,11 @@ classdef DataSet < LabeledData
         function [train,test,validation] = splitDataSet(obj,split)            
             XSplit = DataSet.splitMatrix(obj.X,split);
             YSplit = DataSet.splitMatrix(obj.Y,split);
+            trueYSplit = DataSet.splitMatrix(obj.trueY,split);
             allDataSets = cell(3,1);
             for i=1:numel(allDataSets)
-                type = DataSet.NoType(length(YSplit{i}));
-                allDataSets{i} = DataSet('','','',XSplit{i},YSplit{i},type);
+                type = DataSet.NoType(length(YSplit{i}));               
+                allDataSets{i} = DataSet('','','',XSplit{i},YSplit{i},type,trueYSplit{i});
             end
             train = allDataSets{1};
             test = allDataSets{2};
@@ -112,6 +118,7 @@ classdef DataSet < LabeledData
             obj.X = obj.X(~shouldRemove,:);
             obj.Y = obj.Y(~shouldRemove);
             obj.type = obj.type(~shouldRemove);
+            obj.trueY = obj.trueY(~shouldRemove);
         end
         
         function [d] = getDataOfType(obj,dataType)
@@ -127,6 +134,7 @@ classdef DataSet < LabeledData
             obj.X = obj.X(permutation,:);
             obj.Y = obj.Y(permutation);
             obj.type = obj.type(permutation);
+            obj.trueY = obj.trueY(permutation);
         end
         function [inds] = hasLabel(obj,labels)
             labels = unique(labels);
@@ -143,7 +151,7 @@ classdef DataSet < LabeledData
             obj.X = obj.X(:,shouldKeep);
             obj.featureIDs = obj.featureIDs(shouldKeep);
             obj.featureNames = obj.featureNames(featureIDsToKeep);
-        end
+        end        
     end
     
     methods(Static)
@@ -164,8 +172,7 @@ classdef DataSet < LabeledData
                 f.Y = [f.Y ; varargin{i}.Y];
                 f.type = [f.type ; varargin{i}.type];
             end
-        end
-        
+        end        
     end
     
     methods(Access=private,Static)        
@@ -182,7 +189,7 @@ classdef DataSet < LabeledData
             if ~exist('inds','var')
                 inds = 1:data.size();
             end
-            newData = DataSet('','','',data.X(inds,:),data.Y(inds,:),data.type(inds,:));
+            newData = DataSet('','','',data.X(inds,:),data.Y(inds),data.type(inds,:),data.trueY(inds));
             newData.featureNames = data.featureNames;
             newData.featureIDs = data.featureIDs;
         end

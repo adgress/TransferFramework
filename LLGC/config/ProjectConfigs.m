@@ -4,22 +4,24 @@ classdef ProjectConfigs
     
     properties(Constant)
          
-        %{
+        
          sigmaScale = .2
          k=inf
-         alpha=.9
-         labelsToUse = 1:3
-         classNoise = 0
-         numLabeledPerClass=50
-         reg = 10
-        %}
+         alpha=.95
+         labelsToUse = 1:20
+         classNoise = .25
+         numLabeledPerClass=[30 40 50]
+         %reg = 10
+        
          
+        %{
          sigmaScale = .2:.2:1;
          %k = [10,30,60,120, inf];
          k=inf
          alpha = [.1:.2:.9 .95 .99];
          labelsToUse=1:20
          numLabeledPerClass=2:2:8
+        %}
     end
     
     methods(Static)                
@@ -27,14 +29,14 @@ classdef ProjectConfigs
             c = BatchConfigs();
             c.get('experimentConfigsClass').configsStruct.labelsToUse = ProjectConfigs.labelsToUse;
             %c.get('experimentConfigsClass').setUSPSSmall();
-            c.get('experimentConfigsClass').setCOIL20();
-            %c.get('experimentConfigsClass').setLLGCWeightedConfigs();
+            c.get('experimentConfigsClass').setCOIL20(ProjectConfigs.classNoise);
+            c.get('experimentConfigsClass').setLLGCWeightedConfigs();
         end
         
         function [c] = SplitConfigs()
             c = SplitConfigs();            
             %c.setUSPSSmall();
-            c.setCOIL20();
+            c.setCOIL20(ProjectConfigs.classNoise);
         end
         
         function [c] = VisualizationConfigs()
@@ -54,6 +56,11 @@ classdef ProjectConfigs
             basePlotConfigs = Configs();
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};
+            
+            methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=0-unweighted=0.mat';
+            methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=0-unweighted=1.mat';
+            methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=1-unweighted=0.mat';
+            %{
             k=inf;
             alpha=.9;
             sigmaScale='%s';
@@ -67,7 +74,7 @@ classdef ProjectConfigs
             end                   
             %end
             %end            
-            
+            %}
             plotConfigs = {};
             for fileIdx=1:length(methodResultsFileNames)
                 configs = basePlotConfigs.copy();

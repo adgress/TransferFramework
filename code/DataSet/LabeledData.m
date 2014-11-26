@@ -6,11 +6,13 @@ classdef LabeledData < matlab.mixin.Copyable
         Y
         type
         name
+        trueY
     end
     
     properties(Dependent)
         numClasses
         classes
+        isNoisy
     end
     
     methods
@@ -32,6 +34,10 @@ classdef LabeledData < matlab.mixin.Copyable
         function [I] = isTarget(obj)
             I = obj.type == Constants.TARGET_TRAIN | ...
                 obj.type == Constants.TARGET_TEST;
+        end
+        
+        function [I] = isTargetTest(obj)
+            I = obj.type == Constants.TARGET_TEST;
         end
         
         function [I] = isLabeledTarget(obj)
@@ -60,6 +66,10 @@ classdef LabeledData < matlab.mixin.Copyable
         
         function [v] = get.classes(obj)
             v = unique(obj.Y(obj.isLabeled));
+        end
+        
+        function [v] = get.isNoisy(obj)
+            v = obj.Y ~= obj.trueY;
         end
         
         function [n] = size(obj)
@@ -145,7 +155,7 @@ classdef LabeledData < matlab.mixin.Copyable
                 assert(numToPick(2)-numToPick(1) > 0);
                 for j=1:numel(percentageArray)       
                     if numEach(j) == numEach(j+1)
-                        display('TODO: Potential off by one error');
+                        %display('TODO: Potential off by one error');
                         continue;
                     end
                     indices = thisClassRandomized(numEach(j)+1:numEach(j+1));

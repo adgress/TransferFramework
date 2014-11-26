@@ -14,15 +14,17 @@ classdef DistanceMatrix < LabeledData
     end
     
     methods
-        function [obj] = DistanceMatrix(W,Y,type)
+        function [obj] = DistanceMatrix(W,Y,type,trueY)
             if nargin < 3
                 type = ones(size(Y))*Constants.TARGET_TRAIN;
             end
             obj.W = W;
             obj.Y = Y;
             obj.type = type;
+            obj.trueY = trueY;
             assert(numel(obj.type) == numel(obj.Y));
             assert(numel(obj.type) == size(W,1));
+            assert(numel(obj.trueY) == size(W,1));
         end
         
         function [W] = getRBFKernel(obj,sigma)

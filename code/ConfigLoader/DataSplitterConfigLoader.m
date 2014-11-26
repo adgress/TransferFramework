@@ -54,8 +54,23 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 n = obj.get('numToUsePerLabel');
                 allData = allData.stratifiedSample(n*allData.numClasses);
             end
+            if obj.has('classNoise')
+                classNoise = obj.get('classNoise');
+                allData.trueY = allData.Y;
+                Y = allData.Y;
+                allClasses = allData.classes;
+                for currClass=allClasses'
+                    isClass = find(Y == currClass);
+                    permIsClass = isClass(randperm(length(isClass)));
+                    remainingClasses = allClasses(allClasses ~= currClass);
+                    newLabelVector = randsample(remainingClasses,length(permIsClass),true);
+                    numToUse = floor(classNoise*length(isClass));
+                    allData.Y(permIsClass(1:numToUse)) = newLabelVector(1:numToUse);
+                end
+            end
             for i=1:obj.numSplits
                 if isa(allData,'SimilarityDataSet')
+                    error('TODO: Update');
                     splitIndex = obj.get('splitIndex');
                     metadata.splitIndex = splitIndex;
                     [allSplits{i}] = ...
@@ -64,7 +79,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     allSplits{i} = struct();
                     allSplits{i}.permutation = randperm(length(allData.Y))';
                     
-                    allDataCopy = allData.copy();
+                    allDataCopy = allData.copy();                    
                     allDataCopy.applyPermutation(allSplits{i}.permutation);
                     [split] = ...
                         allDataCopy.generateSplitArray(percentTrain,percentTest,obj.configs);                    

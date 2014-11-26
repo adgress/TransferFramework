@@ -30,9 +30,11 @@ classdef HFMethod < Method
             type = [train.type(trainLabeled);...
                 train.type(~trainLabeled);...
                 test.type];                                
-            
+            trueY = [train.trueY(trainLabeled) ; ...
+                train.trueY(~trainLabeled) ; ...
+                test.trueY];
             W = Helpers.CreateDistanceMatrix(Xall);            
-            distMat = DistanceMatrix(W,Y,type);
+            distMat = DistanceMatrix(W,Y,type,trueY);
         end
         
         function [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat)

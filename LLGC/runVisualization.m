@@ -21,12 +21,11 @@ function [] = runVisualization()
             p = plotConfigs{idx}.copy();
             %p.set('resultFileName', sprintf(p.c.resultFileName,num2str(k)));
             p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
-            %p.c.resultFileName
             newPlotConfigs{idx} = p;
         end
         vizConfigs.set('plotConfigs',newPlotConfigs);        
         [~,returnStruct] = visualizeResults(vizConfigs,f);            
         %vizConfigs.set('showLegend',false);
-    %end
+    end
     
 end

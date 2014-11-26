@@ -24,7 +24,7 @@ classdef SplitConfigs < Configs
             obj.set('outputFile','splits.mat');
         end
         
-        function [] = setCOIL20(obj)
+        function [] = setCOIL20(obj,classNoise)
             obj.set('dataSetType','DataSet');
             obj.set('XName','fea');
             obj.set('YName','gnd');
@@ -36,6 +36,10 @@ classdef SplitConfigs < Configs
             obj.set('outputFilePrefix','Data/COIL20');
             obj.set('targetName','COIL20');
             obj.set('outputFile','splits.mat');
+            if classNoise > 0
+                obj.set('outputFile',['splits-classNoise=' num2str(classNoise) '.mat']);
+            end
+            obj.set('classNoise',classNoise);
         end 
         
         function [] = setUSPS(obj)

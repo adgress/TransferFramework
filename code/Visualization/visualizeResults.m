@@ -229,9 +229,9 @@ end
 function [displayVal] = plotResults(results,sizes,field,colors)        
     vars = getVariances(results,field);
     means = getMeans(results,field);
-    if length(sizes) > 1
+    %if length(sizes) > 1
         errorbar(sizes,means,vars,'color',colors);    
-    end
+    %end
     displayVal = makeResultsStruct(means,vars);
 end
 
@@ -257,14 +257,14 @@ function [displayVal] = plotRelativePerformance(options,baselineFile,results,siz
         if sum(isinf(means)) > 0
             display('NaN');
         end
-        if length(sizes) > 1
+        %if length(sizes) > 1
             errorbar(sizes,means,vars,'color',color);
-        end
+        %end
         displayVal = makeResultsStruct(means,vars);
     else
-        if length(sizes) > 1
+        %if length(sizes) > 1
             errorbar(sizes,means,l,h,'color',color);
-        end
+        %end
         displayVal = makeResultsStruct(means,[]);
         displayVal.lows = lows;
         displayVal.highs = h;
