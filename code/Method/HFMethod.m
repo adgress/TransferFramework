@@ -33,8 +33,11 @@ classdef HFMethod < Method
             trueY = [train.trueY(trainLabeled) ; ...
                 train.trueY(~trainLabeled) ; ...
                 test.trueY];
+            instanceIDs = [train.instanceIDs(trainLabeled) ; ...
+                train.instanceIDs(~trainLabeled) ; ...
+                test.instanceIDs];
             W = Helpers.CreateDistanceMatrix(Xall);            
-            distMat = DistanceMatrix(W,Y,type,trueY);
+            distMat = DistanceMatrix(W,Y,type,trueY,instanceIDs);
         end
         
         function [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat)
@@ -56,7 +59,7 @@ classdef HFMethod < Method
             [fu, fu_CMN] = harmonic_function(distMat, YLabelMatrix);
         end
         
-        function [Wrbf,YtrainMat,sigma,Y_testCleared] = makeLLGCMatrices(obj,distMat)
+        function [Wrbf,YtrainMat,sigma,Y_testCleared,instanceIDs] = makeLLGCMatrices(obj,distMat)
             isTest = distMat.type == Constants.TARGET_TEST;
             Y_testCleared = distMat.Y;
             Y_testCleared(isTest) = -1;
@@ -67,12 +70,13 @@ classdef HFMethod < Method
             elseif isKey(obj.configs,'sigmaScale')
                 sigma = obj.configs.get('sigmaScale')*distMat.meanDistance;
             else
-                WtestCleared = DistanceMatrix(distMat.W,Y_testCleared,distMat.type);
+                WtestCleared = DistanceMatrix(distMat.W,Y_testCleared,distMat.type,distMat.trueY);
                 sigma = GraphHelpers.autoSelectSigma(WtestCleared, ...
                     obj.configs.get('useMeanSigma'),useHF);
             end
             Wrbf = Helpers.distance2RBF(distMat.W,sigma);
             Wrbf = Helpers.SparsifyDistanceMatrix(Wrbf,obj.get('k'));
+            instanceIDs = distMat.instanceIDs;
         end
         
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...

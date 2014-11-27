@@ -14,7 +14,7 @@ classdef DistanceMatrix < LabeledData
     end
     
     methods
-        function [obj] = DistanceMatrix(W,Y,type,trueY)
+        function [obj] = DistanceMatrix(W,Y,type,trueY,instanceIDs)
             if nargin < 3
                 type = ones(size(Y))*Constants.TARGET_TRAIN;
             end
@@ -22,14 +22,16 @@ classdef DistanceMatrix < LabeledData
             obj.Y = Y;
             obj.type = type;
             obj.trueY = trueY;
+            obj.instanceIDs = instanceIDs;
             assert(numel(obj.type) == numel(obj.Y));
             assert(numel(obj.type) == size(W,1));
             assert(numel(obj.trueY) == size(W,1));
+            assert(numel(obj.instanceIDs) == size(W,1));
         end
         
         function [W] = getRBFKernel(obj,sigma)
             W = exp(-2*obj.W./(sigma));
-            W = DistanceMatrix(W,obj.Y,obj.type);
+            W = DistanceMatrix(W,obj.Y,obj.type,obj.trueY,obj.instanceIDs);
         end
         
         function [W,labels] = getTestToLabeled(obj)
@@ -95,6 +97,7 @@ classdef DistanceMatrix < LabeledData
         end
         
         function [W,Y,isTest,type] = prepareForHF(obj)
+            error('Update!');
             W = obj.W;
             isTest = obj.type == Constants.TARGET_TEST;
             labeledTrain = (obj.type  == Constants.TARGET_TRAIN | ...
@@ -107,17 +110,20 @@ classdef DistanceMatrix < LabeledData
         end
         
         function [] = shiftLabeledDataToFront(obj)
+            error('Update!');
             isLabeled = obj.Y > 0;
             newPerm = [find(isLabeled); find(~isLabeled)];            
             obj.permuteData(newPerm);
         end
         function [] = shiftLabeledTargetDataToFront(obj)
+            error('Update!');
             isLabeledTarget = obj.Y > 0 & obj.type ~= Constants.SOURCE;
             newPerm = [find(isLabeledTarget) ; find(~isLabeledTarget)];
             obj.permuteData(newPerm);
             
         end
         function [] = permuteData(obj,newPerm)
+            error('Update!');
             if issorted(newPerm)
                 return;
             end
@@ -127,6 +133,7 @@ classdef DistanceMatrix < LabeledData
         end
         
         function [W,Y,type] = prepareForHF_LOOCV(obj)
+            error('Update!');
             obj.shiftLabeledDataToFront();
             obj.shiftLabeledTargetDataToFront();
             W = obj.W;
@@ -136,6 +143,7 @@ classdef DistanceMatrix < LabeledData
         
         %function [W,Ys,Yt,type,isTarget] = prepareForSourceHF(obj)
         function [] = prepareForSourceHF(obj)
+            error('Update!');
             sourceInds = find(obj.isSource());
             targetInds = find(obj.isTarget());
             allInds = [sourceInds; targetInds];
@@ -147,6 +155,7 @@ classdef DistanceMatrix < LabeledData
         end
         
         function[] = removeInstances(obj, shouldRemove)
+            error('Update!');
             obj.Y = obj.Y(~shouldRemove);
             obj.W = obj.W(~shouldRemove,~shouldRemove);
             obj.type = obj.type(~shouldRemove);

@@ -53,7 +53,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 prepareDataForTransfer(obj,experimentIndex,splitIndex);
             [~,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,...
-                experiment);                        
+                experiment); 
+            trainTestInput.learner = obj.get('learner');
             [results] = obj.trainAndTest(trainTestInput,experiment);            
             results.trainingDataMetadata = obj.constructTrainingDataMetadata(sources,...
                 sampledTrain,test,numPerClass);

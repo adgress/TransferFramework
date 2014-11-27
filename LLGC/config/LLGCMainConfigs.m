@@ -10,13 +10,12 @@ classdef LLGCMainConfigs < MainConfigs
         function [obj] = LLGCMainConfigs()
             obj = obj@MainConfigs();            
             obj.setUSPS();
-            %obj.configsStruct.numLabeledPerClass=2:2:8;
+            
             obj.configsStruct.numLabeledPerClass=ProjectConfigs.numLabeledPerClass;
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
                         
             obj.configsStruct.learners=[];
             obj.setLLGCConfigs(learnerConfigs);
-            %obj.setLLGCWeightedConfigs(learnerConfigs);
             
             obj.configsStruct.multithread=1;                  
             obj.configsStruct.rerunExperiments=0;
@@ -25,7 +24,7 @@ classdef LLGCMainConfigs < MainConfigs
             obj.configsStruct.processMeasureResults=0;
                         
             obj.configsStruct.measureClass='Measure';
-        end           
+        end                           
         
         function [] = setUSPSSmall(obj)
             obj.setUSPS();
@@ -52,6 +51,14 @@ classdef LLGCMainConfigs < MainConfigs
             end
         end
       
+        function [] = setTommasiData(obj)
+            obj.set('dataName','tommasi_data');
+            obj.set('resultsDir','results_tommasi');
+            obj.set('dataSet','tommasi_split_data');            
+            obj.configsStruct.numSourcePerClass=Inf;
+            obj.delete('labelsToUse');
+        end
+        
         
         function [] = setLLGCWeightedConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
@@ -59,8 +66,9 @@ classdef LLGCMainConfigs < MainConfigs
             end
             obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
             llgcObj = LLGCWeightedMethod(learnerConfigs);
-           	%llgcObj.set('unweighted',true);
-            llgcObj.set('oracle',true);
+           	llgcObj.set('unweighted',ProjectConfigs.useUnweighted);
+            llgcObj.set('oracle',ProjectConfigs.useOracle);
+            llgcObj.set('dataSetWeights',ProjectConfigs.useDataSetWeights);
             obj.configsStruct.learners=llgcObj;
         end
         
@@ -87,11 +95,7 @@ classdef LLGCMainConfigs < MainConfigs
             v = [getProjectDir() '/' obj.get('resultsDir') '/' ...
                  '/' obj.get('dataName') '/'];
         end      
-    end
-    
-    methods(Static)
-        
-    end
+    end        
     
 end
 

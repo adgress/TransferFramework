@@ -13,6 +13,8 @@ classdef BatchConfigs < Configs
             obj.configsStruct.k = num2cell(ProjectConfigs.k);
             obj.configsStruct.alpha = num2cell(ProjectConfigs.alpha);
             obj.configsStruct.experimentConfigsClass=LLGCMainConfigs();
+            
+            obj.configsStruct.makeSubDomains = true;
         end        
     end
 end

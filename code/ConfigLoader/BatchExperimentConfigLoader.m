@@ -14,6 +14,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             if obj.has('transferMethodClass')
                 mainConfigs.set('transferMethodClass', obj.get('transferMethodClass'));
             end
+            mainConfigs.set('experimentConfigLoader',obj.get('experimentConfigLoader'));
             if nargin >= 2
                 mainConfigs.set('multithread',multithread);
             end
@@ -21,26 +22,104 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             if obj.has('makeSubDomains') && obj.get('makeSubDomains')
                 dataAndSplits = load(obj.configs.get('experimentConfigsClass').getDataFileName());
                 dataAndSplits = dataAndSplits.dataAndSplits;
-                labels = unique(dataAndSplits.allData.Y);
-                                                
-                backgroundLabel = 257;                
-                keepBackground = false;
+                if isempty(dataAndSplits.allData.trueY)
+                    dataAndSplits.allData.trueY = dataAndSplits.allData.Y;
+                end
+                if isempty(dataAndSplits.allData.instanceIDs)
+                    dataAndSplits.allData.instanceIDs = zeros(size(dataAndSplits.allData.Y));
+                end
                 featuresToUse = 1;
                 dataAndSplits.allData.keepFeatures(featuresToUse);                
-                numBackground = 0;  
                               
                 labelProduct = ProjectConfigs.MakeLabelProduct();
+                t = labelProduct{1};
+                t(2) = t(1);
+                labelProduct = {t,labelProduct{:}};
+                
+                dataAndSplitsCopy = struct();
+                dataAndSplitsCopy.allSplits = {};
+                dataAndSplitsCopy.configs = dataAndSplits.configs.copy();      
+                                                
+                %This code is for making lots of subdomains and using them
+                %together for multisource transfer                
+                for splitIdx=1:length(dataAndSplits.allSplits)
+                    split = dataAndSplits.allSplits{splitIdx};
+                    newSplit = struct();                    
+                    
+                    labelProduct_1 = labelProduct{1};
+                    targetLabel = labelProduct_1(1);
+                    if isa(targetLabel,'cell')
+                        targetLabel = targetLabel{1};
+                    end
+                    targetDataCopy = dataAndSplits.allData.copy();
+                    targetDataCopy.applyPermutation(split.permutation);
+                    targetClassInds = targetDataCopy.hasLabel(targetLabel);
+                    targetDataCopy.remove(~targetClassInds);  
+                    
+                    newSplit.targetData = targetDataCopy;
+                    newSplit.targetType = split.split;
+                    newSplit.targetType = newSplit.targetType(targetClassInds); 
+                    newSplit.sourceData = {};
+                    
+                    for labelProductIdx=1:length(labelProduct)
+                        currLabels = labelProduct{labelProductIdx};                    
+                        targetLabel_i = currLabels(1);
+                        sourceLabel = currLabels(2);
+                        if isa(targetLabel_i,'cell')
+                            targetLabel_i = targetLabel_i{1};
+                            sourceLabel = sourceLabel{1};
+                        end
+                        assert(all(targetLabel_i == targetLabel));
+                        hasOverlap = sum(sourceLabel == targetLabel_i) > 0;
+                        if hasOverlap
+                            display(['Same label found: ' ...
+                                num2str(sourceLabel) ', ' num2str(targetLabel_i)]);
+                            %continue                            
+                        end 
+                        sourceDataCopy = dataAndSplits.allData.copy();                        
+                        sourceDataCopy.applyPermutation(split.permutation);
+                        sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
+                        sourceDataCopy.remove(~sourceClassInds);
+                        for labelIdx=1:length(targetLabel)
+                            sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
+                        end    
+                        sourceDataCopy.instanceIDs(:) = labelProductIdx;                        
+                        if hasOverlap
+                            sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(ProjectConfigs.numOverlap);
+                            sourceDataCopy.remove(sourceDataCopy.Y <= 0);
+                        end
+                        newSplit.sourceData{end+1} = sourceDataCopy;
+                    end                    
+                    display('Not applying permutation to split - is this correct?');
+                    %newSplit.targetType = split.split(split.permutation);                                          
+                    dataAndSplitsCopy.allSplits{end+1} = newSplit;
+                end
+                mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
+                mainConfigs.set('sourceClass',sourceLabel);
+                mainConfigs.set('targetClass',targetLabel);
+                mainConfigs.set('transferDataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
+                mainConfigs.set('k',ProjectConfigs.k);
+                mainConfigs.set('sigmaScale',ProjectConfigs.sigmaScale);
+                mainConfigs.set('alpha',ProjectConfigs.alpha);
+                runExperiment(mainConfigs);
+                
+                %{
+                This code is for generating a bunch of target-source domain
+                pairs
+                
                 for labelProductIdx=1:length(labelProduct)
                     currLabels = labelProduct{labelProductIdx};                    
                     targetLabel = currLabels(1);
-                    sourceLabel = currLabels(2);
+                    sourceLabel = currLabels(2);                   
+                    
                     if isa(targetLabel,'cell')
                         targetLabel = targetLabel{1};
                         sourceLabel = sourceLabel{1};
                     end
                     if sum(sourceLabel == targetLabel) > 0
                         continue
-                    end                    
+                    end 
+                    
                     dataAndSplitsCopy = struct();
                     dataAndSplitsCopy.allSplits = {};
                     dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
@@ -49,50 +128,37 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         newSplit = struct();
                         targetDataCopy = dataAndSplits.allData.copy();
                         targetDataCopy.applyPermutation(split.permutation);
-                        targetClassInds = targetDataCopy.hasLabel([targetLabel backgroundLabel]);
+                        
+                        targetClassInds = targetDataCopy.hasLabel(targetLabel);
                         targetDataCopy.remove(~targetClassInds);  
-
-                        backgroundIndsToRemove = find(targetDataCopy.hasLabel(backgroundLabel));
-                        assert(length(backgroundIndsToRemove) >= numBackground);
-                        backgroundIndsToRemove = backgroundIndsToRemove(numBackground+1:end);
-                        targetDataCopy.remove(backgroundIndsToRemove);
 
                         sourceDataCopy = dataAndSplits.allData.copy();
                         sourceDataCopy.applyPermutation(split.permutation);
-                        sourceClassInds = sourceDataCopy.hasLabel([sourceLabel backgroundLabel]);
+                        sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
                         sourceDataCopy.remove(~sourceClassInds);
+                        
+                        
                         for labelIdx=1:length(targetLabel)
                            sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
                         end                        
-
-                        sourceBackgroundIndsToRemove = find(sourceDataCopy.hasLabel(backgroundLabel));
-
-                        sourceDataCopy.remove(sourceBackgroundIndsToRemove(2*numBackground+1:end));
-                        sourceDataCopy.remove(sourceBackgroundIndsToRemove(1:numBackground));
-                        assert(sum(sourceDataCopy.hasLabel(backgroundLabel)) == numBackground);
+                        
 
                         newSplit.targetData = targetDataCopy;
                         newSplit.sourceData = {sourceDataCopy};
                         display('Not applying permutation to split - is this correct?');
                         %newSplit.targetType = split.split(split.permutation);
                         newSplit.targetType = split.split;
-                        newSplit.targetType = newSplit.targetType(targetClassInds);
-
-                        backgroundShouldRemove = false(length(newSplit.targetType),1);
-                        backgroundShouldRemove(backgroundIndsToRemove) = true;
-                        newSplit.targetType(backgroundShouldRemove) = [];
+                        newSplit.targetType = newSplit.targetType(targetClassInds);                       
 
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
                     end 
-                    if keepBackground
-                        mainConfigs.set('classesToKeep',backgroundLabel);
-                    end
                     mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
                     mainConfigs.set('sourceClass',sourceLabel);
                     mainConfigs.set('targetClass',targetLabel);
                     mainConfigs.set('transferDataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
                     runExperiment(mainConfigs);
                 end
+                %}
             else
                 allParamsToVary = {};
                 paramsToVary = obj.get('paramsToVary');
