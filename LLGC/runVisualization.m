@@ -7,9 +7,9 @@ function [] = runVisualization()
     plotConfigs = vizConfigs.c.plotConfigs;
     
     %dataSet = 'USPS-small';
-    dataSet = 'COIL20';
-    vizConfigs.set('dataSet',{dataSet});
-    vizConfigs.set('prefix','results');
+    %dataSet = 'COIL20';
+    dataSet = 'tommasi_data';
+    vizConfigs.set('dataSet',{dataSet});    
     title(dataSet);
     %for k=ProjectConfigs.k    
     numSubplots = length(ProjectConfigs.sigmaScale);

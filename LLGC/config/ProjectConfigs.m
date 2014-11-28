@@ -16,11 +16,11 @@ classdef ProjectConfigs
         alpha=.9
         labelsToUse = []
         classNoise = .0
-        numLabeledPerClass=[5]
+        numLabeledPerClass=[5 10 15]
         experimentSetting = 3
         numFolds = 0
-        reg = 1e-6*0;
-        numOverlap = 120
+        reg = 1e-4;
+        numOverlap = 60
         
         numTarget = 2;
         numSource = 2;
@@ -28,7 +28,7 @@ classdef ProjectConfigs
         %tommasiLabels = [23 25 26 30 41 56 57];
         
         useOracle=false
-        useUnweighted=false
+        useUnweighted=true
         useDataSetWeights=true
         
         %{
@@ -88,6 +88,10 @@ classdef ProjectConfigs
             c.configsStruct.showLLGCMeasure = false;
             c.configsStruct.plotConfigs = ProjectConfigs.makePlotConfigs();
             c.configsStruct.numColors = length(c.c.plotConfigs); 
+            c.set('prefix','results');
+            if ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+                c.set('prefix','results_tommasi');
+            end
         end
         
         function [plotConfigs] = makePlotConfigs()  
@@ -113,6 +117,11 @@ classdef ProjectConfigs
                 end                   
                 %end
                 %end            
+            elseif ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+                d = '23  25-to-10  15';
+                methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=0-unweighted=0.mat'];
+                methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1-unweighted=0.mat'];
+                methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=0-unweighted=1.mat'];
             else
                 error('TODO');
             end
