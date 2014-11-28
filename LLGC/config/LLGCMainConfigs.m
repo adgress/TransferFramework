@@ -11,7 +11,9 @@ classdef LLGCMainConfigs < MainConfigs
             obj = obj@MainConfigs();            
             obj.setUSPS();
             
-            obj.configsStruct.numLabeledPerClass=ProjectConfigs.numLabeledPerClass;
+            c = ProjectConfigs.Create();
+            
+            obj.configsStruct.numLabeledPerClass=c.numLabeledPerClass;
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
                         
             obj.configsStruct.learners=[];
@@ -64,11 +66,12 @@ classdef LLGCMainConfigs < MainConfigs
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
+            c = ProjectConfigs.Create();
             obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
             llgcObj = LLGCWeightedMethod(learnerConfigs);
-           	llgcObj.set('unweighted',ProjectConfigs.useUnweighted);
-            llgcObj.set('oracle',ProjectConfigs.useOracle);
-            llgcObj.set('dataSetWeights',ProjectConfigs.useDataSetWeights);
+           	llgcObj.set('unweighted',c.useUnweighted);
+            llgcObj.set('oracle',c.useOracle);
+            llgcObj.set('dataSetWeights',c.useDataSetWeights);
             obj.configsStruct.learners=llgcObj;
         end
         

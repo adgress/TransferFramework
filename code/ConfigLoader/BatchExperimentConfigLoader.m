@@ -10,6 +10,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             obj = obj@ConfigLoader(configsObj);
         end
         function [] = runExperiments(obj,multithread)
+            pc = ProjectConfigs.Create();
             mainConfigs = obj.configs.get('experimentConfigsClass').copy();      
             if obj.has('transferMethodClass')
                 mainConfigs.set('transferMethodClass', obj.get('transferMethodClass'));
@@ -31,7 +32,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 featuresToUse = 1;
                 dataAndSplits.allData.keepFeatures(featuresToUse);                
                               
-                labelProduct = ProjectConfigs.MakeLabelProduct();
+                labelProduct = pc.MakeLabelProduct();
                 t = labelProduct{1};
                 t(2) = t(1);
                 labelProduct = {t,labelProduct{:}};
@@ -85,7 +86,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         end    
                         sourceDataCopy.instanceIDs(:) = labelProductIdx;                        
                         if hasOverlap
-                            sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(ProjectConfigs.numOverlap);
+                            sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
                             sourceDataCopy.remove(sourceDataCopy.Y <= 0);
                         end
                         newSplit.sourceData{end+1} = sourceDataCopy;
@@ -98,9 +99,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 mainConfigs.set('sourceClass',sourceLabel);
                 mainConfigs.set('targetClass',targetLabel);
                 mainConfigs.set('transferDataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
-                mainConfigs.set('k',ProjectConfigs.k);
-                mainConfigs.set('sigmaScale',ProjectConfigs.sigmaScale);
-                mainConfigs.set('alpha',ProjectConfigs.alpha);
+                mainConfigs.set('k',pc.k);
+                mainConfigs.set('sigmaScale',pc.sigmaScale);
+                mainConfigs.set('alpha',pc.alpha);
                 runExperiment(mainConfigs);
                 
                 %{

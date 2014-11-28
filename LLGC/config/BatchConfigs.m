@@ -8,10 +8,11 @@ classdef BatchConfigs < Configs
     methods
         function [obj] = BatchConfigs()
             obj = obj@Configs();
+            c = ProjectConfigs.Create();
             obj.configsStruct.paramsToVary={'sigmaScale','k','alpha'};
-            obj.configsStruct.sigmaScale = num2cell(ProjectConfigs.sigmaScale);
-            obj.configsStruct.k = num2cell(ProjectConfigs.k);
-            obj.configsStruct.alpha = num2cell(ProjectConfigs.alpha);
+            obj.configsStruct.sigmaScale = num2cell(c.sigmaScale);
+            obj.configsStruct.k = num2cell(c.k);
+            obj.configsStruct.alpha = num2cell(c.alpha);
             obj.configsStruct.experimentConfigsClass=LLGCMainConfigs();
             
             obj.configsStruct.makeSubDomains = true;

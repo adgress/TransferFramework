@@ -11,7 +11,10 @@ classdef ProjectConfigs
         %dataSet = Constants.TOMMASI_DATA
     end
     
-    methods(Static)                
+    methods(Static)      
+        function [c] = Create()
+            error('TODO');
+        end
         function [c] = BatchConfigs()
             c = BatchConfigs();
             if ProjectConfigs.dataSet == Constants.TOMMASI_DATA
@@ -61,23 +64,25 @@ classdef ProjectConfigs
         end
                 
         function [labelProduct] = MakeLabelProduct()
-            numTargetLabels = ProjectConfigs.numTarget;
-            numSourceLabels = ProjectConfigs.numSource;
-            targetlabels = ProjectConfigs.tommasiLabels(1:numTargetLabels);
-            sourceLabels = ProjectConfigs.tommasiLabels(numTargetLabels+1:numTargetLabels+numSourceLabels);
+            pc = ProjectConfigs.Create();
+            numTargetLabels = pc.numTarget;
+            numSourceLabels = pc.numSource;
+            targetlabels = pc.tommasiLabels(1:numTargetLabels);
+            sourceLabels = pc.tommasiLabels(numTargetLabels+1:numTargetLabels+numSourceLabels);
             targetDomains = Helpers.MakeCrossProductOrdered(targetlabels,targetlabels);
             sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);
             labelProduct = Helpers.MakeCrossProduct(targetDomains,sourceDomains);
         end
         
         function [targetDomains,sourceDomains] = MakeDomains()
-            numTargetLabels = ProjectConfigs.numTarget;
-            numSourceLabels = ProjectConfigs.numSource;
+            pc = ProjectConfigs.Create();
+            numTargetLabels = pc.numTarget;
+            numSourceLabels = pc.numSource;
             
-            targetlabels = ProjectConfigs.tommasiLabels(1:numTargetLabels);
+            targetlabels = pc.tommasiLabels(1:numTargetLabels);
             targetDomains = Helpers.MakeCrossProductOrdered(targetlabels,targetlabels);
             
-            sourceLabels = ProjectConfigs.tommasiLabels(numTargetLabels+1:numTargetLabels+numSourceLabels);            
+            sourceLabels = pc.tommasiLabels(numTargetLabels+1:numTargetLabels+numSourceLabels);            
             sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);           
         end
     end

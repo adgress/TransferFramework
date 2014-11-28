@@ -11,9 +11,10 @@ function [] = runVisualization()
     dataSet = 'tommasi_data';
     vizConfigs.set('dataSet',{dataSet});    
     title(dataSet);
+    c = ProjectConfigs.Create();
     %for k=ProjectConfigs.k    
-    numSubplots = length(ProjectConfigs.sigmaScale);
-    for s=ProjectConfigs.sigmaScale
+    numSubplots = length(c.sigmaScale);
+    for s=c.sigmaScale
         subplotIndex = subplotIndex + 1;
         subplot(1,numSubplots,subplotIndex);                
         newPlotConfigs = cell(size(plotConfigs));

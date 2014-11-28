@@ -21,6 +21,7 @@ classdef LLGCWeightedMethod < LLGCMethod
         
         function [testResults,savedData] = ...
                 trainAndTest(obj,input,savedData)
+            pc = ProjectConfigs();
             useHF = false;
             %{
             if exist('savedData','var')
@@ -43,7 +44,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 testResults.dataType = distMat.type;
             end
             [Wrbf,YtrainMat,sigma,Y_testCleared,instanceIDs] = obj.makeLLGCMatrices(distMat);
-            labels = ProjectConfigs.labelsToUse; 
+            labels = pc.labelsToUse; 
             if isempty(labels)
                 labels = distMat.classes;
             end
@@ -55,15 +56,15 @@ classdef LLGCWeightedMethod < LLGCMethod
             useUnweighted = obj.get('unweighted');
             useDataSetWeights = obj.get('dataSetWeights');
             assert(~(useOracle && useUnweighted));            
-            if useOracle & ~useDataSetWeights
+            if useOracle && ~useDataSetWeights
                 a = zeros(size(M,1),1);
                 a(~distMatRBF.isNoisy & Y_testCleared > 0) = 1;
                 a = repmat(a,1,max(labels));                
-            elseif useUnweighted & ~useDataSetWeights
+            elseif useUnweighted && ~useDataSetWeights
                 a = ones(size(M,1),max(labels));
             else
-                regParams = [.1 1 10 100];
-                numFolds = ProjectConfigs.numFolds;
+                regParams = pc.regParams;
+                numFolds = pc.numFolds;
                 regAcc = zeros(length(regParams),numFolds);
                 splits = cell(numFolds,1);
                 for foldIdx=1:numFolds
@@ -116,7 +117,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                     [~,maxIdx] = max(meanRegAcc);
                     reg = regParams(maxIdx);
                 else
-                    reg = ProjectConfigs.reg;
+                    reg = pc.reg;
                 end
                 
                 hasLabel = Y_testCleared > 0;     
@@ -187,17 +188,19 @@ classdef LLGCWeightedMethod < LLGCMethod
         end                
         
         function [M] = makeM(obj,W)
+            pc = ProjectConfigs.Create();
             W(logical(speye(size(W)))) = 0;
             Disq = diag(sum(W).^-.5);
             WN = Disq*W*Disq;
-            alpha = ProjectConfigs.alpha;                                
+            alpha = pc.alpha;                                
             I = eye(size(WN,1));
             %M = (1/(1-alpha))*(I-alpha*WN);
             M = (I-alpha*WN);
         end
         
         function [a] = solveForNodeWeights(obj,A,Y,Yfull,reg,instanceIDs)                        
-            numLabels = size(Y,2);            
+            numLabels = size(Y,2);          
+            pc = ProjectConfigs.Create();
             if obj.get('dataSetWeights')
                 dataSets = unique(instanceIDs);
                 numDataSets = length(dataSets);
@@ -213,7 +216,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                     variable Aa(numInstances,numLabels)                   
                     minimize(norm(vec(AaSub-Y),2)/numel(find(Y)) + reg*norm(a(2:end),1))
                     subject to             
-                        AaSub == (1-ProjectConfigs.alpha)*Aa(isTarget,:);
+                        AaSub == (1-pc.alpha)*Aa(isTarget,:);
                         Aa == A*(Yfull.*repmat(aDup,1,numLabels))
                         aDup == a(instanceIDs+dataSetOffset)
                         a >= 0
