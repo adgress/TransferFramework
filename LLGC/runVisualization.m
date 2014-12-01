@@ -5,12 +5,9 @@ function [] = runVisualization()
     f = figure;
     subplotIndex = 0;
     plotConfigs = vizConfigs.c.plotConfigs;
-    
-    %dataSet = 'USPS-small';
-    %dataSet = 'COIL20';
-    dataSet = 'tommasi_data';
-    vizConfigs.set('dataSet',{dataSet});    
-    title(dataSet);
+              
+    a = vizConfigs.get('dataSet');
+    title(a{1});
     c = ProjectConfigs.Create();
     %for k=ProjectConfigs.k    
     numSubplots = length(c.sigmaScale);

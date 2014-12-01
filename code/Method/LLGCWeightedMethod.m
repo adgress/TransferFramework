@@ -17,11 +17,14 @@ classdef LLGCWeightedMethod < LLGCMethod
             if ~obj.has('dataSetWeights')
                 obj.set('dataSetWeights',false);
             end
+            if ~obj.has('sort')
+                obj.set('sort',true);
+            end            
         end
         
         function [testResults,savedData] = ...
                 trainAndTest(obj,input,savedData)
-            pc = ProjectConfigs();
+            pc = ProjectConfigs.Create();
             useHF = false;
             %{
             if exist('savedData','var')
@@ -50,11 +53,13 @@ classdef LLGCWeightedMethod < LLGCMethod
             end
             YtrainMat = Helpers.createLabelMatrix(Y_testCleared);
             
-            M = obj.makeM(Wrbf);            
+            M = obj.makeM(Wrbf);  
+            M_inv = inv(M);
             distMatRBF = DistanceMatrix(M,Y_testCleared,distMat.type,distMat.trueY,distMat.instanceIDs);            
             useOracle = obj.get('oracle');
             useUnweighted = obj.get('unweighted');
             useDataSetWeights = obj.get('dataSetWeights');
+            useSorted = obj.get('sort');
             assert(~(useOracle && useUnweighted));            
             if useOracle && ~useDataSetWeights
                 a = zeros(size(M,1),1);
@@ -81,16 +86,19 @@ classdef LLGCWeightedMethod < LLGCMethod
                         Y_testClearedCurr(split==2) = -1;
 
                         hasLabel = Y_testClearedCurr > 0;
-                        Msub = M(hasLabel,hasLabel);
+                        %Msub = M(hasLabel,hasLabel);
+                        Msub = M_inv(hasLabel,hasLabel);
 
                         Y = YtrainMatCurr;                
                         Ysub = Y(hasLabel,:);
 
-                        A = Msub*Ysub;
+                        %A = Msub*Ysub;
+                        A = Msub;
+                        instanceIDsSub = instanceIDs(hasLabel);
                         if useDataSetWeights
                             
                         else
-                            [a] = obj.solveForNodeWeights(A,Ysub,reg);                    
+                            [a] = obj.solveForNodeWeights(A,Ysub,Ysub,reg,instanceIDsSub);
                         end
                         aAll = zeros(size(M,1),1);
                         aAll(hasLabel) = a;                        
@@ -104,15 +112,24 @@ classdef LLGCWeightedMethod < LLGCMethod
                         Yactual = distMat.Y;
                         %Yactual = distMat.trueY;
                         acc = sum(Yactual(isLabeledTest) == Y1(isLabeledTest))/sum(isLabeledTest);
-                        %{
+                        
                         display(['Accuracy: ' num2str(acc)]);
                         accNormal = sum(Yactual(isLabeledTest) == Y2(isLabeledTest))/sum(isLabeledTest);
                         display(['Accuracy Normal: ' num2str(accNormal)]);
-                        %}
+                                                
+                        aOracle = zeros(size(M,1),1);
+                        aOracle(hasLabel) = 1;
+                        aOracle(distMat.isNoisy) = 0;
+                        aOracle = repmat(aOracle,1,max(labels));
+                        YpredOracle = M\(YtrainMatCurr.*aOracle);
+                        [~,Y3] = max(YpredOracle,[],2);
+                        accOracle = sum(Yactual(isLabeledTest) == Y3(isLabeledTest))/sum(isLabeledTest);
+                        display(['Accuracy Oracle: ' num2str(accOracle)]);
+                        
                         regAcc(regIdx,foldIdx) = acc;
                     end
                 end
-                if ProjectConfigs.numFolds > 0
+                if pc.numFolds > 0
                     meanRegAcc = mean(regAcc,2);
                     [~,maxIdx] = max(meanRegAcc);
                     reg = regParams(maxIdx);
@@ -121,70 +138,74 @@ classdef LLGCWeightedMethod < LLGCMethod
                 end
                 
                 hasLabel = Y_testCleared > 0;     
-                M_inv = inv(M);
                 Msub = M_inv(hasLabel,hasLabel);
                 Ysub = YtrainMat(hasLabel,:);
-                %instanceIDsSub = instanceIDs(hasLabel);
-                %A = Msub*Ysub;               
                 A = Msub;
-                if obj.get('dataSetWeights')
+                if useDataSetWeights
                     isTarget = instanceIDs == min(instanceIDs);
-                    %hasLabel = hasLabel & isTarget;
                     isTargetSub = isTarget(hasLabel);
                     instanceIDsSub = instanceIDs(hasLabel);
                     Ysub = Ysub(isTargetSub,:);
-                end 
+                else
+                    instanceIDsSub = instanceIDs(hasLabel);
+                end
                 [aSub] = obj.solveForNodeWeights(A,Ysub,YtrainMat(hasLabel,:),reg,instanceIDsSub);
                 a = zeros(size(M,1),1);
                 a(hasLabel) = aSub;
                 a = repmat(a,1,max(labels));
             end
             
-            F = M\(YtrainMat.*a);
-            [~,Ypred] = max(F,[],2);
             testResults = FoldResults();
             testResults.yActual = distMat.trueY;
             testResults.learnerMetadata.sigma = sigma;
             testResults.dataType = distMat.type;
-            testResults.yPred = Ypred;                        
-            testResults.dataFU = sparse(F);            
             isTest = distMat.isTargetTest();
-            acc = sum(Ypred(isTest) == distMat.trueY(isTest))/sum(isTest);
-            display(['LLGCMethod Acc: ' num2str(acc)]);
-            
+            if ~useOracle && ~useUnweighted
+                F = M\(YtrainMat.*a);
+                [~,Ypred] = max(F,[],2);                                
+                testResults.yPred = Ypred;                        
+                testResults.dataFU = sparse(F);                            
+                acc = sum(Ypred(isTest) == distMat.trueY(isTest))/sum(isTest);
+                display(['LLGCMethod Acc: ' num2str(acc)]);
+            end
             Fnormal = M\YtrainMat;
             [~,YpredNormal] = max(Fnormal,[],2);
             accNormal = sum(YpredNormal(isTest) == distMat.trueY(isTest))/sum(isTest);
             display(['Normal Acc: ' num2str(accNormal)])
-            if obj.get('unweighted')
+            if useUnweighted
                 testResults.yPred = YpredNormal;
                 testResults.dataFU = sparse(Fnormal);                
             end            
-            
-            YtrainMat_justTarget = YtrainMat;
-            YtrainMat_justTarget(instanceIDs ~= 0,:) = 0;
-            FjustTarget = M\YtrainMat_justTarget;
-            [~,YpredJustTarget] = max(FjustTarget,[],2);
-            accJustTarget = sum(YpredJustTarget(isTest) == distMat.trueY(isTest))/sum(isTest);
-            display(['Just Target Acc: ' num2str(accJustTarget)])
-            
+            if useDataSetWeights
+                YtrainMat_justTarget = YtrainMat;
+                YtrainMat_justTarget(instanceIDs ~= 0,:) = 0;
+                FjustTarget = M\YtrainMat_justTarget;
+                [~,YpredJustTarget] = max(FjustTarget,[],2);
+                accJustTarget = sum(YpredJustTarget(isTest) == distMat.trueY(isTest))/sum(isTest);
+                display(['Just Target Acc: ' num2str(accJustTarget)])
+            end
             YtrainMat_oracle = YtrainMat;
-            YtrainMat_oracle(instanceIDs > 1,:) = 0;
+            if useDataSetWeights
+                YtrainMat_oracle(instanceIDs > 1,:) = 0;
+            else
+                YtrainMat_oracle(distMat.isNoisy,:) = 0;
+            end
             Foracle = M\YtrainMat_oracle;
             [~,YpredOracle] = max(Foracle,[],2);
             accJustOracle = sum(YpredOracle(isTest) == distMat.trueY(isTest))/sum(isTest);
             display(['Oracle Acc: ' num2str(accJustOracle)])
-            if obj.get('oracle')
+            if useOracle
                 testResults.yPred = YpredOracle;
                 testResults.dataFU = sparse(Foracle);                
             end  
-            
-            YtrainMat_source = YtrainMat;
-            YtrainMat_source(instanceIDs <= 1,:) = 0;
-            Fsource = M\YtrainMat_source;
-            [~,YpredSource] = max(Fsource,[],2);
-            accSource = sum(YpredSource(isTest) == distMat.trueY(isTest))/sum(isTest);
-            display(['Source Acc: ' num2str(accSource)])
+            if useDataSetWeights
+                YtrainMat_source = YtrainMat;
+                YtrainMat_source(instanceIDs <= 1,:) = 0;
+                Fsource = M\YtrainMat_source;
+                [~,YpredSource] = max(Fsource,[],2);
+                accSource = sum(YpredSource(isTest) == distMat.trueY(isTest))/sum(isTest);
+                display(['Source Acc: ' num2str(accSource)])
+            end
         end                
         
         function [M] = makeM(obj,W)
@@ -226,24 +247,44 @@ classdef LLGCWeightedMethod < LLGCMethod
                 warning on                 
                 %[norm(vec(AaSub-Y),2)/numel(find(Y)) reg*norm(a,1)]
                 a = aDup;
-            else        
+            elseif obj.get('sort')
                 numLabeled = size(Y,1);
+                A = (1-pc.alpha)*A;
+                a = ones(numLabeled,1);
+                F = A*Yfull;
+                v = zeros(numLabeled,1);                
+                for i=1:length(v)
+                    v(i) = norm(Yfull(i,:) - F(i,:),1);
+                end
+                [sortedV,inds] = sort(v,'descend');
+                numNoisy = floor(ProjectConfigs.Create().classNoise*numLabeled);
+                a(inds(1:numNoisy)) = 0;
+            else
+                numLabeled = size(Y,1);
+                                
+                %I think this is the correct problem to solve
+                A = (1-pc.alpha)*A;
+                ny = numLabeled*numLabels;
                 warning off
                 cvx_begin quiet
                     variable a(numLabeled)
-                    %minimize(norm(A*a-Ysub,'fro') + reg*norm(a-1))
-                    minimize(norm(vec(A*(Yfull.*repmat(a,1,numLabels))-Y),1) + reg*norm(a-1,1))
-                    %minimize(norm(vec(A.*repmat(a,1,numLabels)-Ysub),'fro') + reg*norm(a-1,1))
+                    variable aDup(numLabeled,numLabels)                                        
+                    minimize((1/numLabels)*norm(vec((A*Yfull-Y).*aDup),2) + reg*norm(a-1,1))
                     subject to
+                        aDup == repmat(a,1,numLabels)
                         a >= 0
+                        a <= 1
                 cvx_end  
+                (1/ny)*norm(vec(A*(Yfull.*repmat(a,1,numLabels))-Y),1) 
+                reg*norm(a-1,1)
+                reg
                 warning on   
             end
         end
         
         function [nameParams] = getNameParams(obj)
             %nameParams = {'sigma','sigmaScale','k','alpha'};
-            nameParams = {'dataSetWeights','noise','oracle','unweighted'};
+            nameParams = {'dataSetWeights','noise','oracle','unweighted','sort'};
         end
         
         function [prefix] = getPrefix(obj)

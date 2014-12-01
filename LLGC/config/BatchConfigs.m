@@ -13,9 +13,7 @@ classdef BatchConfigs < Configs
             obj.configsStruct.sigmaScale = num2cell(c.sigmaScale);
             obj.configsStruct.k = num2cell(c.k);
             obj.configsStruct.alpha = num2cell(c.alpha);
-            obj.configsStruct.experimentConfigsClass=LLGCMainConfigs();
-            
-            obj.configsStruct.makeSubDomains = true;
+            obj.configsStruct.experimentConfigsClass=LLGCMainConfigs();                        
         end        
     end
 end

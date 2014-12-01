@@ -171,9 +171,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     params = allParams{paramIdx};
                     mainConfigsCopy = mainConfigs.copy();
                     mainConfigsCopy.set(paramsToVary,params);                    
-                    dataAndSplits = load(mainConfigsCopy.getDataFileName());
+                    dataAndSplits = load(mainConfigsCopy.getDataFileName());                    
                     dataAndSplits = dataAndSplits.dataAndSplits;
-                    
+                    if isempty(dataAndSplits.allData.instanceIDs)
+                        dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);
+                    end
                     if isfield(dataAndSplits,'sourceNames')
                         allSourceNames = dataAndSplits.sourceNames;
                         currSourceNames = mainConfigsCopy.c.sourceDataSetToUse;

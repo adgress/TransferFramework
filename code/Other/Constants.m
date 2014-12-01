@@ -10,6 +10,8 @@ classdef Constants < handle
         CV_DATA = 1
         NG_DATA = 2
         TOMMASI_DATA = 3
+        COIL20_DATA = 4
+        USPS_DATA = 5
         
         NO_TYPE = 0;
         TARGET_TRAIN = 1;

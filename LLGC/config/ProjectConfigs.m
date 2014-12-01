@@ -10,7 +10,7 @@ classdef ProjectConfigs
         HYPERPARAMETER_EXPERIMENTS=2
         WEIGHTED_TRANSFER=3
         
-        experimentSetting = 3
+        experimentSetting = 1
     end
     
     properties        
@@ -31,7 +31,10 @@ classdef ProjectConfigs
         
         useOracle
         useUnweighted
-        useDataSetWeights        
+        useDataSetWeights 
+        useSort
+        
+        dataSet
     end
     
     methods(Static)
@@ -41,25 +44,35 @@ classdef ProjectConfigs
             c.useOracle=false;
             c.useUnweighted=false;
             c.useDataSetWeights=false;
+            c.useSort=true;
 
             c.sigmaScale = .2;
             c.k=inf;
-            c.alpha=.95;
+            c.alpha=.9;
             c.classNoise = 0;
-            c.numFolds = 5;
+            c.numFolds = 1;
             c.reg = 1e-4;
-            c.regParams = [.1 1 10 100];
+            c.regParams = [0 1e-8 1e-7 1e-6 5e-6 1e-5 5e-5 1e-4 1e-3 1e-2 .1];
+            c.dataSet = Constants.COIL20_DATA;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
                 c.labelsToUse = 1:20;
                 c.classNoise = .25;
-                c.numLabeledPerClass=[30 40 50];
+                c.numLabeledPerClass=[10 20 30 40 50];
+                %c.numLabeledPerClass=[30 40 50];
+                c.alpha=.95;
+                c.sigmaScale = .2;
+                if c.useSort
+                    c.regParams = [];
+                end
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.HYPERPARAMETER_EXPERIMENTS
+                c.dataSet = Constants.USPS_DATA;
                 c.sigmaScale = .2:.2:1;
                 %k = [10,30,60,120, inf];
                 c.alpha = [.1:.2:.9 .95 .99];
                 c.labelsToUse=1:20;
                 c.numLabeledPerClass=2:2:8;
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+                c.dataSet = Constants.TOMMASI_DATA;
                 c.labelsToUse = [];
                 c.numLabeledPerClass=[5 10 15];
 
@@ -79,14 +92,21 @@ classdef ProjectConfigs
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
             c.get('experimentConfigsClass').configsStruct.labelsToUse = pc.labelsToUse;
-            %c.get('experimentConfigsClass').setUSPSSmall();
-            c.get('experimentConfigsClass').setCOIL20(pc.classNoise);
+            if pc.dataSet == Constants.COIL20_DATA
+                c.get('experimentConfigsClass').setCOIL20(pc.classNoise);
+            end
+            if pc.dataSet == Constants.TOMMASI_DATA
+                c.get('experimentConfigsClass').setTommasiData(); 
+            end
+            if pc.dataSet == Constants.USPS_DATA
+                c.get('experimentConfigsClass').setUSPSSmall();
+            end
             c.get('experimentConfigsClass').setLLGCWeightedConfigs();
-            
+            c.configsStruct.experimentConfigLoader = 'ExperimentConfigLoader';
             if ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
                 c.configsStruct.transferMethodClass = FuseTransfer();
                 c.configsStruct.experimentConfigLoader = 'TransferExperimentConfigLoader';
-                c.get('experimentConfigsClass').setTommasiData();
+                c.configsStruct.makeSubDomains = true;
             end
         end
         
@@ -94,7 +114,7 @@ classdef ProjectConfigs
             pc = ProjectConfigs.Create();
             c = SplitConfigs();            
             %c.setUSPSSmall();
-            pc.setCOIL20(ProjectConfigs.classNoise);
+            c.setCOIL20(ProjectConfigs.classNoise);
         end
         
         function [c] = VisualizationConfigs()
@@ -109,8 +129,17 @@ classdef ProjectConfigs
             c.configsStruct.plotConfigs = ProjectConfigs.makePlotConfigs();
             c.configsStruct.numColors = length(c.c.plotConfigs); 
             c.set('prefix','results');
-            if ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+            
+            pc = ProjectConfigs.Create();
+            if pc.dataSet == Constants.USPS_DATA
+                c.set('dataSet',{'USPS-small'});
+            end
+            if pc.dataSet == Constants.COIL20_DATA
+                c.set('dataSet',{'COIL20'});
+            end
+            if pc.dataSet == Constants.TOMMASI_DATA
                 c.set('prefix','results_tommasi');
+                c.set('dataSet',{'tommasi_data'});
             end
         end
         
@@ -120,9 +149,15 @@ classdef ProjectConfigs
             methodResultsFileNames = {};
             pc = ProjectConfigs.Create();
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
+                %{
                 methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=0-unweighted=0.mat';
                 methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=0-unweighted=1.mat';
                 methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=1-unweighted=0.mat';
+                %}
+                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=1-sort=0.mat';
+                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=0-sort=0.mat';
+                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=1-unweighted=0-sort=0.mat';
+                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=0-sort=1.mat';
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.HYPERPARAMETER_EXPERIMENTS
                 k=inf;
                 alpha=.9;
