@@ -31,12 +31,20 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 end
                 featuresToUse = 1;
                 dataAndSplits.allData.keepFeatures(featuresToUse);                
-                              
-                labelProduct = pc.MakeLabelProduct();
-                t = labelProduct{1};
-                t(2) = t(1);
-                labelProduct = {t,labelProduct{:}};
                 
+                
+                                
+                labelProduct = pc.MakeLabelProduct();
+                
+                addTargetDomain = pc.addTargetDomain;
+                if addTargetDomain
+                    t = labelProduct{1};
+                    t2 = labelProduct{1};
+                    t(2) = t(1);                    
+                    
+                    t2{2} = fliplr(t2{1});
+                    labelProduct = {t,t2,labelProduct{:}};
+                end
                 dataAndSplitsCopy = struct();
                 dataAndSplitsCopy.allSplits = {};
                 dataAndSplitsCopy.configs = dataAndSplits.configs.copy();      
@@ -57,6 +65,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     targetClassInds = targetDataCopy.hasLabel(targetLabel);
                     targetDataCopy.remove(~targetClassInds);  
                     
+                    isOverlap = targetDataCopy.stratifiedSelection(pc.numOverlap);                    
+                    %targetDataCopy.remove(isOverlap);
+                    targetDataCopy.Y(isOverlap) = -1;
+                    
                     newSplit.targetData = targetDataCopy;
                     newSplit.targetType = split.split;
                     newSplit.targetType = newSplit.targetType(targetClassInds); 
@@ -71,7 +83,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             sourceLabel = sourceLabel{1};
                         end
                         assert(all(targetLabel_i == targetLabel));
-                        hasOverlap = sum(sourceLabel == targetLabel_i) > 0;
+                        hasOverlap = ~isempty(intersect(sourceLabel,targetLabel_i));
                         if hasOverlap
                             display(['Same label found: ' ...
                                 num2str(sourceLabel) ', ' num2str(targetLabel_i)]);
@@ -81,24 +93,37 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         sourceDataCopy.applyPermutation(split.permutation);
                         sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
                         sourceDataCopy.remove(~sourceClassInds);
+                        YNew = -1*ones(size(sourceDataCopy.Y));
                         for labelIdx=1:length(targetLabel)
-                            sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
+                            %sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
+                            YNew(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx);
                         end    
+                        sourceDataCopy.Y = YNew;
                         sourceDataCopy.instanceIDs(:) = labelProductIdx;                        
                         if hasOverlap
+                            sourceDataCopy.keep(isOverlap);
+                            %sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
+                            %sourceDataCopy.remove(sourceDataCopy.Y <= 0);
+                        else
                             sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
                             sourceDataCopy.remove(sourceDataCopy.Y <= 0);
                         end
                         newSplit.sourceData{end+1} = sourceDataCopy;
+                        
                     end                    
                     display('Not applying permutation to split - is this correct?');
                     %newSplit.targetType = split.split(split.permutation);                                          
                     dataAndSplitsCopy.allSplits{end+1} = newSplit;
                 end
+                [targetLabels,sourceLabels] = ProjectConfigs.GetTargetSourceLabels();
+                mainConfigs.set('numOverlap',pc.numOverlap);
+                mainConfigs.set('addTargetDomain',pc.addTargetDomain);
+                mainConfigs.set('targetLabels',targetLabels);
+                mainConfigs.set('sourceLabels',sourceLabels);
                 mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
                 mainConfigs.set('sourceClass',sourceLabel);
                 mainConfigs.set('targetClass',targetLabel);
-                mainConfigs.set('transferDataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
+                mainConfigs.set('transferDataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);
                 mainConfigs.set('k',pc.k);
                 mainConfigs.set('sigmaScale',pc.sigmaScale);
                 mainConfigs.set('alpha',pc.alpha);

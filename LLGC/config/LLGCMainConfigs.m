@@ -71,7 +71,11 @@ classdef LLGCMainConfigs < MainConfigs
             llgcObj = LLGCWeightedMethod(learnerConfigs);
            	llgcObj.set('unweighted',c.useUnweighted);
             llgcObj.set('oracle',c.useOracle);
+            llgcObj.set('sort',c.useSort);
+            llgcObj.set('justTarget',c.useJustTarget);
             llgcObj.set('dataSetWeights',c.useDataSetWeights);
+            llgcObj.set('useOracleNoise',c.useOracleNoise);
+            llgcObj.set('classNoise',c.classNoise);            
             obj.configsStruct.learners=llgcObj;
         end
         

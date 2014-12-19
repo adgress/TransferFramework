@@ -454,6 +454,15 @@ classdef Helpers < handle
                 end
             end
         end
+        
+        function [v,inds] = MakeCrossProductForFields(fields,o)
+            paramsArray = {};
+            for i=1:length(fields)
+                paramsArray{end+1} = o.(fields{i});
+            end
+            [v,inds] = Helpers.MakeCrossProduct(paramsArray{:});
+        end
+        
         function [v,inds] = MakeCrossProduct(varargin)
             v = {};
             inds = {[]};
@@ -483,6 +492,12 @@ classdef Helpers < handle
                 end
                 v = vNew;
                 inds = indsNew;
+            end
+        end
+        function [c] = Mat2CellArray(m)
+            c = {};
+            for i=1:numel(m)
+                c{end+1} = m(i);
             end
         end
     end

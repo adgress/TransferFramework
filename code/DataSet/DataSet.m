@@ -25,7 +25,8 @@ classdef DataSet < LabeledData
                 trueY = [];
             end
             if ~exist('instanceIDs','var')
-                instanceIDs = [];
+                instanceIDs = 1:length(Y);
+                instanceIDs = instanceIDs';
             end
             if exist('dataFile','var') && ~isempty(dataFile)
                 obj.dataFile = dataFile;

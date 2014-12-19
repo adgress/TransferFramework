@@ -51,6 +51,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex);
+            assert(sum(sampledTrain.Y > 0) == numPerClass*sampledTrain.numClasses);
             [~,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,...
                 experiment); 
@@ -98,8 +99,31 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             trainingDataMetadata.sampledTrain = sampledTrain;
             trainingDataMetadata.test = test;
             %}
-        end
+        end        
         
+        function [outputFileName] = getOutputFileName(obj)
+            outputDir = obj.configs.resultsDirectory;
+            warning off;
+            outputDirParams = obj.configs.getOutputDirectoryParams();
+            outputDir = [outputDir obj.configs.stringifyFields(outputDirParams, '/')];
+            
+            trueFunc = MainConfigs.trueFunc;
+            t = '';
+            if obj.has('addTargetDomain') && obj.get('addTargetDomain')
+                v = {...
+                    MainConfigs.OutputNameStruct('numOverlap','',trueFunc,true,true),...
+                };
+                t = ['-' obj.configs.stringifyFields(v,'-')];
+            end            
+            outputDir = [outputDir t '/'];
+            warning on;
+            
+            outputFileParams = obj.configs.getOutputFileNameParams();            
+            outputFile = obj.configs.stringifyFields(outputFileParams, '_');            
+            outputFileName = [outputDir outputFile '.mat'];
+            Helpers.MakeDirectoryForFile(outputFileName);
+        end            
+            
         function [transferFileName] = getTransferFileName(obj)
             dataSet = obj.configs.get('dataSet');
             transferDir = obj.configs.transferDirectory;

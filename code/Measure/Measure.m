@@ -21,6 +21,7 @@ classdef Measure < Saveable
                     numel(split.trainPredicted); 
                 valTest = sum(split.testPredicted==split.testActual)/...
                     numel(split.testPredicted);                
+                assert(all(split.testActual > 0));                
                 %{
                 %display('Using soft loss for measure!');
                 testVals = Helpers.SelectFromRows(split.testFU,split.testActual);

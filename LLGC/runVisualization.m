@@ -2,12 +2,18 @@ function [] = runVisualization()
     setPaths;
     close all    
     vizConfigs = ProjectConfigs.VisualizationConfigs();
-    f = figure;
+    width = 600;
+    height = 500;
+    f = figure('position',[100 100 width height]);
     subplotIndex = 0;
     plotConfigs = vizConfigs.c.plotConfigs;
               
     a = vizConfigs.get('dataSet');
-    title(a{1});
+    if vizConfigs.has('title')
+        title(vizConfigs.get('title'));
+    else
+        title(a{1});
+    end
     c = ProjectConfigs.Create();
     %for k=ProjectConfigs.k    
     numSubplots = length(c.sigmaScale);

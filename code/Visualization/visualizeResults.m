@@ -151,8 +151,11 @@ function [f, returnStruct] = visualizeResults(options,f)
             end
         end        
     end       
+    if options.has('legend')
+        leg = options.get('legend');
+    end
     if options.c.showLegend && ~isempty(leg) && ~options.c.showTable
-        legend(leg);
+        legend(leg,'Location','southeast');
     end
     if options.c.showTable
         tableData = makeResultsTableData(displayVals);
