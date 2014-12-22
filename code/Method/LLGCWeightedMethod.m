@@ -182,6 +182,13 @@ classdef LLGCWeightedMethod < LLGCMethod
                 testResults.dataFU = sparse(F);                            
                 acc = sum(Ypred(isTest) == distMat.trueY(isTest))/sum(isTest);
                 display(['LLGCMethod Acc: ' num2str(acc)]);
+                testResults.instanceWeights = a(:,1);
+                if useDataSetWeights
+                    
+                else
+                    testResults.isNoisy = distMat.isNoisy;                    
+                    assert(length(testResults.noisy) == length(testResults.instanceWeights));
+                end
             end
             Fnormal = M\YtrainMat;
             [~,YpredNormal] = max(Fnormal,[],2);

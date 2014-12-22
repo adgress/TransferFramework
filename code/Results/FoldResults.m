@@ -14,6 +14,11 @@ classdef FoldResults < handle
         sources
         sampledTrain
         test
+        
+        isNoisy
+        instanceWeights
+        
+        
     end
     properties(Dependent)
         trainType

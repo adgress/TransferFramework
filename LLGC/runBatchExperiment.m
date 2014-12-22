@@ -5,7 +5,7 @@ function [] = runBatchExperiment(multithread, dataset)
     c = ProjectConfigs.Create();
     %classNoise = [0 .15 .25 .35 .55];
     if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
-        classNoise = [0];
+        classNoise = [.05];
         for i=classNoise(:)'
             c.classNoise = i;
             batchConfigsObj = ProjectConfigs.BatchConfigs();    

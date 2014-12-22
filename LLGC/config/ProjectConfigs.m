@@ -47,7 +47,7 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=false;            
+            c.useUnweighted=true;            
             c.useSort=false;
             c.useJustTarget=false;
             
@@ -99,7 +99,7 @@ classdef ProjectConfigs < handle
                 c.numSource = 4;
                 
                 allLabels = [10 15 23 25 26 30 41 56 57];
-                train = [10 15];
+                train = [23 25];
                 c.tommasiLabels = [train setdiff(allLabels,train)];
                 c.useDataSetWeights=true;
             else
@@ -141,7 +141,7 @@ classdef ProjectConfigs < handle
             c = SplitConfigs();            
             %c.setUSPSSmall();
             %c.setCOIL20(ProjectConfigs.classNoise);
-            c.setCOIL20(.55);
+            c.setCOIL20(.05);
         end
         
         function [c] = VisualizationConfigs()
@@ -196,13 +196,20 @@ classdef ProjectConfigs < handle
                 methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=0-sort=1-useOracleNoise=1-classNoise=%s.mat';
                 methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=0-sort=1-useOracleNoise=0-classNoise=%s.mat';
                 %}
+                methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
                 methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
                 methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
-                classNoise = .55;
+                
+                classNoise = .05;
                 for i=1:length(methodResultsFileNames)
                     methodResultsFileNames{i} = sprintf(methodResultsFileNames{i},num2str(classNoise));
                 end
+                title = ['Class Noise: ' num2str(classNoise)];
+                legend = {...
+                    'LLGC: Oracle Weights',...
+                    'LLGC: Learn Weights',...
+                    'LLGC: Uniform Weights',...                                        
+                };
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.HYPERPARAMETER_EXPERIMENTS
                 k=inf;
                 alpha=.9;
@@ -219,7 +226,7 @@ classdef ProjectConfigs < handle
                 %end            
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
                 labels = [10 15 23 25 26 30];
-                targetLabels = [10 15];
+                targetLabels = [23 25];
                 sourceLabels = setdiff(labels,targetLabels);
                 
                 
