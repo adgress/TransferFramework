@@ -13,6 +13,11 @@ classdef ProjectConfigs < handle
         experimentSetting = 3
         
         instance = ProjectConfigs.CreateSingleton()
+        
+        vizWeights = 1
+        vizNoisyAcc = 0
+        trainLabels = [10 15]
+        labels = [10 15 23 25 26 30]
     end
     
     properties        
@@ -38,6 +43,9 @@ classdef ProjectConfigs < handle
         useSort
         useOracleNoise
         useJustTarget
+        useRobustLoss
+        
+        useJustTargetNoSource
         
         dataSet
         cvParams
@@ -47,15 +55,17 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=true;            
-            c.useSort=false;
+            c.useUnweighted=false;                        
             c.useJustTarget=false;
+            c.useJustTargetNoSource=false;
+            c.useRobustLoss=false;
             
             c.useOracleNoise=false;
             
             c.useDataSetWeights=false;                        
             
             c.addTargetDomain = true;
+            c.useSort=true;
             c.sigmaScale = .2;
             c.k=inf;
             c.alpha=.9;
@@ -70,7 +80,6 @@ classdef ProjectConfigs < handle
                 c.labelsToUse = 1:20;
                 c.classNoise = .0;
                 c.numLabeledPerClass=[10 20 30 40 50];
-                %c.numLabeledPerClass=[30 40 50];
                 c.alpha=.95;
                 c.sigmaScale = .2;
                 c.reg = 0;
@@ -90,16 +99,16 @@ classdef ProjectConfigs < handle
                 c.dataSet = Constants.TOMMASI_DATA;
                 c.labelsToUse = [];
                 c.numLabeledPerClass=[5 10 15 20 25];
-                %c.numLabeledPerClass=[2 4 6];
-                %c.numLabeledPerClass=[5 10 15];
-                c.reg = [0 1e-6 1e-5 5e-5 1e-4 1e-3 5e-3 1e-2 .05 .1];
+                %c.numLabeledPerClass=[25];
+                %c.reg = [0 1e-6 1e-5 5e-5 1e-4 1e-3 5e-3 1e-2 .05 .1];
+                c.reg = .5:.5:4;
                 c.numFolds = 3;                
                 c.numOverlap = 60;
                 c.numTarget = 2;
                 c.numSource = 4;
                 
-                allLabels = [10 15 23 25 26 30 41 56 57];
-                train = [23 25];
+                allLabels = ProjectConfigs.labels;
+                train = ProjectConfigs.trainLabels;
                 c.tommasiLabels = [train setdiff(allLabels,train)];
                 c.useDataSetWeights=true;
             else
@@ -139,9 +148,10 @@ classdef ProjectConfigs < handle
         function [c] = SplitConfigs()
             pc = ProjectConfigs.Create();
             c = SplitConfigs();            
+            c.setTommasi();
             %c.setUSPSSmall();
             %c.setCOIL20(ProjectConfigs.classNoise);
-            c.setCOIL20(.05);
+            %c.setCOIL20(.25);
         end
         
         function [c] = VisualizationConfigs()
@@ -153,15 +163,25 @@ classdef ProjectConfigs < handle
             c.configsStruct.showSoftMeasures = false;
             c.configsStruct.showHardMeasures = false;
             c.configsStruct.showLLGCMeasure = false;
+            
+            c.configsStruct.xAxisField = 'dataSetWeights';
+            c.configsStruct.xAxisDisplay = 'Data Set Weights';
+            if ProjectConfigs.vizWeights
+                c.configsStruct.sizeToUse = 10;
+            end
+            c.configsStruct.vizWeights = ProjectConfigs.vizWeights;
+            c.configsStruct.vizNoisyAcc = ProjectConfigs.vizNoisyAcc;
             [c.configsStruct.plotConfigs,legend,title] = ...
                 ProjectConfigs.makePlotConfigs();
+            c.configsStruct.numColors = length(c.c.plotConfigs); 
             if ~isempty(legend)
-                c.set('legend',legend);                
+                c.set('legend',legend);
+                c.configsStruct.numColors = length(legend);
             end
             if ~isempty('title')
                 c.set('title',title);
-            end
-            c.configsStruct.numColors = length(c.c.plotConfigs); 
+            end            
+            
             c.set('prefix','results');
             
             pc = ProjectConfigs.Create();
@@ -184,32 +204,28 @@ classdef ProjectConfigs < handle
             pc = ProjectConfigs.Create();
             legend = [];
             title = [];
-            if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
-                %{
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=0-unweighted=0.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=0-unweighted=1.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-oracle=1-unweighted=0.mat';
-                %}
-                %{
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=1-unweighted=0-sort=0-useOracleNoise=1-classNoise=%s.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=1-sort=0-useOracleNoise=1-classNoise=%s.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=0-sort=1-useOracleNoise=1-classNoise=%s.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-dataSetWeights=0-oracle=0-unweighted=0-sort=1-useOracleNoise=0-classNoise=%s.mat';
-                %}
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
-                methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
-                
-                classNoise = .05;
+            if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                                
+                classNoise = .15;
+                title = ['Class Noise: ' num2str(classNoise)];
+                if ProjectConfigs.vizNoisyAcc
+                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                    legend = {...
+                        'LLGC: Learn Weights - Instance Prediction',...
+                        'LLGC: Learn Weights - Label Noise Prediction',...
+                    };
+                else
+                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
+                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
+                    legend = {...
+                        'LLGC: Oracle Weights',...
+                        'LLGC: Learn Weights',...
+                        'LLGC: Uniform Weights',...                                        
+                    };
+                end
                 for i=1:length(methodResultsFileNames)
                     methodResultsFileNames{i} = sprintf(methodResultsFileNames{i},num2str(classNoise));
                 end
-                title = ['Class Noise: ' num2str(classNoise)];
-                legend = {...
-                    'LLGC: Oracle Weights',...
-                    'LLGC: Learn Weights',...
-                    'LLGC: Uniform Weights',...                                        
-                };
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.HYPERPARAMETER_EXPERIMENTS
                 k=inf;
                 alpha=.9;
@@ -225,24 +241,33 @@ classdef ProjectConfigs < handle
                 %end
                 %end            
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
-                labels = [10 15 23 25 26 30];
-                targetLabels = [23 25];
+                labels = ProjectConfigs.labels;
+                targetLabels = ProjectConfigs.trainLabels;
                 sourceLabels = setdiff(labels,targetLabels);
                 
                 
                 s = [num2str(sourceLabels) '-to-' num2str(targetLabels)];
                 title = s;
                 d = [s '-numOverlap=60'];
-                methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1.mat'];
-                methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
-                methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
-                methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
-                legend = {...
-                    'LLGC: Oracle Weights',...
-                    'LLGC: Learn Weights',...
-                    'LLGC: Just Target'...
-                    'LLGC: Uniform Weights',...                                        
-                };
+                if ProjectConfigs.vizWeights
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
+                    legend = {...                      
+                        'LLGC: Learn Weights',...
+                    };
+                else
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1.mat'];                    
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTargetNoSource=1.mat'];
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
+                    legend = {...
+                        'LLGC: Oracle Weights',...
+                        'LLGC: Learn Weights',...
+                        'LLGC: Just Target',...
+                        'LLGC: Just Target No Source',...
+                        'LLGC: Uniform Weights',...                                        
+                    };
+                end
             else
                 error('TODO');
             end

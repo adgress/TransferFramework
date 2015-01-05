@@ -91,7 +91,11 @@ function [f, returnStruct] = visualizeResults(options,f)
         if isfield(options,'showRepair') && options.c.showRepair
             plotRepairResults();                
         else
-            sizes = getSizes(results,options.c.xAxisField);                          
+            sizes = getSizes(results,options.c.sizeField);
+            if options.has('sizeToUse')
+                assert(~isempty(intersect(sizes,options.c.sizeToUse)));
+                sizes = options.c.sizeToUse;
+            end
             if configs.hasMoreThanOne('numVecs')
                 error('TODO');
                 numVecs = configs.get('numVecs');
@@ -102,7 +106,26 @@ function [f, returnStruct] = visualizeResults(options,f)
                 displayVals{end+1} = plotResults(results,tau,colors(index,:));
             else
                 numTrain = length(sizes);  
-                if options.c.showRelativePerformance && hasTestResults
+                if options.c.vizWeights
+                    [newResults] = getResultsWithSize(results,sizes);
+                    [displayVals{end+1}] = plotField(newResults,...
+                        options.c.xAxisField,colors(index,:));
+                    legendName = ['Data set weights: ' legendName];
+                    leg{index} = legendName;
+                    index = index+1;
+                elseif options.c.vizNoisyAcc
+                    displayVals{end+1} = plotResults(results,...
+                        sizes,'isNoisyAcc',colors(index,:));
+                    legendName = ['Is Noisy Acc: ' legendName];
+                    leg{index} = legendName;
+                    index = index + 1;
+                    
+                    displayVals{end+1} = plotResults(results,...
+                        sizes,'reg',colors(index,:));
+                    legendName = ['Reg: ' legendName];
+                    leg{index} = legendName;
+                    index = index + 1;
+                elseif options.c.showRelativePerformance && hasTestResults
                     displayVals{end+1} = plotRelativePerformance(options,...
                         baselineFile,results,sizes,colors(index,:));
                     legendName = ['Relative Acc: ' legendName];
@@ -226,6 +249,26 @@ function [index,leg,displayVal] = plotRelativeMeasures(options,results,sizes,con
     dispName = TransferMeasure.GetDisplayName(measures,configs);
     leg{index} = ['Relative Measure: ' dispName];
     index = index + 1;
+    displayVal = makeResultsStruct(means,vars);
+end
+
+function [newResults] = getResultsWithSize(results,size)
+    newResults = {};
+    for i=1:length(results)
+        r = results{i};
+        if r.experiment.numLabeledPerClass == size
+            newResults{end+1} = r;
+        end
+    end
+end
+
+function [displayVal] = plotField(results,field,color)
+    assert(length(results) == 1);
+    vars = getVariances(results,field);
+    means = getMeans(results,field);    
+    %errorbar(1:length(means),means,vars,'color',color);    
+    %bar(1:length(means),means,vars,'color',color);    
+    barwitherr(vars,means,'r');    
     displayVal = makeResultsStruct(means,vars);
 end
 

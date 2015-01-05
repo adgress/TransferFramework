@@ -15,21 +15,32 @@ function [] = runVisualization()
         title(a{1});
     end
     c = ProjectConfigs.Create();
-    %for k=ProjectConfigs.k    
-    numSubplots = length(c.sigmaScale);
-    for s=c.sigmaScale
-        subplotIndex = subplotIndex + 1;
-        subplot(1,numSubplots,subplotIndex);                
-        newPlotConfigs = cell(size(plotConfigs));
-        for idx=1:length(plotConfigs)
-            p = plotConfigs{idx}.copy();
-            %p.set('resultFileName', sprintf(p.c.resultFileName,num2str(k)));
-            p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
-            newPlotConfigs{idx} = p;
-        end
-        vizConfigs.set('plotConfigs',newPlotConfigs);        
-        [~,returnStruct] = visualizeResults(vizConfigs,f);            
-        %vizConfigs.set('showLegend',false);
-    end
     
+    if c.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER && ...
+            ProjectConfigs.vizWeights
+        sizes = 5:5:25;
+        vizConfigs.set('plotConfigs',plotConfigs);
+        for i=1:length(sizes)
+            subplot(1,length(sizes),i);
+            vizConfigs.set('sizeToUse',sizes(i));
+            [~,~] = visualizeResults(vizConfigs,f);  
+        end
+    else                
+        %for k=ProjectConfigs.k    
+        numSubplots = length(c.sigmaScale);
+        for s=c.sigmaScale
+            subplotIndex = subplotIndex + 1;
+            subplot(1,numSubplots,subplotIndex);                
+            newPlotConfigs = cell(size(plotConfigs));
+            for idx=1:length(plotConfigs)
+                p = plotConfigs{idx}.copy();
+                %p.set('resultFileName', sprintf(p.c.resultFileName,num2str(k)));
+                p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+                newPlotConfigs{idx} = p;
+            end
+            vizConfigs.set('plotConfigs',newPlotConfigs);        
+            [~,returnStruct] = visualizeResults(vizConfigs,f);            
+            %vizConfigs.set('showLegend',false);
+        end
+    end
 end

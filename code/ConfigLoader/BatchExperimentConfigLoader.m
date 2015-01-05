@@ -26,9 +26,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 if isempty(dataAndSplits.allData.trueY)
                     dataAndSplits.allData.trueY = dataAndSplits.allData.Y;
                 end
-                if isempty(dataAndSplits.allData.instanceIDs)
+                %Note: I think instance IDs should always be set to 0
+                %if isempty(dataAndSplits.allData.instanceIDs)
                     dataAndSplits.allData.instanceIDs = zeros(size(dataAndSplits.allData.Y));
-                end
+                %end
                 featuresToUse = 1;
                 dataAndSplits.allData.keepFeatures(featuresToUse);                
                 
@@ -48,7 +49,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 dataAndSplitsCopy = struct();
                 dataAndSplitsCopy.allSplits = {};
                 dataAndSplitsCopy.configs = dataAndSplits.configs.copy();      
-                                                
+                                                                                
                 %This code is for making lots of subdomains and using them
                 %together for multisource transfer                
                 for splitIdx=1:length(dataAndSplits.allSplits)
@@ -68,13 +69,19 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     isOverlap = targetDataCopy.stratifiedSelection(pc.numOverlap);                    
                     %targetDataCopy.remove(isOverlap);
                     targetDataCopy.Y(isOverlap) = -1;
-                    
+                    targetDataCopy.ID2Labels = containers.Map;
+                    targetDataCopy.ID2Labels(num2str(0)) = targetLabel;
                     newSplit.targetData = targetDataCopy;
                     newSplit.targetType = split.split;
                     newSplit.targetType = newSplit.targetType(targetClassInds); 
                     newSplit.sourceData = {};
                     
+                    sourceLabel = [];
+                                       
                     for labelProductIdx=1:length(labelProduct)
+                        if mainConfigs.c.learners.get('justTargetNoSource')
+                            break;
+                        end 
                         currLabels = labelProduct{labelProductIdx};                    
                         targetLabel_i = currLabels(1);
                         sourceLabel = currLabels(2);
@@ -99,7 +106,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             YNew(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx);
                         end    
                         sourceDataCopy.Y = YNew;
-                        sourceDataCopy.instanceIDs(:) = labelProductIdx;                        
+                        sourceDataCopy.instanceIDs(:) = labelProductIdx; 
+                        sourceDataCopy.ID2Labels = containers.Map();
+                        sourceDataCopy.ID2Labels(num2str(labelProductIdx)) = sourceLabel;
                         if hasOverlap
                             sourceDataCopy.keep(isOverlap);
                             %sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);

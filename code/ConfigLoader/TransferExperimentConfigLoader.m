@@ -86,8 +86,12 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         function [trainingDataMetadata] = constructTrainingDataMetadata(obj,sources,...
                 sampledTrain,test,numPerClass)
             trainingDataMetadata = struct();
-            trainingDataMetadata.numSourceLabels = ...
-                size(find(sources{1}.Y > 0),1);
+            if length(sources) == 0
+                trainingDataMetadata.numSourceLabels = 0;
+            else
+                trainingDataMetadata.numSourceLabels = ...
+                    size(find(sources{1}.Y > 0),1);
+            end
             trainingDataMetadata.numTargetLabels = ...
                 size(find(sampledTrain.Y > 0),1);
             trainingDataMetadata.numLabeledPerClass = numPerClass;

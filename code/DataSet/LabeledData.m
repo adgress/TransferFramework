@@ -8,6 +8,8 @@ classdef LabeledData < matlab.mixin.Copyable
         name
         trueY
         instanceIDs
+        
+        ID2Labels
     end
     
     properties(Dependent)

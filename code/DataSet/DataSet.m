@@ -62,6 +62,7 @@ classdef DataSet < LabeledData
                 type = DataSet.NoType(length(YSplit{i}));               
                 allDataSets{i} = DataSet('','','',XSplit{i},YSplit{i},...
                     type,trueYSplit{i},instanceIDsSplit{i});
+                allDataSets{i}.ID2Labels = obj.ID2Labels;
             end
             train = allDataSets{1};
             test = allDataSets{2};
@@ -171,17 +172,21 @@ classdef DataSet < LabeledData
             assert(targetTrain.isTargetDataSet());
             assert(targetTest.isTargetDataSet());
             assert(source.isSourceDataSet());
+            error('Should this be DataSet.Combine?');
             dataSet = combine(targetTrain,targetTest);
             dataSet = combine(dataSet,source);
         end
         function [f] = Combine(varargin)
             f = varargin{1}.copy();
             for i=2:length(varargin)
+                m2 = varargin{i}.ID2Labels;
+                assert(isempty(intersect(f.ID2Labels.keys,m2.keys)));
                 f.X = [f.X ; varargin{i}.X];
                 f.Y = [f.Y ; varargin{i}.Y];
                 f.type = [f.type ; varargin{i}.type];
                 f.trueY = [f.trueY ; varargin{i}.trueY];
                 f.instanceIDs = [f.instanceIDs ; varargin{i}.instanceIDs];
+                f.ID2Labels = vertcat(f.ID2Labels,m2);
             end
         end        
     end
@@ -202,6 +207,7 @@ classdef DataSet < LabeledData
             end
             newData = DataSet('','','',data.X(inds,:),data.Y(inds),...
                 data.type(inds,:),data.trueY(inds),data.instanceIDs(inds));
+            newData.ID2Labels = data.ID2Labels;
             newData.featureNames = data.featureNames;
             newData.featureIDs = data.featureIDs;
         end
@@ -213,6 +219,7 @@ classdef DataSet < LabeledData
             if isfield(dataStruct,'featureIDs')
                 data.featureIDs = dataStruct.featureIDs;
             end
+            data.trueY = data.Y;
         end
     end
 end

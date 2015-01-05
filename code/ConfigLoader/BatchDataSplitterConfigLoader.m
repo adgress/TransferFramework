@@ -40,7 +40,14 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                 end
             else
                 data = load(Helpers.MakeProjectURL([inputFilePrefix '/' inputDataSets{1}]));
+                if isfield(data,'data')
+                    data = data.data;
+                end
                 newData = struct();
+                newData.featureIDs = data.featureIDs;
+                newData.directories = data.directories;
+                newData.classNames = data.classNames;
+                newData.classIDs = data.classIDs;
                 newData.X = data.(configs.get('XName'));
                 newData.Y = data.(configs.get('YName'));
                 %TODO: Why did we need this?

@@ -5,7 +5,8 @@ function [] = runBatchExperiment(multithread, dataset)
     c = ProjectConfigs.Create();
     %classNoise = [0 .15 .25 .35 .55];
     if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
-        classNoise = [.05];
+        classNoise = [0 .05 .15 .25 .35];
+        %classNoise = [.05];
         for i=classNoise(:)'
             c.classNoise = i;
             batchConfigsObj = ProjectConfigs.BatchConfigs();    
@@ -17,7 +18,8 @@ function [] = runBatchExperiment(multithread, dataset)
             end
         end
     else
-        fields = {'useOracle','useUnweighted','useJustTarget',[]};        
+        %fields = {[],'useOracle','useUnweighted','useJustTarget'};        
+        fields = {[]};
         for i=1:length(fields)
             f = fields{i};
             if ~isempty(f)

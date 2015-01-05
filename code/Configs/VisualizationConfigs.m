@@ -22,6 +22,7 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.showRelativeMeasures = true;
             obj.configsStruct.numColors = 5;
             obj.configsStruct.relativeType = Constants.DIFF_PERFORMANCE ;
+            obj.configsStruct.sizeField = 'numLabeledPerClass';
             obj.configsStruct.xAxisField = 'numLabeledPerClass';
             obj.configsStruct.xAxisDisplay = 'Target Labels Per Class';
             obj.configsStruct.yAxisDisplay = 'Accuracy';

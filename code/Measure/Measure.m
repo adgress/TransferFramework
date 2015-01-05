@@ -13,7 +13,17 @@ classdef Measure < Saveable
             obj = obj@Saveable(configs);
         end
         function [measureResults] = evaluate(obj,split)
-            measureResults = struct();
+            measureResults = struct();            
+            
+            if ~isempty(split.ID2Labels)
+                measureResults.ID2Labels = split.ID2Labels;                
+            end
+            measureResults.learnerStats = split.learnerStats;   
+            if ~isempty(split.isNoisy)
+                isNoisyWeight = split.instanceWeights(split.isNoisy);
+                isNoisyAcc = mean(1-isNoisyWeight);
+                measureResults.learnerStats.isNoisyAcc = isNoisyAcc;
+            end
             %Hack for Transfer Experiment
             if size(split.trainActual,2) == 1
                 
@@ -120,8 +130,8 @@ classdef Measure < Saveable
                     assert(false);
                 end
             end            
-            measureResults.testPerformance = valTest;
-            measureResults.trainPerformance = valTrain;
+            measureResults.learnerStats.testResults = valTest;
+            measureResults.learnerStats.trainResults = valTrain;
         end
         
         function [aggregatedResults] = aggregateResults(obj,splitMeasures)
@@ -130,13 +140,41 @@ classdef Measure < Saveable
             aggregatedResults.trainResults = [];
             aggregatedResults.trainLabelMeasures = [];
             aggregatedResults.testLabelMeasures = [];
+            sm1 = splitMeasures{1};
+            if isfield(sm1,'ID2Labels')
+                aggregatedResults.ID2Labels = sm1.ID2Labels;
+                %aggregatedResults.dataSetWeights = sm1.dataSetWeights;
+            end
+            
             if numel(splitMeasures) > 0
+                %{
                 testMeasures = ...
                     Helpers.getValuesOfField(splitMeasures,'testPerformance');
                 trainMeasures = ...
-                    Helpers.getValuesOfField(splitMeasures,'trainPerformance');                        
+                    Helpers.getValuesOfField(splitMeasures,'trainPerformance');
                 aggregatedResults.testResults = ResultsVector(testMeasures);
                 aggregatedResults.trainResults = ResultsVector(trainMeasures);
+                %}
+                learnerStatFields = fields(sm1.learnerStats);
+                learnerStats = Helpers.getValuesOfField(splitMeasures,'learnerStats');
+                for i=1:length(learnerStatFields)
+                    f = learnerStatFields{i};
+                    if ~isempty(sm1.learnerStats.(f))
+                        %measureResults.(f) = split.(f);
+                        r = Helpers.getValuesOfField(learnerStats,f);
+                        aggregatedResults.(f) = ResultsVector(r);
+                    end                
+                end
+                %{
+                if isfield(sm1,'dataSetWeights');
+                    weights = Helpers.getValuesOfField(splitMeasures,'dataSetWeights');
+                    aggregatedResults.dataSetWeights = ResultsVector(weights);
+                end
+                %}
+                if isfield(sm1,'isNoisyAcc')
+                    isNoisyAccs = Helpers.getValuesOfField(splitMeasures,'isNoisyAcc');
+                    aggregatedResults.isNoisyAccs = ResultsVector(isNoisyAccs);
+                end
                 %{
                 aggregatedResults.trainLabelMeasures = ...
                     ResultsVector(Helpers.getValuesOfField(splitMeasures,'trainPerfPerLabel'));

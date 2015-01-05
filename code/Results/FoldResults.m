@@ -18,7 +18,9 @@ classdef FoldResults < handle
         isNoisy
         instanceWeights
         
-        
+        %dataSetWeights
+        ID2Labels
+        learnerStats
     end
     properties(Dependent)
         trainType
@@ -43,6 +45,7 @@ classdef FoldResults < handle
             obj.sources = [];
             obj.sampledTrain = [];
             obj.test = [];
+            obj.learnerStats = struct();
         end    
         function [v] = get.trainType(obj)
             %{

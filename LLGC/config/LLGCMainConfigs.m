@@ -75,7 +75,9 @@ classdef LLGCMainConfigs < MainConfigs
             llgcObj.set('justTarget',c.useJustTarget);
             llgcObj.set('dataSetWeights',c.useDataSetWeights);
             llgcObj.set('useOracleNoise',c.useOracleNoise);
-            llgcObj.set('classNoise',c.classNoise);            
+            llgcObj.set('classNoise',c.classNoise);        
+            llgcObj.set('justTargetNoSource',c.useJustTargetNoSource);
+            llgcObj.set('robustLoss',c.useRobustLoss);
             obj.configsStruct.learners=llgcObj;
         end
         
