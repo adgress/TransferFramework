@@ -14,10 +14,13 @@ classdef ProjectConfigs < handle
         
         instance = ProjectConfigs.CreateSingleton()
         
+        vizIncreasingNoise = 0
         vizWeights = 1
         vizNoisyAcc = 0
-        trainLabels = [10 15]
+        trainLabels = [23 25]
         labels = [10 15 23 25 26 30]
+        
+        CLASS_NOISE = .25
     end
     
     properties        
@@ -164,10 +167,12 @@ classdef ProjectConfigs < handle
             c.configsStruct.showHardMeasures = false;
             c.configsStruct.showLLGCMeasure = false;
             
-            c.configsStruct.xAxisField = 'dataSetWeights';
-            c.configsStruct.xAxisDisplay = 'Data Set Weights';
             if ProjectConfigs.vizWeights
+                c.configsStruct.xAxisField = 'dataSetWeights';
+                c.configsStruct.xAxisDisplay = 'Data Set Weights';
                 c.configsStruct.sizeToUse = 10;
+                c.configsStruct.confidenceInterval = ...
+                    VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
             end
             c.configsStruct.vizWeights = ProjectConfigs.vizWeights;
             c.configsStruct.vizNoisyAcc = ProjectConfigs.vizNoisyAcc;
@@ -181,6 +186,10 @@ classdef ProjectConfigs < handle
             if ~isempty('title')
                 c.set('title',title);
             end            
+            
+            if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
+                c.configsStruct.xAxisDisplay = 'Labels Per Class';
+            end
             
             c.set('prefix','results');
             
@@ -204,27 +213,41 @@ classdef ProjectConfigs < handle
             pc = ProjectConfigs.Create();
             legend = [];
             title = [];
-            if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                                
-                classNoise = .15;
-                title = ['Class Noise: ' num2str(classNoise)];
-                if ProjectConfigs.vizNoisyAcc
-                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
-                    legend = {...
-                        'LLGC: Learn Weights - Instance Prediction',...
-                        'LLGC: Learn Weights - Label Noise Prediction',...
+            if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
+                if ProjectConfigs.vizIncreasingNoise
+                     title = 'Accuracy with Label Noise';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0-unweighted=1.mat';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0.05-unweighted=1.mat';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0.15-unweighted=1.mat';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0.25-unweighted=1.mat';
+                     legend = {...
+                            'LLGC: 0% Noise',...
+                            'LLGC: 5% Noise',...
+                            'LLGC: 15% Noise',...                                        
+                            'LLGC: 25% Noise',...                                        
                     };
                 else
-                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
-                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
-                    methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
-                    legend = {...
-                        'LLGC: Oracle Weights',...
-                        'LLGC: Learn Weights',...
-                        'LLGC: Uniform Weights',...                                        
-                    };
-                end
-                for i=1:length(methodResultsFileNames)
-                    methodResultsFileNames{i} = sprintf(methodResultsFileNames{i},num2str(classNoise));
+
+                    title = ['Class Noise: ' num2str(ProjectConfigs.CLASS_NOISE)];
+                    if ProjectConfigs.vizNoisyAcc
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                        legend = {...
+                            'Noise Precision',...
+                            'Predicted Noise Level',...
+                        };
+                    else
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
+                        legend = {...
+                            'LLGC: Oracle Weights',...
+                            'LLGC: Learn Weights',...
+                            'LLGC: Uniform Weights',...                                        
+                        };
+                    end
+                    for i=1:length(methodResultsFileNames)
+                        methodResultsFileNames{i} = sprintf(methodResultsFileNames{i},num2str(ProjectConfigs.CLASS_NOISE));
+                    end
                 end
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.HYPERPARAMETER_EXPERIMENTS
                 k=inf;
@@ -247,7 +270,21 @@ classdef ProjectConfigs < handle
                 
                 
                 s = [num2str(sourceLabels) '-to-' num2str(targetLabels)];
-                title = s;
+                %title = s;
+                title = 'Target Classes: ';
+                classNames = containers.Map;
+                classNames('10') = 'Beer Mug';
+                classNames('15') = 'Bonsai';
+                classNames('23') = 'Bulldozer';
+                classNames('25') = 'Cactus';
+                classNames('26') = 'Cake';
+                classNames('30') = 'Canoe';
+                for i=1:length(targetLabels)
+                    title = [title classNames(num2str(targetLabels(i)))];
+                    if i ~= length(targetLabels)
+                        title = [title ', '];
+                    end
+                end
                 d = [s '-numOverlap=60'];
                 if ProjectConfigs.vizWeights
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
@@ -258,15 +295,15 @@ classdef ProjectConfigs < handle
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1.mat'];                    
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
-                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTargetNoSource=1.mat'];
+                    %methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTargetNoSource=1.mat'];
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
                     legend = {...
                         'LLGC: Oracle Weights',...
                         'LLGC: Learn Weights',...
-                        'LLGC: Just Target',...
-                        'LLGC: Just Target No Source',...
+                        'LLGC: Just Target',...                        
                         'LLGC: Uniform Weights',...                                        
                     };
+                    %'LLGC: Just Target No Source',...
                 end
             else
                 error('TODO');

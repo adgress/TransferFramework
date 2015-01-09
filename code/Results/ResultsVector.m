@@ -19,8 +19,21 @@ classdef ResultsVector < double
         function [v] = getSTD(obj)
             v = std(obj);
         end
-        function [v] = getConfidenceInterval(obj)
-            v = obj.getSTD();
+        function [v] = getConfidenceInterval(obj,confInterval)
+            if confInterval == VisualizationConfigs.CONF_INTERVAL_STD
+                v = obj.getSTD();
+            elseif confInterval == VisualizationConfigs.CONF_INTERVAL_BINOMIAL
+                n = size(obj,1);
+                m = obj.getMean();    
+                v = 1.96*sqrt(inv(n)*m.*(1-m));
+            else
+                error('Unknown conf interval type');
+            end
+            %{
+            c = 9/(2*log(2/.05));
+            nc = n*c;
+            v = (3/(4+nc))*(1 - 2*m + sqrt(1+nc*m.*(1-m)));
+            %}
         end
     end
     

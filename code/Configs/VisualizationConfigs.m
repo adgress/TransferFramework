@@ -3,12 +3,14 @@ classdef VisualizationConfigs < Configs
     %   Detailed explanation goes here
     
     properties(Constant)
-        
+        CONF_INTERVAL_STD = 1
+        CONF_INTERVAL_BINOMIAL = 2
     end
     
     methods
         function obj = VisualizationConfigs()
-            obj = obj@Configs();            
+            obj = obj@Configs();      
+            obj.configsStruct.confidenceInterval = VisualizationConfigs.CONF_INTERVAL_STD;
             obj.configsStruct.axisToUse = [0 10 0 1.1];
             obj.configsStruct.showCorrelation = false;
             obj.configsStruct.showTrain = false;
@@ -26,6 +28,8 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.xAxisField = 'numLabeledPerClass';
             obj.configsStruct.xAxisDisplay = 'Target Labels Per Class';
             obj.configsStruct.yAxisDisplay = 'Accuracy';
+            obj.configsStruct.showXAxisLabel = true;
+            obj.configsStruct.showYAxisLabel = true;
             if obj.get('showRelativePerformance')
                 if obj.get('showCorrelations')
                     obj.configsStruct.relativeType = Constants.CORRELATION;

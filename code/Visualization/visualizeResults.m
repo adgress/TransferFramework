@@ -109,19 +109,19 @@ function [f, returnStruct] = visualizeResults(options,f)
                 if options.c.vizWeights
                     [newResults] = getResultsWithSize(results,sizes);
                     [displayVals{end+1}] = plotField(newResults,...
-                        options.c.xAxisField,colors(index,:));
+                        options.c.xAxisField,colors(index,:),options);
                     legendName = ['Data set weights: ' legendName];
                     leg{index} = legendName;
                     index = index+1;
                 elseif options.c.vizNoisyAcc
                     displayVals{end+1} = plotResults(results,...
-                        sizes,'isNoisyAcc',colors(index,:));
+                        sizes,'isNoisyAcc',colors(index,:),options);
                     legendName = ['Is Noisy Acc: ' legendName];
                     leg{index} = legendName;
                     index = index + 1;
                     
                     displayVals{end+1} = plotResults(results,...
-                        sizes,'reg',colors(index,:));
+                        sizes,'reg',colors(index,:),options);
                     legendName = ['Reg: ' legendName];
                     leg{index} = legendName;
                     index = index + 1;
@@ -134,7 +134,7 @@ function [f, returnStruct] = visualizeResults(options,f)
                 else
                     if hasTestResults
                         if options.c.showTest
-                            displayVals{end+1} = plotResults(results,sizes,'testResults',colors(index,:));
+                            displayVals{end+1} = plotResults(results,sizes,'testResults',colors(index,:),options);
                             legName = legendName;
                             if options.c.showTrain
                                 legName = [legName ', Test'];
@@ -146,7 +146,7 @@ function [f, returnStruct] = visualizeResults(options,f)
                             index = index+1;
                         end
                         if options.c.showTrain
-                            displayVals{end+1} = plotResults(results,sizes,'trainResults',colors(index,:));
+                            displayVals{end+1} = plotResults(results,sizes,'trainResults',colors(index,:),options);
                             leg{index} = [legendName ', Train'];
                             index = index+1;
                         end
@@ -199,6 +199,7 @@ function [f, returnStruct] = visualizeResults(options,f)
         elseif exist('results','var')      
             numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
             numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
+            %{
             xAxisLabel = [options.c.xAxisDisplay ' ('];
             if isfield(results{1}.splitResults{1}.trainingDataMetadata,'numSourceLabels')
                 numSourceLabels = ...
@@ -206,11 +207,17 @@ function [f, returnStruct] = visualizeResults(options,f)
                 xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
             end
             xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
+            %}
+            xAxisLabel = options.c.xAxisDisplay;
         else
             xAxisLabel = '';
         end    
-        xlabel(xAxisLabel,'FontSize',8);
-        ylabel(options.c.yAxisDisplay,'FontSize',8);
+        if options.get('showXAxisLabel')
+            xlabel(xAxisLabel,'FontSize',8);
+        end
+        if options.get('showYAxisLabel')
+            ylabel(options.c.yAxisDisplay,'FontSize',8);
+        end
     end
     hold off;    
     returnStruct = struct();
@@ -262,9 +269,9 @@ function [newResults] = getResultsWithSize(results,size)
     end
 end
 
-function [displayVal] = plotField(results,field,color)
+function [displayVal] = plotField(results,field,color,options)
     assert(length(results) == 1);
-    vars = getVariances(results,field);
+    vars = getVariances(results,field,options);
     means = getMeans(results,field);    
     %errorbar(1:length(means),means,vars,'color',color);    
     %bar(1:length(means),means,vars,'color',color);    
@@ -272,8 +279,8 @@ function [displayVal] = plotField(results,field,color)
     displayVal = makeResultsStruct(means,vars);
 end
 
-function [displayVal] = plotResults(results,sizes,field,colors)        
-    vars = getVariances(results,field);
+function [displayVal] = plotResults(results,sizes,field,colors,options)        
+    vars = getVariances(results,field,options);
     means = getMeans(results,field);
     %if length(sizes) > 1
         errorbar(sizes,means,vars,'color',colors);    
@@ -355,7 +362,7 @@ function [means,vars,lows,highs] = getRelativePerf(results,field1,field2,options
                     ResultsVector.GetRelativePerformance(x,y);
             end
             means(i,:) = relativePerf.getMean();
-            vars(i,:) = relativePerf.getConfidenceInterval();        
+            vars(i,:) = relativePerf.getConfidenceInterval();
         elseif options.relativeType == Constants.CORRELATION
             [means(i),highs(i),lows(i)] = ResultsVector.GetCorrelation(x,y);
         else
@@ -365,12 +372,13 @@ function [means,vars,lows,highs] = getRelativePerf(results,field1,field2,options
 end
 
 
-function [vars] = getVariances(results,name)
+function [vars] = getVariances(results,name,options)
     m = size(results{1}.aggregatedResults.(name),2);
     vars = zeros(numel(results),m);
     for i=1:numel(results);
         vars(i,:) = ...
-            results{i}.aggregatedResults.(name).getConfidenceInterval();
+            results{i}.aggregatedResults.(name).getConfidenceInterval(...
+            options.c.confidenceInterval);
     end
 end
 
