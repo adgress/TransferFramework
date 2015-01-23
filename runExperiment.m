@@ -9,8 +9,10 @@ function [] = runExperiment(configs)
     if numel(learners) > 0
         learner = learners;
         experimentLoader.configs.set('learner',learner);
-    end        
-    learner.updateConfigs(configs);
+    end      
+    if ~isempty(learner)
+        learner.updateConfigs(configs);
+    end
     outputFile = experimentLoader.getOutputFileName();
     if exist(outputFile,'file') && ~configs.get('rerunExperiments')
         display(['Skipping: ' outputFile]);
@@ -62,7 +64,9 @@ function [] = runExperiment(configs)
     end
     if experimentLoader.configs.has('processMeasureResults') &&...
             experimentLoader.configs.get('processMeasureResults')
-        allResults.aggregateMeasureResults();
+        fuMeasureLoss = FUMeasureLoss(configs);
+        fuMeasureLoss.set('justTarget',true);
+        allResults.aggregateMeasureResults(fuMeasureLoss);
     end
     allResults.saveResults(outputFile);
 end

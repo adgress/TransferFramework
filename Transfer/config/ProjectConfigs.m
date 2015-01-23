@@ -7,13 +7,34 @@ classdef ProjectConfigs
         numSource = 5;
         tommasiLabels = [10 15 23 25 26 30 41 56 57];
         cvLabels = 1:10;
-        dataSet = Constants.CV_DATA
-        %dataSet = Constants.TOMMASI_DATA
+        %dataSet = Constants.CV_DATA
+        dataSet = Constants.TOMMASI_DATA
+        
+        instance = ProjectConfigs.CreateSingleton()
+        
+        experimentSetting = 3
+        numLabeled = 3:7
+        
+        EXPERIMENT_LLGC = 1
+        EXPERIMENT_REPAIR = 2
+        EXPERIMENT_MEASURE = 3
+        
+        sourceNoise = .0;
     end
     
-    methods(Static)      
+    properties
+        sigmaScale
+        alpha
+    end
+    
+    methods(Static)    
+        function [c] = CreateSingleton()
+            c = ProjectConfigs();
+            c.sigmaScale = .2;
+            c.alpha = .9;
+        end
         function [c] = Create()
-            error('TODO');
+            c = ProjectConfigs.instance;
         end
         function [c] = BatchConfigs()
             c = BatchConfigs();
@@ -22,8 +43,16 @@ classdef ProjectConfigs
             else
                 c.get('experimentConfigsClass').configsStruct.labelsToUse = 1:10;
             end
-            %c.setLLGCConfigs();
-            c.setCTMeasureConfigs();
+            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_LLGC
+                c.setLLGCConfigs();
+            elseif ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_REPAIR
+                c.setRepairConfigs(ProjectConfigs.sourceNoise);
+            elseif ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_MEASURE
+                c.setMeasureConfigs();
+            else
+                error('');
+            end
+            %c.setCTMeasureConfigs();
             %c.setLLGCMeasureConfigs();            
         end
         
@@ -32,7 +61,7 @@ classdef ProjectConfigs
             if ProjectConfigs.dataSet == Constants.TOMMASI_DATA
                 c.setTommasi();
             else
-                c.setCVSmall();
+                c.setCVSmall(ProjectConfigs.sourceNoise);
             end
         end
         
@@ -41,7 +70,7 @@ classdef ProjectConfigs
             if ProjectConfigs.dataSet == Constants.TOMMASI_DATA
                 c.setTommasi();           
             else
-                c.setCV();
+                c.setCV(ProjectConfigs.sourceNoise);
                 %c.configsStruct.prefix = 'results/CV-small_10classes';
             end
             
@@ -53,16 +82,75 @@ classdef ProjectConfigs
             c.configsStruct.numColors = 5;
             
             %c.configsStruct.axisToUse = [1.5 2.5 0 .3];            
-            c.configsStruct.vizMultiple = true;
+            c.configsStruct.vizMultiple = false;
             %c.makePlotConfigs();            
             
-            if c.c.vizMultiple
+            if ProjectConfigs.experimentSetting == ...
+                    ProjectConfigs.EXPERIMENT_REPAIR
+                [plotConfigs,legend] = ProjectConfigs.MakeRepairPlotConfigs();
+                c.set('plotConfigs',plotConfigs);
+                c.set('legend',legend);
+                c.set('showLegend',true);
+                c.configsStruct.sizeField = 'numLabeledPerClass';
+                c.configsStruct.xAxisField = 'numLabeledPerClass';
+                c.configsStruct.xAxisDisplay = 'Repair Iterations';
+                c.configsStruct.yAxisDisplay = 'Accuracy';
+                c.configsStruct.showRepair = true;                                  
+            elseif c.c.vizMultiple
                 c.delete('axisToUse');
                 c.configsStruct.showSoftMeasures = false;
                 c.makeMultiMeasurePlotConfigs();
+            elseif ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_MEASURE
+                [plotConfigs,legend] = ProjectConfigs.MakeMeasurePlotConfigs();
+                c.set('plotConfigs',plotConfigs);
+                c.set('legend',legend);
+                c.set('showLegend',true);
             end
         end
-                
+          
+        function [plotConfigs,legend] = MakeMeasurePlotConfigs()
+            basePlotConfigs = Configs();
+            %{
+            basePlotConfigs.set('baselineFile',...
+                'TR-strategy=None_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat');
+            %}
+            files = {};
+            legend = {};
+            files{end+1} = 'TM/CT-saveFeatures=1_S+T.mat';
+            legend{end+1} = 'FU Measure Loss';
+            files{end+1} = 'S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
+            legend{end+1} = 'Transfer LLGC';
+            files{end+1} = 'TO_LLGC-sigmaScale=0.2-alpha=0.9.mat';
+            legend{end+1} = 'Target Only LLGC';
+            plotConfigs = {};
+            for i=1:length(files)
+                c = basePlotConfigs.copy();
+                measureLoss = FUMeasureLoss();
+                measureLoss.set('justTarget',true);
+                c.set('measureLoss',measureLoss);
+                c.set('resultFileName',files{i});
+                plotConfigs{end+1} = c;
+            end
+        end
+        
+        function [plotConfigs,legend] = MakeRepairPlotConfigs()
+            basePlotConfigs = Configs();
+            basePlotConfigs.set('baselineFile',...
+                'TR-strategy=None_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat');
+            files = {};
+            legend = {};
+            files{end+1} = 'TR-strategy=None_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';                        
+            legend{end+1} = 'Strategy = None';
+            files{end+1} = 'TR-strategy=Exhaustive_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
+            legend{end+1} = 'Stategy = Exhaustive';
+            plotConfigs = {};
+            for i=1:length(files)
+                c = basePlotConfigs.copy();
+                c.set('resultFileName',files{i});
+                plotConfigs{end+1} = c;
+            end
+        end
+        
         function [labelProduct] = MakeLabelProduct()
             pc = ProjectConfigs.Create();
             numTargetLabels = pc.numTarget;

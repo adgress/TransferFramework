@@ -26,7 +26,7 @@ classdef Measure < Saveable
             end
             %Hack for Transfer Experiment
             if size(split.trainActual,2) == 1
-                
+
                 valTrain = sum(split.trainPredicted==split.trainActual)/...
                     numel(split.trainPredicted); 
                 valTest = sum(split.testPredicted==split.testActual)/...
@@ -50,7 +50,7 @@ classdef Measure < Saveable
                         Helpers.getLabelAccuracy(split.testPredicted,...
                         split.testActual,i);
                 end
-            else
+            elseif ~isempty(split.testPredicted)
                 trainPredicted = split.trainPredicted;
                 testPredicted = split.testPredicted;
                 if isKey(obj.configs,'k')
@@ -62,13 +62,13 @@ classdef Measure < Saveable
                 trainIsCorrect = t(trainPredictedMat);
                 %valTrain = sum(trainIsCorrect(:))/numel(trainPredicted);
                 valTrain = -1;
-                
+
                 testPredictedMat = logical(Helpers.createLabelMatrix(testPredicted));
                 n = size(testPredictedMat,1);
                 m = size(split.testActual,2) - size(testPredictedMat,2);
                 testPredictedMat = logical([testPredictedMat zeros(n,m)]);
                 testIsCorrect = split.testActual(testPredictedMat);
-                
+
                 numCorrect = sum(testIsCorrect(:));
                 total = sum(testPredictedMat(:) | split.testActual(:));
                 useAcc = 1;
@@ -129,9 +129,13 @@ classdef Measure < Saveable
                 else
                     assert(false);
                 end
-            end            
-            measureResults.learnerStats.testResults = valTest;
-            measureResults.learnerStats.trainResults = valTrain;
+            end
+            if exist('valTest','var')
+                measureResults.learnerStats.testResults = valTest;
+            end
+            if exist('valTrain','var')
+                measureResults.learnerStats.trainResults = valTrain;
+            end
         end
         
         function [aggregatedResults] = aggregateResults(obj,splitMeasures)
@@ -140,6 +144,9 @@ classdef Measure < Saveable
             aggregatedResults.trainResults = [];
             aggregatedResults.trainLabelMeasures = [];
             aggregatedResults.testLabelMeasures = [];
+            if isempty(splitMeasures)
+                return;
+            end
             sm1 = splitMeasures{1};
             if isfield(sm1,'ID2Labels')
                 aggregatedResults.ID2Labels = sm1.ID2Labels;

@@ -23,6 +23,13 @@ classdef LearnerConfigs < Configs
             obj.configsStruct.sourceLOOCV=0;
             obj.configsStruct.quiet=0;
             obj.configsStruct.useSoftLoss=0; 
+            
+            % Transfer Repair configs
+            obj.configsStruct.percToRemove=.035;
+            obj.configsStruct.numIterations=3;       
+            
+            obj.configsStruct.alpha = .9;
+            obj.configsStruct.sigmaScale = .2;
         end        
     end        
 end

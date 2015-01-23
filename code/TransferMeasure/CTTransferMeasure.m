@@ -13,18 +13,22 @@ classdef CTTransferMeasure < TransferMeasure
         
         function [fu] = runLabelPropagation(obj,distMat)
             useHF = false;
-            useMeanSigma = obj.configs.get('useMeanSigma');
-            [sigma, bestScore,bestAcc] = GraphHelpers.autoSelectSigma(...
-                distMat,useMeanSigma,useHF);
+            if obj.has('sigmaScale')
+                sigma = obj.get('sigmaScale')*distMat.meanDistance;
+            else
+                useMeanSigma = obj.configs.get('useMeanSigma');
+                [sigma, bestScore,bestAcc] = GraphHelpers.autoSelectSigma(...
+                    distMat,useMeanSigma,useHF);
+            end
             rbfKernel = Helpers.distance2RBF(distMat.W,sigma);
-            [fu,~] = GraphHelpers.RunLLGC(rbfKernel,distMat.Y);            
+            [fu,~] = GraphHelpers.RunLLGC(rbfKernel,distMat.Y,obj.get('alpha'));            
             Helpers.AssertInvalidPercent(fu,.1);
         end
         
         function [measureResults] = computeMeasure(obj,source,target,...
                 options)            
             tic
-            distMat = obj.createDistanceMatrix(source,target);
+            distMat = obj.createDistanceMatrix(source,target,options);
             distMatSourceProp = distMat.copy();
             distMatTargetProp = distMat.copy();
             

@@ -54,19 +54,25 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 n = obj.get('numToUsePerLabel');
                 allData = allData.stratifiedSample(n*allData.numClasses);
             end
+            assert(isempty(allData.trueY));
+            allData.trueY = allData.Y;
+            if isempty(allData.instanceIDs)
+                allData.instanceIDs = 1:length(allData.Y);
+                allData.instanceIDs = allData.instanceIDs';
+            end
             if obj.has('classNoise')
-                classNoise = obj.get('classNoise');
-                allData.trueY = allData.Y;
-                Y = allData.Y;
-                allClasses = allData.classes;
-                for currClass=allClasses'
-                    isClass = find(Y == currClass);
-                    permIsClass = isClass(randperm(length(isClass)));
-                    remainingClasses = allClasses(allClasses ~= currClass);
-                    newLabelVector = randsample(remainingClasses,length(permIsClass),true);
-                    numToUse = floor(classNoise*length(isClass));
-                    allData.Y(permIsClass(1:numToUse)) = newLabelVector(1:numToUse);
-                end
+                classNoise = obj.get('classNoise');        
+                allData.addRancomClassNoise(classNoise);                
+            end
+            if obj.has('maxTrainNumPerLabel')
+                numClasses = max(allData.Y);
+                [allData] = allData.stratifiedSampleNumPerClass(obj.get('maxTrainNumPerLabel'));
+                for i=1:numClasses
+                    if length(find(allData.Y == i)) == obj.get('maxTrainNumPerLabel')
+                        warning('Imbalanced number of instances');
+                        break;
+                    end
+                end                
             end
             for i=1:obj.numSplits
                 if isa(allData,'SimilarityDataSet')
@@ -104,7 +110,12 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         sourceDataSet.X = Helpers.NormalizeRows(sourceDataSet.X);
                     end
                     sourceDataSet.setSource();
-                    
+                    assert(isempty(sourceDataSet.trueY));
+                    sourceDataSet.trueY = sourceDataSet.Y;
+                    if isempty(sourceDataSet.instanceIDs)
+                        sourceDataSet.instanceIDs = 1:length(sourceDataSet.Y);
+                        sourceDataSet.instanceIDs = sourceDataSet.instanceIDs';
+                    end
                     %{
                     sourceSplit = sourceDataSet.generateSplitArray(1,0,obj.configs);
                     sourceToUse = sourceSplit == 1;
@@ -115,6 +126,10 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         numItems = numClasses*obj.get('maxTrainNumPerLabel');
                         [sampledSource] = sourceDataSet.stratifiedSample(numItems);
                         sourceDataSet = sampledSource;
+                    end
+                    if obj.has('sourceNoise') && obj.get('sourceNoise') > 0
+                        sourceNoise = obj.get('sourceNoise');
+                        allData.addRandomClassNoise(sourceNoise);
                     end
                     sourceDataSet.name = obj.dataAndSplits.sourceNames{i};
                     obj.dataAndSplits.sourceDataSets{i} = sourceDataSet;

@@ -36,6 +36,8 @@ classdef DataSet < LabeledData
                 end
                 obj.X = obj.data.(XName);
                 obj.Y = obj.data.(YName);
+                obj.trueY = trueY;
+                obj.instanceIDs = zeros(size(obj.Y));
             else
                 obj.X = X;
                 obj.Y = Y;
@@ -48,6 +50,7 @@ classdef DataSet < LabeledData
             else
                 obj.type = LabeledData.NoType(length(obj.Y));
             end
+            obj.ID2Labels = containers.Map;
             assert(length(obj.type) == length(obj.Y));
             assert(size(obj.X,1) == size(obj.Y,1));
         end                
@@ -74,6 +77,11 @@ classdef DataSet < LabeledData
             sampledDataSet = DataSet.CreateNewDataSet(obj,selectedItems);
         end
         
+        function [sampledDataSet] = stratifiedSampleNumPerClass(obj,numPerClass)
+            [selectedItems] = obj.stratifiedSelectionNumPerClass(numPerClass);
+            sampledDataSet = DataSet.CreateNewDataSet(obj,selectedItems);
+        end
+        
         function [sampledDataSet] = stratifiedSampleByLabels(obj,numItems,classesToKeep)
             if ~exist('classesToKeep','var')
                 classesToKeep = [];
@@ -81,7 +89,28 @@ classdef DataSet < LabeledData
             [selectedItems] = obj.stratifiedSelection(numItems,classesToKeep);
             sampledDataSet = DataSet.CreateNewDataSet(obj);
             sampledDataSet.Y(~selectedItems) = -1;
-            assert(sum(sampledDataSet.Y > 0) == numItems);
+            if sum(sampledDataSet.Y > 0) ~= numItems
+                warning('Sample size is weird'); 
+            end
+        end
+        
+        function [selectedItems] = stratifiedSelectionNumPerClass(obj,itemsPerClass,classesToKeep)
+            if ~exist('classesToKeep','var')
+                classesToKeep = [];
+            end
+            selectedItems = false(size(obj.X,1),1);
+            for i=obj.classes()'               
+                XWithClass = find(obj.Y==i);                
+                itemsToUse = size(XWithClass,1);                
+                if isempty(intersect(classesToKeep,i))
+                    itemsToUse = min(itemsPerClass, itemsToUse);
+                end
+                selectedItems(XWithClass(1:itemsToUse)) = 1;                
+            end
+            c = obj.classes;
+            assert(isequal(i,c(end)));
+            %assert(sum(selectedItems) ~= 49);
+            %assert(sum(selectedItems) == itemsPerClass*length(obj.classes()));
         end
         
         function [selectedItems] = stratifiedSelection(obj,numItems,classesToKeep)
@@ -100,6 +129,7 @@ classdef DataSet < LabeledData
             end
             c = obj.classes;
             assert(isequal(i,c(end)));
+            %assert(sum(selectedItems) ~= 49);
             %assert(sum(selectedItems) == itemsPerClass*length(obj.classes()));
         end
         function [Xl, Yl, indices] = getLabeledData(obj)
@@ -128,6 +158,16 @@ classdef DataSet < LabeledData
             obj.type = obj.type(~shouldRemove);
             obj.trueY = obj.trueY(~shouldRemove);
             obj.instanceIDs = obj.instanceIDs(~shouldRemove);
+        end
+        
+        function [d] = getSourceData(obj)
+            d = obj.getDataOfType(Constants.SOURCE);
+        end
+        
+        function [d] = getTargetData(obj)
+            d1 = obj.getDataOfType(Constants.TARGET_TRAIN);
+            d2 = obj.getDataOfType(Constants.TARGET_TEST);
+            d = DataSet.Combine(d1,d2);
         end
         
         function [d] = getDataOfType(obj,dataType)
@@ -180,7 +220,9 @@ classdef DataSet < LabeledData
             f = varargin{1}.copy();
             for i=2:length(varargin)
                 m2 = varargin{i}.ID2Labels;
-                assert(isempty(intersect(f.ID2Labels.keys,m2.keys)));
+                if ~isempty(m2) && ~isempty(f.ID2Labels)
+                    assert(isempty(intersect(f.ID2Labels.keys,m2.keys)));
+                end
                 f.X = [f.X ; varargin{i}.X];
                 f.Y = [f.Y ; varargin{i}.Y];
                 f.type = [f.type ; varargin{i}.type];
@@ -210,6 +252,7 @@ classdef DataSet < LabeledData
             newData.ID2Labels = data.ID2Labels;
             newData.featureNames = data.featureNames;
             newData.featureIDs = data.featureIDs;
+            newData.name = data.name;
         end
         function [data] = MakeDataFromStruct(dataStruct)
             data = DataSet('','','',dataStruct.X,dataStruct.Y);

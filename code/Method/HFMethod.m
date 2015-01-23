@@ -70,7 +70,8 @@ classdef HFMethod < Method
             elseif isKey(obj.configs,'sigmaScale')
                 sigma = obj.configs.get('sigmaScale')*distMat.meanDistance;
             else
-                WtestCleared = DistanceMatrix(distMat.W,Y_testCleared,distMat.type,distMat.trueY);
+                WtestCleared = DistanceMatrix(distMat.W,Y_testCleared,...
+                    distMat.type,distMat.trueY,distMat.instanceIDs);
                 sigma = GraphHelpers.autoSelectSigma(WtestCleared, ...
                     obj.configs.get('useMeanSigma'),useHF);
             end
@@ -109,7 +110,7 @@ classdef HFMethod < Method
                     savedData = [];
                 end
             end
-            fu(isnan(fu(:))) = .5;
+            fu(isnan(fu(:))) = 0;
             assert(isempty(find(isnan(fu))));
         end
         
@@ -137,7 +138,17 @@ classdef HFMethod < Method
                     [fu,~,sigma] = runLLGC(obj,distMat);
                 end
             end
-            [~,predicted] = max(fu,[],2);
+            [maxVal,predicted] = max(fu,[],2);
+            
+            %Sometimes fu(i,:) will be all 0, resulting in '1' always being
+            %predicted
+            %Replace invalid predictions with random value
+            invalidPrediction = maxVal == 0;
+            
+            %Hackish - need to know which classes are allowed
+            actualClasses = unique(predicted(~invalidPrediction));
+            predicted(maxVal == 0) = randsample(actualClasses,nnz(invalidPrediction),true);
+            
             numNan = sum(isnan(fu(:)));
             if numNan > 0
                 display(['numNan: ' num2str(numNan)]);

@@ -50,8 +50,11 @@ function [f, returnStruct] = visualizeResults(options,f)
         else
             fileName = options.makeResultsFileName(options.c.dataSet{1},...
                 plotConfigs.get('resultFileName'));
-            baselineFile = options.makeResultsFileName(options.c.dataSet{1},...
-                plotConfigs.get('baselineFile'));
+            baselineFile = '';
+            if plotConfigs.has('baselineFile')
+                baselineFile = options.makeResultsFileName(options.c.dataSet{1},...
+                    plotConfigs.get('baselineFile'));
+            end
             if ~exist(fileName,'file')
                 display([fileName ' doesn''t exist - skipping']);
                 continue
@@ -88,8 +91,9 @@ function [f, returnStruct] = visualizeResults(options,f)
             numel(results{1}.aggregatedResults.testResults) > 0;        
         legendName = [legendName ',' configs.stringifyFields(legendNameParams,'-')];
         
-        if isfield(options,'showRepair') && options.c.showRepair
-            plotRepairResults();                
+        if options.has('showRepair') && options.c.showRepair
+            plotRepairResults(results,colors(index,:),options);                
+            index = index+1;
         else
             sizes = getSizes(results,options.c.sizeField);
             if options.has('sizeToUse')
@@ -157,14 +161,14 @@ function [f, returnStruct] = visualizeResults(options,f)
                     else
                         if hasPostTM && options.c.showPostTransferMeasures
                             measureObj = configs.get('postTransferMeasures');                            
-                            displayVals{end+1} = plotResults(results,sizes,'PostTMResults',colors(index,:));
+                            displayVals{end+1} = plotResults(results,sizes,'PostTMResults',colors(index,:),options);
                             dispName = measureObj.getDisplayName();
                             leg{index} = ['PostTM:' legendName ':' dispName];
                             index = index + 1;
                         end
                         if hasPreTM && options.c.showPreTransferMeasures
                             measureObj = configs.get('preTransferMeasures');
-                            displayVals{end+1} = plotResults(results,sizes,'PreTMResults',colors(index,:));
+                            displayVals{end+1} = plotResults(results,sizes,'PreTMResults',colors(index,:),options);
                             dispName = measureObj.getDisplayName();
                             leg{index} = ['PreTM:' legendName ':' dispName];
                             index = index + 1;
@@ -176,6 +180,11 @@ function [f, returnStruct] = visualizeResults(options,f)
     end       
     if options.has('legend')
         leg = options.get('legend');
+    end
+    
+    %Plot is empty
+    if index == 1
+        leg = {};
     end
     if options.c.showLegend && ~isempty(leg) && ~options.c.showTable
         legend(leg,'Location','southeast');
@@ -197,9 +206,10 @@ function [f, returnStruct] = visualizeResults(options,f)
         if isfield(options,'showRepair') && options.c.showRepair        
             xAxisLabel = options.c.xAxisDisplay;     
         elseif exist('results','var')      
+            %{
             numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
             numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
-            %{
+            
             xAxisLabel = [options.c.xAxisDisplay ' ('];
             if isfield(results{1}.splitResults{1}.trainingDataMetadata,'numSourceLabels')
                 numSourceLabels = ...
@@ -399,10 +409,25 @@ function [sizes] = getSizes(results,sizeField)
     end
 end
 
-function [] = plotRepairResults()
+function [] = plotRepairResults(results,color,options)
+    sizes = 0:size(results{1}.aggregatedResults.repairAccuracy,2)-1;
+    plotResults(results,sizes,'repairAccuracy',color,options);
+    %{
+    means = getMeans(results,'repairAccuracy');
+    vars = getVariances(results,'repairAccuracy',options);    
+    for i=1:length(results)
+        r = results{i};
+        m = r.aggregatedResults.repairAccuracy.getMean();
+        v = r.aggregatedResults.repairAccuracy.getConfidenceInterval(...
+            options.c.confidenceInterval);
+    end
+    %}
+%{
     repairMethodString = configs.get('repairMethod');
     transferRepairName = ...
         TransferRepair.GetDisplayName(repairMethodString,configs);
+    legendName = '';
+    transferRepairName = '';
     legendName = [transferRepairName ';' legendName];
     measureClassName = configs.get('measureClass');
     measureObject = Measure.ConstructObject(measureClassName,configs);
@@ -488,4 +513,5 @@ function [] = plotRepairResults()
         leg{index} = [legendName ':' 'Repaired Acc'];
         index = index+1;
     end
+%}
 end

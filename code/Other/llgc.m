@@ -4,11 +4,11 @@ classdef LLGC < handle
             %alpha = .5;       
             W(logical(speye(size(W)))) = 0;
 
-            if nargin < 3
+            if ~exist('invM','var')
                 Disq = diag(sum(W).^-.5);
                 WN = Disq*W*Disq;
                 I = eye(size(WN,1));
-                invM = (1-alpha)*inv(I-alpha*WN);               
+                invM = (1-alpha)*inv((1+alpha)*I - WN);               
             end
             fu = invM*fl;
             fu = Helpers.normRows(fu);
@@ -24,7 +24,7 @@ classdef LLGC < handle
                 Disq = diag(sum(W).^-.5);
                 WN = Disq*W*Disq;
                 I = eye(size(WN,1));
-                invM = (1-alpha)*inv(I-alpha*WN);        
+                invM = (1-alpha)*inv((1+alpha)*I-WN);        
             end
             fu = invM*fl;
             fu = Helpers.normRows(fu);
@@ -42,7 +42,7 @@ classdef LLGC < handle
             Disq = diag(sum(W).^-.5);
             WN = Disq*W*Disq;
             I = eye(size(WN,1));
-            M = (I-alpha*WN);
+            M = ((1+alpha)*I-WN);
             fu = M\((1-alpha)*fl);
             fu = Helpers.normRows(fu);
         %toc

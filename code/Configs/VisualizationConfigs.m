@@ -30,6 +30,8 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.yAxisDisplay = 'Accuracy';
             obj.configsStruct.showXAxisLabel = true;
             obj.configsStruct.showYAxisLabel = true;
+            obj.configsStruct.vizWeights = false;
+            obj.configsStruct.vizNoisyAcc = false;
             if obj.get('showRelativePerformance')
                 if obj.get('showCorrelations')
                     obj.configsStruct.relativeType = Constants.CORRELATION;
@@ -63,10 +65,7 @@ classdef VisualizationConfigs < Configs
                 ProjectConfigs.MakeDomains();            
         end
         
-        function [] = setCV(obj)
-            %prefix = 'results/CV-small_10-13';
-            %prefix = 'results/CV-small';
-            %prefix = 'results/CV-small_numLabeledPerClass';        
+        function [] = setCV(obj, sourceNoise)
             sourceData = {'A','C','D','W'};
             targetData = {'A','C','D','W'};
             obj.configsStruct.sourceData = sourceData;
@@ -75,6 +74,9 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.numSubplotCols = numel(targetData);
             obj.configsStruct.datasetToViz = Constants.CV_DATA;
             obj.configsStruct.prefix = 'results/CV-small';
+            if sourceNoise > 0
+                obj.configsStruct.prefix = ['results/CV-small-' num2str(sourceNoise)];
+            end
         end
         
         function [] = setNumSourcePerClass(obj)
@@ -153,11 +155,16 @@ classdef VisualizationConfigs < Configs
                 end
                 methodResultsFileNames{end+1} = 'S+T_kNN-k=1.mat';   
             else
-                basePlotConfigs.set('baselineFile','TO_LLGC.mat');
+                alpha = 0.9;
+                k = 1;
+                sigmaScale = 0.2;
+                targetOnlyFile = 'TO_LLGC-sigmaScale=0.2-k=1-alpha=0.9.mat';
+                transferFile = 'S+T_LLGC-sigmaScale=0.2-k=1-alpha=0.9.mat';
+                basePlotConfigs.set('baselineFile',targetOnlyFile);
                 if ~obj.c.showRelativePerformance
-                    methodResultsFileNames{end+1} = 'TO_LLGC.mat';
+                    methodResultsFileNames{end+1} = targetOnlyFile;
                 end
-                methodResultsFileNames{end+1} = 'S+T_LLGC.mat';
+                methodResultsFileNames{end+1} = transferFile;
             end                        
             
             

@@ -10,7 +10,9 @@ function [] = runExperiment(configs)
         learner = learners;
         experimentLoader.configs.set('learner',learner);
     end        
-    learner.updateConfigs(configs);
+    if ~isempty(learner)
+        learner.updateConfigs(configs);
+    end
     outputFile = experimentLoader.getOutputFileName();
     if exist(outputFile,'file') && ~configs.get('rerunExperiments')
         display(['Skipping: ' outputFile]);
@@ -60,8 +62,8 @@ function [] = runExperiment(configs)
         allResults.computeLossFunction(measureObject);
         allResults.aggregateResults(measureObject);
     end
-    if experimentLoader.configs.has('processMeasureResults') &&...
-            experimentLoader.configs.get('processMeasureResults')
+    if experimentLoader.has('processMeasureResults') &&...
+            experimentLoader.get('processMeasureResults')
         allResults.aggregateMeasureResults();
     end
     allResults.saveResults(outputFile);

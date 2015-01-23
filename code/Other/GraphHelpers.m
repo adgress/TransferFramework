@@ -12,22 +12,22 @@ classdef GraphHelpers
             [fu, ~] = harmonic_function(W, YLabelMatrix);            
         end
         
-        function [fu,invM] = RunLLGC(W,Y,invM)
+        function [fu,invM] = RunLLGC(W,Y,alpha,invM)
             warning off;
             Ymat = Helpers.createLabelMatrix(Y);
             if size(Ymat,2) == length(unique(Y(Y > 0)))
                 Ymat = full(Ymat);
             end
             if exist('invM','var')
-                [fu,invM] = LLGC.llgc_inv(W,Ymat,invM);
+                [fu,invM] = LLGC.llgc_inv(W,Ymat,alpha,invM);
             else
-                [fu,invM] = LLGC.llgc_inv(W,Ymat);
+                [fu,invM] = LLGC.llgc_inv(W,Ymat,alpha);
             end            
             warning on;
         end
         
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
-                = LOOCV(similarityDistMat,useHF,savedData)
+                = LOOCV(similarityDistMat,useHF,alpha,savedData)
             if nargin < 2
                 useHF = false;
             end             
@@ -71,9 +71,9 @@ classdef GraphHelpers
                     Ycurr = similarityDistMat.Y;
                     Ycurr(ind) = -1;
                     if exist('invM','var')
-                        [fu,invM] = GraphHelpers.RunLLGC(similarityDistMat.W,Ycurr,invM);
+                        [fu,invM] = GraphHelpers.RunLLGC(similarityDistMat.W,Ycurr,alpha,invM);
                     else
-                        [fu,invM] = GraphHelpers.RunLLGC(similarityDistMat.W,Ycurr);
+                        [fu,invM] = GraphHelpers.RunLLGC(similarityDistMat.W,Ycurr,alpha);
                     end                    
                     Yactual_i = Yactual(i);
                     Yscore(i) = fu(ind,Yactual_i);
@@ -88,7 +88,9 @@ classdef GraphHelpers
                      
             Yscore(isnan(Yscore)) = 0;
             n = length(Yactual);
-            Yscore = Yscore(Ypred ~= Yactual);
+            
+            %I'm not sure why I had this line before
+            %Yscore = Yscore(Ypred ~= Yactual);
             if isempty(Yscore)
                 score = 0;
             else

@@ -12,7 +12,7 @@ classdef GraphMeasureResults < FoldResults
     end
     
     methods
-         function obj = GraphMeasureResults()
+        function obj = GraphMeasureResults()
             obj = obj@FoldResults();
         end      
     end

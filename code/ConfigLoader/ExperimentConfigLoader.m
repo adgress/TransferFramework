@@ -26,6 +26,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         end        
         
         function [results,savedData] = trainAndTest(obj,input,experiment)
+            savedData = [];
             learner = input.learner;          
             %learner.updateConfigs(obj.configs);
             input.sharedConfigs = obj.configs;

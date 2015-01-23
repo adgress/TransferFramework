@@ -9,16 +9,24 @@ classdef SplitConfigs < Configs
         function [obj] = SplitConfigs()
             obj = obj@Configs();
             obj.set('numSplits',10);
-            obj.set('percentTrain',.8);
-            obj.set('percentTest',.2);         
+            obj.set('percentTrain',.5);
+            obj.set('percentTest',.5);         
             obj.set('maxTrainNumPerLabel',Inf);
             obj.set('normalizeRows',0);
         end
         
-        function [] = setCVSmall(obj)
-            obj.setCV();
-            obj.set('outputFilePrefix','Transfer/Data/CV-small/');
-            obj.set('maxTrainNumPerLabel',15);
+        function [] = setCVSmall(obj,sourceNoise)
+            if ~exist('sourceNoise','var')
+                sourceNoise = 0;
+            end
+            obj.setCV();            
+            obj.set('maxTrainNumPerLabel',20);
+            outputFilePrefix = 'Data/CV-small';
+            if sourceNoise > 0
+                obj.set('sourceNoise',sourceNoise);
+                outputFilePrefix = [outputFilePrefix '-' num2str(sourceNoise)];                   
+            end
+            obj.set('outputFilePrefix',[outputFilePrefix '/']);
         end
         
         function [] = setCV(obj)

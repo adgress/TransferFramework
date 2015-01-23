@@ -10,10 +10,14 @@ classdef TransferMeasure < Saveable
             obj = obj@Saveable(configs);
         end
         
-        function [W] = createDistanceMatrix(obj, sources, target, savedData)
-            source = DataSet.Combine(sources{:});
+        function [W] = createDistanceMatrix(obj, sources, target, options,savedData)
+            if isa(sources,'cell')
+                source = DataSet.Combine(sources{:});
+            else
+                source = sources;
+            end
             XallCombined = [source.X ; target.X];  
-            if obj.configs.get('zscore')
+            if obj.get('zscore')
                 XallCombined = zscore(XallCombined);
             end
             YCombined = [source.Y ; target.Y];
@@ -26,8 +30,11 @@ classdef TransferMeasure < Saveable
                     savedData.W = W;
                 end
             end
-            W = DistanceMatrix(W,YCombined,typeCombined); 
-            W.prepareForSourceHF();                      
+            trueYCombined = [source.trueY ; target.trueY];
+            instanceIDsCombined = [source.instanceIDs ; target.instanceIDs];
+            W = DistanceMatrix(W,YCombined,typeCombined,trueYCombined,...
+                instanceIDsCombined); 
+            %W.prepareForSourceHF();                      
             if ~obj.configs.get('useSourceForTransfer')                
                 W.removeInstances(W.isSource());       
             end
@@ -48,29 +55,32 @@ classdef TransferMeasure < Saveable
                 W = options.distanceMatrix;                
             else                
                 if exist('savedData','var') && isfield(savedData,'W')
-                    [W] = obj.createDistanceMatrix(source, target, savedData);
+                    [W] = obj.createDistanceMatrix(source, target, options, savedData);
                 else
-                    [W] = obj.createDistanceMatrix(source, target);
+                    [W] = obj.createDistanceMatrix(source, target, options);
                 end
-            end                                    
+            end      
+            alpha = obj.get('alpha');
             if isKey(obj.configs,'sigma')
                 error('Why are we using this sigma?');
                 sigma = obj.configs.get('sigma');
+            elseif obj.has('sigmaScale')
+                sigma = obj.get('sigmaScale')*W.meanDistance;
             else
                 useMeanSigma = obj.configs.get('useMeanSigma');
                 [sigma,~,~] = GraphHelpers.autoSelectSigma(W,useMeanSigma,useHF);            
             end
             measureMetadata.sigma = sigma;
-            rerunLOOCV = 1;
+            rerunLOOCV = 1;            
             if rerunLOOCV
                 rbfKernel = Helpers.distance2RBF(W.W,sigma);
-                distMat = DistanceMatrix(rbfKernel,W.Y,W.type);
+                distMat = DistanceMatrix(rbfKernel,W.Y,W.type,W.trueY,W.instanceIDs);
                 if exist('savedData','var')
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
-                        = GraphHelpers.LOOCV(distMat,useHF,savedData);
+                        = GraphHelpers.LOOCV(distMat,useHF,alpha,savedData);
                 else
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores] ...
-                        = GraphHelpers.LOOCV(distMat,useHF);
+                        = GraphHelpers.LOOCV(distMat,useHF,alpha);
                 end
             else
                 error('TransferMeasure: Not rerunning LOOCV');

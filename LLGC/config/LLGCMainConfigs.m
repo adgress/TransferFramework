@@ -93,17 +93,7 @@ classdef LLGCMainConfigs < MainConfigs
         
         function [learnerConfigs] = makeDefaultLearnerConfigs(obj)
             learnerConfigs = LearnerConfigs();            
-        end
-        
-        function [s] = getDataFileName(obj)
-            s = [getProjectDir() '/' obj.get('dataDir') '/' ...
-                 '/' obj.get('dataName') '/' obj.get('dataSet') '.mat'];
-        end
-        
-        function [v] = getResultsDirectory(obj)
-            v = [getProjectDir() '/' obj.get('resultsDir') '/' ...
-                 '/' obj.get('dataName') '/'];
-        end      
+        end                  
     end        
     
 end

@@ -32,168 +32,168 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 %end
                 featuresToUse = 1;
                 dataAndSplits.allData.keepFeatures(featuresToUse);                
-                
-                
-                                
+                                                                
                 labelProduct = pc.MakeLabelProduct();
                 
-                addTargetDomain = pc.addTargetDomain;
-                if addTargetDomain
-                    t = labelProduct{1};
-                    t2 = labelProduct{1};
-                    t(2) = t(1);                    
-                    
-                    t2{2} = fliplr(t2{1});
-                    labelProduct = {t,t2,labelProduct{:}};
-                end
-                dataAndSplitsCopy = struct();
-                dataAndSplitsCopy.allSplits = {};
-                dataAndSplitsCopy.configs = dataAndSplits.configs.copy();      
-                                                                                
-                %This code is for making lots of subdomains and using them
-                %together for multisource transfer                
-                for splitIdx=1:length(dataAndSplits.allSplits)
-                    split = dataAndSplits.allSplits{splitIdx};
-                    newSplit = struct();                    
-                    
-                    labelProduct_1 = labelProduct{1};
-                    targetLabel = labelProduct_1(1);
-                    if isa(targetLabel,'cell')
-                        targetLabel = targetLabel{1};
+                multiSourceTransfer = false;
+                if multiSourceTransfer
+                    addTargetDomain = pc.addTargetDomain;
+                    if addTargetDomain
+                        t = labelProduct{1};
+                        t2 = labelProduct{1};
+                        t(2) = t(1);                    
+
+                        t2{2} = fliplr(t2{1});
+                        labelProduct = {t,t2,labelProduct{:}};
                     end
-                    targetDataCopy = dataAndSplits.allData.copy();
-                    targetDataCopy.applyPermutation(split.permutation);
-                    targetClassInds = targetDataCopy.hasLabel(targetLabel);
-                    targetDataCopy.remove(~targetClassInds);  
-                    
-                    isOverlap = targetDataCopy.stratifiedSelection(pc.numOverlap);                    
-                    %targetDataCopy.remove(isOverlap);
-                    targetDataCopy.Y(isOverlap) = -1;
-                    targetDataCopy.ID2Labels = containers.Map;
-                    targetDataCopy.ID2Labels(num2str(0)) = targetLabel;
-                    newSplit.targetData = targetDataCopy;
-                    newSplit.targetType = split.split;
-                    newSplit.targetType = newSplit.targetType(targetClassInds); 
-                    newSplit.sourceData = {};
-                    
-                    sourceLabel = [];
-                                       
-                    for labelProductIdx=1:length(labelProduct)
-                        if mainConfigs.c.learners.get('justTargetNoSource')
-                            break;
-                        end 
-                        currLabels = labelProduct{labelProductIdx};                    
-                        targetLabel_i = currLabels(1);
-                        sourceLabel = currLabels(2);
-                        if isa(targetLabel_i,'cell')
-                            targetLabel_i = targetLabel_i{1};
-                            sourceLabel = sourceLabel{1};
-                        end
-                        assert(all(targetLabel_i == targetLabel));
-                        hasOverlap = ~isempty(intersect(sourceLabel,targetLabel_i));
-                        if hasOverlap
-                            display(['Same label found: ' ...
-                                num2str(sourceLabel) ', ' num2str(targetLabel_i)]);
-                            %continue                            
-                        end 
-                        sourceDataCopy = dataAndSplits.allData.copy();                        
-                        sourceDataCopy.applyPermutation(split.permutation);
-                        sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
-                        sourceDataCopy.remove(~sourceClassInds);
-                        YNew = -1*ones(size(sourceDataCopy.Y));
-                        for labelIdx=1:length(targetLabel)
-                            %sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
-                            YNew(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx);
-                        end    
-                        sourceDataCopy.Y = YNew;
-                        sourceDataCopy.instanceIDs(:) = labelProductIdx; 
-                        sourceDataCopy.ID2Labels = containers.Map();
-                        sourceDataCopy.ID2Labels(num2str(labelProductIdx)) = sourceLabel;
-                        if hasOverlap
-                            sourceDataCopy.keep(isOverlap);
-                            %sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
-                            %sourceDataCopy.remove(sourceDataCopy.Y <= 0);
-                        else
-                            sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
-                            sourceDataCopy.remove(sourceDataCopy.Y <= 0);
-                        end
-                        newSplit.sourceData{end+1} = sourceDataCopy;
-                        
-                    end                    
-                    display('Not applying permutation to split - is this correct?');
-                    %newSplit.targetType = split.split(split.permutation);                                          
-                    dataAndSplitsCopy.allSplits{end+1} = newSplit;
-                end
-                [targetLabels,sourceLabels] = ProjectConfigs.GetTargetSourceLabels();
-                mainConfigs.set('numOverlap',pc.numOverlap);
-                mainConfigs.set('addTargetDomain',pc.addTargetDomain);
-                mainConfigs.set('targetLabels',targetLabels);
-                mainConfigs.set('sourceLabels',sourceLabels);
-                mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
-                mainConfigs.set('sourceClass',sourceLabel);
-                mainConfigs.set('targetClass',targetLabel);
-                mainConfigs.set('transferDataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);
-                mainConfigs.set('k',pc.k);
-                mainConfigs.set('sigmaScale',pc.sigmaScale);
-                mainConfigs.set('alpha',pc.alpha);
-                runExperiment(mainConfigs);
-                
-                %{
-                This code is for generating a bunch of target-source domain
-                pairs
-                
-                for labelProductIdx=1:length(labelProduct)
-                    currLabels = labelProduct{labelProductIdx};                    
-                    targetLabel = currLabels(1);
-                    sourceLabel = currLabels(2);                   
-                    
-                    if isa(targetLabel,'cell')
-                        targetLabel = targetLabel{1};
-                        sourceLabel = sourceLabel{1};
-                    end
-                    if sum(sourceLabel == targetLabel) > 0
-                        continue
-                    end 
-                    
                     dataAndSplitsCopy = struct();
                     dataAndSplitsCopy.allSplits = {};
-                    dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
+                    dataAndSplitsCopy.configs = dataAndSplits.configs.copy();      
+
+                    %This code is for making lots of subdomains and using them
+                    %together for multisource transfer                
                     for splitIdx=1:length(dataAndSplits.allSplits)
                         split = dataAndSplits.allSplits{splitIdx};
-                        newSplit = struct();
+                        newSplit = struct();                    
+
+                        labelProduct_1 = labelProduct{1};
+                        targetLabel = labelProduct_1(1);
+                        if isa(targetLabel,'cell')
+                            targetLabel = targetLabel{1};
+                        end
                         targetDataCopy = dataAndSplits.allData.copy();
                         targetDataCopy.applyPermutation(split.permutation);
-                        
                         targetClassInds = targetDataCopy.hasLabel(targetLabel);
                         targetDataCopy.remove(~targetClassInds);  
 
-                        sourceDataCopy = dataAndSplits.allData.copy();
-                        sourceDataCopy.applyPermutation(split.permutation);
-                        sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
-                        sourceDataCopy.remove(~sourceClassInds);
-                        
-                        
-                        for labelIdx=1:length(targetLabel)
-                           sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
-                        end                        
-                        
-
+                        isOverlap = targetDataCopy.stratifiedSelection(pc.numOverlap);                    
+                        %targetDataCopy.remove(isOverlap);
+                        targetDataCopy.Y(isOverlap) = -1;
+                        targetDataCopy.ID2Labels = containers.Map;
+                        targetDataCopy.ID2Labels(num2str(0)) = targetLabel;
                         newSplit.targetData = targetDataCopy;
-                        newSplit.sourceData = {sourceDataCopy};
-                        display('Not applying permutation to split - is this correct?');
-                        %newSplit.targetType = split.split(split.permutation);
                         newSplit.targetType = split.split;
-                        newSplit.targetType = newSplit.targetType(targetClassInds);                       
+                        newSplit.targetType = newSplit.targetType(targetClassInds); 
+                        newSplit.sourceData = {};
 
+                        sourceLabel = [];
+
+                        for labelProductIdx=1:length(labelProduct)
+                            if mainConfigs.c.learners.get('justTargetNoSource')
+                                break;
+                            end 
+                            currLabels = labelProduct{labelProductIdx};                    
+                            targetLabel_i = currLabels(1);
+                            sourceLabel = currLabels(2);
+                            if isa(targetLabel_i,'cell')
+                                targetLabel_i = targetLabel_i{1};
+                                sourceLabel = sourceLabel{1};
+                            end
+                            assert(all(targetLabel_i == targetLabel));
+                            hasOverlap = ~isempty(intersect(sourceLabel,targetLabel_i));
+                            if hasOverlap
+                                display(['Same label found: ' ...
+                                    num2str(sourceLabel) ', ' num2str(targetLabel_i)]);
+                                %continue                            
+                            end 
+                            sourceDataCopy = dataAndSplits.allData.copy();                        
+                            sourceDataCopy.applyPermutation(split.permutation);
+                            sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
+                            sourceDataCopy.remove(~sourceClassInds);
+                            YNew = -1*ones(size(sourceDataCopy.Y));
+                            for labelIdx=1:length(targetLabel)
+                                %sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
+                                YNew(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx);
+                            end    
+                            sourceDataCopy.Y = YNew;
+                            sourceDataCopy.instanceIDs(:) = labelProductIdx; 
+                            sourceDataCopy.ID2Labels = containers.Map();
+                            sourceDataCopy.ID2Labels(num2str(labelProductIdx)) = sourceLabel;
+                            if hasOverlap
+                                sourceDataCopy.keep(isOverlap);
+                                %sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
+                                %sourceDataCopy.remove(sourceDataCopy.Y <= 0);
+                            else
+                                sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
+                                sourceDataCopy.remove(sourceDataCopy.Y <= 0);
+                            end
+                            newSplit.sourceData{end+1} = sourceDataCopy;
+
+                        end                    
+                        display('Not applying permutation to split - is this correct?');
+                        %newSplit.targetType = split.split(split.permutation);                                          
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
-                    end 
+                    end
+                    [targetLabels,sourceLabels] = ProjectConfigs.GetTargetSourceLabels();
+                    mainConfigs.set('numOverlap',pc.numOverlap);
+                    mainConfigs.set('addTargetDomain',pc.addTargetDomain);
+                    mainConfigs.set('targetLabels',targetLabels);
+                    mainConfigs.set('sourceLabels',sourceLabels);
                     mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
                     mainConfigs.set('sourceClass',sourceLabel);
                     mainConfigs.set('targetClass',targetLabel);
-                    mainConfigs.set('transferDataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
+                    mainConfigs.set('transferDataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);
+                    mainConfigs.set('k',pc.k);
+                    mainConfigs.set('sigmaScale',pc.sigmaScale);
+                    mainConfigs.set('alpha',pc.alpha);
                     runExperiment(mainConfigs);
-                end
+                else
+                %{
+                This code is for generating a bunch of target-source domain
+                pairs
                 %}
+                    for labelProductIdx=1:length(labelProduct)
+                        currLabels = labelProduct{labelProductIdx};                    
+                        targetLabel = currLabels(1);
+                        sourceLabel = currLabels(2);                   
+
+                        if isa(targetLabel,'cell')
+                            targetLabel = targetLabel{1};
+                            sourceLabel = sourceLabel{1};
+                        end
+                        if sum(sourceLabel == targetLabel) > 0
+                            continue
+                        end 
+
+                        dataAndSplitsCopy = struct();
+                        dataAndSplitsCopy.allSplits = {};
+                        dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
+                        for splitIdx=1:length(dataAndSplits.allSplits)
+                            split = dataAndSplits.allSplits{splitIdx};
+                            newSplit = struct();
+                            targetDataCopy = dataAndSplits.allData.copy();
+                            targetDataCopy.applyPermutation(split.permutation);
+
+                            targetClassInds = targetDataCopy.hasLabel(targetLabel);
+                            targetDataCopy.remove(~targetClassInds);  
+
+                            sourceDataCopy = dataAndSplits.allData.copy();
+                            sourceDataCopy.applyPermutation(split.permutation);
+                            sourceClassInds = sourceDataCopy.hasLabel(sourceLabel);
+                            sourceDataCopy.remove(~sourceClassInds);
+
+
+                            for labelIdx=1:length(targetLabel)
+                               sourceDataCopy.Y(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx); 
+                            end                        
+
+
+                            newSplit.targetData = targetDataCopy;
+                            newSplit.sourceData = {sourceDataCopy};
+                            display('Not applying permutation to split - is this correct?');
+                            %newSplit.targetType = split.split(split.permutation);
+                            newSplit.targetType = split.split;
+                            newSplit.targetType = newSplit.targetType(targetClassInds);                       
+
+                            dataAndSplitsCopy.allSplits{end+1} = newSplit;
+                        end 
+                        mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
+                        mainConfigs.set('sourceClass',sourceLabel);
+                        mainConfigs.set('targetClass',targetLabel);
+                        mainConfigs.set('transferDataSetName',[num2str(sourceLabel) '-to-' num2str(targetLabel)]);
+                        runExperiment(mainConfigs);
+                    end
+                end
             else
                 allParamsToVary = {};
                 paramsToVary = obj.get('paramsToVary');
@@ -233,7 +233,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         targetDataCopy = dataAndSplits.allData.copy();
                         targetDataCopy.applyPermutation(split.permutation);                        
                         newSplit.targetData = targetDataCopy;
-                        if isfield(dataAndSplitsCopy, 'sourceDataSets')
+                        if isfield(dataAndSplits, 'sourceDataSets')
                             newSplit.sourceData = Helpers.MapCellArray(@copy,dataAndSplits.sourceDataSets);
                         end
                         display('Not applying permutation to split - is this correct?');

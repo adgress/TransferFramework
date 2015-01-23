@@ -9,6 +9,7 @@ classdef LabeledData < matlab.mixin.Copyable
         trueY
         instanceIDs
         
+        %Map of Data Set IDs to original label data
         ID2Labels
     end
     
@@ -16,6 +17,7 @@ classdef LabeledData < matlab.mixin.Copyable
         numClasses
         classes
         isNoisy
+        numPerClass
     end
     
     methods
@@ -75,6 +77,14 @@ classdef LabeledData < matlab.mixin.Copyable
             v = obj.Y ~= obj.trueY;
         end
         
+        function [v] = get.numPerClass(obj)
+            v = [];
+            for i=obj.classes(:)'
+                v(i) = length(find(obj.Y == i));
+            end
+            v = v';
+        end
+        
         function [n] = size(obj)
             n = length(obj.Y);
         end
@@ -119,6 +129,19 @@ classdef LabeledData < matlab.mixin.Copyable
             inds = false(length(obj.Y),1);
             for i=class
                 inds = inds | obj.Y == i;
+            end
+        end
+        
+        function [] = addRandomClassNoise(obj,classNoise)
+            originalY = obj.Y;
+            allClasses = obj.classes;
+            for currClass=allClasses'
+                isClass = find(originalY == currClass);
+                permIsClass = isClass(randperm(length(isClass)));
+                remainingClasses = allClasses(allClasses ~= currClass);
+                newLabelVector = randsample(remainingClasses,length(permIsClass),true);
+                numToUse = floor(classNoise*length(isClass));
+                obj.Y(permIsClass(1:numToUse)) = newLabelVector(1:numToUse);
             end
         end
         

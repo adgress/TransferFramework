@@ -11,9 +11,7 @@ function [] = runBatchExperiment(multithread, dataset)
     transferMethodClassStrings = batchConfigsObj.get('transferMethodClassStrings');
     for i=1:numel(transferMethodClassStrings)
         transferMethodClass = str2func(transferMethodClassStrings{i});
-        batchConfigsObj.set('transferMethodClass', transferMethodClass());
-        batchConfigsObj.set('experimentConfigLoader', ...
-            'TransferExperimentConfigLoader');
+        batchConfigsObj.set('transferMethodClass', transferMethodClass());        
         obj = BatchExperimentConfigLoader(batchConfigsObj);
         if nargin < 1
             obj.runExperiments();

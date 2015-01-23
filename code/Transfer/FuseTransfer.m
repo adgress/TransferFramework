@@ -27,10 +27,8 @@ classdef FuseTransfer < Transfer
             
             numTrain = targetTrainData.size();
             numTest = targetTestData.size();
-            typeVector = [DataSet.TargetTrainType(numTrain); ...
-                DataSet.TargetTestType(numTest)];
-            tTarget = DataSet('','','',[targetTrainData.X;targetTestData.X],...
-                [targetTrainData.Y;-1*ones(numel(targetTestData.Y),1)],typeVector);
+            tTarget = DataSet.Combine(targetTrainData,targetTestData);
+            tTarget.Y(numTrain+1:end) = -1;
         end  
         function [prefix] = getPrefix(obj)
             prefix = 'S+T';

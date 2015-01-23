@@ -22,7 +22,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             end
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain,classesToKeep);
             assert(sampledTrain.numClasses == train.numClasses);
-            assert(sum(sampledTrain.Y > 0) == sampledTrain.numClasses*numPerClass);
+            if sum(sampledTrain.Y > 0) ~= sampledTrain.numClasses*numPerClass
+                warning('Sample size is weird');
+            end
             assert(numPerClass > 1);
             splitStruct = obj.dataAndSplits.allSplits{splitIndex};
             sourceDataSets = splitStruct.sourceData;
@@ -51,7 +53,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex);
-            assert(sum(sampledTrain.Y > 0) == numPerClass*sampledTrain.numClasses);
+            if sum(sampledTrain.Y > 0) ~= numPerClass*sampledTrain.numClasses
+                warning('Possibly wrong number of labels');
+            end
             [~,trainTestInput] = ...
                 obj.performTransfer(sampledTrain,test,sources,validate,...
                 experiment); 

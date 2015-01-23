@@ -12,11 +12,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.setCVData();
             obj.setNumLabeled();            
             
-            learnerConfigs = obj.makeDefaultLearnerConfigs();
-            
-            % Transfer Repair configs
-            learnerConfigs.configsStruct.percToRemove=.035;
-            learnerConfigs.configsStruct.numIterations=3;                        
+            learnerConfigs = obj.makeDefaultLearnerConfigs();                        
                         
             obj.configsStruct.preTransferMeasures=[];
             obj.configsStruct.postTransferMeasures={};
@@ -24,7 +20,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.setLLGCConfigs(learnerConfigs);
             
             obj.configsStruct.multithread=1;                  
-            obj.configsStruct.rerunExperiments=0;
+            obj.configsStruct.rerunExperiments=1;
             
             obj.configsStruct.computeLossFunction=1;
             obj.configsStruct.processMeasureResults=0;
@@ -43,8 +39,12 @@ classdef TransferMainConfigs < MainConfigs
         end
         
         function [] = setCVData(obj)
+            noise = ProjectConfigs.sourceNoise;
             %obj.configsStruct.dataName = 'CV';
             obj.configsStruct.dataName='CV-small';
+            if noise > 0
+                obj.configsStruct.dataName= ['CV-small-' num2str(noise)];
+            end
             obj.configsStruct.dataDir='Data';
             obj.configsStruct.resultsDir='results';
             obj.configsStruct.transferDir='Data/transferData';
@@ -88,6 +88,13 @@ classdef TransferMainConfigs < MainConfigs
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
             obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
+            obj.setLearnerLLGC(learnerConfigs);
+        end
+        
+        function [] = setLearnerLLGC(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
             llgcObj = LLGCMethod(learnerConfigs);
             obj.configsStruct.learners=llgcObj;
         end
