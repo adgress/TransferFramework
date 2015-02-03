@@ -36,7 +36,8 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
                     DataSet.TargetTestType(test.size())];
                 target = DataSet('','','',[sampledTrain.X ; test.X],...
                     [sampledTrain.Y ; -1*ones(size(test.Y))],...
-                    type);                               
+                    type);
+                target.trueY = target.Y;
                 measureObj = obj.get(preTransferMeasureKey);
                 measureObj.set('useSourceForTransfer',0);
                 [results.preTransferResults] = runTransferMeasureExperiment(obj, ...

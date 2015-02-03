@@ -64,8 +64,7 @@ function [] = runExperiment(configs)
     end
     if experimentLoader.configs.has('processMeasureResults') &&...
             experimentLoader.configs.get('processMeasureResults')
-        fuMeasureLoss = FUMeasureLoss(configs);
-        fuMeasureLoss.set('justTarget',true);
+        fuMeasureLoss = configs.get('measureLoss');
         allResults.aggregateMeasureResults(fuMeasureLoss);
     end
     allResults.saveResults(outputFile);

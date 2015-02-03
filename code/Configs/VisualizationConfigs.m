@@ -19,8 +19,7 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.showTable = false;
             obj.configsStruct.tableColumns = {'Relative Transfer Acc','Our Measure','Our Measure Just Targets'};                                              
             obj.configsStruct.showPostTransferMeasures = true;
-            obj.configsStruct.showPreTransferMeasures = true;
-            obj.configsStruct.showRelativePerformance = false;
+            obj.configsStruct.showPreTransferMeasures = true;            
             obj.configsStruct.showRelativeMeasures = true;
             obj.configsStruct.numColors = 5;
             obj.configsStruct.relativeType = Constants.DIFF_PERFORMANCE ;
@@ -32,7 +31,8 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.showYAxisLabel = true;
             obj.configsStruct.vizWeights = false;
             obj.configsStruct.vizNoisyAcc = false;
-            if obj.get('showRelativePerformance')
+            obj.set('showCorrelations',false);
+            %if obj.get('showRelativePerformance')
                 if obj.get('showCorrelations')
                     obj.configsStruct.relativeType = Constants.CORRELATION;
                     obj.configsStruct.yAxisDisplay = 'Measure-Accuracy Correlation';
@@ -44,7 +44,7 @@ classdef VisualizationConfigs < Configs
                     obj.configsStruct.yAxisDisplay = 'Measure/Accuracy';
                     %}                    
                 end
-            end    
+            %end    
             obj.configsStruct.showKNN = false;
             obj.configsStruct.showSoftMeasures = true;
             obj.configsStruct.showHardMeasures = false;
@@ -150,9 +150,11 @@ classdef VisualizationConfigs < Configs
             methodResultsFileNames = {};            
             if obj.c.showKNN
                 basePlotConfigs.set('baselineFile','TO_kNN-k=1.mat');
+                %{
                 if ~obj.c.showRelativePerformance
                     methodResultsFileNames{end+1} = 'TO_kNN-k=1.mat';
                 end
+                %}
                 methodResultsFileNames{end+1} = 'S+T_kNN-k=1.mat';   
             else
                 alpha = 0.9;
@@ -161,9 +163,11 @@ classdef VisualizationConfigs < Configs
                 targetOnlyFile = 'TO_LLGC-sigmaScale=0.2-k=1-alpha=0.9.mat';
                 transferFile = 'S+T_LLGC-sigmaScale=0.2-k=1-alpha=0.9.mat';
                 basePlotConfigs.set('baselineFile',targetOnlyFile);
+                %{
                 if ~obj.c.showRelativePerformance
                     methodResultsFileNames{end+1} = targetOnlyFile;
                 end
+                %}
                 methodResultsFileNames{end+1} = transferFile;
             end                        
             

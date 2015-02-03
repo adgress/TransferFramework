@@ -155,10 +155,11 @@ classdef DistanceMatrix < LabeledData
         end
         
         function[] = removeInstances(obj, shouldRemove)
-            error('Update!');
             obj.Y = obj.Y(~shouldRemove);
             obj.W = obj.W(~shouldRemove,~shouldRemove);
             obj.type = obj.type(~shouldRemove);
+            obj.trueY = obj.trueY(~shouldRemove);
+            obj.instanceIDs = obj.instanceIDs(~shouldRemove);
         end
         
         function [n] = get.meanDistance(obj)

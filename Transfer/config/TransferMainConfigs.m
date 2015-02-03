@@ -71,6 +71,9 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.learners=[];
             obj.configsStruct.preTransferMeasures=[];
             obj.configsStruct.postTransferMeasures=CTTransferMeasure(learnerConfigs);
+            
+            obj.configsStruct.measureLoss = FUMeasureLoss(obj);
+            obj.configsStruct.measureLoss.set('justTarget',true);
         end
         
         function [] = setLLGCMeasureConfigs(obj, learnerConfigs)
@@ -81,6 +84,8 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
             obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
             obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);                        
+            
+            obj.configsStruct.measureLoss = MeasureLoss(obj);       
         end        
         
         function [] = setLLGCConfigs(obj, learnerConfigs)

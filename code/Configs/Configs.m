@@ -87,7 +87,11 @@ classdef Configs < matlab.mixin.Copyable
         
         function [s] = makeResultsFileName(obj, dataSet, fileName)
             s = [getProjectDir() '/' obj.c.prefix '/' ...
-                dataSet '/' fileName];
+                dataSet '/'];
+            if obj.has('labelsToUse')
+                s = [s num2str(obj.get('labelsToUse')) '/'];
+            end
+            s = [s fileName];
         end
     end
     

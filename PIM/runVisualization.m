@@ -13,7 +13,6 @@ function [] = runVisualization(dataset)
     
     options = struct();
     options.baselineFiles = {};
-    options.showRelativePerformance = 0;
     options.prefix = '';
     options.dataSet = 'pim';
     options.measure = 'Measure';

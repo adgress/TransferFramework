@@ -32,16 +32,24 @@ classdef LLGC < handle
             invM = [];
             %display('llgc: Normalizing fu');
         end
-
-
+        
+        function [invM] = makeInvM(W,alpha)
+            W(logical(speye(size(W)))) = 0;
+            Disq = diag(sum(W).^-.5);
+            WN = Disq*W*Disq;
+            I = eye(size(WN,1));
+            invM = (1-alpha)*inv((1+alpha)*I-WN);
+        end
+        
         function [fu] = llgc_LS(W,fl,alpha)
         %tic
             %alpha = .5;   
             W(logical(speye(size(W)))) = 0;   
             %Disq = spdiags(sum(W).^-.5);
-            Disq = diag(sum(W).^-.5);
+            n = size(W,1);
+            Disq = spdiags(sum(W,2).^-.5,0,n,n);
             WN = Disq*W*Disq;
-            I = eye(size(WN,1));
+            I = speye(size(WN,1));
             M = ((1+alpha)*I-WN);
             fu = M\((1-alpha)*fl);
             fu = Helpers.normRows(fu);

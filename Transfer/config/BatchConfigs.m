@@ -53,8 +53,8 @@ classdef BatchConfigs < Configs
             e = obj.c.experimentConfigsClass;
             e.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';                          
             %learnerConfigs.set('strategy','None');
-            %e.setLearnerLLGC();
-            e.setCTMeasureConfigs();
+            e.setLLGCMeasureConfigs();
+            %e.setCTMeasureConfigs();
             e.set('processMeasureResults',true);
             
             pc = ProjectConfigs.Create();
@@ -64,7 +64,8 @@ classdef BatchConfigs < Configs
             m.set('alpha',pc.alpha);
             m.set('useSourceForTransfer',true);
             
-            e.set('measureObj',m);
+            %TODO: I think this is used for repair
+            %e.set('measureObj',m);
             e.set('saveINV',false);
             e.set('fixSigma',false);
             e.set('numLabeledPerClass',ProjectConfigs.numLabeled);            

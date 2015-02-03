@@ -138,6 +138,11 @@ classdef DataSet < LabeledData
             Yl = obj.Y(indices,:);
         end
         
+        function [] = keepWithLabels(obj,labels)
+            inds = obj.hasLabel(labels);
+            obj.keep(inds);           
+        end
+        
         function [] = keep(obj,shouldKeep)
             if ~islogical(shouldKeep)
                 logArray = false(obj.size(),1);

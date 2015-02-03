@@ -227,6 +227,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     dataAndSplitsCopy = struct();
                     dataAndSplitsCopy.allSplits = {};
                     dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
+                    labelsToUse = [];
+                    if mainConfigsCopy.has('labelsToUse')
+                        labelsToUse = mainConfigsCopy.c.labelsToUse;
+                    end
                     for splitIdx=1:length(dataAndSplits.allSplits)
                         split = dataAndSplits.allSplits{splitIdx};
                         newSplit = struct();
@@ -235,10 +239,19 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         newSplit.targetData = targetDataCopy;
                         if isfield(dataAndSplits, 'sourceDataSets')
                             newSplit.sourceData = Helpers.MapCellArray(@copy,dataAndSplits.sourceDataSets);
+                            if ~isempty(labelsToUse)
+                                error('TODO');
+                            end
                         end
                         display('Not applying permutation to split - is this correct?');
                         %newSplit.targetType = split.split(split.permutation);
-                        newSplit.targetType = split.split;
+                        newSplit.targetType = split.split;                     
+                        if ~isempty(labelsToUse)
+                            targetIndsToUse = targetDataCopy.hasLabel(labelsToUse);
+                            newSplit.targetData.keep(targetIndsToUse);
+                            newSplit.targetType(~targetIndsToUse) = [];
+                        end
+                        
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
                     end
                     mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);

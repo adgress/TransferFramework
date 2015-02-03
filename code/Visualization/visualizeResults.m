@@ -91,7 +91,10 @@ function [f, returnStruct] = visualizeResults(options,f)
             numel(results{1}.aggregatedResults.testResults) > 0;        
         legendName = [legendName ',' configs.stringifyFields(legendNameParams,'-')];
         
-        if options.has('showRepair') && options.c.showRepair
+        showRelativePerf = plotConfigs.has('showRelativePerformance') && ...
+            plotConfigs.get('showRelativePerformance');
+        showRepair = options.has('showRepair') && options.c.showRepair;
+        if showRepair
             plotRepairResults(results,colors(index,:),options);                
             index = index+1;
         else
@@ -129,7 +132,8 @@ function [f, returnStruct] = visualizeResults(options,f)
                     legendName = ['Reg: ' legendName];
                     leg{index} = legendName;
                     index = index + 1;
-                elseif options.c.showRelativePerformance && hasTestResults
+                elseif showRelativePerf && hasTestResults
+                    %error('Update');
                     displayVals{end+1} = plotRelativePerformance(options,...
                         baselineFile,results,sizes,colors(index,:));
                     legendName = ['Relative Acc: ' legendName];
@@ -138,6 +142,7 @@ function [f, returnStruct] = visualizeResults(options,f)
                 else
                     if hasTestResults
                         if options.c.showTest
+                            %error('Update');
                             displayVals{end+1} = plotResults(results,sizes,'testResults',colors(index,:),options);
                             legName = legendName;
                             if options.c.showTrain
@@ -150,16 +155,23 @@ function [f, returnStruct] = visualizeResults(options,f)
                             index = index+1;
                         end
                         if options.c.showTrain
+                            error('Update');
                             displayVals{end+1} = plotResults(results,sizes,'trainResults',colors(index,:),options);
                             leg{index} = [legendName ', Train'];
                             index = index+1;
                         end
                     end
                     if hasPostTM && hasPreTM && options.c.showRelativeMeasures
-                        [index,leg,displayVals{end+1}] = plotRelativeMeasures(options,results,sizes,configs,...
-                            hasPostTM,hasPreTM,colors,index,legendName,leg);
+                        %error('Update');
+                        [displayVals{end+1}] = plotRelativeMeasures(options,results,sizes,...
+                            hasPostTM,hasPreTM,colors(index,:));
+                        measures = configs.get('postTransferMeasures');
+                        dispName = TransferMeasure.GetDisplayName(measures,configs);
+                        leg{index} = ['Relative Measure: ' legendName];
+                        index = index + 1;
                     else
                         if hasPostTM && options.c.showPostTransferMeasures
+                            %error('Update!');
                             measureObj = configs.get('postTransferMeasures');                            
                             displayVals{end+1} = plotResults(results,sizes,'PostTMResults',colors(index,:),options);
                             dispName = measureObj.getDisplayName();
@@ -167,6 +179,7 @@ function [f, returnStruct] = visualizeResults(options,f)
                             index = index + 1;
                         end
                         if hasPreTM && options.c.showPreTransferMeasures
+                            error('Update!');
                             measureObj = configs.get('preTransferMeasures');
                             displayVals{end+1} = plotResults(results,sizes,'PreTMResults',colors(index,:),options);
                             dispName = measureObj.getDisplayName();
@@ -197,7 +210,7 @@ function [f, returnStruct] = visualizeResults(options,f)
         end
         set(options.c.table,'Data',tableData,'ColumnName',leg,'RowName',options.c.dataSet);
     else
-        if options.has('axisToUse')
+        if options.has('axisToUse') && ~options.c.vizMeasureCorrelation
             axisToUse = options.c.axisToUse;    
             a = axis;
             a(3:4) = axisToUse(3:4);
@@ -206,18 +219,6 @@ function [f, returnStruct] = visualizeResults(options,f)
         if isfield(options,'showRepair') && options.c.showRepair        
             xAxisLabel = options.c.xAxisDisplay;     
         elseif exist('results','var')      
-            %{
-            numTrain = results{1}.splitResults{1}.trainingDataMetadata.numTrain;
-            numTest = results{1}.splitResults{1}.trainingDataMetadata.numTest;
-            
-            xAxisLabel = [options.c.xAxisDisplay ' ('];
-            if isfield(results{1}.splitResults{1}.trainingDataMetadata,'numSourceLabels')
-                numSourceLabels = ...
-                    results{1}.splitResults{1}.trainingDataMetadata.numSourceLabels;
-                xAxisLabel = [xAxisLabel 'Num Source Labels = ' num2str(numSourceLabels) ', '];
-            end
-            xAxisLabel = [xAxisLabel num2str(numTrain) '/' num2str(numTest) ')'];
-            %}
             xAxisLabel = options.c.xAxisDisplay;
         else
             xAxisLabel = '';
@@ -232,6 +233,8 @@ function [f, returnStruct] = visualizeResults(options,f)
     hold off;    
     returnStruct = struct();
     returnStruct.numItemsInLegend = length(leg);
+    returnStruct.displayVals = displayVals;
+    returnStruct.sizes = sizes;
 end
 
 function [c] = makeResultsTableData(resultStructs)
@@ -249,8 +252,8 @@ function [s] = makeResultsStruct(means,vars)
     s.vars = vars;
 end
 
-function [index,leg,displayVal] = plotRelativeMeasures(options,results,sizes,configs,...
-    hasPostTM,hasPreTM,colors,index,learnerName,leg)
+function [displayVal] = plotRelativeMeasures(options,results,sizes,...
+    hasPostTM,hasPreTM,color)
     assert(hasPostTM && hasPreTM && options.c.showRelativeMeasures);
     field2 = 'PostTMResults';
     field1 = 'PreTMResults';
@@ -261,11 +264,9 @@ function [index,leg,displayVal] = plotRelativeMeasures(options,results,sizes,con
     vars(isnan(vars)) = 0;
     means = mean(means,2);
     vars = mean(vars,2);
-    errorbar(sizes,means,vars,'color',colors(index,:));
-    measures = configs.get('postTransferMeasures');
-    dispName = TransferMeasure.GetDisplayName(measures,configs);
-    leg{index} = ['Relative Measure: ' dispName];
-    index = index + 1;
+    if ~options.c.vizMeasureCorrelation
+        errorbar(sizes,means,vars,'color',color);    
+    end
     displayVal = makeResultsStruct(means,vars);
 end
 
@@ -292,9 +293,9 @@ end
 function [displayVal] = plotResults(results,sizes,field,colors,options)        
     vars = getVariances(results,field,options);
     means = getMeans(results,field);
-    %if length(sizes) > 1
+    if ~options.c.vizMeasureCorrelation
         errorbar(sizes,means,vars,'color',colors);    
-    %end
+    end
     displayVal = makeResultsStruct(means,vars);
 end
 
@@ -319,15 +320,15 @@ function [displayVal] = plotRelativePerformance(options,baselineFile,results,siz
     if ~isempty(vars)
         if sum(isinf(means)) > 0
             display('NaN');
-        end
-        %if length(sizes) > 1
+        end        
+        if ~options.c.vizMeasureCorrelation
             errorbar(sizes,means,vars,'color',color);
-        %end
+        end
         displayVal = makeResultsStruct(means,vars);
     else
-        %if length(sizes) > 1
+        if ~options.c.vizMeasureCorrelation
             errorbar(sizes,means,l,h,'color',color);
-        %end
+        end
         displayVal = makeResultsStruct(means,[]);
         displayVal.lows = lows;
         displayVal.highs = h;
@@ -372,7 +373,7 @@ function [means,vars,lows,highs] = getRelativePerf(results,field1,field2,options
                     ResultsVector.GetRelativePerformance(x,y);
             end
             means(i,:) = relativePerf.getMean();
-            vars(i,:) = relativePerf.getConfidenceInterval();
+            vars(i,:) = relativePerf.getConfidenceInterval(options.c.confidenceInterval);
         elseif options.relativeType == Constants.CORRELATION
             [means(i),highs(i),lows(i)] = ResultsVector.GetCorrelation(x,y);
         else

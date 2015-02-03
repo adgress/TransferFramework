@@ -331,6 +331,9 @@ classdef ExperimentConfigLoader < ConfigLoader
             warning off;
             outputDirParams = obj.configs.getOutputDirectoryParams();
             outputDir = [outputDir obj.configs.stringifyFields(outputDirParams, '/') '/'];
+            if obj.has('labelsToUse')
+                outputDir = [outputDir num2str(obj.get('labelsToUse')) '/'];
+            end
             warning on;
             
             outputFileParams = obj.configs.getOutputFileNameParams();            

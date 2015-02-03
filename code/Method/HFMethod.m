@@ -20,10 +20,10 @@ classdef HFMethod < Method
             end
             XLabeled = train.X(trainLabeled,:);
             XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
-            Xall = [XLabeled ; XUnlabeled];      
+            Xall = [XLabeled ; XUnlabeled];                  
             if learnerConfigs.get('zscore')
                 Xall = zscore(Xall);
-            end
+            end            
             Y = [train.Y(trainLabeled) ; ...
                 train.Y(~trainLabeled) ; ...
                 test.Y];
@@ -36,7 +36,21 @@ classdef HFMethod < Method
             instanceIDs = [train.instanceIDs(trainLabeled) ; ...
                 train.instanceIDs(~trainLabeled) ; ...
                 test.instanceIDs];
-            W = Helpers.CreateDistanceMatrix(Xall);            
+            if size(Xall,2) == 1
+                [Xall,inds] = sort(Xall,'ascend');
+                Y = Y(inds);
+                type = type(inds);
+                trueY = trueY(inds);
+                instanceIDs = instanceIDs(inds);                
+                W = Helpers.CreateDistanceMatrix(Xall);
+            else
+                W = Helpers.CreateDistanceMatrix(Xall);
+                %{
+                if obj.has('Wsparsity')
+                    W = Helpers.SparsifyDistanceMatrix(W,obj.get('Wsparsity'));
+                end
+                %}
+            end            
             distMat = DistanceMatrix(W,Y,type,trueY,instanceIDs);
         end
         
@@ -76,7 +90,7 @@ classdef HFMethod < Method
                     obj.configs.get('useMeanSigma'),useHF);
             end
             Wrbf = Helpers.distance2RBF(distMat.W,sigma);
-            Wrbf = Helpers.SparsifyDistanceMatrix(Wrbf,obj.get('k'));
+            %Wrbf = Helpers.SparsifyDistanceMatrix(Wrbf,obj.get('k'));
             instanceIDs = distMat.instanceIDs;
         end
         
@@ -92,6 +106,26 @@ classdef HFMethod < Method
                 [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
                 = GraphHelpers.LOOCV(similarityDistMat,useHF);
             end
+        end
+        
+        function [fu,savedData,sigma] = runBandedLLGC(obj,distMat,savedData)
+            [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat);
+            
+            n = size(Wrbf,1);
+            s = ceil(sqrt(n));            
+            diagonals = spdiags(Wrbf,-s:s);
+            WrbBanded = spdiags(diagonals,-s:s,n,n);            
+            %{
+            tic
+            [fu] = LLGC.llgc_LS(Wrbf, YtrainMat,obj.get('alpha'));
+            toc
+            tic
+            [fu] = LLGC.llgc_LS(WrbBanded, YtrainMat,obj.get('alpha'));
+            toc
+            %}
+            [fu] = LLGC.llgc_LS(WrbBanded, YtrainMat,obj.get('alpha'));
+            fu(isnan(fu(:))) = 0;
+            assert(isempty(find(isnan(fu))));
         end
         
         function [fu,savedData,sigma] = runLLGC(obj,distMat,savedData)
