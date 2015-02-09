@@ -21,9 +21,6 @@ classdef DataSet < LabeledData
             if ~exist('Y','var')
                 Y = [];
             end
-            if ~exist('trueY','var')
-                trueY = [];
-            end
             if ~exist('instanceIDs','var')
                 instanceIDs = 1:length(Y);
                 instanceIDs = instanceIDs';
@@ -36,15 +33,18 @@ classdef DataSet < LabeledData
                 end
                 obj.X = obj.data.(XName);
                 obj.Y = obj.data.(YName);
-                obj.trueY = trueY;
                 obj.instanceIDs = zeros(size(obj.Y));
             else
                 obj.X = X;
-                obj.Y = Y;
-                obj.trueY = trueY;
+                obj.Y = Y;                                
                 obj.instanceIDs = instanceIDs;
             end              
             
+               
+            if ~exist('trueY','var')
+                trueY = obj.Y;
+            end
+            obj.trueY = trueY;
             if exist('type','var')
                 obj.type = type;                
             else
@@ -248,6 +248,17 @@ classdef DataSet < LabeledData
         end                
     end
     methods(Static)
+        function [d] = CreateGaussianData(n,p,k)
+            assert(k == 2);
+            mu = zeros(k,p);
+            mu(1,1:p) = ones(1,p);
+            mu(2,1:p) = -ones(1,p);
+            sigma = ones(1,p);
+            g = gmdistribution(mu,sigma);
+            [X,Y] = g.random(n);    
+            %d = DataSet('',[],[],X,Y,type,trueY,instanceIDs);
+            d = DataSet('',[],[],X,Y);
+        end
         function [newData] = CreateNewDataSet(data,inds)
             if ~exist('inds','var')
                 inds = 1:data.size();

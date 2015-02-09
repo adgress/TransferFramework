@@ -15,6 +15,18 @@ classdef LLGC < handle
             %display('llgc: Normalizing fu');
         end
 
+        function [fu,invM] = llgc_inv_unbiased(W,fl,alpha,invM)
+            %alpha = .5;       
+            W(logical(speye(size(W)))) = 0;
+
+            if ~exist('invM','var')
+                invM = LLGC.makeInvM_unbiased(W,alpha,fl);              
+            end
+            fu = invM*fl;
+            fu = Helpers.normRows(fu);
+            %display('llgc: Normalizing fu');
+        end
+        
         function [fu,invM] = llgc_chol(W,fl)
             error('Need to set alpha');
         tic
@@ -39,6 +51,20 @@ classdef LLGC < handle
             WN = Disq*W*Disq;
             I = eye(size(WN,1));
             invM = (1-alpha)*inv((1+alpha)*I-WN);
+        end
+        
+        function [invM] = makeInvM_unbiased(W,alpha,Y)
+            W(logical(speye(size(W)))) = 0;
+            Disq = diag(sum(W).^-.5);
+            WN = Disq*W*Disq;
+            Y = Y > 0;
+            if size(Y,2) > 1
+                Y = sum(Y,2);
+            end
+            I = eye(size(WN,1));
+            A = diag(Y);
+            eps = 1e-6;
+            invM = (1-alpha)*inv(I*(1+eps) - WN + alpha*A);
         end
         
         function [fu] = llgc_LS(W,fl,alpha)

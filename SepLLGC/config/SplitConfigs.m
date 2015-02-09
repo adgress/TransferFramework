@@ -16,6 +16,29 @@ classdef SplitConfigs < Configs
             obj.setUSPS();
         end
         
+        function [] = setSpam(obj)
+            obj.delete('maxTrainNumPerLabel');
+            obj.configsStruct.inputFilePrefix='../Data/pmtkdata-master/spamData/';
+            obj.configsStruct.inputDataSets={'spamData.mat'};
+            obj.configsStruct.dataSetAcronyms={'SPAM'};
+            obj.configsStruct.outputFilePrefix='Data/spamData/';            
+            obj.configsStruct.outputFile='spamData_split_data.mat';
+            
+            obj.set('XName',{'Xtrain','Xtest'});
+            obj.set('YName',{'ytrain','ytest'});
+        end
+        
+        function [] = setHousingBinary(obj)
+            obj.delete('maxTrainNumPerLabel');
+            obj.configsStruct.inputFilePrefix='/Data/housing/';
+            obj.configsStruct.inputDataSets={'housingBinary.mat'};
+            obj.configsStruct.dataSetAcronyms={'HB'};
+            obj.configsStruct.outputFilePrefix='Data/housingBinary/';            
+            obj.configsStruct.outputFile='housing_split_data.mat';
+            
+            obj.set('XName','X');
+            obj.set('YName','yBinary');
+        end
         
         function [] = setTommasi(obj)
             obj.set('XName','X');
@@ -37,7 +60,7 @@ classdef SplitConfigs < Configs
             %obj.set('maxTrainNumPerLabel',500);
             obj.set('numToUsePerLabel',300);
             obj.set('outputFile','splits.mat');
-        end
+        end        
         
         function [] = setCOIL20(obj,classNoise)
             obj.set('dataSetType','DataSet');

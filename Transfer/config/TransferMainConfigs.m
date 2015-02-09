@@ -20,7 +20,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.setLLGCConfigs(learnerConfigs);
             
             obj.configsStruct.multithread=1;                  
-            obj.configsStruct.rerunExperiments=1;
+            obj.configsStruct.rerunExperiments=0;
             
             obj.configsStruct.computeLossFunction=1;
             obj.configsStruct.processMeasureResults=0;

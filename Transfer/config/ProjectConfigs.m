@@ -12,14 +12,14 @@ classdef ProjectConfigs
         
         instance = ProjectConfigs.CreateSingleton()
         
-        experimentSetting = 3
-        numLabeled = 3:7
+        experimentSetting = 1
+        numLabeled = 4:2:20
         
         EXPERIMENT_LLGC = 1
         EXPERIMENT_REPAIR = 2
         EXPERIMENT_MEASURE = 3
         
-        vizMeasureCorrelation = true
+        vizMeasureCorrelation = false
         
         sourceNoise = .0;
     end
@@ -88,10 +88,7 @@ classdef ProjectConfigs
             
             if ProjectConfigs.experimentSetting == ...
                     ProjectConfigs.EXPERIMENT_REPAIR
-                [plotConfigs,legend] = ProjectConfigs.MakeRepairPlotConfigs();
-                c.set('plotConfigs',plotConfigs);
-                c.set('legend',legend);
-                c.set('showLegend',true);
+                [plotConfigs,legend] = ProjectConfigs.MakeRepairPlotConfigs();                
                 c.configsStruct.sizeField = 'numLabeledPerClass';
                 c.configsStruct.xAxisField = 'numLabeledPerClass';
                 c.configsStruct.xAxisDisplay = 'Repair Iterations';
@@ -102,12 +99,31 @@ classdef ProjectConfigs
                 c.configsStruct.showSoftMeasures = false;
                 c.makeMultiMeasurePlotConfigs();
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_MEASURE
-                [plotConfigs,legend] = ProjectConfigs.MakeMeasurePlotConfigs();
-                c.set('plotConfigs',plotConfigs);
-                c.set('legend',legend);
-                c.set('showLegend',true);
+                [plotConfigs,legend] = ProjectConfigs.MakeMeasurePlotConfigs();                
+            elseif ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_LLGC
+                %[plotConfigs,legend] = ProjectConfigs.MakeMeasurePlotConfigs();
+                files = {};
+                legend = {};
+                files{end+1} = 'TO_LLGC-sigmaScale=0.2-alpha=0.9.mat';
+                legend{end+1} = 'LLGC';
+
+                files{end+1} = 'S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
+                legend{end+1} = 'Transfer LLGC';
+                plotConfigs = {};
+                for i=1:length(files)
+                    p = Configs();
+                    %measureLoss = FUMeasureLoss();
+                    %measureLoss.set('justTarget',true);
+                    %c.set('measureLoss',measureLoss);
+                    p.set('resultFileName',files{i});
+                    plotConfigs{end+1} = p;
+                end
             end
-            c.set('vizMeasureCorrelation',true);
+            c.set('plotConfigs',plotConfigs);
+            c.set('legend',legend);
+            c.set('showLegend',true);
+                
+            c.set('vizMeasureCorrelation',ProjectConfigs.vizMeasureCorrelation);
             
             %Indicies of displayVals to use for correlation between
             %transfer measure and transfer performance

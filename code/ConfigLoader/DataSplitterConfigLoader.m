@@ -54,7 +54,8 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 n = obj.get('numToUsePerLabel');
                 allData = allData.stratifiedSample(n*allData.numClasses);
             end
-            assert(isempty(allData.trueY));
+            %TODO: Why did we need this?
+            %assert(isempty(allData.trueY));
             allData.trueY = allData.Y;
             if isempty(allData.instanceIDs)
                 allData.instanceIDs = 1:length(allData.Y);

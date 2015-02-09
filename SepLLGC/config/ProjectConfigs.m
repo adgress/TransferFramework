@@ -14,7 +14,13 @@ classdef ProjectConfigs < handle
         
         %labels = [10 15 23 25 26 30]
         
+        %Tommasi labels
         labels = {[10 15], [10 23], [15 23]}
+        
+        %Housing labels
+        %labels = {[1 2]}
+        
+        numRandomFeatures = 0
     end
     
     properties        
@@ -68,9 +74,13 @@ classdef ProjectConfigs < handle
         function [c] = BatchConfigs()
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
+            %{
             if pc.dataSet == Constants.TOMMASI_DATA
                 c.get('experimentConfigsClass').setTommasiData(); 
             end
+            %}
+            %c.get('experimentConfigsClass').setHousingBinaryData(); 
+            c.get('experimentConfigsClass').setTommasiData(); 
             c.get('experimentConfigsClass').setSepLLGCConfigs();
             %c.get('experimentConfigsClass').setLLGCConfigs();
             c.configsStruct.experimentConfigLoader = 'ExperimentConfigLoader';
@@ -101,10 +111,16 @@ classdef ProjectConfigs < handle
             c.set('prefix','results');
             
             pc = ProjectConfigs.Create();
+            
             if pc.dataSet == Constants.TOMMASI_DATA
                 c.set('prefix','results_tommasi');
                 c.set('dataSet',{'tommasi_data'});
             end
+            
+            %{
+            c.set('prefix','results_housing');
+            c.set('dataSet',{'housingBinary'});
+            %}
         end
         
         function [plotConfigs,legend,title] = makePlotConfigs()  
@@ -115,20 +131,20 @@ classdef ProjectConfigs < handle
             legend = [];
             title = [];
             if ProjectConfigs.experimentSetting == ProjectConfigs.SEP_LLGC_EXPERIMENT
-                 title = '';
-                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-uniform=1.mat';
-                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';
-                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=0.mat';                 
-                 methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2-alpha=0.9.mat';
-                 
-                 legend = {...
+                title = '';
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-uniform=1.mat';                 
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=0.mat';                                  
+                legend = {...
                         'LLGC Sep Uniform',...
-                        'LLGC Sep Sum',...
-                        'LLGC Sep Weighted',...                        
-                        'LLGC',...                                        
+                        'LLGC Sep Weighted',...                                                .                                        
                 };
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized';
+                methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2-alpha=0.9.mat';
+                legend{end+1} = 'LLGC';
+                
+                %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';
+                                    %'LLGC Sep Sum',...                                                    
             else
                 error('TODO');
             end
@@ -138,7 +154,12 @@ classdef ProjectConfigs < handle
                 configs.set('resultFileName',methodResultsFileNames{fileIdx});
                 plotConfigs{end+1} = configs;
             end
-        end                
+        end     
+        
+         function [c] = SplitConfigs()
+             c = SplitConfigs();
+             c.setHousingBinary();
+         end
     end
     methods(Access = private)
         function [c] = ProjectConfigs()            

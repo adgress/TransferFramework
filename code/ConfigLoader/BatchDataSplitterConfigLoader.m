@@ -44,12 +44,41 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                     data = data.data;
                 end
                 newData = struct();
-                newData.featureIDs = data.featureIDs;
-                newData.directories = data.directories;
-                newData.classNames = data.classNames;
-                newData.classIDs = data.classIDs;
-                newData.X = data.(configs.get('XName'));
-                newData.Y = data.(configs.get('YName'));
+                featureIDs = [];
+                directories = [];
+                classIDs = [];
+                classNames = [];
+                if isfield(data,'featureIDs')
+                    featureIDs = data.featureIDs;
+                end
+                if isfield(data,'directories')
+                    directories = data.directories;
+                end
+                if isfield(data,'classIDs')
+                    classIDs = data.classIDs;
+                end
+                if isfield(data,'classNames')
+                    classNames = data.classNames;
+                end
+                newData.classNames = classNames;
+                newData.classIDs = classIDs;                                
+                newData.featureIDs = featureIDs;
+                newData.directories = directories;
+                
+                XName = configs.get('XName');
+                YName = configs.get('YName');
+                if iscell(XName)                    
+                    X = [];
+                    Y = [];
+                    for nameIdx=1:length(XName)
+                        
+                    end
+                else
+                    X = data.(XName);
+                    Y = data.(YName);
+                end
+                newData.X = X;
+                newData.Y = Y;
                 %TODO: Why did we need this?
                 %allFields = fields(data);
                 %data = data.(allFields{1});

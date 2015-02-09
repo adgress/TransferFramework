@@ -36,7 +36,9 @@ classdef HFMethod < Method
             instanceIDs = [train.instanceIDs(trainLabeled) ; ...
                 train.instanceIDs(~trainLabeled) ; ...
                 test.instanceIDs];
-            if size(Xall,2) == 1
+            
+            %TODO: I turned this off because it was causing bugs elsewhere
+            if size(Xall,2) == 1 && false
                 [Xall,inds] = sort(Xall,'ascend');
                 Y = Y(inds);
                 type = type(inds);

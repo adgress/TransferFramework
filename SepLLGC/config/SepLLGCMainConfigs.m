@@ -30,6 +30,13 @@ classdef SepLLGCMainConfigs < MainConfigs
             %obj.configsStruct.labelsToUse=[10 15];
         end                           
         
+        function [] = setHousingBinaryData(obj)
+            obj.set('dataName','housingBinary');
+            obj.set('resultsDir','results_housing');
+            obj.set('dataSet','housing_split_data');            
+            obj.delete('labelsToUse');
+        end
+        
         function [] = setTommasiData(obj)
             obj.set('dataName','tommasi_data');
             obj.set('resultsDir','results_tommasi');

@@ -195,6 +195,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     end
                 end
             else
+                numRandomFeatures = pc.numRandomFeatures;
                 allParamsToVary = {};
                 paramsToVary = obj.get('paramsToVary');
                 for paramIdx=1:length(paramsToVary)
@@ -207,8 +208,13 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigsCopy.set(paramsToVary,params);                    
                     dataAndSplits = load(mainConfigsCopy.getDataFileName());                    
                     dataAndSplits = dataAndSplits.dataAndSplits;
+                    if numRandomFeatures > 0
+                        display(['Adding ' num2str(numRandomFeatures) ' random features']);
+                        X = dataAndSplits.allData.X;
+                        dataAndSplits.allData.X = [X rand(size(X,1),numRandomFeatures)];
+                    end
                     if isempty(dataAndSplits.allData.instanceIDs)
-                        dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);
+                        dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);                        
                     end
                     if isfield(dataAndSplits,'sourceNames')
                         allSourceNames = dataAndSplits.sourceNames;
