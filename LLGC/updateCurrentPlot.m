@@ -1,8 +1,8 @@
 %For Transfer performance plots
-
+%{
 set(findall(gcf,'type','text'),'FontSize',20);
 set(legend,'Location','south');
-
+%}
 %For data set weight plots
 %{
 fontSize = 25;
@@ -25,7 +25,11 @@ axis(a);
 %}
 
 %For label noise prediction plots
-%{
-title('Label Noise: 5%');
-set(findall(gcf,'type','text'),'FontSize',18);
-%}
+
+%title('Label Noise: 25%');
+set(findall(gcf,'type','text'),'FontSize',20);
+
+p = get(gcf,'position');
+p(3:4) = [600 500];
+set(gcf,'position',p);
+%print -djpeg 'LLGC/paper figures/weights025.jpg' -r300%}
