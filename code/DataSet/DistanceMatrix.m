@@ -96,8 +96,8 @@ classdef DistanceMatrix < LabeledData
             nn = labels(I);
         end
         
-        function [W,Y,isTest,type] = prepareForHF(obj)
-            error('Update!');
+        function [W,Y,isTest,type,perm] = prepareForHF(obj)
+            %error('Update!');
             W = obj.W;
             isTest = obj.type == Constants.TARGET_TEST;
             labeledTrain = (obj.type  == Constants.TARGET_TRAIN | ...
@@ -163,6 +163,11 @@ classdef DistanceMatrix < LabeledData
         end
         
         function [n] = get.meanDistance(obj)
+            %{
+            isTarget = obj.isTarget();
+            targetDists = obj.W(isTarget,isTarget);
+            n = mean(targetDists(:));
+            %}
             n = mean(obj.W(:));
         end
     end

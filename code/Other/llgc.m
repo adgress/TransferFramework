@@ -15,6 +15,19 @@ classdef LLGC < handle
             %display('llgc: Normalizing fu');
         end
 
+        function [L] = make_L_unnormalized(W)
+            L = diag(sum(W)) - W;
+        end
+        
+        function [L] = make_L(W)
+            W(logical(speye(size(W)))) = 0;
+
+            Disq = diag(sum(W).^-.5);
+            WN = Disq*W*Disq;
+            I = eye(size(WN,1));
+            L = I - WN;
+        end
+        
         function [fu,invM] = llgc_inv_unbiased(W,fl,alpha,invM)
             %alpha = .5;       
             W(logical(speye(size(W)))) = 0;

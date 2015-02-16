@@ -66,15 +66,19 @@ classdef ExperimentConfigLoader < ConfigLoader
             end                        
         end   
         
-        function [results] = ...
-                runExperiment(obj,experimentIndex,splitIndex)            
+        function [learner,experiment] = setExperimentConfigs(obj,experimentIndex)
             experiment = obj.allExperiments{experimentIndex};
             f = fields(experiment);
             learner = experiment.learner;
             for i=1:length(f)
                 obj.configs.set(f{i}, experiment.(f{i}));
                 learner.configs.set(f{i}, experiment.(f{i}));
-            end            
+            end        
+        end
+        
+        function [results] = ...
+                runExperiment(obj,experimentIndex,splitIndex)            
+            [learner] = obj.setExperimentConfigs(experimentIndex);
             [train,test,validate,featType] = obj.getSplit(splitIndex);
             train.setTargetTrain();
             test.setTargetTest();
@@ -296,9 +300,8 @@ classdef ExperimentConfigLoader < ConfigLoader
             else
                 error('Unknown DataSet')
             end
-            if obj.has('labelsToUse')
-                labelsToUse = obj.get('labelsToUse');
-                assert(length(labelsToUse) > 1);
+            if obj.has('labelsToUse') && ~isempty(obj.get('labelsToUse'))
+                labelsToUse = obj.get('labelsToUse');                
                 train.keep(train.hasLabel(labelsToUse));
                 test.keep(test.hasLabel(labelsToUse));
                 validate.keep(validate.hasLabel(labelsToUse));

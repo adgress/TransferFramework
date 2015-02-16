@@ -226,7 +226,8 @@ classdef DataSet < LabeledData
             for i=2:length(varargin)
                 m2 = varargin{i}.ID2Labels;
                 if ~isempty(m2) && ~isempty(f.ID2Labels)
-                    assert(isempty(intersect(f.ID2Labels.keys,m2.keys)));
+                    %TODO: fix this check?
+                    %assert(isempty(intersect(f.ID2Labels.keys,m2.keys)));
                 end
                 f.X = [f.X ; varargin{i}.X];
                 f.Y = [f.Y ; varargin{i}.Y];

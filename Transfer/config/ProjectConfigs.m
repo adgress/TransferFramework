@@ -1,11 +1,8 @@
-classdef ProjectConfigs
+classdef ProjectConfigs < ProjectConfigsBase
     %PROJECTCONFIGS Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties(Constant)
-        numTarget = 2;
-        numSource = 5;
-        tommasiLabels = [10 15 23 25 26 30 41 56 57];
+    properties(Constant)        
         cvLabels = 1:10;
         %dataSet = Constants.CV_DATA
         dataSet = Constants.TOMMASI_DATA
@@ -27,6 +24,9 @@ classdef ProjectConfigs
     properties
         sigmaScale
         alpha
+        numSource
+        numTarget
+        tommasiLabels
     end
     
     methods(Static)    
@@ -190,30 +190,7 @@ classdef ProjectConfigs
                 c.set('resultFileName',files{i});
                 plotConfigs{end+1} = c;
             end
-        end
-        
-        function [labelProduct] = MakeLabelProduct()
-            pc = ProjectConfigs.Create();
-            numTargetLabels = pc.numTarget;
-            numSourceLabels = pc.numSource;
-            targetlabels = pc.tommasiLabels(1:numTargetLabels);
-            sourceLabels = pc.tommasiLabels(numTargetLabels+1:numTargetLabels+numSourceLabels);
-            targetDomains = Helpers.MakeCrossProductOrdered(targetlabels,targetlabels);
-            sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);
-            labelProduct = Helpers.MakeCrossProduct(targetDomains,sourceDomains);
-        end
-        
-        function [targetDomains,sourceDomains] = MakeDomains()
-            pc = ProjectConfigs.Create();
-            numTargetLabels = pc.numTarget;
-            numSourceLabels = pc.numSource;
-            
-            targetlabels = pc.tommasiLabels(1:numTargetLabels);
-            targetDomains = Helpers.MakeCrossProductOrdered(targetlabels,targetlabels);
-            
-            sourceLabels = pc.tommasiLabels(numTargetLabels+1:numTargetLabels+numSourceLabels);            
-            sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);           
-        end
+        end                
     end
     
 end

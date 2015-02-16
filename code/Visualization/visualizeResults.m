@@ -143,7 +143,11 @@ function [f, returnStruct] = visualizeResults(options,f)
                     if hasTestResults
                         if options.c.showTest
                             %error('Update');
-                            displayVals{end+1} = plotResults(results,sizes,'testResults',colors(index,:),options);
+                            fieldToPlot = 'testResults';
+                            if plotConfigs.has('fieldToPlot')
+                                fieldToPlot = plotConfigs.get('fieldToPlot');
+                            end
+                            displayVals{end+1} = plotResults(results,sizes,fieldToPlot,colors(index,:),options);
                             legName = legendName;
                             if options.c.showTrain
                                 legName = [legName ', Test'];
@@ -294,7 +298,11 @@ function [displayVal] = plotResults(results,sizes,field,colors,options)
     vars = getVariances(results,field,options);
     means = getMeans(results,field);
     if ~options.c.vizMeasureCorrelation
-        errorbar(sizes,means,vars,'color',colors);    
+        if length(means) == length(sizes)
+            errorbar(sizes,means,vars,'color',colors);    
+        else
+            errorbar(1:length(means),means,vars,'color',colors);    
+        end
     end
     displayVal = makeResultsStruct(means,vars);
 end

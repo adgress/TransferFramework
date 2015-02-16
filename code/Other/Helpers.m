@@ -74,7 +74,8 @@ classdef Helpers < handle
             X=X';
             Y=Y';
             D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 
-            D = real(D.^.5); 
+            %D = real(D.^.5); 
+            D = real(D);
             %toc
             %{
             tic
@@ -358,7 +359,7 @@ classdef Helpers < handle
         end        
         function [W] = distance2RBF(W,sigma)
             W = W.^2;
-            W = W./(-2*sigma);
+            W = -W./(2*sigma^2);
             W = exp(W);
         end
         function [b] = cellArrayHasValue(c,value)
@@ -425,6 +426,14 @@ classdef Helpers < handle
             end
             v = vNew;
             inds = indsNew;
+        end
+        
+        function [s] = Cell2StructArray(cellArray)
+            %f = fields(cellArray{1});
+            s = cellArray{1};
+            for idx=2:length(cellArray)
+                s(idx) = cellArray{idx};
+            end
         end
         
         function [inds] = IsMember(cellArray,toFind)

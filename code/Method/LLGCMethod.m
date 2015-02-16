@@ -20,12 +20,7 @@ classdef LLGCMethod < HFMethod
                 [testResults] = ...
                     obj.trainAndTestGraphMethod(input,useHF);
             end
-        end
-        function [] = updateConfigs(obj, newConfigs)
-            %keys = {'sigma', 'sigmaScale','k','alpha'};
-            keys = {'sigmaScale','alpha'};
-            obj.updateConfigsWithKeys(newConfigs,keys);
-        end                
+        end                        
         
         function [prefix] = getPrefix(obj)
             prefix = 'LLGC';

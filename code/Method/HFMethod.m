@@ -57,22 +57,27 @@ classdef HFMethod < Method
         end
         
         function [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat)
-            error('Make Sure this still works!');
-            [distMat,Y,isTest,type] = distMat.prepareForHF();
+            %error('Make Sure this still works!');
+            [W,Y,isTest,type,perm] = distMat.prepareForHF();
+            assert(issorted(perm));
             Y_testCleared = Y;
             Y_testCleared(isTest) = -1;
             if isKey(obj.configs,'sigma')
                 sigma = obj.configs('sigma');
+            elseif obj.has('sigmaScale')
+                sigma = distMat.meanDistance * obj.get('sigmaScale');
             else
-                sigma = GraphHelpers.autoSelectSigma(distMat,Y_testCleared,~isTest,obj.configs('useMeanSigma'),useHF,type);
+                sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,obj.configs('useMeanSigma'),useHF,type);
             end
-            distMat = Helpers.distance2RBF(distMat,sigma);
+            W = Helpers.distance2RBF(W,sigma);
             isTrainLabeled = Y > 0 & ~isTest;
             assert(~issorted(isTrainLabeled));
             YTrain = Y(isTrainLabeled);
             YLabelMatrix = Helpers.createLabelMatrix(YTrain);
             addpath(genpath('libraryCode'));
-            [fu, fu_CMN] = harmonic_function(distMat, YLabelMatrix);
+            [fu, fu_CMN] = harmonic_function(W, YLabelMatrix);
+            fu = [YLabelMatrix ; fu];
+            fu_CMN = [YLabelMatrix ; fu_CMN];
         end
         
         function [Wrbf,YtrainMat,sigma,Y_testCleared,instanceIDs] = makeLLGCMatrices(obj,distMat)
@@ -165,7 +170,7 @@ classdef HFMethod < Method
                 testResults.dataType = distMat.type;
             end
             if useHF
-                error('Make sure this works!');
+                %error('Make sure this works!');
                 [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat);
             else
                 if exist('savedData','var') && isfield(savedData,'invM')
@@ -189,8 +194,10 @@ classdef HFMethod < Method
             if numNan > 0
                 display(['numNan: ' num2str(numNan)]);
             end
+            %{
             if useHF
-                isYTest = Y > 0 & isTest;
+                %distMat entries should be sorted properly
+                isYTest = distMat.Y > 0 & distMatisTest;
                 YTest = Y(isYTest);            
                 numTrainLabeled = sum(isTrainLabeled);
                 predicted = predicted(isYTest(numTrainLabeled+1:end));    
@@ -203,6 +210,15 @@ classdef HFMethod < Method
                 predicted = predicted(isYTest);
                 testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
             end
+            %}
+            isYTest = distMat.Y > 0 & distMat.type == Constants.TARGET_TEST;
+            
+            %test instances should be last
+            assert(issorted(isYTest));
+            YTest = distMat.Y(isYTest);
+            predicted = predicted(isYTest);
+            testResults.dataFU = sparse(fu);
+            %testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
             val = sum(predicted == YTest)/...
                     length(YTest);
             if ~obj.configs.get('quiet')
@@ -222,6 +238,11 @@ classdef HFMethod < Method
             useHF = true;
             [testResults] = ...
                 trainAndTestGraphMethod(obj,input,useHF);
+        end
+        function [] = updateConfigs(obj, newConfigs)
+            %keys = {'sigma', 'sigmaScale','k','alpha'};
+            keys = {'sigmaScale','alpha'};
+            obj.updateConfigsWithKeys(newConfigs,keys);
         end
         function [prefix] = getPrefix(obj)
             prefix = 'HF';

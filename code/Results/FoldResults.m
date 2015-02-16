@@ -1,4 +1,4 @@
-classdef FoldResults < handle
+classdef FoldResults <  matlab.mixin.Copyable
     %FOLDRESULTS Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -149,6 +149,9 @@ classdef FoldResults < handle
                 fieldSize = size(fieldValue,1);
                 assert(fieldSize == 0 || fieldSize == numInstances);
             end
+            assert(all(obj.dataType == Constants.TARGET_TRAIN | ...
+                obj.dataType == Constants.TARGET_TEST | ...
+                obj.dataType == Constants.SOURCE));
         end
     end
     

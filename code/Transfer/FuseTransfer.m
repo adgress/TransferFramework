@@ -19,7 +19,7 @@ classdef FuseTransfer < Transfer
                 sourceDataSets)             
             transformedTargetTrain = targetTrainData;
             for idx=1:length(sourceDataSets)
-                transformedTargetTrain = DataSet.Combine(sourceDataSets{idx},transformedTargetTrain);
+                transformedTargetTrain = DataSet.Combine(transformedTargetTrain,sourceDataSets{idx});
             end
             transformedTargetTest = targetTestData;
             %assert(numel(sourceDataSets) == 1);

@@ -8,6 +8,7 @@ classdef TransferMeasure < Saveable
     methods
         function obj = TransferMeasure(configs)
             obj = obj@Saveable(configs);
+            obj.set('useSourceForTransfer',true);
         end
         
         function [W] = createDistanceMatrix(obj, sources, target, options,savedData)

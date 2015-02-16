@@ -20,9 +20,13 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 mainConfigs.set('multithread',multithread);
             end
             
-            if obj.has('makeSubDomains') && obj.get('makeSubDomains')
+            if pc.makeSubDomains
                 dataAndSplits = load(obj.configs.get('experimentConfigsClass').getDataFileName());
                 dataAndSplits = dataAndSplits.dataAndSplits;
+                if isempty(dataAndSplits.configs)
+                    dataAndSplits.configs = Configs();
+                    dataAndSplits.configs.set('numSplits',length(dataAndSplits.allSplits));
+                end
                 if isempty(dataAndSplits.allData.trueY)
                     dataAndSplits.allData.trueY = dataAndSplits.allData.Y;
                 end
@@ -35,10 +39,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                                                                 
                 labelProduct = pc.MakeLabelProduct();
                 
-                multiSourceTransfer = false;
+                multiSourceTransfer = pc.multiSourceTransfer;
                 if multiSourceTransfer
-                    addTargetDomain = pc.addTargetDomain;
-                    if addTargetDomain
+                    if pc.addTargetDomain
                         t = labelProduct{1};
                         t2 = labelProduct{1};
                         t(2) = t(1);                    
@@ -65,8 +68,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         targetDataCopy.applyPermutation(split.permutation);
                         targetClassInds = targetDataCopy.hasLabel(targetLabel);
                         targetDataCopy.remove(~targetClassInds);  
-
-                        isOverlap = targetDataCopy.stratifiedSelection(pc.numOverlap);                    
+                        targetOverlap = pc.numOverlap;
+                        if ~pc.addTargetDomain
+                            targetOverlap = 0;
+                        end
+                        isOverlap = targetDataCopy.stratifiedSelection(targetOverlap);                    
                         %targetDataCopy.remove(isOverlap);
                         targetDataCopy.Y(isOverlap) = -1;
                         targetDataCopy.ID2Labels = containers.Map;
@@ -79,7 +85,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         sourceLabel = [];
 
                         for labelProductIdx=1:length(labelProduct)
-                            if mainConfigs.c.learners.get('justTargetNoSource')
+                            if pc.justTargetNoSource
                                 break;
                             end 
                             currLabels = labelProduct{labelProductIdx};                    
@@ -113,10 +119,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                                 sourceDataCopy.keep(isOverlap);
                                 %sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
                                 %sourceDataCopy.remove(sourceDataCopy.Y <= 0);
-                            else
-                                sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.numOverlap);
+                            elseif pc.maxSourceSize < length(sourceDataCopy.Y);                                
+                                sourceDataCopy = sourceDataCopy.stratifiedSampleByLabels(pc.maxSourceSize);
                                 sourceDataCopy.remove(sourceDataCopy.Y <= 0);
                             end
+                            sourceDataCopy.setSource();
                             newSplit.sourceData{end+1} = sourceDataCopy;
 
                         end                    
@@ -124,7 +131,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         %newSplit.targetType = split.split(split.permutation);                                          
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
                     end
-                    [targetLabels,sourceLabels] = ProjectConfigs.GetTargetSourceLabels();
+                    [targetLabels,sourceLabels] = pc.GetTargetSourceLabels();
                     mainConfigs.set('numOverlap',pc.numOverlap);
                     mainConfigs.set('addTargetDomain',pc.addTargetDomain);
                     mainConfigs.set('targetLabels',targetLabels);
@@ -195,7 +202,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     end
                 end
             else
-                numRandomFeatures = pc.numRandomFeatures;
+                numRandomFeatures = 0;
+                if isfield(pc,'numRandomFeatures')
+                    numRandomFeatures = pc.numRandomFeatures;
+                end                
                 allParamsToVary = {};
                 paramsToVary = obj.get('paramsToVary');
                 for paramIdx=1:length(paramsToVary)
@@ -232,6 +242,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     end
                     dataAndSplitsCopy = struct();
                     dataAndSplitsCopy.allSplits = {};
+                    if isempty(dataAndSplits.configs)
+                        dataAndSplits.configs = Configs();
+                        dataAndSplits.configs.set('numSplits',length(dataAndSplits.allSplits));
+                    end
                     dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
                     labelsToUse = [];
                     if mainConfigsCopy.has('labelsToUse')
