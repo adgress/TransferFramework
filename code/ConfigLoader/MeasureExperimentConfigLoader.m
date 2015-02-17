@@ -7,6 +7,9 @@ classdef MeasureExperimentConfigLoader < TransferExperimentConfigLoader
     
     methods
         function obj = MeasureExperimentConfigLoader(configs)
+            if ~exist('configs','var')
+                configs = Configs();
+            end
             obj = obj@TransferExperimentConfigLoader(configs);               
         end 
         function [resultsStruct] = runTransferMeasureExperiment(obj, ...

@@ -21,7 +21,6 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.showPostTransferMeasures = true;
             obj.configsStruct.showPreTransferMeasures = true;            
             obj.configsStruct.showRelativeMeasures = true;
-            obj.configsStruct.numColors = 5;
             obj.configsStruct.relativeType = Constants.DIFF_PERFORMANCE ;
             obj.configsStruct.sizeField = 'numLabeledPerClass';
             obj.configsStruct.xAxisField = 'numLabeledPerClass';

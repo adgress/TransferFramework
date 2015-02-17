@@ -25,7 +25,7 @@ classdef SepLLGCMainConfigs < MainConfigs
             obj.configsStruct.computeLossFunction=1;
             obj.configsStruct.processMeasureResults=0;
                         
-            obj.configsStruct.measureClass='Measure';
+            obj.configsStruct.measure=Measure();
             obj.configsStruct.dataDir='Data';
             %obj.configsStruct.labelsToUse=[10 15];
         end                           
@@ -35,38 +35,7 @@ classdef SepLLGCMainConfigs < MainConfigs
             obj.set('resultsDir','results_housing');
             obj.set('dataSet','housing_split_data');            
             obj.delete('labelsToUse');
-        end
-        
-        function [] = setTommasiData(obj)
-            obj.set('dataName','tommasi_data');
-            obj.set('resultsDir','results_tommasi');
-            obj.set('dataSet','tommasi_split_data');            
-            obj.delete('labelsToUse');
-        end        
-        
-        function [] = setSepLLGCConfigs(obj, learnerConfigs)
-            if ~exist('learnerConfigs','var')
-                learnerConfigs = obj.makeDefaultLearnerConfigs();
-            end
-            %c = ProjectConfigs.Create();
-            obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
-            llgcObj = SepLLGCMethod(learnerConfigs);           	
-            obj.configsStruct.learners=llgcObj;
-        end
-        
-        
-        function [] = setLLGCConfigs(obj, learnerConfigs)
-            if ~exist('learnerConfigs','var')
-                learnerConfigs = obj.makeDefaultLearnerConfigs();
-            end
-            obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
-            llgcObj = LLGCMethod(learnerConfigs);
-            obj.configsStruct.learners=llgcObj;
-        end
-        
-        function [learnerConfigs] = makeDefaultLearnerConfigs(obj)
-            learnerConfigs = LearnerConfigs();            
-        end                  
+        end                               
     end        
     
 end

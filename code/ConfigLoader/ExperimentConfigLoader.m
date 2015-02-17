@@ -15,15 +15,17 @@ classdef ExperimentConfigLoader < ConfigLoader
     
     methods
         function obj = ExperimentConfigLoader(configs)
-            obj = obj@ConfigLoader(configs);            
-            dataSet = obj.configs.get('dataSet');            
-            if obj.has('dataAndSplits')
-                obj.configs.set('dataSet',dataSet);
-                dataSet = obj.get('dataAndSplits');
+            if ~exist('configs','var')
+                configs = Configs();
             end
-            obj.createAllExperiments();
-            obj.setDataSet(dataSet);
+            obj = obj@ConfigLoader(configs);            
+            obj.updateDataSetFromConfigs();            
         end        
+        
+        function [] = setNewConfigs(obj,newConfigs)
+            obj.configs = newConfigs;
+            obj.updateDataSetFromConfigs();
+        end
         
         function [results,savedData] = trainAndTest(obj,input,experiment)
             savedData = [];
@@ -136,9 +138,9 @@ classdef ExperimentConfigLoader < ConfigLoader
                 drMethodObj = DRMethod.ConstructObject(drMethodName,obj.configs);
                 cvParams = obj.configs('cvParams');
                 
-                measureObj = Measure.ConstructObject(...
-                    obj.configs('measureClass'),obj.configs);
-                
+                measureObj = obj.configs.get('measure');
+                measureObj.configs = obj.configs;
+
                 cvData = struct();
                 cvData.train = sampledTrainCV;
                 cvData.test = sampledValidateCV;
@@ -355,6 +357,20 @@ classdef ExperimentConfigLoader < ConfigLoader
             v = obj.dataAndSplits.configs.get('numSplits');
         end
     end 
+    
+    methods(Access=private)
+        function [] = updateDataSetFromConfigs(obj)
+            if obj.has('dataSet')
+                dataSet = obj.configs.get('dataSet');    
+                if obj.has('dataAndSplits')
+                    obj.configs.set('dataSet',dataSet);
+                    dataSet = obj.get('dataAndSplits');
+                end
+                obj.setDataSet(dataSet);
+                obj.createAllExperiments();
+            end           
+        end
+    end
     methods(Static)
         function [s] = CreateRunExperimentInput(train,test,validate,...
                 configs)

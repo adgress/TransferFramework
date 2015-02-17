@@ -20,7 +20,7 @@ function [] = runVisualization()
         domainsToViz = ProjectConfigs.cvDomainsToViz;
     end
     
-    if ~isempty(domainsToViz)
+    if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz
         for i=1:length(domainsToViz)
             subplot(1,length(domainsToViz),i);
             newResultsDir = [resultsDirectoryPrefix '/' domainsToViz{i} '/'];

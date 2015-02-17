@@ -43,7 +43,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             if ProjectConfigs.dataSet == Constants.TOMMASI_DATA
                 c.setTommasiData();
             else
-                c.get('experimentConfigsClass').configsStruct.labelsToUse = 1:10;
+                c.get('mainConfigs').configsStruct.labelsToUse = 1:10;
             end
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_LLGC
                 c.setLLGCConfigs();
@@ -80,7 +80,6 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.configsStruct.showSoftMeasures = true;
             c.configsStruct.showHardMeasures = true;
             c.configsStruct.showLLGCMeasure = true;
-            c.configsStruct.numColors = 5;
             
             %c.configsStruct.axisToUse = [1.5 2.5 0 .3];            
             c.configsStruct.vizMultiple = false;

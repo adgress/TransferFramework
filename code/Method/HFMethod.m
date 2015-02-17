@@ -137,16 +137,13 @@ classdef HFMethod < Method
         
         function [fu,savedData,sigma] = runLLGC(obj,distMat,savedData)
             [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat);
+            alpha = obj.get('alpha');
             if exist('savedData','var') && isfield(savedData,'invM')
-                error('TODO');
-                [fu] = LLGC.llgc(Wrbf, YtrainMat, obj.get('alpha'), savedData.invM);
+                [fu] = LLGC.llgc_inv(Wrbf, YtrainMat, alpha, savedData.invM);
             else
-                [fu] = LLGC.llgc_LS(Wrbf, YtrainMat,obj.get('alpha'));
+                [fu] = LLGC.llgc_LS(Wrbf, YtrainMat, alpha);
                 if exist('savedData','var')
-                    error('TODO!');
-                    savedData.invM = invM;
-                    savedData.W = W;
-                    savedData.Ymat = YtrainMat;
+                    savedData.invM = LLGC.makeInvM(Wrbf,alpha);
                 else
                     savedData = [];
                 end
@@ -173,7 +170,7 @@ classdef HFMethod < Method
                 %error('Make sure this works!');
                 [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat);
             else
-                if exist('savedData','var') && isfield(savedData,'invM')
+                if exist('savedData','var')
                     [fu,savedData,sigma] = runLLGC(obj,distMat,savedData);
                 else
                     [fu,~,sigma] = runLLGC(obj,distMat);

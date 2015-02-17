@@ -95,10 +95,6 @@ function [] = runVisualization(dataset)
         options.methodsToShow = methodsToShow;
         options.axisToUse = axisToUse;
         options.fileNames = fileNames;
-        options.numColors = length(fileNames);
-        if showTrain && showTest
-            options.numColors = options.numColors*2;
-        end
         options.measureConfigs('k') = k;
         subplot(1,length(kVals),i);
         visualizeResults(options,f);

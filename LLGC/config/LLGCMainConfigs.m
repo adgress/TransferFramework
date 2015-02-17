@@ -25,7 +25,7 @@ classdef LLGCMainConfigs < MainConfigs
             obj.configsStruct.computeLossFunction=1;
             obj.configsStruct.processMeasureResults=0;
                         
-            obj.configsStruct.measureClass='Measure';
+            obj.configsStruct.measure=Measure();
         end                           
         
         function [] = setUSPSSmall(obj)
@@ -51,23 +51,14 @@ classdef LLGCMainConfigs < MainConfigs
                 obj.configsStruct.dataSet = [obj.configsStruct.dataSet ...
                     '-classNoise=' num2str(classNoise)];
             end
-        end
-      
-        function [] = setTommasiData(obj)
-            obj.set('dataName','tommasi_data');
-            obj.set('resultsDir','results_tommasi');
-            obj.set('dataSet','tommasi_split_data');            
-            obj.configsStruct.numSourcePerClass=Inf;
-            obj.delete('labelsToUse');
-        end
-        
+        end              
         
         function [] = setLLGCWeightedConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
             c = ProjectConfigs.Create();
-            obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
+            obj.configsStruct.configLoader=ExperimentConfigLoader();
             llgcObj = LLGCWeightedMethod(learnerConfigs);
            	llgcObj.set('unweighted',c.useUnweighted);
             llgcObj.set('oracle',c.useOracle);
@@ -79,21 +70,7 @@ classdef LLGCMainConfigs < MainConfigs
             llgcObj.set('justTargetNoSource',c.useJustTargetNoSource);
             llgcObj.set('robustLoss',c.useRobustLoss);
             obj.configsStruct.learners=llgcObj;
-        end
-        
-        
-        function [] = setLLGCConfigs(obj, learnerConfigs)
-            if ~exist('learnerConfigs','var')
-                learnerConfigs = obj.makeDefaultLearnerConfigs();
-            end
-            obj.configsStruct.experimentConfigLoader='ExperimentConfigLoader';  
-            llgcObj = LLGCMethod(learnerConfigs);
-            obj.configsStruct.learners=llgcObj;
-        end
-        
-        function [learnerConfigs] = makeDefaultLearnerConfigs(obj)
-            learnerConfigs = LearnerConfigs();            
-        end                  
+        end                                           
     end        
     
 end

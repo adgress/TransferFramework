@@ -20,6 +20,15 @@ classdef MainConfigs < Configs
     methods               
         function [obj] = MainConfigs()
             obj = obj@Configs();
+            obj.configsStruct.multithread=1;                  
+            obj.configsStruct.rerunExperiments=0;
+            
+            obj.configsStruct.computeLossFunction=1;
+            obj.configsStruct.processMeasureResults=0;
+                        
+            obj.configsStruct.measure=Measure();
+            obj.configsStruct.learners=[];
+            obj.configsStruct.dataDir='Data';
         end        
         function [v] = get.dataDirectory(obj)
             v = [obj.get('dataDir') '/' obj.get('dataName') '/'];
@@ -101,6 +110,52 @@ classdef MainConfigs < Configs
         function [legendName] = makeLegendName(obj)
             
         end
+        function [learnerConfigs] = makeDefaultLearnerConfigs(obj)
+            learnerConfigs = LearnerConfigs();            
+        end  
+        
+        function [] = setTommasiData(obj)
+            obj.set('dataName','tommasi_data');
+            obj.set('resultsDir','results_tommasi');
+            obj.set('dataSet','tommasi_split_data');            
+            obj.configsStruct.numSourcePerClass=Inf;
+        end
+        
+        function [] = setCVData(obj)
+            obj.configsStruct.numSourcePerClass=Inf;
+            
+            obj.configsStruct.dataName='CV-small';
+            obj.configsStruct.dataDir='Data';
+            obj.configsStruct.resultsDir='results';
+            obj.configsStruct.transferDir='Data/transferData';
+            obj.configsStruct.outputDir='results';
+            obj.configsStruct.dataSet='ACW2D';
+            obj.configsStruct.sourceDataSetToUse = {'W'};
+        end
+        function [] = setLLGCConfigs(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.configLoader=ExperimentConfigLoader();
+            llgcObj = LLGCMethod(learnerConfigs);
+            obj.configsStruct.learners=llgcObj;
+        end
+        function [] = setLearnerLLGC(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            llgcObj = LLGCMethod(learnerConfigs);
+            obj.configsStruct.learners=llgcObj;
+        end
+        function [] = setSepLLGCConfigs(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            %c = ProjectConfigs.Create();
+            obj.configsStruct.configLoader=ExperimentConfigLoader(); 
+            llgcObj = SepLLGCMethod(learnerConfigs);           	
+            obj.configsStruct.learners=llgcObj;
+        end   
     end   
     
     methods(Static)

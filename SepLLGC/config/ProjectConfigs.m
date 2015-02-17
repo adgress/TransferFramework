@@ -76,14 +76,14 @@ classdef ProjectConfigs < handle
             pc = ProjectConfigs.Create();
             %{
             if pc.dataSet == Constants.TOMMASI_DATA
-                c.get('experimentConfigsClass').setTommasiData(); 
+                c.get('mainConfigs').setTommasiData(); 
             end
             %}
             %c.get('experimentConfigsClass').setHousingBinaryData(); 
-            c.get('experimentConfigsClass').setTommasiData(); 
-            c.get('experimentConfigsClass').setSepLLGCConfigs();
-            %c.get('experimentConfigsClass').setLLGCConfigs();
-            c.configsStruct.experimentConfigLoader = 'ExperimentConfigLoader';
+            c.get('mainConfigs').setTommasiData(); 
+            c.get('mainConfigs').setSepLLGCConfigs();
+            %c.get('mainConfigs').setLLGCConfigs();
+            c.configsStruct.configLoader = ExperimentConfigLoader();
         end
         
         function [c] = VisualizationConfigs()
@@ -98,11 +98,9 @@ classdef ProjectConfigs < handle
             c.configsStruct.showLLGCMeasure = false;
             c.configsStruct.vizMeasureCorrelation = false;
             [c.configsStruct.plotConfigs,legend,title] = ...
-                ProjectConfigs.makePlotConfigs();
-            c.configsStruct.numColors = length(c.c.plotConfigs); 
+                ProjectConfigs.makePlotConfigs();            
             if ~isempty(legend)
                 c.set('legend',legend);
-                c.configsStruct.numColors = length(legend);
             end
             if ~isempty('title')
                 c.set('title',title);

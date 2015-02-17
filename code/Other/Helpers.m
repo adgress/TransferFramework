@@ -144,7 +144,7 @@ classdef Helpers < handle
         function [sCombined] = CombineStructs(s1,s2)
             sCombined = struct();
             structs = {s1, s2};
-            for structIdx = 1:numel(struct)
+            for structIdx = 1:numel(structs)
                 fields = fieldnames(structs{structIdx});
                 currStruct = structs{structIdx};
                 for fieldIdx = 1:numel(fields)

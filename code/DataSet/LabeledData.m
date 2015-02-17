@@ -131,7 +131,9 @@ classdef LabeledData < matlab.mixin.Copyable
                 inds = inds | obj.Y == i;
             end
         end
-        
+        function [] = labelData(obj,inds)
+            obj.Y(inds) = obj.trueY(inds);
+        end
         function [] = addRandomClassNoise(obj,classNoise)
             originalY = obj.Y;
             allClasses = obj.classes;

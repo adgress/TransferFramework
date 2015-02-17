@@ -7,6 +7,9 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
     
     methods
         function obj = TransferExperimentConfigLoader(configs)
+            if ~exist('configs','var')
+                configs = Configs();
+            end
             obj = obj@ExperimentConfigLoader(configs);
         end      
         

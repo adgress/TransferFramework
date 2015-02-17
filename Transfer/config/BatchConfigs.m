@@ -8,10 +8,10 @@ classdef BatchConfigs < Configs
     methods
         function [obj] = BatchConfigs()
             obj = obj@Configs();                        
-            obj.configsStruct.experimentConfigsClass=TransferMainConfigs();
+            obj.configsStruct.mainConfigs=TransferMainConfigs();
             obj.configsStruct.paramsToVary={'dataSet','sourceDataSetToUse'};
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer','Transfer'};            
-            obj.configsStruct.experimentConfigsClass.setNumLabeled();
+            obj.configsStruct.mainConfigs.setNumLabeled();
             obj.setTransferData();
         end
         
@@ -21,37 +21,37 @@ classdef BatchConfigs < Configs
         end
         
         function [] = setNNConfigs(obj)
-            obj.configsStruct.experimentConfigsClass.setNNConfigs();
+            obj.configsStruct.mainConfigs.setNNConfigs();
         end
         
         function [] = setLLGCConfigs(obj)
-            obj.configsStruct.experimentConfigsClass.setLLGCConfigs();
-            obj.set('experimentConfigLoader', ...
-                'TransferExperimentConfigLoader');  
-            obj.c.experimentConfigsClass.set('numLabeledPerClass',ProjectConfigs.numLabeled);
+            obj.configsStruct.mainConfigs.setLLGCConfigs();
+            obj.set('configLoader', ...
+                TransferExperimentConfigLoader());  
+            obj.c.mainConfigs.set('numLabeledPerClass',ProjectConfigs.numLabeled);
         end
         
         function [] = setTommasiData(obj)
             obj.set('dataSet','tommasi_split_data');
-            obj.get('experimentConfigsClass').setTommasiData();
+            obj.get('mainConfigs').setTommasiData();
             obj.configsStruct.paramsToVary={};
             obj.set('makeSubDomains',true);
         end
         
         function [] = setCTMeasureConfigs(obj)
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer'};
-            obj.configsStruct.experimentConfigsClass.setCTMeasureConfigs();
+            obj.configsStruct.mainConfigs.setCTMeasureConfigs();
         end
         
         function [] = setLLGCMeasureConfigs(obj)
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer'};
-            obj.configsStruct.experimentConfigsClass.setLLGCMeasureConfigs();
+            obj.configsStruct.mainConfigs.setLLGCMeasureConfigs();
         end
         
         function [] = setMeasureConfigs(obj)
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer'};
-            e = obj.c.experimentConfigsClass;
-            e.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';                          
+            e = obj.c.mainConfigs;
+            e.configsStruct.configLoader=MeasureExperimentConfigLoader();
             %learnerConfigs.set('strategy','None');
             e.setLLGCMeasureConfigs();
             %e.setCTMeasureConfigs();
@@ -70,13 +70,13 @@ classdef BatchConfigs < Configs
             e.set('fixSigma',false);
             e.set('numLabeledPerClass',ProjectConfigs.numLabeled);            
             
-            obj.set('experimentConfigLoader', ...
-                'MeasureExperimentConfigLoader');
+            obj.set('configLoader', ...
+                MeasureExperimentConfigLoader());
         end
         
         function [] = setRepairConfigs(obj,sourceNoise)
             obj.configsStruct.transferMethodClassStrings = {'FuseTransfer'};
-            e = obj.c.experimentConfigsClass;
+            e = obj.c.mainConfigs;
             e.configsStruct.experimentConfigLoader='RepairTransferExperimentConfigLoader';                          
             %learnerConfigs.set('strategy','None');
             e.setLearnerLLGC();                                  
@@ -102,8 +102,8 @@ classdef BatchConfigs < Configs
             e.configsStruct.repairMethod.set('repairTransferMeasure',...
                 m);
             
-            obj.set('experimentConfigLoader', ...
-                'RepairTransferExperimentConfigLoader');
+            obj.set('configLoader', ...
+                RepairTransferExperimentConfigLoader());
         end
     end
 end

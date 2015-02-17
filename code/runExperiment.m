@@ -1,25 +1,26 @@
 function [] = runExperiment(configs)    
           
     setPaths;    
-    experimentConfigLoaderClass = str2func(configs.get('experimentConfigLoader'));
-    experimentLoader = experimentConfigLoaderClass(configs);        
-    learners = experimentLoader.configs.get('learners');
+    configLoader = configs.get('configLoader');
+    configLoader.setNewConfigs(configs);
+    %configLoader.configs = configs;
+    learners = configLoader.configs.get('learners');
     
     learner = [];
     if numel(learners) > 0
         learner = learners;
-        experimentLoader.configs.set('learner',learner);
+        configLoader.configs.set('learner',learner);
     end        
     if ~isempty(learner)
         learner.updateConfigs(configs);
     end
-    outputFile = experimentLoader.getOutputFileName();
+    outputFile = configLoader.getOutputFileName();
     if exist(outputFile,'file') && ~configs.get('rerunExperiments')
         display(['Skipping: ' outputFile]);
         return;
     end
 
-    multithread = experimentLoader.configs.get('multithread');
+    multithread = configLoader.configs.get('multithread');
     if multithread
         %Fix for laptop
         distcomp.feature( 'LocalUseMpiexec', false );
@@ -28,26 +29,26 @@ function [] = runExperiment(configs)
     end
     tic
 
-    allResults = ResultsContainer(experimentLoader.numSplits,...
-        experimentLoader.numExperiments);    
-    for j = 1:experimentLoader.numExperiments
-        experimentLoader.allExperiments{j}.learner = learner;
+    allResults = ResultsContainer(configLoader.numSplits,...
+        configLoader.numExperiments);    
+    for j = 1:configLoader.numExperiments
+        configLoader.allExperiments{j}.learner = learner;
         allResults.allResults{j}.experiment = ...
-            experimentLoader.allExperiments{j};                   
+            configLoader.allExperiments{j};                   
     end
-    for j=1:experimentLoader.numExperiments
-        splitResults = cell(experimentLoader.numSplits,1);
+    for j=1:configLoader.numExperiments
+        splitResults = cell(configLoader.numSplits,1);
         if multithread
-            parfor i=1:experimentLoader.numSplits  
+            parfor i=1:configLoader.numSplits  
                 display(sprintf('%d',i));
                 [splitResults{i}] = ...
-                    experimentLoader.runExperiment(j,i);               
+                    configLoader.runExperiment(j,i);               
             end            
         else
-            for i=1:experimentLoader.numSplits                
+            for i=1:configLoader.numSplits                
                 display(sprintf('%d',i));
                 [splitResults{i}] = ...
-                    experimentLoader.runExperiment(j,i);
+                    configLoader.runExperiment(j,i);
             end
         end
         allResults.allResults{j}.splitResults = splitResults;
@@ -56,14 +57,13 @@ function [] = runExperiment(configs)
 
     allResults.mainConfigs = configs.copy();
     allResults.mainConfigs.delete('dataAndSplits');
-    if experimentLoader.configs.get('computeLossFunction')
-        measureClass = str2func(experimentLoader.configs.get('measureClass'));
-        measureObject = measureClass(experimentLoader.configs);
+    if configLoader.configs.get('computeLossFunction')
+        measureObject = configLoader.get('measure');
         allResults.computeLossFunction(measureObject);
         allResults.aggregateResults(measureObject);
     end
-    if experimentLoader.has('processMeasureResults') &&...
-            experimentLoader.get('processMeasureResults')
+    if configLoader.has('processMeasureResults') &&...
+            configLoader.get('processMeasureResults')
         allResults.aggregateMeasureResults();
     end
     allResults.saveResults(outputFile);

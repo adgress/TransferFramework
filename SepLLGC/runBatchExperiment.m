@@ -8,7 +8,7 @@ function [] = runBatchExperiment(multithread, dataset)
         for i=1:length(labels)
             l = labels{i};
             batchConfigsObj = ProjectConfigs.BatchConfigs();    
-            batchConfigsObj.c.experimentConfigsClass.set('labelsToUse',l);
+            batchConfigsObj.c.mainConfigs.set('labelsToUse',l);
             obj = BatchExperimentConfigLoader(batchConfigsObj);
             if nargin < 1
                 obj.runExperiments();

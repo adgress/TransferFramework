@@ -17,7 +17,9 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.preTransferMeasures=[];
             obj.configsStruct.postTransferMeasures={};
             obj.configsStruct.learners=[];
-            obj.setLLGCConfigs(learnerConfigs);
+            
+            obj.configsStruct.configLoader=TransferExperimentConfigLoader();  
+            obj.setLearnerLLGC(learnerConfigs);
             
             obj.configsStruct.multithread=1;                  
             obj.configsStruct.rerunExperiments=0;
@@ -25,7 +27,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.computeLossFunction=1;
             obj.configsStruct.processMeasureResults=0;
                         
-            obj.configsStruct.measureClass='Measure';
+            obj.configsStruct.measure=Measure();
         end   
         
         function [] = setNumLabeled(obj)
@@ -38,7 +40,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.numSourcePerClass=5:5:15;
         end
         
-        function [] = setCVData(obj)
+        function [] = setCVData_OLD(obj)
             noise = ProjectConfigs.sourceNoise;
             %obj.configsStruct.dataName = 'CV';
             obj.configsStruct.dataName='CV-small';
@@ -50,22 +52,13 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.transferDir='Data/transferData';
             obj.configsStruct.outputDir='results';
             obj.configsStruct.dataSet='A2C';            
-        end
-        
-        function [] = setTommasiData(obj)
-            obj.set('dataName','tommasi_data');
-            obj.set('resultsDir','results_tommasi');
-            obj.set('dataSet','tommasi_split_data');            
-            obj.configsStruct.numLabeledPerClass=2:2:8;
-            obj.configsStruct.numSourcePerClass=Inf;
-            obj.delete('labelsToUse');
-        end
+        end        
         
         function [] = setCTMeasureConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
-            obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
+            obj.configsStruct.configLoader=MeasureExperimentConfigLoader();
             %obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
             %obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);
             obj.configsStruct.learners=[];
@@ -81,40 +74,20 @@ classdef TransferMainConfigs < MainConfigs
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
             obj.configsStruct.learners=[];
-            obj.configsStruct.experimentConfigLoader='MeasureExperimentConfigLoader';
+            obj.configsStruct.configLoader=MeasureExperimentConfigLoader();
             obj.configsStruct.preTransferMeasures=LLGCTransferMeasure(learnerConfigs);
             obj.configsStruct.postTransferMeasures=LLGCTransferMeasure(learnerConfigs);                        
             
             obj.configsStruct.measureLoss = MeasureLoss(obj);       
-        end        
-        
-        function [] = setLLGCConfigs(obj, learnerConfigs)
-            if ~exist('learnerConfigs','var')
-                learnerConfigs = obj.makeDefaultLearnerConfigs();
-            end
-            obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
-            obj.setLearnerLLGC(learnerConfigs);
-        end
-        
-        function [] = setLearnerLLGC(obj, learnerConfigs)
-            if ~exist('learnerConfigs','var')
-                learnerConfigs = obj.makeDefaultLearnerConfigs();
-            end
-            llgcObj = LLGCMethod(learnerConfigs);
-            obj.configsStruct.learners=llgcObj;
-        end
+        end                             
         
         function [] = setNNConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
             end
-            obj.configsStruct.experimentConfigLoader='TransferExperimentConfigLoader';  
+            obj.configsStruct.configLoader=TransferExperimentConfigLoader();  
             nnObj = NearestNeighborMethod(learnerConfigs);
             obj.configsStruct.learners=nnObj;
-        end
-        
-        function [learnerConfigs] = makeDefaultLearnerConfigs(obj)
-            learnerConfigs = LearnerConfigs();            
         end
         
         function [s] = getDataFileName(obj)

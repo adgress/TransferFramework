@@ -9,6 +9,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
     
     methods
         function obj = DataSplitterConfigLoader(configs)
+            if ~exist('configs','var')
+                configs = Configs();
+            end
             obj = obj@ConfigLoader(configs);            
         end
         function [] = splitData(obj)            

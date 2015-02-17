@@ -7,6 +7,9 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
     
     methods
         function obj = ActiveExperimentConfigLoader(configs)
+            if ~exist('configs','var')
+                configs = Configs();
+            end
             obj = obj@ExperimentConfigLoader(configs);
         end
         
@@ -20,14 +23,18 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             [numTrain,numPerClass] = obj.calculateSampling(experiment,originalTest);
             [sampledTrain] = originalTrain.stratifiedSampleByLabels(numTrain,[]);
             sources = obj.dataAndSplits.allSplits{splitIndex}.sourceData;
+            for sourceIdx=1:length(sources)
+                sources{sourceIdx}.setSource();
+            end
             transferMethodObj = obj.get('transferMethodClass');
             transferMeasureObj = obj.get('transferMeasure');
-            if ~isempty(transferMethodObj)
-                preTransferInput = struct();
-                preTransferInput.train = sampledTrain;
-                preTransferInput.test = originalTest;
-                preTransferInput.learner = learner;
-                preTransferInput.sharedConfigs = obj.configs;
+            
+            preTransferInput = struct();
+            preTransferInput.train = sampledTrain;
+            preTransferInput.test = originalTest;
+            preTransferInput.learner = learner;
+            preTransferInput.sharedConfigs = obj.configs;
+            if ~isempty(transferMethodObj)                
                 [sampledTrain,test,~,~] = ...
                     transferMethodObj.performTransfer(sampledTrain,originalTest,sources);                
             else
@@ -42,23 +49,19 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
 
             [activeMethodObj] = obj.get('activeMethodObj');
             activeResults = ActiveLearningResults();                        
-
-            activeResults.iterationResults{1} = ...
-                learner.trainAndTest(input);
-            if ~isempty(transferMethodObj)
-                activeResults.preTransferResults{1} = ...
-                    learner.trainAndTest(preTransferInput);
-            end
+            
+            measureSavedData = struct();
+            learnerSavedData = struct();
+            
+            [activeResults.iterationResults{end+1}, ...
+                activeResults.preTransferResults{end+1},learnerSavedData] = ...
+                obj.runLearners(input,preTransferInput,transferMethodObj,...
+                learnerSavedData);
             if ~isempty(transferMeasureObj)
-                transferMeasureObj.set('useSourceForTransfer',true);
-                %TODO: This only works for FuseTransfer
-                activeResults.transferMeasureResults{1} = ...
-                    transferMeasureObj.computeMeasure(sources,sampledTrain,...
-                    transferMeasureObj.configs);
-                transferMeasureObj.set('useSourceForTransfer',false);
-                activeResults.preTransferMeasureResults{1} = ...
-                    transferMeasureObj.computeMeasure(sources,preTransferInput.train,...
-                    transferMeasureObj.configs);
+                [activeResults.transferMeasureResults{end+1},...
+                    activeResults.preTransferMeasureResults{end+1},...
+                    measureSavedData] = obj.runTransferMeasures(sources,...
+                    preTransferInput.train,transferMeasureObj,measureSavedData);
             end
             %Note: This assumes the first N instances in train and
             %originalTrain are target instances
@@ -69,32 +72,57 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                     s.preTransferResults = ...
                         activeResults.preTransferResults{end}.copy();
                 end
-                queriedIdx = ...
-                    activeMethodObj.queryLabel(input,resultsForAL,s);
+                queriedIdx = activeMethodObj.queryLabel(input,resultsForAL,s);
                 activeResults.queriedLabelIdx(end+1) = queriedIdx;
-                input.train.Y(queriedIdx) = input.train.trueY(queriedIdx);
-                activeResults.iterationResults{end+1} = ...
-                    learner.trainAndTest(input);
-                if ~isempty(transferMethodObj)
-                    preTransferInput.train.Y(queriedIdx) = ...
-                        preTransferInput.train.trueY(queriedIdx);
-                    activeResults.preTransferResults{end+1} = ...
-                        learner.trainAndTest(preTransferInput);
-                end
+                input.train.labelData(queriedIdx);
+                preTransferInput.train.labelData(queriedIdx);
+                [activeResults.iterationResults{end+1}, ...
+                    activeResults.preTransferResults{end+1},learnerSavedData] = ...
+                    obj.runLearners(input,preTransferInput,transferMethodObj,learnerSavedData);
                 if ~isempty(transferMeasureObj)
-                    assert(~isempty(transferMethodObj));
-                    transferMeasureObj.set('useSourceForTransfer',true);
-                    activeResults.transferMeasureResults{end+1} = ...
-                        transferMeasureObj.computeMeasure(sources,...
-                        preTransferInput.train,transferMeasureObj.configs);
-                    transferMeasureObj.set('useSourceForTransfer',false);
-                    activeResults.preTransferMeasureResults{end+1} = ...
-                        transferMeasureObj.computeMeasure(sources,...
-                        preTransferInput.train,transferMeasureObj.configs);
+                    [activeResults.transferMeasureResults{end+1},...
+                        activeResults.preTransferMeasureResults{end+1},measureSavedData]...
+                        = obj.runTransferMeasures(sources,...
+                        preTransferInput.train,transferMeasureObj,measureSavedData);
                 end
             end                                                                        
             activeResults.trainingDataMetadata = obj.constructTrainingDataMetadata(...
                 sampledTrain,test,numPerClass);   
+        end
+        function [results,preTransferResults,savedData] = ...
+                runLearners(obj,input,preTransferInput,transferMethodObj,...
+                savedData)
+            if ~isfield(savedData,'postTransfer')
+                savedData.postTransfer = struct();
+            end
+            if ~isfield(savedData,'preTransfer')
+                savedData.preTransfer = struct();
+            end
+            [results,savedData.postTransfer] = input.learner.trainAndTest(input,...
+                savedData.postTransfer);
+            if ~isempty(transferMethodObj)
+                [preTransferResults,savedData.preTransfer] = ...
+                    input.learner.trainAndTest(preTransferInput,...
+                    savedData.preTransfer);
+            end
+        end
+        %TODO: This only works for FuseTransfer
+        function [postTransferResults,preTransferResults,savedData] = ...
+                runTransferMeasures(obj,sources,train,transferMeasureObj,savedData)
+            if ~isfield(savedData,'postTransfer')
+                savedData.postTransfer = struct();
+            end
+            if ~isfield(savedData,'preTransfer')
+                savedData.preTransfer = struct();
+            end
+            transferMeasureObj.set('useSourceForTransfer',true);
+            [postTransferResults,savedData.postTransfer] = ...
+                transferMeasureObj.computeMeasure(sources,...
+                train,transferMeasureObj.configs,savedData.postTransfer);
+            transferMeasureObj.set('useSourceForTransfer',false);
+            [preTransferResults,savedData.preTransfer] = ...
+                transferMeasureObj.computeMeasure(sources,...
+                train,transferMeasureObj.configs,savedData.preTransfer);
         end
         
         function [results,savedData] = trainAndTest(obj,input,experiment)

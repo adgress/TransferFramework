@@ -13,16 +13,16 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         
         instance = ProjectConfigs.CreateSingleton()
-        
+        %{
         data = Constants.CV_DATA
         targetLabels = [1:10]
         sourceLabels = [1:10]
+        %}
         
-        %{
         data = Constants.TOMMASI_DATA        
         targetLabels = [10 15]
-        sourceLabels = [25 26]
-        %}
+        sourceLabels = [25 30]
+        
         %Weak positive transfer for small number of labels
         %targetLabels = [105 145]
         %sourceLabels = [250 252]
@@ -35,9 +35,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         showTransferDifference = 1
         showTransferPrediction = 1
         showTransferPerformance = 0
-        
+                
         activeMethodsToPlot = {'Random'}
-        %domainsToViz = {}
+        useDomainsToViz = false
         tommasiDomainsToViz = {...
             '25  26-to-10  15',...
             '30  41-to-10  15',...
@@ -88,8 +88,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             %allLabels = ProjectConfigs.labels;
             %train = ProjectConfigs.trainLabels;
             %c.tommasiLabels = [train setdiff(allLabels,train)];           
-            
-            c.multiSourceTransfer = true;
+                        
             c.makeSubDomains = true;
             c.addTargetDomain = false;
             c.numOverlap = 0;
@@ -111,13 +110,13 @@ classdef ProjectConfigs < ProjectConfigsBase
         function [c] = BatchConfigs()
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
-            c.get('experimentConfigsClass').configsStruct.labelsToUse = pc.labelsToUse;
+            c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
             if pc.dataSet == Constants.TOMMASI_DATA
-                c.get('experimentConfigsClass').setTommasiData(); 
+                c.get('mainConfigs').setTommasiData(); 
             elseif pc.dataSet == Constants.CV_DATA
-                c.get('experimentConfigsClass').setCVData(); 
+                c.get('mainConfigs').setCVData(); 
             end
-            c.configsStruct.experimentConfigLoader='ActiveExperimentConfigLoader';
+            c.configsStruct.configLoader=ActiveExperimentConfigLoader();
             c.set('transferMethodClass', FuseTransfer());        
             %c.set('transferMethodClass', Transfer());        
             
@@ -145,10 +144,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.configsStruct.vizNoisyAcc = false;
             [c.configsStruct.plotConfigs,legend,title] = ...
                 ProjectConfigs.makePlotConfigs();
-            c.configsStruct.numColors = length(c.c.plotConfigs); 
             if ~isempty(legend)
                 c.set('legend',legend);
-                c.configsStruct.numColors = length(legend);
             end
             if ~isempty('title')
                 c.set('title',title);
@@ -180,7 +177,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};           
             legend = {};
-            s = num2str(ProjectConfigs.trainLabels);
+            s = num2str(ProjectConfigs.targetLabels);
             title = s;
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
                 methodResultsFileNames{end+1} = ['/Random_HF.mat'];

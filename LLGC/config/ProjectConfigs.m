@@ -129,21 +129,21 @@ classdef ProjectConfigs < handle
         function [c] = BatchConfigs()
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
-            c.get('experimentConfigsClass').configsStruct.labelsToUse = pc.labelsToUse;
+            c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
             if pc.dataSet == Constants.COIL20_DATA
-                c.get('experimentConfigsClass').setCOIL20(pc.classNoise);
+                c.get('mainConfigs').setCOIL20(pc.classNoise);
             end
             if pc.dataSet == Constants.TOMMASI_DATA
-                c.get('experimentConfigsClass').setTommasiData(); 
+                c.get('mainConfigs').setTommasiData(); 
             end
             if pc.dataSet == Constants.USPS_DATA
-                c.get('experimentConfigsClass').setUSPSSmall();
+                c.get('mainConfigs').setUSPSSmall();
             end
-            c.get('experimentConfigsClass').setLLGCWeightedConfigs();
-            c.configsStruct.experimentConfigLoader = 'ExperimentConfigLoader';
+            c.get('mainConfigs').setLLGCWeightedConfigs();
+            c.configsStruct.configLoader = ExperimentConfigLoader();
             if ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
                 c.configsStruct.transferMethodClass = FuseTransfer();
-                c.configsStruct.experimentConfigLoader = 'TransferExperimentConfigLoader';
+                c.configsStruct.configLoader = TransferExperimentConfigLoader();
                 c.configsStruct.makeSubDomains = true;
             end
         end
@@ -178,10 +178,8 @@ classdef ProjectConfigs < handle
             c.configsStruct.vizNoisyAcc = ProjectConfigs.vizNoisyAcc;
             [c.configsStruct.plotConfigs,legend,title] = ...
                 ProjectConfigs.makePlotConfigs();
-            c.configsStruct.numColors = length(c.c.plotConfigs); 
             if ~isempty(legend)
                 c.set('legend',legend);
-                c.configsStruct.numColors = length(legend);
             end
             if ~isempty('title')
                 c.set('title',title);

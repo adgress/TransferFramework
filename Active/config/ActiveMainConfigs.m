@@ -16,20 +16,8 @@ classdef ActiveMainConfigs < MainConfigs
             obj.configsStruct.numLabeledPerClass=c.numLabeledPerClass;
             
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
-                        
-            obj.configsStruct.learners=[];
-            obj.configsStruct.learners=LLGCMethod(learnerConfigs);
-            %obj.configsStruct.learners=HFMethod(learnerConfigs);
-            
-            %obj.configsStruct.activeMeasure = 
-            
-            obj.configsStruct.multithread=1;                  
-            obj.configsStruct.rerunExperiments=0;
-            
-            obj.configsStruct.computeLossFunction=1;
-            obj.configsStruct.processMeasureResults=0;
-                        
-            obj.configsStruct.measureClass='Measure';                        
+                                    
+            obj.configsStruct.learners=LLGCMethod(learnerConfigs);                                               
             
             activeConfigs = Configs();            
             obj.configsStruct.activeMethodObj=RandomActiveMethod(activeConfigs);
@@ -40,29 +28,14 @@ classdef ActiveMainConfigs < MainConfigs
             learnerConfigs.set('useSoftLoss',true)
             obj.configsStruct.transferMeasure = LLGCTransferMeasure(learnerConfigs);
             
-            obj.configsStruct.labelBudget = 40;
-            obj.configsStruct.dataDir='Data';
+            obj.configsStruct.labelBudget = 40;            
             obj.configsStruct.labelsToUse = c.labelsToUse;
             
-        end                           
+        end                                           
         
-        function [] = setTommasiData(obj)
-            obj.set('dataName','tommasi_data');
-            obj.set('resultsDir','results_tommasi');
-            obj.set('dataSet','tommasi_split_data');            
+        function [] = setCVData(obj)      
+            setCVData@MainConfigs(obj);
             obj.configsStruct.numSourcePerClass=Inf;
-        end
-        
-        function [] = setCVData(obj)
-            obj.set('dataName','tommasi_data');
-            obj.set('dataSet','tommasi_split_data');            
-            obj.configsStruct.numSourcePerClass=Inf;
-            
-            obj.configsStruct.dataName='CV-small';            
-            obj.configsStruct.dataDir='Data';
-            obj.configsStruct.resultsDir='results';
-            obj.configsStruct.transferDir='Data/transferData';
-            obj.configsStruct.outputDir='results';            
             %obj.configsStruct.sourceDataSetToUse = {{'A'},{'C'},{'D'},{'W'}};
             %{
             obj.configsStruct.dataSet='ADW2C';
@@ -70,11 +43,7 @@ classdef ActiveMainConfigs < MainConfigs
             %}
             obj.configsStruct.dataSet='ACW2D';
             obj.configsStruct.sourceDataSetToUse = {'W'};
-        end
-        
-        function [learnerConfigs] = makeDefaultLearnerConfigs(obj)
-            learnerConfigs = LearnerConfigs();            
-        end                  
+        end                                
     end        
     
 end

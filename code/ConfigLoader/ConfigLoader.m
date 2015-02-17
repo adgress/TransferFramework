@@ -8,6 +8,9 @@ classdef ConfigLoader < Saveable
     
     methods
         function obj = ConfigLoader(configsobj)
+            if ~exist('configs','var')
+                configs = Configs();
+            end
             obj = obj@Saveable(configsobj);
             %obj.configFile = '';            
             %obj.configsClass = configsClass;
