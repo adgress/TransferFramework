@@ -40,7 +40,9 @@ classdef LabeledData < matlab.mixin.Copyable
             I = obj.type == Constants.TARGET_TRAIN | ...
                 obj.type == Constants.TARGET_TEST;
         end
-        
+        function [I] = isTargetTrain(obj)
+            I = obj.type == Constants.TARGET_TRAIN;
+        end
         function [I] = isTargetTest(obj)
             I = obj.type == Constants.TARGET_TEST;
         end
@@ -134,17 +136,30 @@ classdef LabeledData < matlab.mixin.Copyable
         function [] = labelData(obj,inds)
             obj.Y(inds) = obj.trueY(inds);
         end
-        function [] = addRandomClassNoise(obj,classNoise)
+        function [] = addRandomClassNoise(obj,classNoise,inds)
+            if ~exist('inds','var')
+                inds = ones(size(obj.Y));
+            end
             originalY = obj.Y;
             allClasses = obj.classes;
             for currClass=allClasses'
-                isClass = find(originalY == currClass);
+                isClass = find((originalY == currClass) & inds);
                 permIsClass = isClass(randperm(length(isClass)));
-                remainingClasses = allClasses(allClasses ~= currClass);
+                remainingClasses = allClasses(allClasses ~= currClass);               
                 newLabelVector = randsample(remainingClasses,length(permIsClass),true);
+                
+                %If first argument to randsample is scalar, then it samples
+                %from 1 to the scalar
+                if length(remainingClasses) == 1
+                    newLabelVector(:) = remainingClasses;
+                end
                 numToUse = floor(classNoise*length(isClass));
                 obj.Y(permIsClass(1:numToUse)) = newLabelVector(1:numToUse);
             end
+        end
+        
+        function [] = addRandomClassNoiseToTrain(obj,classNoise)
+            obj.addRandomClassNoise(classNoise,obj.isTargetTrain());
         end
         
         function [split] = generateSplitArray(obj,percTrain,percTest,configs)

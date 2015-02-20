@@ -54,8 +54,9 @@ classdef Helpers < handle
         end
         
         function [f] = MakeProjectURL(file)
-            [s] = getProjectConstants();
-            f = [s.projectDir '/' file];
+            %[s] = getProjectConstants();
+            %f = [s.projectDir '/' file];
+            f = file;
         end
         
         function [v] = NormalizeRange(v,range)
@@ -438,6 +439,9 @@ classdef Helpers < handle
         
         function [inds] = IsMember(cellArray,toFind)
             inds = zeros(size(cellArray));
+            if ~iscell(toFind)
+                toFind = {toFind};
+            end
             for idx=1:length(toFind)
                 inds = inds | ismember(cellArray,toFind{idx});
             end

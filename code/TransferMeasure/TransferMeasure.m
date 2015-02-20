@@ -11,22 +11,30 @@ classdef TransferMeasure < Saveable
             obj.set('useSourceForTransfer',true);
         end
         
-        function [W] = createDistanceMatrix(obj, sources, target, options,savedData)
+        function [W,savedData] = createDistanceMatrix(obj, sources, target, options,savedData)
             if isa(sources,'cell')
                 source = DataSet.Combine(sources{:});
             else
                 source = sources;
-            end
-            XallCombined = [source.X ; target.X];  
-            if obj.get('zscore')
-                XallCombined = zscore(XallCombined);
-            end
+            end            
             YCombined = [source.Y ; target.Y];
             typeCombined = [source.type ; target.type];
             if exist('savedData','var') && isfield(savedData,'W')
-                W = savedData.W;
+                W = savedData.W;            
             else
-                W = Kernel.Distance(XallCombined);                    
+                XallCombined = [source.X ; target.X];  
+                if obj.get('zscore')
+                    XallCombined = zscore(XallCombined);
+                end
+                if obj.get('useSeparableDistanceMatrix')
+                    error('TODO: combine with RBF?');
+                    W = zeros(size(Xall,1));
+                    for featureIdx=1:size(Xall,1)
+                        W = W + Helpers.CreateDistanceMatrix(Xall(:,featureIdx));
+                    end
+                else
+                    W = Kernel.Distance(XallCombined);                                        
+                end
                 if exist('savedData','var')
                     savedData.W = W;
                 end
@@ -55,8 +63,8 @@ classdef TransferMeasure < Saveable
                 error('Not yet implemented!');
                 W = options.distanceMatrix;                
             else                
-                if exist('savedData','var') && isfield(savedData,'W')
-                    [W] = obj.createDistanceMatrix(source, target, options, savedData);
+                if exist('savedData','var')
+                    [W,savedData] = obj.createDistanceMatrix(source, target, options, savedData);
                 else
                     [W] = obj.createDistanceMatrix(source, target, options);
                 end

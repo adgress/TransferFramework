@@ -39,8 +39,8 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                     numSource = sources{i}.numClasses*experiment.numSourcePerClass;
                     sources{i} = sources{i}.stratifiedSample(numSource);
                 end
-                if obj.has('labelsToUse')
-                    labelsToUse = obj.get('labelsToUse');
+                if obj.has('targetLabels')
+                    labelsToUse = obj.get('targetLabels');
                     assert(length(labelsToUse) > 1);
                     sources{i}.keep(sources{i}.hasLabel(labelsToUse));                   
                 end

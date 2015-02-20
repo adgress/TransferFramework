@@ -28,8 +28,12 @@ classdef Saveable < handle
                 obj.configs.addConfigs(newConfigs);
             end
         end
-        function [v] = get(obj,key)
-            v = obj.configs.get(key);
+        function [v] = get(obj,key,defaultValue)
+            if exist('defaultValue','var')
+                v = obj.configs.get(key,defaultValue);
+            else
+                v = obj.configs.get(key);
+            end
         end
         function [] = set(obj,key,value)
             obj.configs.set(key,value);

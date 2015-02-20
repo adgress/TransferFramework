@@ -1,6 +1,5 @@
 classdef MainConfigs < Configs
-    %CONFIGS Summary of this class goes here
-    %   Detailed explanation goes here
+    %Configs for an experiment
     
     properties
     end
@@ -20,11 +19,6 @@ classdef MainConfigs < Configs
     methods               
         function [obj] = MainConfigs()
             obj = obj@Configs();
-            obj.configsStruct.multithread=1;                  
-            obj.configsStruct.rerunExperiments=0;
-            
-            obj.configsStruct.computeLossFunction=1;
-            obj.configsStruct.processMeasureResults=0;
                         
             obj.configsStruct.measure=Measure();
             obj.configsStruct.learners=[];
@@ -44,8 +38,8 @@ classdef MainConfigs < Configs
         
         
         function [s] = getDataFileName(obj)
-            s = [getProjectDir() '/' obj.get('dataDir') '/' ...
-                 '/' obj.get('dataName') '/' obj.get('dataSet') '.mat'];
+            s = [obj.get('dataDir') '/' '/' obj.get('dataName') '/' ...
+                obj.get('dataSet') '.mat'];
         end
         
         function [v] = getOutputDirectoryParams(obj)
@@ -114,12 +108,21 @@ classdef MainConfigs < Configs
             learnerConfigs = LearnerConfigs();            
         end  
         
+        function [] = setNGData(obj)
+            obj.set('dataName','20news-bydate/splitData');
+            obj.set('resultsDir','results_ng');
+            obj.set('dataSet','CR2CR3CR42CR1');            
+            obj.configsStruct.numSourcePerClass=Inf;
+            obj.set('sourceDataSetToUse',{'CR4'});
+        end
+        
         function [] = setTommasiData(obj)
             obj.set('dataName','tommasi_data');
             obj.set('resultsDir','results_tommasi');
             obj.set('dataSet','tommasi_split_data');            
             obj.configsStruct.numSourcePerClass=Inf;
         end
+        
         
         function [] = setCVData(obj)
             obj.configsStruct.numSourcePerClass=Inf;

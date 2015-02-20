@@ -17,6 +17,9 @@ function [f, returnStruct] = visualizeResults(options,f)
         end
         allResults = load(fileName);
         allResults = allResults.results;
+        measure = options.get('measure');
+        allResults.computeLossFunction(measure);
+        allResults.aggregateResults(measure);
         configs = allResults.mainConfigs;
 
         learners = configs.get('learners');
@@ -63,7 +66,7 @@ function [f, returnStruct] = visualizeResults(options,f)
         end
         set(options.c.table,'Data',tableData,'ColumnName',leg,'RowName',options.c.dataSet);
     else
-        if options.has('axisToUse') && ~options.c.vizMeasureCorrelation
+        if options.has('axisToUse')
             axisToUse = options.c.axisToUse;    
             a = axis;
             a(3:4) = axisToUse(3:4);
@@ -102,24 +105,6 @@ function [s] = makeResultsStruct(means,vars)
     s.vars = vars;
 end
 
-function [displayVal] = plotRelativeMeasures(options,results,sizes,...
-    hasPostTM,hasPreTM,color)
-    assert(hasPostTM && hasPreTM && options.c.showRelativeMeasures);
-    field2 = 'PostTMResults';
-    field1 = 'PreTMResults';
-    [means,vars,lows,ups] = getRelativePerf(results,...
-        field1,field2,options);
-    means(isnan(means)) = 0;
-    means(isinf(means)) = 2;
-    vars(isnan(vars)) = 0;
-    means = mean(means,2);
-    vars = mean(vars,2);
-    if ~options.c.vizMeasureCorrelation
-        errorbar(sizes,means,vars,'color',color);    
-    end
-    displayVal = makeResultsStruct(means,vars);
-end
-
 function [newResults] = getResultsWithSize(results,size)
     newResults = {};
     for i=1:length(results)
@@ -143,7 +128,8 @@ end
 function [displayVal] = plotResults(results,sizes,field,colors,options)        
     vars = getVariances(results,field,options);
     means = getMeans(results,field);
-    if ~options.c.vizMeasureCorrelation
+    %if ~options.c.vizMeasureCorrelation
+    if true
         if length(means) == length(sizes)
             errorbar(sizes,means,vars,'color',colors);    
         else
@@ -152,90 +138,6 @@ function [displayVal] = plotResults(results,sizes,field,colors,options)
     end
     displayVal = makeResultsStruct(means,vars);
 end
-
-function [displayVal] = plotRelativePerformance(options,baselineFile,results,sizes,color)
-    baselineResults = load(baselineFile);
-    baselineResults = baselineResults.results.allResults;
-    for i=1:numel(results)
-        results{i}.aggregatedResults.baseline = ...
-            baselineResults{i}.aggregatedResults.testResults;
-        results{i}.aggregatedResults.baselinePerLabel = ...
-            baselineResults{i}.aggregatedResults.testLabelMeasures;
-        
-    end
-    field2 = 'testResults';
-	field1 = 'baseline';
-    
-    [means,vars,l,h] = getRelativePerf(results,field1,...
-        field2,options);
-    means(isnan(means)) = 0;
-    means(isinf(means)) = 2;
-    vars(isnan(vars)) = 0;
-    if ~isempty(vars)
-        if sum(isinf(means)) > 0
-            display('NaN');
-        end        
-        if ~options.c.vizMeasureCorrelation
-            errorbar(sizes,means,vars,'color',color);
-        end
-        displayVal = makeResultsStruct(means,vars);
-    else
-        if ~options.c.vizMeasureCorrelation
-            errorbar(sizes,means,l,h,'color',color);
-        end
-        displayVal = makeResultsStruct(means,[]);
-        displayVal.lows = lows;
-        displayVal.highs = h;
-    end    
-end
-
-function [means,vars,lows,highs] = getRelativePerf(results,field1,field2,options)
-    t = results{1}.aggregatedResults.(field1);
-    if iscell(t)
-        t = cell2mat(t);
-    end
-    numMeasureFields = size(t,2);
-    means = zeros(numel(results),numMeasureFields);
-    vars = [];
-    highs = [];
-    lows = [];
-    if options.c.relativeType == Constants.RELATIVE_PERFORMANCE || ...
-            options.c.relativeType == Constants.DIFF_PERFORMANCE
-        vars = means;
-    else
-        highs = means;
-        lows = means;
-    end
-    for i=1:numel(results);        
-        x = results{i}.aggregatedResults.(field1);
-        y = results{i}.aggregatedResults.(field2);
-        if iscell(x)
-            x = cell2mat(x);
-        end
-        if iscell(results{i}.aggregatedResults.(field2))
-            y = cell2mat(y);
-        end
-        if size(x,1) ~= size(y,1)            
-            y = y';
-        end
-        if options.c.relativeType == Constants.RELATIVE_PERFORMANCE || ...
-                options.c.relativeType == Constants.DIFF_PERFORMANCE
-            if options.c.relativeType == Constants.DIFF_PERFORMANCE                
-                relativePerf = ResultsVector(y - x);                
-            else
-                relativePerf = ...
-                    ResultsVector.GetRelativePerformance(x,y);
-            end
-            means(i,:) = relativePerf.getMean();
-            vars(i,:) = relativePerf.getConfidenceInterval(options.c.confidenceInterval);
-        elseif options.relativeType == Constants.CORRELATION
-            [means(i),highs(i),lows(i)] = ResultsVector.GetCorrelation(x,y);
-        else
-            error('Unknown Relative Type');
-        end
-    end
-end
-
 
 function [vars] = getVariances(results,name,options)
     m = size(results{1}.aggregatedResults.(name),2);
@@ -262,10 +164,4 @@ function [sizes] = getSizes(results,sizeField)
         sizes(i) = ...
             results{i}.experiment.(sizeField);
     end
-end
-%TODO: I think we don't need this as long as we specify the field to plot
-%is 'repairAccuracy'
-function [] = plotRepairResults(results,color,options)
-    sizes = 0:size(results{1}.aggregatedResults.repairAccuracy,2)-1;
-    plotResults(results,sizes,'repairAccuracy',color,options);    
 end

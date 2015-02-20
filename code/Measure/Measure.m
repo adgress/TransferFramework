@@ -44,11 +44,11 @@ classdef Measure < Saveable
                     end
                     if ~isempty(split.transferMeasureResults)
                         transferMeasures(resultIdx) = ...
-                            split.transferMeasureResults{resultIdx}.score;
+                            split.transferMeasureResults{resultIdx}.percCorrect;
                     end
                     if ~isempty(split.preTransferMeasureResults)
                         preTransferMeasures(resultIdx) = ...
-                            split.preTransferMeasureResults{resultIdx}.score;
+                            split.preTransferMeasureResults{resultIdx}.percCorrect;
                     end
                 end
                 transferDifference = ...
@@ -58,9 +58,13 @@ classdef Measure < Saveable
                 measureResults.learnerStats.transferDifference = transferDifference;
                 if ~isempty(preTransferMeasures)
                     measureResults.learnerStats.preTransferMeasures = preTransferMeasures;
+                    measureResults.learnerStats.preTransferMeasurePerfDiff = ...
+                        abs(preTransferMeasures - preTransferValTest);
                 end
-                if ~isempty(transferMeasures)
+                if ~isempty(transferMeasures)                    
                     measureResults.learnerStats.transferMeasures = transferMeasures;
+                    measureResults.learnerStats.transferMeasurePerfDiff = ...
+                        abs(transferMeasures - valTest);
                 end
                 if ~isempty(transferMeasures) && ~isempty(preTransferMeasures)
                     transferMeasureDifference = transferMeasures - preTransferMeasures;

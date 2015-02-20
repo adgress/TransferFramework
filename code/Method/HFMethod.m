@@ -10,19 +10,14 @@ classdef HFMethod < Method
             obj = obj@Method(configs);
         end
         
-        function [distMat] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs)            
-            if useHF                
+        function [distMat,savedData] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs,savedData)            
+            if useHF    
+                error('Caching assumes ordering doesn''t change');
                 trainLabeled = train.Y > 0;
             else
                 %TODO: Ordering doesn't matter for LLGC - maybe rename
                 %variable to make this code more clear?
                 trainLabeled = true(length(train.Y),1);
-            end
-            XLabeled = train.X(trainLabeled,:);
-            XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
-            Xall = [XLabeled ; XUnlabeled];                  
-            if learnerConfigs.get('zscore')
-                Xall = zscore(Xall);
             end            
             Y = [train.Y(trainLabeled) ; ...
                 train.Y(~trainLabeled) ; ...
@@ -36,23 +31,42 @@ classdef HFMethod < Method
             instanceIDs = [train.instanceIDs(trainLabeled) ; ...
                 train.instanceIDs(~trainLabeled) ; ...
                 test.instanceIDs];
-            
-            %TODO: I turned this off because it was causing bugs elsewhere
-            if size(Xall,2) == 1 && false
-                [Xall,inds] = sort(Xall,'ascend');
-                Y = Y(inds);
-                type = type(inds);
-                trueY = trueY(inds);
-                instanceIDs = instanceIDs(inds);                
-                W = Helpers.CreateDistanceMatrix(Xall);
+                
+            if exist('savedData','var') && isfield(savedData,'W')
+                W = savedData.W;
             else
-                W = Helpers.CreateDistanceMatrix(Xall);
-                %{
-                if obj.has('Wsparsity')
-                    W = Helpers.SparsifyDistanceMatrix(W,obj.get('Wsparsity'));
+                XLabeled = train.X(trainLabeled,:);
+                XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
+                Xall = [XLabeled ; XUnlabeled];                  
+                if learnerConfigs.get('zscore')
+                    Xall = zscore(Xall);
+                end   
+                %TODO: I turned this off because it was causing bugs elsewhere
+                if size(Xall,2) == 1 && false
+                    [Xall,inds] = sort(Xall,'ascend');
+                    Y = Y(inds);
+                    type = type(inds);
+                    trueY = trueY(inds);
+                    instanceIDs = instanceIDs(inds);                
+                    W = Helpers.CreateDistanceMatrix(Xall);
+                elseif obj.get('useSeparableDistanceMatrix')
+                    W = zeros(size(Xall,1));
+                    for featureIdx=1:size(Xall,1)
+                        W = W + Helpers.CreateDistanceMatrix(Xall(:,featureIdx));
+                    end
+                    W = W ./ size(Xall,1);
+                else
+                    W = Helpers.CreateDistanceMatrix(Xall);
+                    %{
+                    if obj.has('Wsparsity')
+                        W = Helpers.SparsifyDistanceMatrix(W,obj.get('Wsparsity'));
+                    end
+                    %}
+                end    
+                if exist('savedData','var')
+                    savedData.W = W;
                 end
-                %}
-            end            
+            end
             distMat = DistanceMatrix(W,Y,type,trueY,instanceIDs);
         end
         
@@ -163,11 +177,15 @@ classdef HFMethod < Method
                 error('Possible bug - is this taking advantage of source data?');
             else                
                 %[distMat] = createDistanceMatrix(obj,train,test,useHF,learner.configs);
-                [distMat] = createDistanceMatrix(obj,train,test,useHF,obj.configs);
+                if exist('savedData','var')
+                    [distMat,savedData] = createDistanceMatrix(obj,train,test,useHF,obj.configs,savedData);
+                else
+                    [distMat] = createDistanceMatrix(obj,train,test,useHF,obj.configs);
+                end
                 testResults.dataType = distMat.type;
             end
             if useHF
-                %error('Make sure this works!');
+                error('Is distMat a distanceMatrix or Wrbf?');
                 [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat);
             else
                 if exist('savedData','var')

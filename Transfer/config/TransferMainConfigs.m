@@ -19,13 +19,7 @@ classdef TransferMainConfigs < MainConfigs
             obj.configsStruct.learners=[];
             
             obj.configsStruct.configLoader=TransferExperimentConfigLoader();  
-            obj.setLearnerLLGC(learnerConfigs);
-            
-            obj.configsStruct.multithread=1;                  
-            obj.configsStruct.rerunExperiments=0;
-            
-            obj.configsStruct.computeLossFunction=1;
-            obj.configsStruct.processMeasureResults=0;
+            obj.setLearnerLLGC(learnerConfigs);            
                         
             obj.configsStruct.measure=Measure();
         end   

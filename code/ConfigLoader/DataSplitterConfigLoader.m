@@ -20,7 +20,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
             allSplits = cell(obj.numSplits,1);            
             percentTrain = obj.get('percentTrain');
             percentTest = obj.get('percentTest');
-            dataSetType = obj.get('dataSetType');
+            dataSetType = obj.get('dataSetType','DataSet');
             if obj.has('data')
                 dataStruct = obj.get('data');
                 allData = DataSet.MakeDataFromStruct(dataStruct);
@@ -28,11 +28,11 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 if normalizeRows
                     allData.X = Helpers.NormalizeRows(allData.X);
                 end  
-                allData.name = obj.get('targetName');
             else
                 inputFile = obj.get('inputFile');
                 if isequal(dataSetType,'SimilarityDataSet')
                     inputPrefix = obj.get('inputFilePrefix'); 
+                    error('Do we want to use MakeProjectURL?');
                     f = Helpers.MakeProjectURL([inputPrefix '/' inputFile]);
                     data = load(f);
                     allData = data.data;                
@@ -42,6 +42,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     XName = obj.get('XName');
                     YName = obj.get('YName');
                     dataSetTypeConstructer = str2func(dataSetType);
+                    %error('Do we want to use MakeProjectURL?');
                     f = Helpers.MakeProjectURL(inputFile);
                     allData = dataSetTypeConstructer(f,XName,YName);
                     metadata = struct();
@@ -50,9 +51,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     if normalizeRows
                         allData.X = Helpers.NormalizeRows(allData.X);
                     end                                
-                end  
-                allData.name = obj.get('targetName');
-            end
+                end                  
+            end            
+            allData.name = obj.get('targetName','');
             if obj.has('numToUsePerLabel')
                 n = obj.get('numToUsePerLabel');
                 allData = allData.stratifiedSample(n*allData.numClasses);
@@ -66,7 +67,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
             end
             if obj.has('classNoise')
                 classNoise = obj.get('classNoise');        
-                allData.addRancomClassNoise(classNoise);                
+                allData.addRandomClassNoise(classNoise);                
             end
             if obj.has('maxTrainNumPerLabel')
                 numClasses = max(allData.Y);
@@ -103,18 +104,18 @@ classdef DataSplitterConfigLoader < ConfigLoader
             end
             if obj.has('sourceFiles')
                 display('TODO: permute source data?');
-                d = getProjectDir();
                 sourceFiles = obj.get('sourceFiles');
                 obj.dataAndSplits.sourceDataSets = {};
                 obj.dataAndSplits.sourceNames = obj.get('sourceNames');
                 for i=1:numel(sourceFiles)
-                    sourceFileName = [d '/' sourceFiles{i}];
+                    %sourceFileName = [d '/' sourceFiles{i}];
+                    sourceFileName = sourceFiles{i};
                     sourceDataSet = DataSet(sourceFileName,XName,YName);                    
                     if normalizeRows
                         sourceDataSet.X = Helpers.NormalizeRows(sourceDataSet.X);
                     end
                     sourceDataSet.setSource();
-                    assert(isempty(sourceDataSet.trueY));
+                    %assert(isempty(sourceDataSet.trueY));
                     sourceDataSet.trueY = sourceDataSet.Y;
                     if isempty(sourceDataSet.instanceIDs)
                         sourceDataSet.instanceIDs = 1:length(sourceDataSet.Y);
@@ -138,19 +139,31 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     sourceDataSet.name = obj.dataAndSplits.sourceNames{i};
                     obj.dataAndSplits.sourceDataSets{i} = sourceDataSet;
                 end                
-            end     
-                 
+            end                 
             obj.dataAndSplits.allData = allData;
             obj.dataAndSplits.allSplits = allSplits;
             if exist('metadata','var')
                 obj.dataAndSplits.metadata = metadata;
             end
+            
+            if obj.has('minInstancesPerFeature')                
+                Xall = obj.dataAndSplits.allData.X;
+                if isfield(obj.dataAndSplits,'sourceDataSets')
+                    for sourceIdx=1:length(obj.dataAndSplits.sourceDataSets)
+                        Xall = [Xall ; obj.dataAndSplits.sourceDataSets{sourceIdx}.X];
+                    end                    
+                end
+                featuresToKeep = sum(Xall > 0) >= obj.get('minInstancesPerFeature');
+                obj.dataAndSplits.allData.keepFeatureInds(featuresToKeep);
+                for sourceIdx=1:length(obj.dataAndSplits.sourceDataSets)
+                    obj.dataAndSplits.sourceDataSets{sourceIdx}.keepFeatureInds(featuresToKeep);
+                end
+            end
             obj.dataAndSplits.configs = obj.configs;                        
         end
         function [] = saveSplit(obj)
             c = getProjectConstants();
-            outputFile = [c.projectDir '/' ...
-                obj.get('outputFilePrefix') '/' obj.get('outputFile')];
+            outputFile = [obj.get('outputFilePrefix') '/' obj.get('outputFile')];
             Helpers.MakeDirectoryForFile(outputFile);
             dataAndSplits = obj.dataAndSplits;
             display(['Saving splits to:' outputFile]);

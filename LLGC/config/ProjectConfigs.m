@@ -322,8 +322,9 @@ classdef ProjectConfigs < handle
             sourceLabels = pc.tommasiLabels(numTargetLabels+1:numTargetLabels+numSourceLabels);
         end
         
-        function [labelProduct] = MakeLabelProduct()            
-            [targetLabels,sourceLabels] = ProjectConfigs.GetTargetSourceLabels();
+        function [labelProduct] = MakeLabelProduct()       
+            error('What target-source labels should we use?');
+            %[targetLabels,sourceLabels] = ProjectConfigs.GetTargetSourceLabels();
             
             targetDomains = Helpers.MakeCrossProductOrdered(targetLabels,targetLabels);
             %sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);

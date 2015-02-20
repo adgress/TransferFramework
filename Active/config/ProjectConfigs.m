@@ -10,34 +10,30 @@ classdef ProjectConfigs < ProjectConfigsBase
         EXPERIMENT_ACTIVE_TRANSFER = 2
         experimentSetting = 2
         
-        
+        numRandomFeatures = 0
         
         instance = ProjectConfigs.CreateSingleton()
-        %{
-        data = Constants.CV_DATA
-        targetLabels = [1:10]
-        sourceLabels = [1:10]
-        %}
+
+        data = Constants.NG_DATA
+        %data = Constants.TOMMASI_DATA
+        %data = Constants.CV_DATA
         
-        data = Constants.TOMMASI_DATA        
-        targetLabels = [10 15]
-        sourceLabels = [25 30]
+        useOverrideConfigs = 1
         
-        %Weak positive transfer for small number of labels
-        %targetLabels = [105 145]
-        %sourceLabels = [250 252]
-        
-        %targetLabels = [10 15]
-        %sourceLabels = [25 26]
-        trainLabels = [10 15]
-        %[10 15 23 25 26 30 41 56 57]
         showBothPerformance = 0
-        showTransferDifference = 1
+        showTransferDifference = 0
         showTransferPrediction = 1
         showTransferPerformance = 0
+        showTransferMeasurePerfDiff = 1
+        showPreTransferMeasurePerfDiff = 1
                 
+        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
         activeMethodsToPlot = {'Random'}
-        useDomainsToViz = false
+        useDomainsToViz = true
+        
+        vizTargetLabels = [10 15]
+        vizSourceLabels = [25 26];
+        
         tommasiDomainsToViz = {...
             '25  26-to-10  15',...
             '30  41-to-10  15',...
@@ -53,10 +49,10 @@ classdef ProjectConfigs < ProjectConfigsBase
     end
     
     properties        
-        sigmaScale
-        k
-        alpha
-        labelsToUse
+        %sigmaScale
+        %k
+        %alpha
+        %labelsToUse
         numLabeledPerClass                                
         %tommasiLabels                       
         multiSourceTransfer
@@ -66,28 +62,32 @@ classdef ProjectConfigs < ProjectConfigsBase
         maxSourceSize
         justTargetNoSource
         dataSet
+        
+        labelNoise
+        %Update trueY based on noisy labels.  Hack to make active learning
+        %work
+        replaceTrueY 
     end
     
     methods(Static, Access=private)
         function [c] = CreateSingleton()
-            c = ProjectConfigs();            
+            c = ProjectConfigs();
+            c.labelNoise = .0;
+            c.replaceTrueY = true;
+            
+            %{
             c.sigmaScale = .2;
             c.k=inf;
             c.alpha=.9;
-
+            %}
             c.dataSet = ProjectConfigs.data;
-            %c.labelsToUse = ProjectConfigs.trainLabels;
-            c.labelsToUse = ProjectConfigs.targetLabels;
-            %c.sourceLabels = ProjectConfigs.sourceLabels;
+
             c.numLabeledPerClass=[2];
             c.numTarget = 2;
             c.numSource = 2;
             
             c.tommasiLabels = [10 15 23 25 26 30 41 56 57];
-            
-            %allLabels = ProjectConfigs.labels;
-            %train = ProjectConfigs.trainLabels;
-            %c.tommasiLabels = [train setdiff(allLabels,train)];           
+                    
                         
             c.makeSubDomains = true;
             c.addTargetDomain = false;
@@ -96,7 +96,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.maxSourceSize = inf;
             if c.dataSet == Constants.CV_DATA
                 c.makeSubDomains = false;
-                c.labelsToUse = [];
+            elseif c.dataSet == Constants.NG_DATA
+                c.makeSubDomains = false;
             end
         end
     end
@@ -110,38 +111,33 @@ classdef ProjectConfigs < ProjectConfigsBase
         function [c] = BatchConfigs()
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
-            c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
-            if pc.dataSet == Constants.TOMMASI_DATA
-                c.get('mainConfigs').setTommasiData(); 
-            elseif pc.dataSet == Constants.CV_DATA
-                c.get('mainConfigs').setCVData(); 
+            %c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
+            switch pc.dataSet
+                case Constants.CV_DATA
+                    c.get('mainConfigs').setTommasiData(); 
+                case Constants.TOMMASI_DATA
+                    c.get('mainConfigs').setTommasiData(); 
+                case Constants.NG_DATA
+                    c.get('mainConfigs').setNGData();
+                otherwise
+                    error('Unknown data set');
             end
             c.configsStruct.configLoader=ActiveExperimentConfigLoader();
             c.set('transferMethodClass', FuseTransfer());        
-            %c.set('transferMethodClass', Transfer());        
-            
+            %c.set('transferMethodClass', Transfer());                    
         end
         
         function [c] = SplitConfigs()
             pc = ProjectConfigs.Create();
             c = SplitConfigs();            
-            c.setTommasi();
+            %c.setTommasi();
+            c.set20NG();
         end
         
         function [c] = VisualizationConfigs()            
-            c = VisualizationConfigs();                                           
-            c.configsStruct.showPostTransferMeasures = false;
-            c.configsStruct.showPreTransferMeasures = false;
-            c.configsStruct.showRelativePerformance = false;
-            c.configsStruct.showRelativeMeasures = false;
-            c.configsStruct.showSoftMeasures = false;
-            c.configsStruct.showHardMeasures = false;
-            c.configsStruct.showLLGCMeasure = false;
-            c.configsStruct.vizMeasureCorrelation = false;
+            c = VisualizationConfigs();                                                       
             c.configsStruct.confidenceInterval = VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
             
-            c.configsStruct.vizWeights = false;
-            c.configsStruct.vizNoisyAcc = false;
             [c.configsStruct.plotConfigs,legend,title] = ...
                 ProjectConfigs.makePlotConfigs();
             if ~isempty(legend)
@@ -155,21 +151,46 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.configsStruct.axisToUse = [0 10 -.5 1.1];
             pc = ProjectConfigs.Create();
             
-            if ProjectConfigs.data == Constants.TOMMASI_DATA
-                c.set('prefix','results_tommasi');
-                c.set('dataSet',{'tommasi_data'});
+            [d] = ProjectConfigs.getResultsDirectory();
+            switch ProjectConfigs.data
+                case Constants.TOMMASI_DATA
+                    c.set('prefix','results_tommasi');
+                    c.set('dataSet',{'tommasi_data'});
 
-                [t,s] = pc.GetTargetSourceLabels();
-                transferDir = [num2str(s) '-to-' num2str(t)];
-                c.set('resultsDirectory',['results_tommasi/tommasi_data/' transferDir]);
-            else
-                c.set('prefix','');
-                c.set('dataSet',{'CV-small'});
-               
-                transferDir = 'A2C';
-                c.set('resultsDirectory',['results/CV-small/' transferDir]);
-            end
+                    t = ProjectConfigs.vizTargetLabels;
+                    s = ProjectConfigs.vizSourceLabels;
+                    %[t,s] = pc.GetTargetSourceLabels();
+                    transferDir = [num2str(s) '-to-' num2str(t)];
+                case Constants.CV_DATA
+                    c.set('prefix','');
+                    c.set('dataSet',{'CV-small'});
+                    transferDir = 'A2C';
+                case Constants.NG_DATA                    
+                    c.set('prefix','results_ng');
+                    c.set('dataSet',{'CR2CR3CR42CR1'});
+                    transferDir = 'CR42CR3';
+                otherwise
+                    error('Unknown data set');
+            end            
+            c.set('resultsDirectory',[d transferDir]);
             %c.set('resultsDirectory','results_tommasi/tommasi_data/25  23-to-10  15');
+        end
+        
+        function [d] = getResultsDirectory()
+            pc = ProjectConfigs.Create();
+            switch pc.data
+                case Constants.TOMMASI_DATA
+                    d = 'results_tommasi/tommasi_data/';
+                case Constants.CV_DATA
+                    d = 'results/CV-small/';
+                case Constants.NG_DATA
+                    d = 'results_ng/';
+                otherwise
+                    error('Unknown data set');
+            end           
+            if pc.labelNoise > 0
+                d = [d '/labelNoise=' num2str(pc.labelNoise) '/'];
+            end
         end
         
         function [plotConfigs,legend,title] = makePlotConfigs()  
@@ -177,7 +198,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};           
             legend = {};
-            s = num2str(ProjectConfigs.targetLabels);
+            s = num2str(ProjectConfigs.vizTargetLabels);
             title = s;
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
                 methodResultsFileNames{end+1} = ['/Random_HF.mat'];
@@ -187,33 +208,46 @@ classdef ProjectConfigs < ProjectConfigsBase
                 methodResultsFileNames{end+1} = ['/VM_HF.mat'];
                 legend{end+1} = 'VM';
             else
-                fields = {}; 
+                plotFields = {}; 
                 legendSuffixes = {};
                 fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
                 
                 if ProjectConfigs.showBothPerformance
-                    fields = [fields {'testResults','preTransferValTest'}];
+                    plotFields = [plotFields {'testResults','preTransferValTest'}];
                     legendSuffixes = [legendSuffixes {'Transfer Performance','Performance'}];
                 end
                 if ProjectConfigs.showTransferPrediction
-                    fields{end+1} = 'negativeTransferPrediction';
+                    plotFields{end+1} = 'negativeTransferPrediction';
                     legendSuffixes{end+1} = 'Negative Transfer Prediction Accuracy';
                 end
                 if ProjectConfigs.showTransferDifference
-                    fields{end+1} = 'transferDifference';
+                    plotFields{end+1} = 'transferDifference';
                     legendSuffixes{end+1} = 'Test Error Difference';
                 end
                 if ProjectConfigs.showTransferPerformance
-                    fields{end+1} = 'testResults';
+                    plotFields{end+1} = 'testResults';
                     legendSuffixes{end+1} = 'Transfer Performance';  
                 end
+                if ProjectConfigs.showPreTransferMeasurePerfDiff
+                    plotFields{end+1} = 'transferMeasurePerfDiff';
+                    legendSuffixes{end+1} = 'Pre-Transfer abs(Measure-Perf)';
+                end
+                if ProjectConfigs.showTransferMeasurePerfDiff
+                    plotFields{end+1} = 'preTransferMeasurePerfDiff';
+                    legendSuffixes{end+1} = 'Transfer abs(Measure-Perf)';
+                end
                 %TODO: This assumes activeMethodsToPlot has length one                
-                for i=1:length(legendSuffixes)
-                    toPlot = ProjectConfigs.activeMethodsToPlot{1};
-                    methodResultsFileNames{i} = ...
-                        [toPlot fileSuffix];
-                    legend{i} = [toPlot ': ' legendSuffixes{i}];
-                end                
+                methods = ProjectConfigs.activeMethodsToPlot;
+                fields = {};
+                for methodIdx=1:length(ProjectConfigs.activeMethodsToPlot)
+                    for legendIdx=1:length(legendSuffixes)
+                        toPlot = ProjectConfigs.activeMethodsToPlot{methodIdx};
+                        methodResultsFileNames{end+1} = ...
+                            [toPlot fileSuffix];
+                        legend{end+1} = [toPlot ': ' legendSuffixes{legendIdx}];
+                        fields{end+1} = plotFields{legendIdx};
+                    end                
+                end
             end
             plotConfigs = {};
             for fileIdx=1:length(methodResultsFileNames)
@@ -225,20 +259,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 plotConfigs{end+1} = configs;
             end
         end                
-    end
-    methods
-        function [t,s] = GetTargetSourceLabels(obj)
-            t = ProjectConfigs.targetLabels;
-            s = ProjectConfigs.sourceLabels;
-        end    
-        function [labelProduct] = MakeLabelProduct(obj)
-            [t,s] = obj.GetTargetSourceLabels();                        
-            targetDomains = Helpers.MakeCrossProductOrdered(t,t);
-            %sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);
-            sourceDomains = Helpers.MakeCrossProductOrdered(s,s);
-            labelProduct = Helpers.MakeCrossProduct(targetDomains,sourceDomains);
-        end
-    end
+    end    
     methods(Access = private)
         function [c] = ProjectConfigs()            
         end

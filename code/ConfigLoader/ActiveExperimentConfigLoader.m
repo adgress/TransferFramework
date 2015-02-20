@@ -134,7 +134,11 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
         end
         
         function [outputFileName] = getOutputFileName(obj)
+            pc = ProjectConfigs.Create();
             outputDir = obj.configs.resultsDirectory;
+            if pc.labelNoise > 0
+                outputDir = [outputDir '/labelNoise=' num2str(pc.labelNoise) '/'];
+            end
             warning off;
             outputDirParams = obj.configs.getOutputDirectoryParams();
             outputDir = [outputDir '/' obj.configs.stringifyFields(outputDirParams, '/') '/'];     

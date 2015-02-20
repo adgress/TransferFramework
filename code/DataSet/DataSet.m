@@ -199,6 +199,10 @@ classdef DataSet < LabeledData
             inds = logical(sum(labelMat == YMat,2));
         end
         function [] = keepFeatures(obj,featureIDsToKeep)
+            if isempty(obj.featureIDs)
+                display('keepFeatures: No feature IDs - skipping');
+                return;
+            end
             shouldKeep = false(1,size(obj.X,2));
             for i=featureIDsToKeep
                 shouldKeep = shouldKeep | obj.featureIDs == i;
@@ -206,7 +210,13 @@ classdef DataSet < LabeledData
             obj.X = obj.X(:,shouldKeep);
             obj.featureIDs = obj.featureIDs(shouldKeep);
             obj.featureNames = obj.featureNames(featureIDsToKeep);
-        end        
+        end   
+        function [] = keepFeatureInds(obj,inds)
+            obj.X = obj.X(:,inds);
+            if ~isempty(obj.featureIDs)
+                obj.featureIDs = obj.featureIDs(inds);
+            end
+        end
     end
     
     methods(Static)

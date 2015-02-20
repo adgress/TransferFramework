@@ -13,7 +13,7 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
             inputFilePrefix = obj.get('inputFilePrefix');
             inputDataSets = obj.get('inputDataSets');
             dataSetAcronyms = obj.get('dataSetAcronyms');
-            outputFilePrefix = obj.get('outputFilePrefix');
+            %outputFilePrefix = obj.get('outputFilePrefix');
             if length(inputDataSets) > 1
                 for i=1:numel(inputDataSets)
                     configCopy = configs.copy();
@@ -39,7 +39,7 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                     o.saveSplit();
                 end
             else
-                data = load(Helpers.MakeProjectURL([inputFilePrefix '/' inputDataSets{1}]));
+                data = load([inputFilePrefix '/' inputDataSets{1}]);
                 if isfield(data,'data')
                     data = data.data;
                 end

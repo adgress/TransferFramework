@@ -59,6 +59,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 testResults.dataType = distMat.type;
             end
             [Wrbf,YtrainMat,sigma,Y_testCleared,instanceIDs] = obj.makeLLGCMatrices(distMat);
+            error('use targetLabels instead?');
             labels = pc.labelsToUse; 
             if isempty(labels)
                 labels = distMat.classes;

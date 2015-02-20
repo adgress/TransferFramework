@@ -226,29 +226,6 @@ classdef ExperimentConfigLoader < ConfigLoader
             [results] = obj.trainAndTest(input,experiment);            
             results.trainingDataMetadata = obj.constructTrainingDataMetadata(...
                 sampledTrain,test,numPerClass);
-            %{
-            [results] = ...
-                methodObject.trainAndTest(input);
-            if exist('drMetadata','var')
-                error('What should we do with drMetadata?');
-                metadata.drMetadata = drMetadata;
-            end
-            results.trainingDataMetadata.percTrain = percTrain;
-            if isa(train,'DataSet')            
-                results.trainingDataMetadata.numTrain = numel(sampledTrain.Y);
-                results.trainingDataMetadata.numTest = numel(test.Y);
-                results.trainingDataMetadata.numClasses = max(test.Y);
-            else
-                trainIndex = obj.configs('trainSetIndex');
-                testIndex = obj.configs('testSetIndex');
-                Wij = train.getSubW(trainIndex,testIndex);
-                %results.trainActual = Wij;
-                results.trainingDataMetadata.numClasses = size(Wij,2);
-                results.trainingDataMetadata.numTrain = size(train.X{trainIndex},1) + ...
-                    size(validate.X{trainIndex},1);
-                results.trainingDataMetadata.numTest = size(test.X{trainIndex,1},1);                                
-            end
-            %}
         end
         
         function [trainingDataMetadata] = constructTrainingDataMetadata(obj,...
@@ -302,11 +279,19 @@ classdef ExperimentConfigLoader < ConfigLoader
             else
                 error('Unknown DataSet')
             end
-            if obj.has('labelsToUse') && ~isempty(obj.get('labelsToUse'))
-                labelsToUse = obj.get('labelsToUse');                
+            if obj.has('targetLabels') && ~isempty(obj.get('targetLabels'))
+                labelsToUse = obj.get('targetLabels');                
                 train.keep(train.hasLabel(labelsToUse));
                 test.keep(test.hasLabel(labelsToUse));
                 validate.keep(validate.hasLabel(labelsToUse));
+            end
+            pc = ProjectConfigs.Create();            
+            if pc.labelNoise > 0
+                assert(all(train.Y > 0));
+                train.addRandomClassNoise(pc.labelNoise);
+                if pc.replaceTrueY
+                    train.trueY = train.Y;
+                end
             end
         end
         
@@ -336,8 +321,8 @@ classdef ExperimentConfigLoader < ConfigLoader
             warning off;
             outputDirParams = obj.configs.getOutputDirectoryParams();
             outputDir = [outputDir obj.configs.stringifyFields(outputDirParams, '/') '/'];
-            if obj.has('labelsToUse')
-                outputDir = [outputDir num2str(obj.get('labelsToUse')) '/'];
+            if obj.has('targetLabels')
+                outputDir = [outputDir num2str(obj.get('targetLabels')) '/'];
             end
             warning on;
             

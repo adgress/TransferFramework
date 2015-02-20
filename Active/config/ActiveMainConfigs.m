@@ -4,19 +4,23 @@ classdef ActiveMainConfigs < MainConfigs
     
     properties(Dependent)
         transferDirectory
-    end
+        labelsToUse
+    end        
+    
+    
     
     methods
         function [obj] = ActiveMainConfigs()
-            obj = obj@MainConfigs();            
+            obj = obj@MainConfigs();        
+            useSeparableDistanceMatrix = true;
             obj.setTommasiData();
             
-            c = ProjectConfigs.Create();
+            pc = ProjectConfigs.Create();
             
-            obj.configsStruct.numLabeledPerClass=c.numLabeledPerClass;
+            obj.configsStruct.numLabeledPerClass=pc.numLabeledPerClass;
             
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
-                                    
+            learnerConfigs.set('useSeparableDistanceMatrix',useSeparableDistanceMatrix);
             obj.configsStruct.learners=LLGCMethod(learnerConfigs);                                               
             
             activeConfigs = Configs();            
@@ -25,25 +29,49 @@ classdef ActiveMainConfigs < MainConfigs
             %obj.configsStruct.activeMethodObj=TargetEntropyActiveMethod(activeConfigs);
             %obj.configsStruct.activeMethodObj=VarianceMinimizationActiveMethod(activeConfigs);            
             
-            learnerConfigs.set('useSoftLoss',true)
-            obj.configsStruct.transferMeasure = LLGCTransferMeasure(learnerConfigs);
+            transferMeasureConfigs = obj.makeDefaultLearnerConfigs();
+            transferMeasureConfigs.set('useSeparableDistanceMatrix',useSeparableDistanceMatrix);
+            obj.configsStruct.transferMeasure = LLGCTransferMeasure(transferMeasureConfigs);
             
             obj.configsStruct.labelBudget = 40;            
-            obj.configsStruct.labelsToUse = c.labelsToUse;
+            %obj.configsStruct.labelsToUse = pc.labelsToUse;            
             
+            switch pc.data
+                case Constants.CV_DATA
+                case Constants.TOMMASI_DATA
+                    obj.set('targetLabels',[10 15]);
+                    obj.set('sourceLabels',[25 26]);
+                case Constants.NG_DATA
+                otherwise
+                    error('Unknown data set');
+            end
+            
+            obj.set('sigmaScale',.2);
+            obj.set('k',inf);
+            obj.set('alpha',.9);
         end                                           
         
         function [] = setCVData(obj)      
             setCVData@MainConfigs(obj);
             obj.configsStruct.numSourcePerClass=Inf;
-            %obj.configsStruct.sourceDataSetToUse = {{'A'},{'C'},{'D'},{'W'}};
-            %{
             obj.configsStruct.dataSet='ADW2C';
             obj.configsStruct.sourceDataSetToUse = {'A'};
-            %}
-            obj.configsStruct.dataSet='ACW2D';
-            obj.configsStruct.sourceDataSetToUse = {'W'};
-        end                                
+        end                    
+        
+        function [t,s] = GetTargetSourceLabels(obj)
+            t = obj.get('targetLabels');
+            s = obj.get('sourceLabels');
+        end    
+        function [labelProduct] = MakeLabelProduct(obj)
+            [t,s] = obj.GetTargetSourceLabels();                        
+            targetDomains = Helpers.MakeCrossProductOrdered(t,t);
+            %sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);
+            sourceDomains = Helpers.MakeCrossProductOrdered(s,s);
+            labelProduct = Helpers.MakeCrossProduct(targetDomains,sourceDomains);
+        end
+        function [v] = get.labelsToUse(obj)
+            v = obj.get('targetLabels');
+        end
     end        
     
 end

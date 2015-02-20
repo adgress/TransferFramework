@@ -1,5 +1,5 @@
 function [] = runExperiment(configs)    
-          
+    pc = ProjectConfigs.Create();
     setPaths;    
     configLoader = configs.get('configLoader');
     configLoader.setNewConfigs(configs);
@@ -15,7 +15,7 @@ function [] = runExperiment(configs)
         learner.updateConfigs(configs);
     end
     outputFile = configLoader.getOutputFileName();
-    if exist(outputFile,'file') && ~configs.get('rerunExperiments')
+    if exist(outputFile,'file') && ~pc.rerunExperiments
         display(['Skipping: ' outputFile]);
         return;
     end
@@ -57,13 +57,12 @@ function [] = runExperiment(configs)
 
     allResults.mainConfigs = configs.copy();
     allResults.mainConfigs.delete('dataAndSplits');
-    if configLoader.configs.get('computeLossFunction')
+    if pc.computeLossFunction
         measureObject = configLoader.get('measure');
         allResults.computeLossFunction(measureObject);
         allResults.aggregateResults(measureObject);
     end
-    if configLoader.has('processMeasureResults') &&...
-            configLoader.get('processMeasureResults')
+    if pc.processMeasureResults
         allResults.aggregateMeasureResults();
     end
     allResults.saveResults(outputFile);

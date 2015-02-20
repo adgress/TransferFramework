@@ -13,17 +13,15 @@ function [] = runVisualization()
     else
         title(a{1});
     end
-    resultsDirectoryPrefix = 'results_tommasi/tommasi_data/';
     domainsToViz = ProjectConfigs.tommasiDomainsToViz;
     if ProjectConfigs.data == Constants.CV_DATA
-        resultsDirectoryPrefix = 'results/CV-small/';
         domainsToViz = ProjectConfigs.cvDomainsToViz;
     end
-    
+    [d] = ProjectConfigs.getResultsDirectory();
     if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz
         for i=1:length(domainsToViz)
             subplot(1,length(domainsToViz),i);
-            newResultsDir = [resultsDirectoryPrefix '/' domainsToViz{i} '/'];
+            newResultsDir = [d '/' domainsToViz{i} '/'];
             vizConfigs.set('resultsDirectory',newResultsDir);
             title(domainsToViz{i});
             [~,returnStruct] = visualizeResults(vizConfigs,f);

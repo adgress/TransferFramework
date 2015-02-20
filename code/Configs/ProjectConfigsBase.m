@@ -6,6 +6,11 @@ classdef ProjectConfigsBase < handle
         numTarget
         numSource
         tommasiLabels
+        
+        rerunExperiments
+        multithread
+        computeLossFunction
+        processMeasureResults
     end
     
     methods
@@ -13,8 +18,16 @@ classdef ProjectConfigsBase < handle
             obj.numTarget = 2;
             obj.numSource = 2;
             obj.tommasiLabels = [10 15 25 23 26 30 41 56 57];
+            obj.rerunExperiments=0;
+            
+            obj.multithread=1;
+            obj.rerunExperiments=0;
+            
+            obj.computeLossFunction=1;
+            obj.processMeasureResults=0;
         end
-        function [labelProduct] = MakeLabelProduct(obj)            
+        function [labelProduct] = MakeLabelProduct(obj)         
+            error('Shouldn''t this be in MainConfigs?');
             numTargetLabels = obj.numTarget;
             numSourceLabels = obj.numSource;
             targetlabels = obj.tommasiLabels(1:numTargetLabels);
@@ -36,6 +49,7 @@ classdef ProjectConfigsBase < handle
         end
         
         function [targetLabels,sourceLabels] = GetTargetSourceLabels(obj)
+            error('Shouldn''t this be in MainConfigs?');
             numTargetLabels = obj.numTarget;
             numSourceLabels = obj.numSource;
             targetLabels = obj.tommasiLabels(1:numTargetLabels);

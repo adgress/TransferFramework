@@ -23,55 +23,48 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 mainConfigs.set('multithread',multithread);
             end
             
-            if pc.makeSubDomains
-                [dataAndSplits] = obj.loadData(mainConfigs);
-                labelProduct = pc.MakeLabelProduct();                                
-              
-                if pc.addTargetDomain
-                    labelProduct = obj.addTargetDomain(labelProduct);
-                end                    
+            allParamsToVary = {};
+            numRandomFeatures = pc.numRandomFeatures;
+            paramsToVary = obj.get('paramsToVary');
+            for paramIdx=1:length(paramsToVary)
+                allParamsToVary{end+1} = obj.get(paramsToVary{paramIdx});
+            end
+            paramsToVary{end+1} = 'overrideConfigs';
+            allParamsToVary{end+1} = obj.get('overrideConfigs');
+            allParams = Helpers.MakeCrossProduct(allParamsToVary{:});
+            for paramIdx=1:length(allParams)                    
+                params = allParams{paramIdx};
+                mainConfigsCopy = mainConfigs.copy();
+                mainConfigsCopy.set(paramsToVary,params);  
+                mainConfigsCopy.addConfigs(params{end});
 
-                [dataAndSplitsCopy] = obj.makeSubDomainsForMultisourceTransfer(...
-                    dataAndSplits,labelProduct,pc);
-                [targetLabels,sourceLabels] = pc.GetTargetSourceLabels();
-                mainConfigs.set('numOverlap',pc.numOverlap);
-                mainConfigs.set('addTargetDomain',pc.addTargetDomain);                    
-                mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
-                mainConfigs.set('transferDataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);
-                mainConfigs.set('k',pc.k);
-                mainConfigs.set('sigmaScale',pc.sigmaScale);
-                mainConfigs.set('alpha',pc.alpha);                
-                
-                mainConfigs.set('targetLabels',targetLabels);
-                mainConfigs.set('sourceLabels',sourceLabels);
-                mainConfigs.set('dataAndSplits',dataAndSplitsCopy);
-                mainConfigs.set('transferDataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);
-                runExperiment(mainConfigs);
-            else
-                numRandomFeatures = 0;
-                if isfield(pc,'numRandomFeatures')
-                    numRandomFeatures = pc.numRandomFeatures;
-                end                
-                allParamsToVary = {};
-                paramsToVary = obj.get('paramsToVary');
-                for paramIdx=1:length(paramsToVary)
-                    allParamsToVary{end+1} = obj.get(paramsToVary{paramIdx});
+                [dataAndSplits] = obj.loadData(mainConfigsCopy);
+
+                if numRandomFeatures > 0
+                    error('Add random features to source data?');
+                    display(['Adding ' num2str(numRandomFeatures) ' random features']);
+                    X = dataAndSplits.allData.X;
+                    dataAndSplits.allData.X = [X rand(size(X,1),numRandomFeatures)];
                 end
-                allParams = Helpers.MakeCrossProduct(allParamsToVary{:});
-                for paramIdx=1:length(allParams)
-                    params = allParams{paramIdx};
-                    mainConfigsCopy = mainConfigs.copy();
-                    mainConfigsCopy.set(paramsToVary,params);                    
-                    dataAndSplits = load(mainConfigsCopy.getDataFileName());                    
-                    dataAndSplits = dataAndSplits.dataAndSplits;
-                    if numRandomFeatures > 0
-                        display(['Adding ' num2str(numRandomFeatures) ' random features']);
-                        X = dataAndSplits.allData.X;
-                        dataAndSplits.allData.X = [X rand(size(X,1),numRandomFeatures)];
+                if isempty(dataAndSplits.allData.instanceIDs)
+                    dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);                        
+                end                                   
+                if pc.makeSubDomains
+                    labelProduct = mainConfigsCopy.MakeLabelProduct();                    
+                    if pc.addTargetDomain
+                        labelProduct = obj.addTargetDomain(labelProduct);
                     end
-                    if isempty(dataAndSplits.allData.instanceIDs)
-                        dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);                        
-                    end
+                    [dataAndSplitsCopy] = obj.makeSubDomainsForMultisourceTransfer(...
+                        dataAndSplits,labelProduct,pc);
+                    [targetLabels,sourceLabels] = mainConfigsCopy.GetTargetSourceLabels();
+                    mainConfigsCopy.set('numOverlap',pc.numOverlap);
+                    mainConfigsCopy.set('addTargetDomain',pc.addTargetDomain);                    
+                    mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
+                    mainConfigsCopy.set('transferDataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);             
+
+                    mainConfigsCopy.set('targetLabels',targetLabels);
+                    mainConfigsCopy.set('sourceLabels',sourceLabels);                
+                else
                     if isfield(dataAndSplits,'sourceNames')
                         allSourceNames = dataAndSplits.sourceNames;
                         currSourceNames = mainConfigsCopy.c.sourceDataSetToUse;
@@ -79,6 +72,8 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         shouldUseSource = Helpers.IsMember(allSourceNames,currSourceNames) ...
                             & ~ismember(allSourceNames,targetName);                                         
                         if isempty(find(shouldUseSource))
+                            display(['Can''t find source(s) - skipping' ]);
+                            display(currSourceNames);
                             continue;
                         end
                         dataAndSplits.sourceDataSets = dataAndSplits.sourceDataSets(shouldUseSource);
@@ -94,8 +89,8 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     end
                     dataAndSplitsCopy.configs = dataAndSplits.configs.copy();
                     labelsToUse = [];
-                    if mainConfigsCopy.has('labelsToUse')
-                        labelsToUse = mainConfigsCopy.c.labelsToUse;
+                    if mainConfigsCopy.has('targetLabels')
+                        labelsToUse = mainConfigsCopy.c.targetLabels;
                     end
                     for splitIdx=1:length(dataAndSplits.allSplits)
                         split = dataAndSplits.allSplits{splitIdx};
@@ -105,7 +100,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         newSplit.targetData = targetDataCopy;
                         if isfield(dataAndSplits, 'sourceDataSets')
                             newSplit.sourceData = Helpers.MapCellArray(@copy,dataAndSplits.sourceDataSets);
-                            if ~isempty(labelsToUse)
+                            if mainConfigsCopy.has('sourceLabels')
                                 error('TODO');
                             end
                         end
@@ -117,14 +112,16 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             newSplit.targetData.keep(targetIndsToUse);
                             newSplit.targetType(~targetIndsToUse) = [];
                         end
-                        
+
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
                     end
-                    mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
-                    runExperiment(mainConfigsCopy);
-                end
-            end
-        end        
+                end                    
+                mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
+
+                runExperiment(mainConfigsCopy);
+            end        
+        end                        
+        
         function [dataAndSplits] = loadData(obj,mainConfigs)
             dataAndSplits = load(mainConfigs.getDataFileName());
             dataAndSplits = dataAndSplits.dataAndSplits;
