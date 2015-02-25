@@ -10,8 +10,10 @@ classdef LLGC < handle
                 I = eye(size(WN,1));
                 invM = (1-alpha)*inv((1+alpha)*I - WN);               
             end
-            fu = invM*fl;
+            fu = invM*fl;            
             fu = Helpers.normRows(fu);
+            assert(~any(isnan(fu(:))));
+            assert(~any(isinf(fu(:))));
             %display('llgc: Normalizing fu');
         end
 
@@ -86,12 +88,19 @@ classdef LLGC < handle
             W(logical(speye(size(W)))) = 0;   
             %Disq = spdiags(sum(W).^-.5);
             n = size(W,1);
-            Disq = spdiags(sum(W,2).^-.5,0,n,n);
+            D = spdiags(sum(W,2),0,n,n);
+            
+            %TODO: Do we want this?
+            D = D + 1e-6*sparse(eye(size(D)));
+            
+            Disq = inv(D).^.5;
             WN = Disq*W*Disq;
             I = speye(size(WN,1));
             M = ((1+alpha)*I-WN);
             fu = M\((1-alpha)*fl);
             fu = Helpers.normRows(fu);
+            assert(~any(isnan(fu(:))));
+            assert(~any(isinf(fu(:))));
         %toc
             %display('llgc: Normalizing fu');
         end

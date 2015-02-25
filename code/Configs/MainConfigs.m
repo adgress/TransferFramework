@@ -23,6 +23,7 @@ classdef MainConfigs < Configs
             obj.configsStruct.measure=Measure();
             obj.configsStruct.learners=[];
             obj.configsStruct.dataDir='Data';
+            obj.set('includeDataNameInResultsDirectory',true);
         end        
         function [v] = get.dataDirectory(obj)
             v = [obj.get('dataDir') '/' obj.get('dataName') '/'];
@@ -32,8 +33,10 @@ classdef MainConfigs < Configs
         end
         
         function [v] = getResultsDirectory(obj)
-            v = [getProjectDir() '/' obj.get('resultsDir') '/' ...
-                 '/' obj.get('dataName') '/'];
+            v = [getProjectDir() '/' obj.get('resultsDir') '/'];
+            if obj.get('includeDataNameInResultsDirectory')
+                v = [v obj.get('dataName') '/'];
+            end
         end
         
         
@@ -111,9 +114,13 @@ classdef MainConfigs < Configs
         function [] = setNGData(obj)
             obj.set('dataName','20news-bydate/splitData');
             obj.set('resultsDir','results_ng');
-            obj.set('dataSet','CR2CR3CR42CR1');            
+            
             obj.configsStruct.numSourcePerClass=Inf;
-            obj.set('sourceDataSetToUse',{'CR4'});
+            %obj.set('dataSet','CR2CR3CR42CR1');
+            %obj.set('sourceDataSetToUse',{'CR4'});
+            
+            obj.set('dataSet','CR2CR3CR4ST1ST2ST3ST42CR1');
+            obj.set('sourceDataSetToUse',{'ST4'});
         end
         
         function [] = setTommasiData(obj)

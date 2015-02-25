@@ -11,7 +11,7 @@ classdef TransferMeasure < Saveable
             obj.set('useSourceForTransfer',true);
         end
         
-        function [W,savedData] = createDistanceMatrix(obj, sources, target, options,savedData)
+        function [W,savedData] = createDistanceMatrix(obj, sources, target, options, makeRBF, savedData)
             if isa(sources,'cell')
                 source = DataSet.Combine(sources{:});
             else
@@ -22,18 +22,30 @@ classdef TransferMeasure < Saveable
             if exist('savedData','var') && isfield(savedData,'W')
                 W = savedData.W;            
             else
-                XallCombined = [source.X ; target.X];  
+                Xall = [source.X ; target.X];  
                 if obj.get('zscore')
-                    XallCombined = zscore(XallCombined);
+                    Xall = zscore(Xall);
                 end
                 if obj.get('useSeparableDistanceMatrix')
-                    error('TODO: combine with RBF?');
+                    assert(makeRBF);
+                    sigmaScale = obj.get('sigmaScale');
                     W = zeros(size(Xall,1));
-                    for featureIdx=1:size(Xall,1)
-                        W = W + Helpers.CreateDistanceMatrix(Xall(:,featureIdx));
+                    for featureIdx=1:size(Xall,2)
+                        W_i = full(Helpers.CreateDistanceMatrix(Xall(:,featureIdx)));
+                        sigma_i = sigmaScale*mean(W_i(:));          
+                        if sigma_i == 0
+                            continue;
+                        end                        
+                        a = Helpers.distance2RBF(W_i,sigma_i)./size(Xall,2);
+                        %a = W_i.^2;
+                        %a = -a ./ (2*sigma_i^2);
+                        assert(all(~isnan(a(:))));
+                        assert(all(~isinf(a(:))));
+                        W = W + a;
                     end
+                    %W = exp(W);
                 else
-                    W = Kernel.Distance(XallCombined);                                        
+                    W = Kernel.Distance(Xall);                                        
                 end
                 if exist('savedData','var')
                     savedData.W = W;
@@ -51,7 +63,8 @@ classdef TransferMeasure < Saveable
         
         function [measureResults,savedData] = ...
                 computeGraphMeasure(obj,source,target,options,...
-                useHF,savedData)                
+                useHF,savedData)       
+            makeRBF = true;
             measureMetadata = struct();
             targetWithLabels = target.Y > 0;
             if sum(targetWithLabels) == 0 || ...
@@ -64,9 +77,9 @@ classdef TransferMeasure < Saveable
                 W = options.distanceMatrix;                
             else                
                 if exist('savedData','var')
-                    [W,savedData] = obj.createDistanceMatrix(source, target, options, savedData);
+                    [W,savedData] = obj.createDistanceMatrix(source, target, options, makeRBF, savedData);
                 else
-                    [W] = obj.createDistanceMatrix(source, target, options);
+                    [W] = obj.createDistanceMatrix(source, target, makeRBF, options);
                 end
             end      
             alpha = obj.get('alpha');
@@ -82,7 +95,11 @@ classdef TransferMeasure < Saveable
             measureMetadata.sigma = sigma;
             rerunLOOCV = 1;            
             if rerunLOOCV
-                rbfKernel = Helpers.distance2RBF(W.W,sigma);
+                if makeRBF
+                    rbfKernel = W.W;
+                else
+                    rbfKernel = Helpers.distance2RBF(W.W,sigma);
+                end
                 distMat = DistanceMatrix(rbfKernel,W.Y,W.type,W.trueY,W.instanceIDs);
                 if exist('savedData','var')
                     [score, percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...

@@ -13,9 +13,15 @@ function [] = runVisualization()
     else
         title(a{1});
     end
-    domainsToViz = ProjectConfigs.tommasiDomainsToViz;
-    if ProjectConfigs.data == Constants.CV_DATA
-        domainsToViz = ProjectConfigs.cvDomainsToViz;
+    switch ProjectConfigs.data
+        case Constants.CV_DATA
+            domainsToViz = ProjectConfigs.cvDomainsToViz;
+        case Constants.TOMMASI_DATA
+            domainsToViz = ProjectConfigs.tommasiDomainsToViz;
+        case Constants.NG_DATA
+            domainsToViz = ProjectConfigs.ngDomainsToViz;
+        otherwise
+            error('unknown data set');
     end
     [d] = ProjectConfigs.getResultsDirectory();
     if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz

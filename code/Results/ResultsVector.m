@@ -25,10 +25,22 @@ classdef ResultsVector < double
             elseif confInterval == VisualizationConfigs.CONF_INTERVAL_BINOMIAL
                 n = size(obj,1);
                 m = obj.getMean();    
+                z = 1.96;
                 v = 1.96*sqrt(inv(n)*m.*(1-m));
+                %{
+                t = m + (.5/n)*z^2;
+                k = sqrt(m.*(1-m)/n + z^2 /(4*n^2));
+                tp = t + z*k;
+                tm = t - z*k;
+                l = 1/(1 + (z^2)/n);
+                tp = tp * l;
+                tm = tm * l;
+                v = [tp ; tm];
+                %}
             else
                 error('Unknown conf interval type');
             end
+            %v = v*0;
             %{
             c = 9/(2*log(2/.05));
             nc = n*c;

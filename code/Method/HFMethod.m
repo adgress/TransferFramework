@@ -10,7 +10,7 @@ classdef HFMethod < Method
             obj = obj@Method(configs);
         end
         
-        function [distMat,savedData] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs,savedData)            
+        function [distMat,savedData] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs,makeRBF,savedData)
             if useHF    
                 error('Caching assumes ordering doesn''t change');
                 trainLabeled = train.Y > 0;
@@ -31,7 +31,9 @@ classdef HFMethod < Method
             instanceIDs = [train.instanceIDs(trainLabeled) ; ...
                 train.instanceIDs(~trainLabeled) ; ...
                 test.instanceIDs];
-                
+            if obj.has('sigmaScale')
+                sigmaScale = obj.get('sigmaScale');
+            end
             if exist('savedData','var') && isfield(savedData,'W')
                 W = savedData.W;
             else
@@ -49,14 +51,30 @@ classdef HFMethod < Method
                     trueY = trueY(inds);
                     instanceIDs = instanceIDs(inds);                
                     W = Helpers.CreateDistanceMatrix(Xall);
+                    error('check makeRBF');
                 elseif obj.get('useSeparableDistanceMatrix')
+                    assert(makeRBF);
                     W = zeros(size(Xall,1));
-                    for featureIdx=1:size(Xall,1)
-                        W = W + Helpers.CreateDistanceMatrix(Xall(:,featureIdx));
+                    for featureIdx=1:size(Xall,2)
+                        W_i = full(Helpers.CreateDistanceMatrix(Xall(:,featureIdx)));
+                        sigma_i = sigmaScale*mean(W_i(:));          
+                        if sigma_i == 0
+                            continue;
+                        end
+                        a = Helpers.distance2RBF(W_i,sigma_i)./size(Xall,2);
+                        %a = W_i.^2;
+                        %a = -a ./ (2*sigma_i^2);
+                        assert(all(~isnan(a(:))));
+                        assert(all(~isinf(a(:))));
+                        W = W + a;
                     end
-                    W = W ./ size(Xall,1);
+                    %W = exp(W);
                 else
                     W = Helpers.CreateDistanceMatrix(Xall);
+                    if makeRBF
+                        sigma = sigmaScale*mean(W(:));
+                        W = Helpers.distance2RBF(W,sigma);
+                    end
                     %{
                     if obj.has('Wsparsity')
                         W = Helpers.SparsifyDistanceMatrix(W,obj.get('Wsparsity'));
@@ -149,8 +167,11 @@ classdef HFMethod < Method
             assert(isempty(find(isnan(fu))));
         end
         
-        function [fu,savedData,sigma] = runLLGC(obj,distMat,savedData)
+        function [fu,savedData,sigma] = runLLGC(obj,distMat,makeRBF,savedData)
             [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat);
+            if makeRBF
+                Wrbf = distMat.W;
+            end
             alpha = obj.get('alpha');
             if exist('savedData','var') && isfield(savedData,'invM')
                 [fu] = LLGC.llgc_inv(Wrbf, YtrainMat, alpha, savedData.invM);
@@ -172,15 +193,16 @@ classdef HFMethod < Method
             test = input.test;   
             %learner = input.configs.learner;
             testResults = FoldResults();   
+            makeRBF = true;
             if isfield(input,'distanceMatrix')
                 distMat = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
             else                
-                %[distMat] = createDistanceMatrix(obj,train,test,useHF,learner.configs);
+                %[distMat] = createDistanceMatrix(obj,train,test,useHF,makeRBF,learner.configs);
                 if exist('savedData','var')
-                    [distMat,savedData] = createDistanceMatrix(obj,train,test,useHF,obj.configs,savedData);
+                    [distMat,savedData] = createDistanceMatrix(obj,train,test,useHF,obj.configs,makeRBF,savedData);
                 else
-                    [distMat] = createDistanceMatrix(obj,train,test,useHF,obj.configs);
+                    [distMat] = createDistanceMatrix(obj,train,test,useHF,obj.configs,makeRBF);
                 end
                 testResults.dataType = distMat.type;
             end
@@ -189,9 +211,9 @@ classdef HFMethod < Method
                 [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat);
             else
                 if exist('savedData','var')
-                    [fu,savedData,sigma] = runLLGC(obj,distMat,savedData);
+                    [fu,savedData,sigma] = runLLGC(obj,distMat, makeRBF, savedData);
                 else
-                    [fu,~,sigma] = runLLGC(obj,distMat);
+                    [fu,~,sigma] = runLLGC(obj,distMat, makeRBF);
                 end
             end
             [maxVal,predicted] = max(fu,[],2);

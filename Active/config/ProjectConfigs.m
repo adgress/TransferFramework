@@ -21,15 +21,17 @@ classdef ProjectConfigs < ProjectConfigsBase
         useOverrideConfigs = 1
         
         showBothPerformance = 0
-        showTransferDifference = 0
+        showTransferDifference = 1
         showTransferPrediction = 1
         showTransferPerformance = 0
-        showTransferMeasurePerfDiff = 1
-        showPreTransferMeasurePerfDiff = 1
+        showTransferMeasurePerfDiff = 0
+        showPreTransferMeasurePerfDiff = 0
+        showWeightedTransferLoss = 0;
                 
-        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
-        activeMethodsToPlot = {'Random'}
-        useDomainsToViz = true
+        activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
+        %activeMethodsToPlot = {'Random','Entropy'}
+        %activeMethodsToPlot = {'Random'}
+        useDomainsToViz = 1
         
         vizTargetLabels = [10 15]
         vizSourceLabels = [25 26];
@@ -46,6 +48,30 @@ classdef ProjectConfigs < ProjectConfigsBase
             'D2W',...
             'W2D',...
             }
+        %{
+        ngDomainsToViz = {...
+            'ST12CR1',...
+            'ST22CR1',...
+            'ST32CR1',...
+            'ST42CR1',...
+            }
+        %}
+        %{
+        ngDomainsToViz = {...
+            'CR22CR1',...
+            'CR32CR1',...
+            'CR42CR1',...
+            }
+        %}
+        ngDomainsToViz = {...
+            'ST12CR1',...
+            'ST22CR1',...
+            'ST32CR1',...
+            'ST42CR1',...
+            'CR22CR1',...
+            'CR32CR1',...
+            'CR42CR1',...
+        }
     end
     
     properties        
@@ -119,6 +145,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.get('mainConfigs').setTommasiData(); 
                 case Constants.NG_DATA
                     c.get('mainConfigs').setNGData();
+                    c.get('mainConfigs').set('includeDataNameInResultsDirectory',false);
                 otherwise
                     error('Unknown data set');
             end
@@ -137,6 +164,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         function [c] = VisualizationConfigs()            
             c = VisualizationConfigs();                                                       
             c.configsStruct.confidenceInterval = VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
+            %c.configsStruct.confidenceInterval = VisualizationConfigs.CONF_INTERVAL_STD;
             
             [c.configsStruct.plotConfigs,legend,title] = ...
                 ProjectConfigs.makePlotConfigs();
@@ -168,7 +196,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 case Constants.NG_DATA                    
                     c.set('prefix','results_ng');
                     c.set('dataSet',{'CR2CR3CR42CR1'});
-                    transferDir = 'CR42CR3';
+                    transferDir = 'CR42CR1';
                 otherwise
                     error('Unknown data set');
             end            
@@ -210,7 +238,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             else
                 plotFields = {}; 
                 legendSuffixes = {};
-                fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
+                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
+                fileSuffix = '_S+T_LogReg.mat';
                 
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];
@@ -235,6 +264,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if ProjectConfigs.showTransferMeasurePerfDiff
                     plotFields{end+1} = 'preTransferMeasurePerfDiff';
                     legendSuffixes{end+1} = 'Transfer abs(Measure-Perf)';
+                end
+                if ProjectConfigs.showWeightedTransferLoss
+                    plotFields{end+1} = 'weightedPrecisionTransferLoss';
+                    legendSuffixes{end+1} = 'Weighted Precision Transfer Loss';
                 end
                 %TODO: This assumes activeMethodsToPlot has length one                
                 methods = ProjectConfigs.activeMethodsToPlot;

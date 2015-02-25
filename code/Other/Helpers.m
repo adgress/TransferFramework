@@ -142,6 +142,11 @@ classdef Helpers < handle
             end
         end
         
+        function [v] = StructField2Mat(l,field)
+            v = [l.(field)];
+            v = reshape(v,length(l),length(l(1).(field)));
+        end
+        
         function [sCombined] = CombineStructs(s1,s2)
             sCombined = struct();
             structs = {s1, s2};

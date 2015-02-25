@@ -8,6 +8,7 @@ function [f, returnStruct] = visualizeResults(options,f)
     allPlotConfigs = options.get('plotConfigs');
     numColors = length(allPlotConfigs);
     colors = colormap(hsv(numColors));
+    fileManager = FileManager();
     for i=1:length(allPlotConfigs)
         plotConfigs = allPlotConfigs{i};                
         fileName = options.makeResultsFileName(plotConfigs.get('resultFileName'));
@@ -15,7 +16,7 @@ function [f, returnStruct] = visualizeResults(options,f)
             display([fileName ' doesn''t exist - skipping']);
             continue
         end
-        allResults = load(fileName);
+        allResults = fileManager.load(fileName);
         allResults = allResults.results;
         measure = options.get('measure');
         allResults.computeLossFunction(measure);
@@ -99,10 +100,15 @@ function [c] = makeResultsTableData(resultStructs)
     end
 end
 
-function [s] = makeResultsStruct(means,vars)
+function [s] = makeResultsStruct(means,vars,low)
     s = struct();
     s.means = means;
-    s.vars = vars;
+    if nargin == 2
+        s.vars = vars;
+    else
+        s.high = vars;
+        s.low = low;
+    end
 end
 
 function [newResults] = getResultsWithSize(results,size)
@@ -127,6 +133,7 @@ end
 
 function [displayVal] = plotResults(results,sizes,field,colors,options)        
     vars = getVariances(results,field,options);
+    %[high,low] = getVariances(results,field,options);
     means = getMeans(results,field);
     %if ~options.c.vizMeasureCorrelation
     if true
@@ -134,18 +141,28 @@ function [displayVal] = plotResults(results,sizes,field,colors,options)
             errorbar(sizes,means,vars,'color',colors);    
         else
             errorbar(1:length(means),means,vars,'color',colors);    
+            %errorbar(1:length(means),means,low,high,'color',colors);    
+            %a = ksr(1:41,means,2);
+            %plot(a.x,a.f,'color',colors);
         end
     end
     displayVal = makeResultsStruct(means,vars);
+    %displayVal = makeResultsStruct(means,high,low);
 end
 
 function [vars] = getVariances(results,name,options)
+%function [high,low] = getVariances(results,name,options)
     m = size(results{1}.aggregatedResults.(name),2);
     vars = zeros(numel(results),m);
+    %high = zeros(numel(results),m);
+    %low = zeros(numel(results),m);
     for i=1:numel(results);
-        vars(i,:) = ...
+        v = ...
             results{i}.aggregatedResults.(name).getConfidenceInterval(...
             options.c.confidenceInterval);
+        vars(i,:) = v;
+        %high(i,:) = v(1,:);
+        %low(i,:) = v(2,:);        
     end
 end
 

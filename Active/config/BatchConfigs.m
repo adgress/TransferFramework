@@ -26,7 +26,7 @@ classdef BatchConfigs < Configs
                     case Constants.TOMMASI_DATA
                         overrideConfigs = BatchConfigs.makeTommasiOverrideConfigs();
                     case Constants.NG_DATA
-                        
+                        overrideConfigs = BatchConfigs.makeNGOverrideConfigs();
                     otherwise
                         error('Unknown data set');
                 end
@@ -75,6 +75,37 @@ classdef BatchConfigs < Configs
                 c = Configs();
                 c.set('targetLabels',targetLabelSets{idx});
                 c.set('sourceLabels',sourceLabelSets{idx});
+                configs{end+1} = c;
+            end
+        end
+        
+        function [configs] = makeNGOverrideConfigs()
+            configs = {};      
+            %{
+            sourceDataSetToUse = {'CR2','CR3','CR4'};
+            dataSet = 'CR2CR3CR42CR1';
+            for idx=1:length(sourceDataSetToUse)
+                c = Configs();
+                c.set('sourceDataSetToUse',sourceDataSetToUse{idx});
+                c.set('dataSet',dataSet);
+                configs{end+1} = c;
+            end
+                        
+            sourceDataSetToUse = {'ST1','ST2','ST3','ST4'};
+            dataSet = 'CR2CR3CR4ST1ST2ST3ST42CR1';
+            for idx=1:length(sourceDataSetToUse)
+                c = Configs();
+                c.set('sourceDataSetToUse',sourceDataSetToUse{idx});
+                c.set('dataSet',dataSet);
+                configs{end+1} = c;
+            end
+            %}
+            sourceDataSetToUse = {'CR2','CR3','CR4','ST1','ST2','ST3','ST4'};
+            dataSet = 'CR2CR3CR4ST1ST2ST3ST42CR1';
+            for idx=1:length(sourceDataSetToUse)
+                c = Configs();
+                c.set('sourceDataSetToUse',sourceDataSetToUse{idx});
+                c.set('dataSet',dataSet);
                 configs{end+1} = c;
             end
         end

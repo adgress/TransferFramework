@@ -45,6 +45,8 @@ classdef Saveable < handle
             obj.configs.delete(key);
         end
         
+        function [] = updateConfigs(obj, newConfigs)
+        end
         function [] = updateConfigsWithKeys(obj, newConfigs, keys)
             obj.configs.addConfigsWithKeys(newConfigs,keys);
         end

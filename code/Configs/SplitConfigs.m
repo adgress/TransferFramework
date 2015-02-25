@@ -64,11 +64,14 @@ classdef SplitConfigs < Configs
             %maxTrain=1000
             
             obj.configsStruct.inputFilePrefix='Data/20news-bydate/Domains/';
-            obj.configsStruct.inputDataSets={'CR1.mat','CR2.mat','CR3.mat','CR4.mat'};
-            %obj.configsStruct.dataSetAcronyms={'CR1','CR2','CR3','CR4'};
-            obj.configsStruct.dataSetAcronyms={'CR1','CR2','CR3','CR4'};
+            obj.configsStruct.inputDataSets=...
+                {'CR1.mat','CR2.mat','CR3.mat','CR4.mat',...
+                'ST1.mat','ST2.mat','ST3.mat','ST4.mat'};
+            obj.configsStruct.dataSetAcronyms=...
+                {'CR1','CR2','CR3','CR4','ST1','ST2','ST3','ST4'};
             obj.configsStruct.outputFilePrefix='Data/20news-bydate/splitData/';
-            obj.set('minInstancesPerFeature',6);
+            obj.set('minInstancesPerFeature',100);
+            obj.set('numSplits',30);
         end
     end
     
