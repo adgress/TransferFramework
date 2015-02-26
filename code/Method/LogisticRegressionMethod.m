@@ -38,8 +38,9 @@ classdef LogisticRegressionMethod < Method
                 options = ['-s 0 -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];
                 accs(cIdx) = train(YLabeled,sparse(XLabeled),options);
             end
-            bestC = argmax(accs);
-            bestCVAcc = accs(bestC) / 100;          
+            bestCInd = argmax(accs);
+            bestC = C(bestCInd);
+            bestCVAcc = accs(bestCInd) / 100;          
             testResults.learnerMetadata.cvAcc = bestCVAcc;
             if sum(trainData.isSource()) > 0
                 labeledTargetInds = find(trainData.isLabeledTarget());
@@ -54,6 +55,20 @@ classdef LogisticRegressionMethod < Method
                     [~,t,~] = predict(trainData.Y(idx), ...
                             sparse(trainData.X(idx,shouldUseFeature)),...
                             m, '-q');
+                    %{
+                    % Find L2-regularized logistic
+                    nVars = size(Xcurr,2);
+                    X = [ones(size(Xcurr,1),1) Xcurr];
+                    Y = Ycurr;
+                    Y(Y == 2) = -1;
+                    funObj = @(w)LogisticLoss(w,X,Y);
+                    lambda = 1*ones(nVars+1,1);
+                    lambda(1) = 0; % Don't penalize bias
+                    minFuncOptions = struct();
+                    minFuncOptions.Display = 0;
+                    fprintf('Training L2-regularized logistic regression model...\n');
+                    wL2 = minFunc(@penalizedL2,zeros(nVars+1,1),minFuncOptions,funObj,lambda);
+                    %}
                     cvAcc = cvAcc + t(1)/(100*length(labeledTargetInds));
                 end
                 testResults.learnerMetadata.cvAcc = cvAcc;
