@@ -20,23 +20,27 @@ classdef LogisticRegressionMethod < Method
             XLabeled = trainData.X(trainData.isLabeled(),:);
             shouldUseFeature = true(size(XLabeled,2),1);
             for i=1:size(XLabeled,2)
-                if length(unique(XLabeled(:,i))) == 1
+                if length(unique(XLabeled(:,i))) <= 2
                     shouldUseFeature(i) = false;
                 end
             end
             
             %Hyperparameter is multiplied with the loss term
             C = 10.^(-5:5);
-            
             XLabeled = XLabeled(:,shouldUseFeature);
             %XLabeled = zscore(XLabeled);
             YLabeled = trainData.Y(trainData.isLabeled(),:);
             %B = mnrfit(XLabeled,YLabeled);                       
             
             accs = zeros(size(C));
+            XLabeledCurr = XLabeled;
+            t = NormalizeTransform();
+            t.learn(XLabeledCurr);
+            XLabeledCurr = sparse(t.apply(XLabeledCurr));
+            
             for cIdx=1:length(C)
-                options = ['-s 0 -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];
-                accs(cIdx) = train(YLabeled,sparse(XLabeled),options);
+                options = ['-s 0 -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];                
+                accs(cIdx) = train(YLabeled,XLabeledCurr,options);
             end
             bestCInd = argmax(accs);
             bestC = C(bestCInd);
@@ -45,16 +49,39 @@ classdef LogisticRegressionMethod < Method
             if sum(trainData.isSource()) > 0
                 labeledTargetInds = find(trainData.isLabeledTarget());
                 cvAcc = 0;
-                for idx=labeledTargetInds'
+                for ind=1:length(labeledTargetInds)
+                    idx = labeledTargetInds(ind);                    
+                    options = ['-s 0 -c ' num2str(bestC) ' -B 1 -q'];
+                    %options = ['-s 0 -c ' num2str(bestC) ' -B 1'];
                     currToUse = trainData.isLabeled();
                     currToUse(idx) = 0;
-                    options = ['-s 0 -c ' num2str(bestC) ' -B 1 -q'];
                     Xcurr = trainData.X(currToUse,shouldUseFeature);
                     Ycurr = trainData.Y(currToUse);
+                    
+                    t = NormalizeTransform();
+                    t.learn(Xcurr);                    
+                    Xcurr = t.apply(Xcurr,Ycurr);
+                    display('start train');
+                    
+                    %{
+                    l = [];
+                    for i=1:size(Xcurr,2)
+                        l(i) = length(unique(Xcurr(:,i)));
+                    end
+                    
+                    if ind == 2
+                        %continue;
+                        display('');
+                    end
+                    %}
                     m = train(Ycurr,sparse(Xcurr),options);
-                    [~,t,~] = predict(trainData.Y(idx), ...
-                            sparse(trainData.X(idx,shouldUseFeature)),...
-                            m, '-q');
+                    display('end train');
+                    Ytest = trainData.Y(idx);
+                    Xtest = trainData.X(idx,shouldUseFeature);
+                    Xtest = t.apply(Xtest);
+                    display('start predict');
+                    [~,t,~] = predict(Ytest, sparse(Xtest), m, '-q');
+                    display('end predict');
                     %{
                     % Find L2-regularized logistic
                     nVars = size(Xcurr,2);
@@ -76,18 +103,28 @@ classdef LogisticRegressionMethod < Method
             if ~isempty(test)
                 testResults.dataType = [trainData.type ; test.type];
                 options = ['-s 0 -c ' num2str(bestC) ' -B 1 -q'];
+                
+                t = NormalizeTransform();
+                t.learn(XLabeled,YLabeled);
+                XLabeled = t.apply(XLabeled,YLabeled);
+                display('start train2');
                 model = train(YLabeled,sparse(XLabeled),options);
-
+                display('end train2');
                 %Xall = [train.X ; test.X];
                 %Xall = Xall(:,shouldUseFeature);
                 Xtrain = sparse(trainData.X(:,shouldUseFeature));            
                 %Xall = zscore(Xall);
 
                 %vals = mnrval(B,Xall);
-                [predTrain,~,trainFU] = predict(trainData.trueY, Xtrain, model, '-q -b 1');
-
+                Xtrain = t.apply(Xtrain);
+                display('start predict2');
+                [predTrain,~,trainFU] = predict(trainData.trueY, sparse(Xtrain), model, '-q -b 1');
+                display('end predict2');
                 Xtest = sparse(test.X(:,shouldUseFeature));
-                [predTest,acc,testFU] = predict(test.Y, Xtest, model, '-q -b 1');
+                Xtest = t.apply(Xtest);
+                display('start predict3');
+                [predTest,acc,testFU] = predict(test.Y, sparse(Xtest), model, '-q -b 1');
+                display('end predict3');
                 acc(1) = acc(1) / 100;
                 testResults.yPred = [predTrain;predTest];
                 testResults.yActual = [trainData.Y ; test.Y];
