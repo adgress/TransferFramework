@@ -9,11 +9,14 @@ function [f, returnStruct] = visualizeResults(options,f)
     numColors = length(allPlotConfigs);
     colors = colormap(hsv(numColors));
     fileManager = FileManager();
+    fileExists = true(length(allPlotConfigs),1);
+    sizes = [];
     for i=1:length(allPlotConfigs)
         plotConfigs = allPlotConfigs{i};                
         fileName = options.makeResultsFileName(plotConfigs.get('resultFileName'));
         if ~exist(fileName,'file')
             display([fileName ' doesn''t exist - skipping']);
+            fileExists(i) = false;
             continue
         end
         allResults = fileManager.load(fileName);
@@ -56,8 +59,8 @@ function [f, returnStruct] = visualizeResults(options,f)
     if index == 1
         leg = {};
     end
-    if options.c.showLegend && ~isempty(leg) && ~options.c.showTable
-        legend(leg,'Location','southeast');
+    if options.c.showLegend && ~isempty(leg) && ~options.c.showTable && any(fileExists)
+        legend(leg(fileExists),'Location','southeast');
     end
     if options.c.showTable
         tableData = makeResultsTableData(displayVals);
@@ -142,7 +145,7 @@ function [displayVal] = plotResults(results,sizes,field,colors,options)
         else
             errorbar(1:length(means),means,vars,'color',colors);    
             %errorbar(1:length(means),means,low,high,'color',colors);    
-            %a = ksr(1:41,means,2);
+            %a = ksr(1:length(means),means,2);
             %plot(a.x,a.f,'color',colors);
         end
     end

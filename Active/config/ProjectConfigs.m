@@ -14,21 +14,25 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         instance = ProjectConfigs.CreateSingleton()
 
-        data = Constants.NG_DATA
+        %data = Constants.NG_DATA
         %data = Constants.TOMMASI_DATA
-        %data = Constants.CV_DATA
+        data = Constants.CV_DATA
         
         useOverrideConfigs = 1
         
-        showBothPerformance = 0
-        showTransferDifference = 1
-        showTransferPrediction = 1
+        showBothPerformance = 1
+        showPreTransferPerformance = 0
         showTransferPerformance = 0
+        
+        showTransferDifference = 0
+        showTransferPrediction = 0
+        
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         showWeightedTransferLoss = 0;
                 
-        activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
+        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
+        activeMethodsToPlot = {'Entropy','TargetEntropy'}
         %activeMethodsToPlot = {'Random','Entropy'}
         %activeMethodsToPlot = {'Random'}
         useDomainsToViz = 1
@@ -140,7 +144,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
             switch pc.dataSet
                 case Constants.CV_DATA
-                    c.get('mainConfigs').setTommasiData(); 
+                    c.get('mainConfigs').setCVData(); 
                 case Constants.TOMMASI_DATA
                     c.get('mainConfigs').setTommasiData(); 
                 case Constants.NG_DATA
@@ -244,6 +248,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];
                     legendSuffixes = [legendSuffixes {'Transfer Performance','Performance'}];
+                end
+                if ProjectConfigs.showPreTransferPerformance
+                    plotFields{end+1} = 'preTransferValTest';
+                    legendSuffixes{end+1} = 'Pre Transfer Performance';
                 end
                 if ProjectConfigs.showTransferPrediction
                     plotFields{end+1} = 'negativeTransferPrediction';

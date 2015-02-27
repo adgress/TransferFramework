@@ -24,8 +24,8 @@ classdef ActiveMainConfigs < MainConfigs
             
             activeConfigs = Configs();            
             %obj.configsStruct.activeMethodObj=RandomActiveMethod(activeConfigs);
-            obj.configsStruct.activeMethodObj=EntropyActiveMethod(activeConfigs);
-            %obj.configsStruct.activeMethodObj=TargetEntropyActiveMethod(activeConfigs);
+            %obj.configsStruct.activeMethodObj=EntropyActiveMethod(activeConfigs);
+            obj.configsStruct.activeMethodObj=TargetEntropyActiveMethod(activeConfigs);
             %obj.configsStruct.activeMethodObj=VarianceMinimizationActiveMethod(activeConfigs);            
             
             transferMeasureConfigs = obj.makeDefaultLearnerConfigs();
@@ -38,7 +38,7 @@ classdef ActiveMainConfigs < MainConfigs
             obj.set('transferMeasure',MethodTransferMeasure(transferMeasureConfigs));
             obj.set('learners',LogisticRegressionMethod(learnerConfigs));
             
-            obj.configsStruct.labelBudget = 40;            
+            obj.configsStruct.labelBudget = 10;
             %obj.configsStruct.labelsToUse = pc.labelsToUse;            
             
             switch pc.data
