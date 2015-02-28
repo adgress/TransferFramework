@@ -1,4 +1,4 @@
-classdef Saveable < handle
+classdef Saveable < matlab.mixin.Copyable
     %SAVEABLE Summary of this class goes here
     %   Detailed explanation goes here
     

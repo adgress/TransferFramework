@@ -30,6 +30,21 @@ classdef BatchConfigs < Configs
                     otherwise
                         error('Unknown data set');
                 end
+                activeConfigs = Configs();
+                activeMethods = {
+                    EntropyActiveMethod(activeConfigs), ...
+                    TargetEntropyActiveMethod(activeConfigs);  
+                };
+                newOverrideConfigs = {};
+                for i=1:length(overrideConfigs)
+                    c = overrideConfigs{i};
+                    for j=1:length(activeMethods)
+                        cCopy = c.copy();
+                        cCopy.set('activeMethodObj',activeMethods{j}.copy);
+                        newOverrideConfigs{end+1} = cCopy;
+                    end
+                end
+                overrideConfigs = newOverrideConfigs;
             end            
             obj.set('overrideConfigs',overrideConfigs);
         end           
