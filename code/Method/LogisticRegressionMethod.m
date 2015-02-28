@@ -49,39 +49,36 @@ classdef LogisticRegressionMethod < Method
             if sum(trainData.isSource()) > 0
                 labeledTargetInds = find(trainData.isLabeledTarget());
                 cvAcc = 0;
-                for ind=1:length(labeledTargetInds)
-                    idx = labeledTargetInds(ind);                    
+                folds = 10;
+                if length(labeledTargetInds) < folds
+                    folds = length(labeledTargetInds);
+                end
+                %for ind=1:length(labeledTargetInds)
+                for foldIdx=1:folds
+                    if length(labeledTargetInds) <= folds
+                        isTest = foldIdx;
+                    else
+                        isTest = DataSet.generateSplit([.8 .2 0],...
+                            trainData.Y(labeledTargetInds)) == 2;
+                    end
+                    %idx = labeledTargetInds(ind);                    
+                    testInds = labeledTargetInds(isTest);
                     options = ['-s 0 -c ' num2str(bestC) ' -B 1 -q'];
                     %options = ['-s 0 -c ' num2str(bestC) ' -B 1'];
                     currToUse = trainData.isLabeled();
-                    currToUse(idx) = 0;
+                    %currToUse(idx) = 0;
+                    currToUse(testInds) = false;
                     Xcurr = trainData.X(currToUse,shouldUseFeature);
                     Ycurr = trainData.Y(currToUse);
                     
                     t = NormalizeTransform();
                     t.learn(Xcurr);                    
                     Xcurr = t.apply(Xcurr,Ycurr);
-                    display('start train');
-                    
-                    %{
-                    l = [];
-                    for i=1:size(Xcurr,2)
-                        l(i) = length(unique(Xcurr(:,i)));
-                    end
-                    
-                    if ind == 2
-                        %continue;
-                        display('');
-                    end
-                    %}
                     m = train(Ycurr,sparse(Xcurr),options);
-                    display('end train');
-                    Ytest = trainData.Y(idx);
-                    Xtest = trainData.X(idx,shouldUseFeature);
+                    Ytest = trainData.Y(testInds);
+                    Xtest = trainData.X(testInds,shouldUseFeature);
                     Xtest = t.apply(Xtest);
-                    display('start predict');
                     [~,t,~] = predict(Ytest, sparse(Xtest), m, '-q');
-                    display('end predict');
                     %{
                     % Find L2-regularized logistic
                     nVars = size(Xcurr,2);
@@ -96,7 +93,7 @@ classdef LogisticRegressionMethod < Method
                     fprintf('Training L2-regularized logistic regression model...\n');
                     wL2 = minFunc(@penalizedL2,zeros(nVars+1,1),minFuncOptions,funObj,lambda);
                     %}
-                    cvAcc = cvAcc + t(1)/(100*length(labeledTargetInds));
+                    cvAcc = cvAcc + t(1)/(100*folds);
                 end
                 testResults.learnerMetadata.cvAcc = cvAcc;
             end
@@ -107,24 +104,13 @@ classdef LogisticRegressionMethod < Method
                 t = NormalizeTransform();
                 t.learn(XLabeled,YLabeled);
                 XLabeled = t.apply(XLabeled,YLabeled);
-                display('start train2');
                 model = train(YLabeled,sparse(XLabeled),options);
-                display('end train2');
-                %Xall = [train.X ; test.X];
-                %Xall = Xall(:,shouldUseFeature);
                 Xtrain = sparse(trainData.X(:,shouldUseFeature));            
-                %Xall = zscore(Xall);
-
-                %vals = mnrval(B,Xall);
                 Xtrain = t.apply(Xtrain);
-                display('start predict2');
                 [predTrain,~,trainFU] = predict(trainData.trueY, sparse(Xtrain), model, '-q -b 1');
-                display('end predict2');
                 Xtest = sparse(test.X(:,shouldUseFeature));
                 Xtest = t.apply(Xtest);
-                display('start predict3');
                 [predTest,acc,testFU] = predict(test.Y, sparse(Xtest), model, '-q -b 1');
-                display('end predict3');
                 acc(1) = acc(1) / 100;
                 testResults.yPred = [predTrain;predTest];
                 testResults.yActual = [trainData.Y ; test.Y];
