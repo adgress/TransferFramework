@@ -1,4 +1,4 @@
-classdef NormalizeTransform < Saveable
+classdef NormalizeTransform < TransformBase
     %STANDARDIZETRANSFORM Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -29,13 +29,7 @@ classdef NormalizeTransform < Saveable
         
         function [prefix] = getPrefix(obj)
             prefix = 'ZScore';
-        end
-        function [d] = getDirectory(obj)
-            error('');
-        end
-        function [nameParams] = getNameParams(obj)
-            error('TODO');
-        end
+        end        
     end
     
 end
