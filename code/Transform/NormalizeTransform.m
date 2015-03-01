@@ -23,6 +23,7 @@ classdef NormalizeTransform < Saveable
         function [Z] = apply(obj,X,Y)
             Z = X - repmat(obj.mean,size(X,1),1);
             Z = Z ./ repmat(obj.stdevs,size(X,1),1);
+	    Z(isnan(Z(:))) = 0;
             %diff = Z - obj.Z;
         end
         
