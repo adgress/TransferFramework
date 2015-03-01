@@ -30,25 +30,40 @@ function [] = runExperiment(configs)
     tic
 
     allResults = ResultsContainer(configLoader.numSplits,...
-        configLoader.numExperiments);    
+        configLoader.numExperiments);        
     for j = 1:configLoader.numExperiments
         configLoader.allExperiments{j}.learner = learner;
         allResults.allResults{j}.experiment = ...
             configLoader.allExperiments{j};                   
     end
+    assert(configLoader.numExperiments == 1);
     for j=1:configLoader.numExperiments
         splitResults = cell(configLoader.numSplits,1);
         if multithread
             parfor i=1:configLoader.numSplits  
                 display(sprintf('%d',i));
+                t = makeTempFile(outputFile,i);
+                if exist(t,'file')
+                    display('Found Temp results - loading...');
+                    splitResults{i} = loadTempResults(t);
+                    continue;
+                end
                 [splitResults{i}] = ...
-                    configLoader.runExperiment(j,i);               
+                    configLoader.runExperiment(j,i);                               
+                saveTempResults(t,splitResults{i});
             end            
         else
             for i=1:configLoader.numSplits                
                 display(sprintf('%d',i));
+                t = makeTempFile(outputFile,i);
+                if exist(t,'file')
+                    display('Found Temp results - loading...');
+                    splitResults{i} = loadTempResults(t);                    
+                    continue;
+                end
                 [splitResults{i}] = ...
                     configLoader.runExperiment(j,i);
+                saveTempResults(t,splitResults{i});
             end
         end
         allResults.allResults{j}.splitResults = splitResults;
@@ -66,4 +81,23 @@ function [] = runExperiment(configs)
         allResults.aggregateMeasureResults();
     end
     allResults.saveResults(outputFile);
+    for i=1:configLoader.numSplits
+        t = makeTempFile(outputFile,i);
+        delete(t);
+    end
+end
+
+function [t] = makeTempFile(file,idx)
+    [path,name,ext] = fileparts(file);
+    t = [path '/TEMP/' num2str(idx) '_' name ext];
+end
+
+function [] = saveTempResults(file,tempResults)
+    Helpers.MakeDirectoryForFile(file);
+    save(file,'tempResults');
+end
+
+function [a] = loadTempResults(file)
+    a = load(file);
+    a = a.tempResults;
 end
