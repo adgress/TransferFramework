@@ -185,17 +185,21 @@ classdef LabeledData < matlab.mixin.Copyable
             dataSize = size(Y,1);
             split = zeros(dataSize,1);
             uniqueY = unique(Y);
-            for i=1:length(uniqueY)
+            for i=1:length(uniqueY)                
                 thisClass = find(Y == uniqueY(i));
                 numThisClass = numel(thisClass);
+                assert(numThisClass >= length(unique(percentageArray)));
                 perm = randperm(numThisClass);
                 thisClassRandomized = thisClass(perm);
                 numToPick = ceil(numThisClass*percentageArray);
                 %diff = max(numToPick(1)-maxTrainNumPerLabel,0);
                 numToPick(1) = min(numToPick(1),maxTrainNumPerLabel);
-                %numToPick = numToPick-diff;
-                numEach = [0 numToPick];
+                %numToPick = numToPick-diff;                
+                if numToPick(2) == numToPick(1)
+                    numToPick(1) = numToPick(1) - 1;
+                end
                 assert(numToPick(2)-numToPick(1) > 0);
+                numEach = [0 numToPick];
                 for j=1:numel(percentageArray)       
                     if numEach(j) == numEach(j+1)
                         %display('TODO: Potential off by one error');
