@@ -33,7 +33,8 @@ classdef BatchConfigs < Configs
                 activeConfigs = Configs();
                 activeMethods = {
                     EntropyActiveMethod(activeConfigs), ...
-                    TargetEntropyActiveMethod(activeConfigs);  
+                    TargetEntropyActiveMethod(activeConfigs),...
+                    SumEntropyActiveMethod(activeConfigs),...
                 };
                 newOverrideConfigs = {};
                 for i=1:length(overrideConfigs)
