@@ -32,9 +32,10 @@ classdef BatchConfigs < Configs
                 end
                 activeConfigs = Configs();
                 activeMethods = {
-                    EntropyActiveMethod(activeConfigs), ...
-                    TargetEntropyActiveMethod(activeConfigs),...
+                    RandomActiveMethod(activeConfigs),...
                     SumEntropyActiveMethod(activeConfigs),...
+                    EntropyActiveMethod(activeConfigs), ...
+                    TargetEntropyActiveMethod(activeConfigs),...                    
                 };
                 newOverrideConfigs = {};
                 for i=1:length(overrideConfigs)
@@ -76,16 +77,17 @@ classdef BatchConfigs < Configs
             configs = {};            
             
             targetLabelSets = {};
+            targetLabelSets{end+1} = [105 57];
             targetLabelSets{end+1} = [10 15];
             targetLabelSets{end+1} = [10 15];
             targetLabelSets{end+1} = [105 145];
-            targetLabelSets{end+1} = [105 57];
+            
             
             sourceLabelSets = {};
+            sourceLabelSets{end+1} = [250 124];
             sourceLabelSets{end+1} = [30 41];
             sourceLabelSets{end+1} = [25 26];
-            sourceLabelSets{end+1} = [250 252];
-            sourceLabelSets{end+1} = [250 124];
+            sourceLabelSets{end+1} = [250 252];            
             
             for idx=1:length(targetLabelSets)
                 c = Configs();

@@ -40,7 +40,7 @@ classdef LogisticRegressionMethod < Method
             
             for cIdx=1:length(C)
                 options = ['-s 0 -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];                
-                accs(cIdx) = train(YLabeled,XLabeledCurr,options);
+                evalc('accs(cIdx) = train(YLabeled,XLabeledCurr,options)');
             end
             bestCInd = argmax(accs);
             bestC = C(bestCInd);

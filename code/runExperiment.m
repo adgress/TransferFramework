@@ -44,7 +44,7 @@ function [] = runExperiment(configs)
                 display(sprintf('%d',i));
                 t = makeTempFile(outputFile,i);
                 if exist(t,'file')
-                    display('Found Temp results - loading...');
+                    
                     splitResults{i} = loadTempResults(t);
                     continue;
                 end
