@@ -24,7 +24,9 @@ classdef LogisticRegressionMethod < Method
                     shouldUseFeature(i) = false;
                 end
             end
-            
+            t = find(shouldUseFeature);            
+            t(ProjectConfigs.logRegNumFeatures+1:end) = [];
+            shouldUseFeature(t) = 0;
             %Hyperparameter is multiplied with the loss term
             C = 10.^(-5:5);
             XLabeled = XLabeled(:,shouldUseFeature);

@@ -15,16 +15,19 @@ classdef ProjectConfigs < ProjectConfigsBase
         instance = ProjectConfigs.CreateSingleton()
 
         %data = Constants.NG_DATA
-        %data = Constants.TOMMASI_DATA
-        data = Constants.CV_DATA
+        data = Constants.TOMMASI_DATA
+        %data = Constants.CV_DATA
+        
+        kNumLabeledPerClass = 10
+        logRegNumFeatures = 100
         
         useOverrideConfigs = 1
         
-        showBothPerformance = 1
-        showPreTransferPerformance = 0
+        showBothPerformance = 0
+        showPreTransferPerformance = 1
         showTransferPerformance = 0
         
-        showTransferDifference = 0
+        showTransferDifference = 1
         showTransferPrediction = 0
         
         showTransferMeasurePerfDiff = 0
@@ -32,8 +35,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         showWeightedTransferLoss = 0;
                 
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
-        activeMethodsToPlot = {'Entropy','TargetEntropy'}
-        %activeMethodsToPlot = {'Random','Entropy'}
+        activeMethodsToPlot = {'Entropy','TargetEntropy','SumEntropy'}
+        %activeMethodsToPlot = {'Entropy','TargetEntropy'}
+        %activeMethodsToPlot = {'Entropy'}
         %activeMethodsToPlot = {'Random'}
         useDomainsToViz = 1
         
@@ -112,7 +116,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             %}
             c.dataSet = ProjectConfigs.data;
 
-            c.numLabeledPerClass=[2];
+            c.numLabeledPerClass=ProjectConfigs.kNumLabeledPerClass;
             c.numTarget = 2;
             c.numSource = 2;
             
