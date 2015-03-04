@@ -14,6 +14,7 @@ classdef LogisticRegressionMethod < Method
         
         function [testResults,savedData] = ...
                 trainAndTest(obj,input,savedData)
+            %error('TODO: Try resampling training data');
             testResults = FoldResults();
             trainData = input.train;
             test = input.test;            
@@ -23,26 +24,41 @@ classdef LogisticRegressionMethod < Method
                 if length(unique(XLabeled(:,i))) <= 2
                     shouldUseFeature(i) = false;
                 end
+            end 
+            t = find(shouldUseFeature);
+            if ProjectConfigs.logRegNumFeatures < length(t)                
+                t(ProjectConfigs.logRegNumFeatures+1:end) = [];
             end
-            t = find(shouldUseFeature);            
-            t(ProjectConfigs.logRegNumFeatures+1:end) = [];
-            shouldUseFeature(t) = 0;
+            shouldUseFeature(:) = 0;
+            shouldUseFeature(t) = 1;
             %Hyperparameter is multiplied with the loss term
             C = 10.^(-5:5);
             XLabeled = XLabeled(:,shouldUseFeature);
             %XLabeled = zscore(XLabeled);
             YLabeled = trainData.Y(trainData.isLabeled(),:);
             %B = mnrfit(XLabeled,YLabeled);                       
+            labeledType = trainData.type(trainData.isLabeled());
             
             accs = zeros(size(C));
             XLabeledCurr = XLabeled;
             t = NormalizeTransform();
             t.learn(XLabeledCurr);
             XLabeledCurr = sparse(t.apply(XLabeledCurr));
+            YLabeledCurr = YLabeled;
             
+            liblinearMethod = 0;
+            if ProjectConfigs.useL1LogReg
+                liblinearMethod = 6;
+            end
+            if ProjectConfigs.resampleTarget
+                I = LabeledData.ResampleTargetTrainData(labeledType);
+                XLabeledCurr = XLabeledCurr(I,:);
+                YLabeledCurr = YLabeledCurr(I);
+            end
             for cIdx=1:length(C)
-                options = ['-s 0 -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];                
-                evalc('accs(cIdx) = train(YLabeled,XLabeledCurr,options)');
+                options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];                
+                evalc('accs(cIdx) = train(YLabeledCurr,XLabeledCurr,options)');
+                %accs(cIdx) = train(YLabeled,XLabeledCurr,options);
             end
             bestCInd = argmax(accs);
             bestC = C(bestCInd);
@@ -65,17 +81,24 @@ classdef LogisticRegressionMethod < Method
                     end
                     %idx = labeledTargetInds(ind);                    
                     testInds = labeledTargetInds(isTest);
-                    options = ['-s 0 -c ' num2str(bestC) ' -B 1 -q'];
+                    options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(bestC) ' -B 1 -q'];
                     %options = ['-s 0 -c ' num2str(bestC) ' -B 1'];
                     currToUse = trainData.isLabeled();
                     %currToUse(idx) = 0;
                     currToUse(testInds) = false;
                     Xcurr = trainData.X(currToUse,shouldUseFeature);
                     Ycurr = trainData.Y(currToUse);
+                    type = trainData.type(currToUse);
                     
                     t = NormalizeTransform();
                     t.learn(Xcurr);                    
                     Xcurr = t.apply(Xcurr,Ycurr);
+                    
+                    if ProjectConfigs.resampleTarget
+                        I = LabeledData.ResampleTargetTrainData(type);
+                        Xcurr = Xcurr(I,:);
+                        Ycurr = Ycurr(I);
+                    end
                     m = train(Ycurr,sparse(Xcurr),options);
                     Ytest = trainData.Y(testInds);
                     Xtest = trainData.X(testInds,shouldUseFeature);
@@ -101,11 +124,18 @@ classdef LogisticRegressionMethod < Method
             end
             if ~isempty(test)
                 testResults.dataType = [trainData.type ; test.type];
-                options = ['-s 0 -c ' num2str(bestC) ' -B 1 -q'];
+                options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(bestC) ' -B 1 -q'];
                 
                 t = NormalizeTransform();
                 t.learn(XLabeled,YLabeled);
                 XLabeled = t.apply(XLabeled,YLabeled);
+                
+                if ProjectConfigs.resampleTarget
+                    I = LabeledData.ResampleTargetTrainData(labeledType);
+                    XLabeled = XLabeled(I,:);
+                    YLabeled = YLabeled(I);
+                end
+                
                 model = train(YLabeled,sparse(XLabeled),options);
                 Xtrain = sparse(trainData.X(:,shouldUseFeature));            
                 Xtrain = t.apply(Xtrain);

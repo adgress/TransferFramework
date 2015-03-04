@@ -216,6 +216,24 @@ classdef LabeledData < matlab.mixin.Copyable
             assert(sum(split==0) == 0);
         end
         
+        function [I] = ResampleTargetTrainData(type)
+            %assert(length(type) == length(Y));
+            isTarget = type == Constants.TARGET_TRAIN;
+            isSource = type == Constants.SOURCE;
+            numTarget = sum(isTarget);
+            numSource = sum(isSource);
+            if numTarget >= numSource
+                I = 1:length(type);
+                return
+            end
+            I = zeros(numSource,1);
+            targetInds = find(isTarget);
+            for i=1:numSource
+                I(i) = targetInds(mod(i-1,numTarget)+1);
+            end
+            I = [I ; find(isSource)];
+        end
+        
         function [v] = TargetTrainType(n)
             v = Constants.TARGET_TRAIN*ones(n,1);
         end

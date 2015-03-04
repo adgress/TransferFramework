@@ -16,9 +16,9 @@ classdef FileManager < handle
         function [d] = load(obj,file)
             if ~isKey(obj.cachedFiles,file)                
                 obj.fileNames{end+1} = file;
-                if length(obj.cachedFiles.keys) >= obj.maxSavedFiles
+                if length(obj.cachedFiles.keys) >= obj.maxSavedFiles                    
+                    remove(obj.cachedFiles,obj.fileNames{1});
                     obj.fileNames(1) = [];
-                    remove(obj.cachedFiles,file);
                 end
                 obj.cachedFiles(file) = load(file);
             end            

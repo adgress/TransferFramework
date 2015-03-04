@@ -18,24 +18,27 @@ classdef ProjectConfigs < ProjectConfigsBase
         data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         
-        kNumLabeledPerClass = 10
-        logRegNumFeatures = 100
+        resampleTarget = true
+        kNumLabeledPerClass = 2
+        logRegNumFeatures = inf
+        useL1LogReg = false
         
-        useOverrideConfigs = 1
+        useOverrideConfigs = 1        
         
         showBothPerformance = 0
-        showPreTransferPerformance = 1
-        showTransferPerformance = 0
+        showPreTransferPerformance = 0
+        showTransferPerformance = 1
         
-        showTransferDifference = 1
+        showTransferDifference = 0
         showTransferPrediction = 0
         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         showWeightedTransferLoss = 0;
-                
+         
+        activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
-        activeMethodsToPlot = {'Entropy','TargetEntropy','SumEntropy'}
+        %activeMethodsToPlot = {'Entropy','TargetEntropy','SumEntropy'}
         %activeMethodsToPlot = {'Entropy','TargetEntropy'}
         %activeMethodsToPlot = {'Entropy'}
         %activeMethodsToPlot = {'Random'}
