@@ -7,6 +7,20 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [v] = Normalize(val,allVals)
+            minVal = min(allVals);
+            maxVal = max(allVals);
+            assert(minVal ~= maxVal);
+            v = (val-minVal)/(maxVal-minVal);
+        end
+        
+        function [v] = NormalizeRange(v,range)
+            if nargin < 2
+                range = [min(v) max(v)];
+            end
+            v = v - range(1);
+            v = v ./ (range(2)-range(1));
+        end                
         
         function [] = MakeDirectoryForFile(fileName)
             inds = strfind(fileName,'/');
@@ -57,14 +71,6 @@ classdef Helpers < handle
             %[s] = getProjectConstants();
             %f = [s.projectDir '/' file];
             f = file;
-        end
-        
-        function [v] = NormalizeRange(v,range)
-            if nargin < 2
-                range = [min(v) max(v)];
-            end
-            v = v - range(1);
-            v = v ./ (range(2)-range(1));
         end                
         
         function [D] = CreateDistanceMatrix(X,Y)

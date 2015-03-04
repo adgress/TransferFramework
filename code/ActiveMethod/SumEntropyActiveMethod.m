@@ -20,6 +20,8 @@ classdef SumEntropyActiveMethod < EntropyActiveMethod
                 H(end+1) = obj.entropy(fuTrain(i,:));
                 HTarget(end+1) = obj.entropy(fuTrainTarget(i,:));
             end
+            H = Helpers.NormalizeRange(H);
+            HTarget = Helpers.NormalizeRange(HTarget);
             [maxVal,maxInd] = max(H + HTarget);
             [maxHTarget,maxTargetInd] = max(HTarget);
             HMax = H(maxInd);
@@ -29,8 +31,11 @@ classdef SumEntropyActiveMethod < EntropyActiveMethod
             %queriedIdx = unlabeledInds(maxTargetInd);
             %display(['Sum Best: ' num2str(max(H)/maxVal) ' ' num2str(max(HTarget)/maxVal)]);
             %display(['Target Best: ' num2str(max(H)/maxHTarget) ' ' num2str(max(H))]);
-            display(['Sum Best: ' num2str(HMax) ' ' num2str(HTargetMax)]);
-            display(['Target Best: ' num2str(H(maxTargetInd)) ' ' num2str(HTarget(maxTargetInd))]);
+            format shortEng
+            %format compact
+            display(['Sum Best: ' num2str(Helpers.Normalize(HMax,H)) ' ' num2str(Helpers.Normalize(HTargetMax,HTarget))]);
+            display(['Target Best: ' num2str(Helpers.Normalize(H(maxTargetInd),H)) ' ' num2str(Helpers.Normalize(HTarget(maxTargetInd),HTarget))]);
+            format
         end
         
         function [prefix] = getPrefix(obj)
