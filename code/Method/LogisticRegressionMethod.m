@@ -50,15 +50,17 @@ classdef LogisticRegressionMethod < Method
             if ProjectConfigs.useL1LogReg
                 liblinearMethod = 6;
             end
+            instanceWeights = ones(size(YLabeledCurr));
             if ProjectConfigs.resampleTarget
-                I = LabeledData.ResampleTargetTrainData(labeledType);
-                XLabeledCurr = XLabeledCurr(I,:);
-                YLabeledCurr = YLabeledCurr(I);
+                numSource = sum(labeledType == Constants.SOURCE);
+                numTarget = sum(labeledType == Constants.TARGET_TRAIN);
+                instanceWeights(labeledType == Constants.SOURCE) = 1/numSource;
+                instanceWeights(labeledType == Constants.TARGET_TRAIN) = 1/numTarget;
             end
             for cIdx=1:length(C)
                 options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];                
-                evalc('accs(cIdx) = train(YLabeledCurr,XLabeledCurr,options)');
-                %accs(cIdx) = train(YLabeled,XLabeledCurr,options);
+                %evalc('accs(cIdx) = train(YLabeledCurr,XLabeledCurr,options)');
+                evalc('accs(cIdx) = train(instanceWeights,YLabeledCurr,XLabeledCurr,options)');                
             end
             bestCInd = argmax(accs);
             bestC = C(bestCInd);
@@ -93,13 +95,15 @@ classdef LogisticRegressionMethod < Method
                     t = NormalizeTransform();
                     t.learn(Xcurr);                    
                     Xcurr = t.apply(Xcurr,Ycurr);
-                    
+                    instanceWeights = ones(size(Ycurr));
                     if ProjectConfigs.resampleTarget
-                        I = LabeledData.ResampleTargetTrainData(type);
-                        Xcurr = Xcurr(I,:);
-                        Ycurr = Ycurr(I);
+                        numSource = sum(type == Constants.SOURCE);
+                        numTarget = sum(type == Constants.TARGET_TRAIN);
+                        instanceWeights(type == Constants.SOURCE) = 1/numSource;
+                        instanceWeights(type == Constants.TARGET_TRAIN) = 1/numTarget;
                     end
-                    m = train(Ycurr,sparse(Xcurr),options);
+                    %m = train(Ycurr,sparse(Xcurr),options);
+                    m = train(instanceWeights,Ycurr,sparse(Xcurr),options);
                     Ytest = trainData.Y(testInds);
                     Xtest = trainData.X(testInds,shouldUseFeature);
                     Xtest = t.apply(Xtest);
@@ -122,6 +126,7 @@ classdef LogisticRegressionMethod < Method
                 end
                 testResults.learnerMetadata.cvAcc = cvAcc;
             end
+            instanceWeights = ones(size(YLabeled));
             if ~isempty(test)
                 testResults.dataType = [trainData.type ; test.type];
                 options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(bestC) ' -B 1 -q'];
@@ -131,12 +136,17 @@ classdef LogisticRegressionMethod < Method
                 XLabeled = t.apply(XLabeled,YLabeled);
                 
                 if ProjectConfigs.resampleTarget
-                    I = LabeledData.ResampleTargetTrainData(labeledType);
-                    XLabeled = XLabeled(I,:);
-                    YLabeled = YLabeled(I);
+                    %I = LabeledData.ResampleTargetTrainData(labeledType);
+                    %XLabeled = XLabeled(I,:);
+                    %YLabeled = YLabeled(I);
+                    numSource = sum(labeledType == Constants.SOURCE);
+                    numTarget = sum(labeledType == Constants.TARGET_TRAIN);
+                    instanceWeights(labeledType == Constants.SOURCE) = 1/numSource;
+                    instanceWeights(labeledType == Constants.TARGET_TRAIN) = 1/numTarget;
                 end
                 
-                model = train(YLabeled,sparse(XLabeled),options);
+                %model = train(YLabeled,sparse(XLabeled),options);
+                model = train(instanceWeights,YLabeled,sparse(XLabeled),options);
                 Xtrain = sparse(trainData.X(:,shouldUseFeature));            
                 Xtrain = t.apply(Xtrain);
                 [predTrain,~,trainFU] = predict(trainData.trueY, sparse(Xtrain), model, '-q -b 1');

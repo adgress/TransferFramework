@@ -18,7 +18,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         
-        resampleTarget = false
+        resampleTarget = true
         kNumLabeledPerClass = 2
         logRegNumFeatures = inf
         useL1LogReg = false
@@ -26,10 +26,10 @@ classdef ProjectConfigs < ProjectConfigsBase
         useOverrideConfigs = 1        
         
         showBothPerformance = 0
-        showPreTransferPerformance = 1
-        showTransferPerformance = 0
+        showPreTransferPerformance = 0
+        showTransferPerformance = 1
         
-        showTransferDifference = 0
+        showTransferDifference = 1
         showTransferPrediction = 0
         
         showTransferMeasurePerfDiff = 0
