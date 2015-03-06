@@ -11,7 +11,18 @@ classdef TransferRepresentativeActiveMethod < ActiveMethod
             obj = obj@ActiveMethod(configs);
         end
         
-        function [queriedIdx,scores] = queryLabel(obj,input,results,s)   
+        function [queriedIdx,scores] = queryLabel(obj,input,results,s)               
+            
+            unlabeledScores = obj.getScores(input,results,s);
+            unlabeledInds = find(input.train.Y < 0);
+            [~,maxIdx] = max(unlabeledScores);
+            queriedIdx = unlabeledInds(maxIdx);
+            
+            scores = -ones*size(input.train.Y);
+            scores(unlabeledInds) = unlabeledScores;
+        end  
+        
+        function [scores] = getScores(obj,input,results,s)
             sigmaScale = .2;
             W = Helpers.CreateDistanceMatrix(input.train.X);
             Wrbf = Helpers.distance2RBF(W,mean(W(:))*sigmaScale);
@@ -21,13 +32,8 @@ classdef TransferRepresentativeActiveMethod < ActiveMethod
             
             unlabeled2source = Wrbf(unlabeledInds,sourceInds);
             unlabeledScores = sum(unlabeled2source,2);
-            
-            [~,maxIdx] = max(unlabeledScores);
-            queriedIdx = unlabeledInds(maxIdx);
-            
-            scores = -ones*size(input.train.Y);
-            scores(unlabeledInds) = unlabeledScores;
-        end  
+            scores = unlabeledScores;
+        end
         
         function [prefix] = getPrefix(obj)
             prefix = 'TransferRep';

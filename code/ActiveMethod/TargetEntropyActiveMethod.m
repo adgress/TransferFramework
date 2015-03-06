@@ -11,18 +11,24 @@ classdef TargetEntropyActiveMethod < EntropyActiveMethod
         end
         
         function [queriedIdx,scores] = queryLabel(obj,input,results,s)   
-            H = [];
+            H = getScores(input,results,s);
+            [~,maxInd] = max(H);
+            unlabeledInds = find(input.train.Y < 0);
+            queriedIdx = unlabeledInds(maxInd);
+            scores = -ones*size(input.train.Y);
+            scores(unlabeledInds) = H;
+        end      
+        
+        function [scores] = getScores(obj,input,results,s)
+            scores = [];
             fuTrain = s.preTransferResults.trainFU;
             unlabeledInds = find(input.train.Y < 0);
             for i=unlabeledInds'
                 assert(length(i) == 1);
-                H(end+1) = obj.entropy(fuTrain(i,:));
+                scores(end+1) = obj.entropy(fuTrain(i,:));
             end
-            [~,maxInd] = max(H);
-            queriedIdx = unlabeledInds(maxInd);
-            scores = -ones*size(input.train.Y);
-            scores(unlabeledInds) = H;
-        end        
+            scores = scores';           
+        end
         
         function [prefix] = getPrefix(obj)
             prefix = 'TargetEntropy';

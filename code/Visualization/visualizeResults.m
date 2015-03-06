@@ -19,30 +19,38 @@ function [f, returnStruct] = visualizeResults(options,f)
             fileExists(i) = false;
             continue
         end
-        allResults = fileManager.load(fileName);
-        allResults = allResults.results;
-        measure = options.get('measure');
-        allResults.computeLossFunction(measure);
-        allResults.aggregateResults(measure);
-        configs = allResults.mainConfigs;
+        smallFileName = getSmallFile(fileName);
+        if exist(smallFileName,'file')
+            load(smallFileName);
+        else
+            allResults = fileManager.load(fileName);
+            allResults = allResults.results;
+            measure = options.get('measure');
+            allResults.computeLossFunction(measure);
+            allResults.aggregateResults(measure);
+            configs = allResults.mainConfigs;
 
-        learners = configs.get('learners');
-        learnerClassString = '';
-        if numel(learners) > 0
-            learnerClassString = class(learners);
-        end                    
-        [results] = allResults.getResultsForMethod(learnerClassString,options.c.resultQueries);
-
+            learners = configs.get('learners');
+            learnerClassString = '';
+            if numel(learners) > 0
+                learnerClassString = class(learners);
+            end                    
+            [results] = allResults.getResultsForMethod(learnerClassString,options.c.resultQueries);
+            Helpers.MakeDirectoryForFile(smallFileName);
+            results{1}.splitResults = [];
+            results{1}.splitMeasures = [];
+            save(smallFileName,'results');
+        end
         sizes = getSizes(results,options.c.sizeField);
         if options.has('sizeToUse')
             assert(~isempty(intersect(sizes,options.c.sizeToUse)));
             sizes = options.c.sizeToUse;
-        end 
+        end
+        [results] = getResultsWithSize(results,sizes);
         fieldToPlot = 'testResults';
         if plotConfigs.has('fieldToPlot')
             fieldToPlot = plotConfigs.get('fieldToPlot');
-        end
-        [results] = getResultsWithSize(results,sizes);
+        end        
         if options.has('vizBarChartForField') && ...
                 options.c.vizBarChartForField
             displayVals{end+1} = plotField(results,...
@@ -184,4 +192,9 @@ function [sizes] = getSizes(results,sizeField)
         sizes(i) = ...
             results{i}.experiment.(sizeField);
     end
+end
+
+function [s] = getSmallFile(file)
+    [dir,name,ext] = fileparts(file);
+    s = [dir '/small/small_' name ext];
 end

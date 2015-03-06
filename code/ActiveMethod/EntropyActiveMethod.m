@@ -11,18 +11,24 @@ classdef EntropyActiveMethod < ActiveMethod
         end
         
         function [queriedIdx,scores] = queryLabel(obj,input,results,s)   
-            H = [];
-            fuTrain = results.trainFU;
-            unlabeledInds = find(input.train.Y < 0);
-            for i=unlabeledInds'
-                assert(length(i) == 1);
-                H(end+1) = obj.entropy(fuTrain(i,:));
-            end
+            H = obj.getScores(input,results,s);
             [~,maxInd] = max(H);
+            unlabeledInds = find(input.train.Y < 0);
             queriedIdx = unlabeledInds(maxInd);
             scores = -ones*size(input.train.Y);
             scores(unlabeledInds) = H;
         end        
+        
+        function [scores] = getScores(obj,input,results,s)
+            scores = [];
+            fuTrain = results.trainFU;
+            unlabeledInds = find(input.train.Y < 0);
+            for i=unlabeledInds'
+                assert(length(i) == 1);
+                scores(end+1) = obj.entropy(fuTrain(i,:));
+            end
+            scores = scores';
+        end
         
         %From http://stackoverflow.com/questions/22074941/shannons-entropy-calculation
         function [H] = entropy(obj,p)
