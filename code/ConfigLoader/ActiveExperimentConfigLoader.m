@@ -72,6 +72,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                     s.preTransferResults = ...
                         activeResults.preTransferResults{end}.copy();
                 end
+                s.preTransferInput = preTransferInput;
                 queriedIdx = activeMethodObj.queryLabel(input,resultsForAL,s);
                 activeResults.queriedLabelIdx(end+1) = queriedIdx;
                 input.train.labelData(queriedIdx);

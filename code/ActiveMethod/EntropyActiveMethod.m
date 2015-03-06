@@ -10,7 +10,7 @@ classdef EntropyActiveMethod < ActiveMethod
             obj = obj@ActiveMethod(configs);
         end
         
-        function [queriedIdx] = queryLabel(obj,input,results,s)   
+        function [queriedIdx,scores] = queryLabel(obj,input,results,s)   
             H = [];
             fuTrain = results.trainFU;
             unlabeledInds = find(input.train.Y < 0);
@@ -20,6 +20,8 @@ classdef EntropyActiveMethod < ActiveMethod
             end
             [~,maxInd] = max(H);
             queriedIdx = unlabeledInds(maxInd);
+            scores = -ones*size(input.train.Y);
+            scores(unlabeledInds) = H;
         end        
         
         %From http://stackoverflow.com/questions/22074941/shannons-entropy-calculation

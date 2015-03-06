@@ -10,7 +10,7 @@ classdef TargetEntropyActiveMethod < EntropyActiveMethod
             obj = obj@EntropyActiveMethod(configs);
         end
         
-        function [queriedIdx] = queryLabel(obj,input,results,s)   
+        function [queriedIdx,scores] = queryLabel(obj,input,results,s)   
             H = [];
             fuTrain = s.preTransferResults.trainFU;
             unlabeledInds = find(input.train.Y < 0);
@@ -20,6 +20,8 @@ classdef TargetEntropyActiveMethod < EntropyActiveMethod
             end
             [~,maxInd] = max(H);
             queriedIdx = unlabeledInds(maxInd);
+            scores = -ones*size(input.train.Y);
+            scores(unlabeledInds) = H;
         end        
         
         function [prefix] = getPrefix(obj)

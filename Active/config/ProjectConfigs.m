@@ -26,8 +26,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         useOverrideConfigs = 1        
         
         showBothPerformance = 0
-        showPreTransferPerformance = 0
-        showTransferPerformance = 1
+        showPreTransferPerformance = 1
+        showTransferPerformance = 0
         
         showTransferDifference = 1
         showTransferPrediction = 0
@@ -35,8 +35,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         showWeightedTransferLoss = 0;
-         
-        activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
+        
+        activeMethodsToPlot = {'Random','Entropy','TargetEntropy','TransferRep'}
+        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
         %activeMethodsToPlot = {'Entropy','TargetEntropy','SumEntropy'}
         %activeMethodsToPlot = {'Entropy','TargetEntropy'}

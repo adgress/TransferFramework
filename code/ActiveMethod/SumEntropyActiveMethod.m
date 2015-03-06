@@ -9,7 +9,7 @@ classdef SumEntropyActiveMethod < EntropyActiveMethod
         function obj = SumEntropyActiveMethod(configs)            
             obj = obj@EntropyActiveMethod(configs);                     
         end
-        function [queriedIdx] = queryLabel(obj,input,results,s)
+        function [queriedIdx,scores] = queryLabel(obj,input,results,s)
             H = [];            
             HTarget = [];
             fuTrain = results.trainFU;
@@ -36,6 +36,9 @@ classdef SumEntropyActiveMethod < EntropyActiveMethod
             display(['Sum Best: ' num2str(Helpers.Normalize(HMax,H)) ' ' num2str(Helpers.Normalize(HTargetMax,HTarget))]);
             display(['Target Best: ' num2str(Helpers.Normalize(H(maxTargetInd),H)) ' ' num2str(Helpers.Normalize(HTarget(maxTargetInd),HTarget))]);
             format
+            
+            scores = -ones*size(input.train.Y);
+            scores(unlabeledInds) = H + HTarget;
         end
         
         function [prefix] = getPrefix(obj)

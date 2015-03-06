@@ -21,8 +21,7 @@ classdef ActiveMethod < Saveable
     end
     
     methods(Abstract)
-        [queriedIdx] = ...
-            queryLabel(obj,input,results)   
+        [queriedIdx,scores] = queryLabel(obj,input,results)   
     end  
     
 end
