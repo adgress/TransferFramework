@@ -2,7 +2,7 @@ function [] = runVisualization()
     setPaths;
     close all    
     vizConfigs = ProjectConfigs.VisualizationConfigs();
-    width = 600;
+    width = 1800;
     height = 500;
 
     f = figure('position',[100 100 width height]);

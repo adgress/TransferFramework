@@ -30,8 +30,8 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             transferMeasureObj = obj.get('transferMeasure');
             
             preTransferInput = struct();
-            preTransferInput.train = sampledTrain;
-            preTransferInput.test = originalTest;
+            %preTransferInput.train = sampledTrain;
+            %preTransferInput.test = originalTest;
             preTransferInput.learner = learner;
             preTransferInput.sharedConfigs = obj.configs;
             if ~isempty(transferMethodObj)                
@@ -40,6 +40,9 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             else
                 test = originalTest;
             end
+            preTransferInput.train = sampledTrain.copy();
+            preTransferInput.train.Y(preTransferInput.train.isSource()) = -1;
+            preTransferInput.test = originalTest;
             input = struct();
             input.train = sampledTrain;
             input.test = test;
@@ -149,7 +152,8 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             outputFile = obj.configs.stringifyFields(outputFileParams, '_');
             
             activeMethodObj = obj.configs.get('activeMethodObj');
-            outputFile = [activeMethodObj.getDisplayName() '_' outputFile];
+            s = activeMethodObj.getResultFileName('_',false);
+            outputFile = [s '_' outputFile];
             outputFileName = [outputDir outputFile '.mat'];
             Helpers.MakeDirectoryForFile(outputFileName);
         end   

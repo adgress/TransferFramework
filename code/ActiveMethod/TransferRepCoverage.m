@@ -8,6 +8,7 @@ classdef TransferRepCoverage < ActiveMethod
     methods
         function obj = TransferRepCoverage(configs)            
             obj = obj@ActiveMethod(configs);
+            obj.set('method',3);
         end
         
         function [queriedIdx,scores] = queryLabel(obj,input,results,s)                           
@@ -24,24 +25,50 @@ classdef TransferRepCoverage < ActiveMethod
         function [scores] = getScores(obj,input,results,s)            
             sigmaScale = .2;
             W = Helpers.CreateDistanceMatrix(input.train.X);
-            Wrbf = Helpers.distance2RBF(W,mean(W(:))*sigmaScale);
-                        
-            labeledTargetInds = find(input.train.isLabeledTarget());      
-            sourceInds = find(input.train.isSource());
-            labeledTarget2source = Wrbf(labeledTargetInds,sourceInds);
-            %labeledTarget2source = max(labeledTarget2source(:)) - labeledTarget2source;            
-            sourceScores = sum(labeledTarget2source);
-            sourceScores = sourceScores + 1e-3;
-            sourceScores = 1./sourceScores;
+            W = Helpers.SparsifyDistanceMatrix(W,20);
+            m = mean(W(W(:) > 0));
+            Wrbf = Helpers.distance2RBF(W,m*sigmaScale);
+            Wrbf(W(:) == 0) = 0;
+            labeledTargetInds = find(input.train.isLabeledTarget());
             unlabeledInds = find(input.train.Y < 0);
+            sourceInds = find(input.train.isSource());            
+            labeledTarget2source = Wrbf(labeledTargetInds,sourceInds);
             unlabeled2source = Wrbf(unlabeledInds,sourceInds);
-                        
-            %unlabeledScores = sum(unlabeled2source,2);
-            scores = unlabeled2source*sourceScores';
+            
+            switch obj.get('method')
+                case 0
+                    sourceScores = sum(labeledTarget2source);
+                    sourceScores = sourceScores + 1e-3;
+                    sourceScores = 1./sourceScores;                    
+
+                    scores = unlabeled2source*sourceScores';
+                case 2
+                    sourceScores = sum(labeledTarget2source) ./ size(labeledTarget2source,1);
+                    sourceScores = sourceScores + 1e-6;
+                    invSourceScores = sourceScores;
+                    sourceScores = 1./sourceScores;                    
+                    scores = unlabeled2source*sourceScores';
+                    %display('');
+                case 3
+                    targetEntropy = TargetEntropyActiveMethod(Configs());
+                    [~,entropyScores] = targetEntropy.queryLabel(input,results,s);
+                    %s1 = Helpers.NormalizeRange(scores);                    
+                    sourceScores = entropyScores(sourceInds);
+                    scores = unlabeled2source*sourceScores';
+                otherwise
+                    error('');
+            end            
         end
         
         function [prefix] = getPrefix(obj)
             prefix = 'TransferRepCov';
+        end
+        
+        function [nameParams] = getNameParams(obj)
+            nameParams = {};
+            if obj.has('method') && obj.get('method') > 0
+                nameParams{end+1} = 'method';
+            end
         end
     end
     
