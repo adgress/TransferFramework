@@ -25,7 +25,7 @@ classdef TransferRepCoverage < ActiveMethod
         function [scores] = getScores(obj,input,results,s)            
             sigmaScale = .2;
             W = Helpers.CreateDistanceMatrix(input.train.X);
-            W = Helpers.SparsifyDistanceMatrix(W,20);
+            %W = Helpers.SparsifyDistanceMatrix(W,20);
             m = mean(W(W(:) > 0));
             Wrbf = Helpers.distance2RBF(W,m*sigmaScale);
             Wrbf(W(:) == 0) = 0;
