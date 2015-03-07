@@ -67,8 +67,7 @@ function [] = runExperiment(configs)
             end
         end
         allResults.allResults{j}.splitResults = splitResults;
-    end
-    toc
+    end    
 
     allResults.mainConfigs = configs.copy();
     allResults.mainConfigs.delete('dataAndSplits');
@@ -85,6 +84,7 @@ function [] = runExperiment(configs)
         t = makeTempFile(outputFile,i);
         delete(t);
     end
+    toc
 end
 
 function [t] = makeTempFile(file,idx)

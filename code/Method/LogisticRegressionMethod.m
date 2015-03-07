@@ -33,6 +33,7 @@ classdef LogisticRegressionMethod < Method
             shouldUseFeature(t) = 1;
             %Hyperparameter is multiplied with the loss term
             C = 10.^(-5:5);
+            %C = 10^3;
             XLabeled = XLabeled(:,shouldUseFeature);
             %XLabeled = zscore(XLabeled);
             YLabeled = trainData.Y(trainData.isLabeled(),:);
@@ -58,7 +59,7 @@ classdef LogisticRegressionMethod < Method
                 instanceWeights(labeledType == Constants.TARGET_TRAIN) = 1/numTarget;
             end
             for cIdx=1:length(C)
-                options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -v 5 -q'];                
+                options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -v 10 -q'];                
                 %evalc('accs(cIdx) = train(YLabeledCurr,XLabeledCurr,options)');
                 evalc('accs(cIdx) = train(instanceWeights,YLabeledCurr,XLabeledCurr,options)');                
             end
