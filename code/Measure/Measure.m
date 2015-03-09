@@ -75,7 +75,7 @@ classdef Measure < Saveable
                     measureResults.learnerStats.negativeTransferPrediction = ...
                         (transferDifference >= 0) == ...
                         (transferMeasureDifference >= 0);
-                    measureResults.learnerStats.weightedNegativeTransferLoss = ...
+                    measureResults.learnerStats.weightedPrecisionTransferLoss = ...
                         (1 - measureResults.learnerStats.negativeTransferPrediction) .* ...
                         abs(transferDifference);                        
                 end
@@ -150,7 +150,7 @@ classdef Measure < Saveable
                 l1 = l(1);
                 if isfield(l1,'weightedNegativeTransferLoss')
                     %v = [l.weightedNegativeTransferLoss];
-                    v = Helpers.StructField2Mat(l,'weightedNegativeTransferLoss');
+                    v = Helpers.StructField2Mat(l,'weightedPrecisionTransferLoss');
                     isNonzero = v > 0;
                     a = sum(v)./sum(isNonzero);
                     a(isnan(a)) = 0;
