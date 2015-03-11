@@ -66,7 +66,8 @@ classdef ProjectConfigs < handle
             if ProjectConfigs.experimentSetting == ProjectConfigs.SEP_LLGC_EXPERIMENT                
                 c.dataSet = Constants.TOMMASI_DATA;
                 c.labelsToUse = [];
-                c.numLabeledPerClass=[5 10 15 20 25];
+                %c.numLabeledPerClass=[5 10 15 20 25];
+                c.numLabeledPerClass=[10 20 30 40 50];
                 %c.numLabeledPerClass=25;
                 c.reg = [0 10.^(-8:4) ];   
                 c.numFolds = 3;                
@@ -163,9 +164,10 @@ classdef ProjectConfigs < handle
                 };
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized';
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=1-addBias=1.mat';
+                legend{end+1} = 'LLGC Sep Weighted Regularized with Bias';
                 methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2-alpha=0.9.mat';
-                legend{end+1} = 'LLGC';
-                
+                legend{end+1} = 'LLGC';                
                 %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';
                                     %'LLGC Sep Sum',...                                                    
             else
