@@ -13,7 +13,7 @@ classdef NormalizeTransform < TransformBase
             if ~exist('configs','var')
                 configs = Configs();
             end
-            obj.configs = configs;
+            obj = obj@TransformBase(configs);
         end
         
         function [] = learn(obj,X,Y)
@@ -23,7 +23,7 @@ classdef NormalizeTransform < TransformBase
         function [Z] = apply(obj,X,Y)
             Z = X - repmat(obj.mean,size(X,1),1);
             Z = Z ./ repmat(obj.stdevs,size(X,1),1);
-	    Z(isnan(Z(:))) = 0;
+            Z(isnan(Z(:))) = 0;
             %diff = Z - obj.Z;
         end
         

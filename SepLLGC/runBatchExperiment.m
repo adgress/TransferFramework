@@ -4,7 +4,7 @@ function [] = runBatchExperiment(multithread, dataset)
     
     c = ProjectConfigs.Create();
     if ProjectConfigs.experimentSetting == ProjectConfigs.SEP_LLGC_EXPERIMENT
-        labels = ProjectConfigs.labels;
+        labels = ProjectConfigs.getLabels();
         for i=1:length(labels)
             l = labels{i};
             batchConfigsObj = ProjectConfigs.BatchConfigs();    

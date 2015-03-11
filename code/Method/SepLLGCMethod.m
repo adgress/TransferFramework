@@ -17,27 +17,30 @@ classdef SepLLGCMethod < LLGCMethod
             if ~obj.has('sum')
                 obj.set('sum',false);
             end
+            if ~obj.has('addBias')
+                obj.set('addBias',1);
+            end
         end
         
         function [testResults,savedData] = ...
                 trainAndTest(obj,input,savedData)
             useHF = false;
+            makeRBF = true;
             train = input.train;
             test = input.test;
             trainCopy = train.copy();
             testCopy = test.copy();            
             numClasses = max(train.Y);
-            numInstances = size(trainCopy.X,1) + size(testCopy.X,1);
-            %numFeatures = size(trainCopy.X,2);
-            %numFeatures = 20;            
+            numInstances = size(trainCopy.X,1) + size(testCopy.X,1);         
             invM = {};      
             alpha = obj.get('alpha');
+            
+            %Different views for feature groups
             %featureGroups = {1:300,301:328,329:368,369:405};            
             %featureGroups = [num2cell(1:300) {301:328,329:368,369:405}];
             %featureGroups = num2cell(1:405);
-            featureGroups = num2cell(1:size(trainCopy.X,2));
-            
-            featuresToUse = 5;
+                                    
+            %all pairs of features
             %{
             for i=1:size(trainCopy.X,2)
                 for j=i+1:size(trainCopy.X,2)
@@ -47,16 +50,18 @@ classdef SepLLGCMethod < LLGCMethod
             %}
             %featureGroups{end+1} = 1:size(trainCopy.X,2);
             %featureGroups = {1:size(trainCopy.X,2)};
+            
+            %featuresToUse = 5;
+            
+            featureGroups = num2cell(1:size(trainCopy.X,2));
             F = zeros(numInstances,numClasses,length(featureGroups));
-            %for dimIdx=1:numFeatures
             perGroupAcc = zeros(length(featureGroups),1);
-            %distMats = {};
             for groupIdx=1:length(featureGroups);
                 dims = featureGroups{groupIdx};
                 trainCopy.X = train.X(:,dims);
                 testCopy.X = test.X(:,dims);   
                 d = obj.createDistanceMatrix(trainCopy,testCopy,...
-                    useHF,obj.configs);                                
+                    useHF,obj.configs,makeRBF);                                
                 d.removeTestLabels();
                 %distMats{groupIdx} = d;
                 if groupIdx == 1
@@ -68,14 +73,8 @@ classdef SepLLGCMethod < LLGCMethod
                         distMat.W = distMat.W + d.W;
                     end
                 else
-                    %F(:,:,dimIdx) = obj.runBandedLLGC(distMat);
-                    %F(:,:,dimIdx) = obj.runLLGC(d);
                     [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,d);                    
-                    %[F(:,:,groupIdx),~] = LLGC.llgc_inv([],Ymat,alpha,invM{groupIdx});
-                    
-                    %invM{end+1} = LLGC.makeInvM(Wrbf,alpha);
-                    %[F(:,:,groupIdx),~] = LLGC.llgc_inv([],YtrainMat,alpha,invM{groupIdx});
-                    
+
                     invM{end+1} = LLGC.makeInvM_unbiased(Wrbf,alpha,YtrainMat);
                     [F(:,:,groupIdx),~] = LLGC.llgc_inv_unbiased([],YtrainMat,alpha,invM{groupIdx});
                     [~,Fpred] = max(F(:,:,groupIdx),[],2);
@@ -91,90 +90,54 @@ classdef SepLLGCMethod < LLGCMethod
             isLabeledInds = distMat.isLabeled();
             numLabeled = sum(isLabeledInds);
             %F_labeled = F(isLabeledInds,:,:);
-            Y_labeled = Helpers.createLabelMatrix(distMat.Y(isLabeledInds));                                    
+            Y_labeled = distMat.Y(isLabeledInds);
+            Y_labeled_mat = Helpers.createLabelMatrix(Y_labeled);
             isLabeledInds = find(isLabeledInds);
-            %{
-            indsPerClass = [];
-            indsPerClass(1,:) = find(distMat.Y == 1 & distMat.Y > 0);
-            indsPerClass(2,:) = find(distMat.Y == 2 & distMat.Y > 0);
-            otherClass = [2 1];
-            %}
+
+            if obj.get('addBias') && false
+                transform = NormalizeTransform();
+            else
+                transform = TransformBase();
+            end
             if ~obj.get('sum')                     
                 F_labeled = zeros(length(isLabeledInds),size(F,2),size(F,3));                
                 for instanceIdx = 1:length(isLabeledInds)
                     ind = isLabeledInds(instanceIdx);
-                    currLabel = distMat.Y(ind);
-                    %otherLabel = otherClass(currLabel);
-                    %thisClassInd = find(indsPerClass(currLabel,:) == ind);
                     
                     Y_copy = distMat.Y;
                     Y_copy(ind) = -1;
-                    %Y_copy(indsPerClass(otherLabel,thisClassInd)) = -1;
                     YMatCurrRemoved = Helpers.createLabelMatrix(Y_copy);
                     for groupIdx=1:length(featureGroups)
                          %[F(:,:,groupIdx),~] = LLGC.llgc_inv([],YMatCurrRemoved,alpha,invM{groupIdx});
-                         [F(:,:,groupIdx),~] = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
-                         F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
+
+                         %[F(:,:,groupIdx),~] = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
+                         %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
+                         
+                         a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
+                         F_labeled(instanceIdx,:,groupIdx) = a(ind,:);
+                         
+                         %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
                     end                    
                 end
                 F(isnan(F(:))) = 0;
                 assert(~any(isnan(F(:))));
-                F_labeled(isnan(F_labeled)) = 0;
-                %{
-                pc = ProjectConfigs.Create();
-                regVals = pc.reg;            
-                regPerf = zeros(size(regVals));
-                for instanceIdx = 1:length(isLabeledInds)
-                    ind = isLabeledInds(instanceIdx);
-                    Y_copy = distMat.Y;                    
-                    Y_copy(ind) = -1;
-                    YMatCurrRemoved = Helpers.createLabelMatrix(Y_copy);                    
-                    F = zeros(numInstances,numClasses,numFeatures);
-                    for dimIdx=1:numFeatures
-                         [F(:,:,dimIdx),~] = LLGC.llgc_inv([],YMatCurrRemoved,alpha,invM{dimIdx});
-                    end
-                    F_labeled = F(isLabeledInds,:,:);
-
-                    
-                    Y_labeledCopy = Y_labeled;
-                    trueLabel = distMat.Y(ind);
-                    Y_labeledCopy(instanceIdx,:) = 0;
-                    
-                    [F_bar,Y_bar] = obj.stackLabels(F_labeled,Y_labeledCopy);
-                    for regIdx=1:length(regVals)
-                        reg = regVals(regIdx);
-                        %isLabeledInds = find(distMat.Y > 0);
-                        %acc = 0;
-                        b = obj.solveForBeta(F_bar,Y_bar,reg);
-                        Fb = obj.sumF(F,b);
-                        Fb = Helpers.normRows(Fb);
-                        %[~,FbPred] = max(Fb,[],2);
-                        regPerf(regIdx) = regPerf(regIdx) + Fb(ind,trueLabel);
-                    end
-                    regPerf = regPerf ./ length(isLabeledInds);
-                    regPerf(regIdx) = mean(acc);            
-                end
-                %}
+                F_labeled(isnan(F_labeled)) = 0;         
                 
                 trainAccs = [];
                 testAccs = [];
                 for groupIdx=1:length(featureGroups);
-                    %{
-                    Fcurr = F(:,:,dimIdx);
-                    [~,FcurrPred] = max(Fcurr,[],2);
-                    accVec = FcurrPred == distMat.trueY;
-                    trainAccs(dimIdx) = mean(accVec(isLabeledInds));
-                    testAccs(dimIdx) = mean(accVec(distMat.isTargetTest()));
-                    %}
                     Fcurr = F_labeled(:,:,groupIdx);
                     [~,FcurrPred] = max(Fcurr,[],2);
-                    accVec = FcurrPred == distMat.Y(isLabeledInds);
+                    accVec = FcurrPred == distMat.trueY(isLabeledInds);
                     trainAccs(groupIdx) = mean(accVec);
-                    t = [FcurrPred distMat.Y(isLabeledInds)];
+                    
+                    Fcurr = F(:,:,groupIdx);
+                    [~,FcurrPred] = max(Fcurr,[],2);
+                    accVec = FcurrPred == distMat.trueY;
+                    testAccs(groupIdx) = mean(accVec);
                 end
                 
-                if ~obj.get('uniform')
-                    [F_bar_labeled,Y_bar_labeled] = obj.stackLabels(F_labeled,Y_labeled);                    
+                if ~obj.get('uniform')                    
                     if obj.get('regularized')
                         %error('');
                         reg = .1;
@@ -182,7 +145,83 @@ classdef SepLLGCMethod < LLGCMethod
                         reg = 0;
                     end        
                     solveForBeta = true;
-                    if solveForBeta
+                    numFolds = 10;
+                    useFCurrLabeled = 0;
+                    if solveForBeta              
+                        pc = ProjectConfigs.Create();
+                        regVals = pc.reg;            
+                        
+                        regPerf = zeros(size(regVals));
+                        regPerfTrain = regPerf;                        
+                        for foldIdx=1:numFolds
+                            isTest = DataSet.generateSplit([.8 .2 0],...
+                                Y_labeled) == 2;
+                            cvLabeledInds = isLabeledInds(~isTest);
+                            Fcurr = zeros(length(Y_labeled),size(F,2),size(F,3));                            
+                            FcurrLabeled = zeros(length(cvLabeledInds),size(F,2),size(F,3));
+                            Y_copy = distMat.Y;
+                            Y_copy(isLabeledInds(isTest)) = -1;
+                            YMatCurrRemoved = Helpers.createLabelMatrix(Y_copy);
+                            
+                            
+                            for groupIdx=1:length(featureGroups)                                
+                                a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
+                                Fcurr(:,:,groupIdx) = a(isLabeledInds,:);
+                                                                
+                                for cvIdx=1:length(cvLabeledInds)
+                                    Y_copy2 = Y_copy;
+                                    Y_copy2(cvLabeledInds(cvIdx)) = -1;
+                                    Y_copy2Mat = Helpers.createLabelMatrix(Y_copy2);
+                                    a = LLGC.llgc_inv_unbiased([],Y_copy2Mat,alpha,invM{groupIdx});
+                                    FcurrLabeled(cvIdx,:,groupIdx) = a(cvIdx,:);
+                                end
+                            end
+                    
+                            for regIdx=1:length(regVals)
+                                reg = regVals(regIdx);                                                                
+                                %Xtrain = Fcurr(~isTest,:,:);
+                                
+                                if useFCurrLabeled
+                                    Xtrain = FcurrLabeled;
+                                else
+                                    Xtrain = F_labeled(~isTest,:,:);
+                                end
+                                Ytrain = Helpers.createLabelMatrix(Y_labeled(~isTest));
+                                [F_bar_labeled, Y_bar_labeled] = obj.stackLabels(Xtrain,Ytrain);
+                                                                                                
+                                transform.learn(F_bar_labeled);                    
+                                F_bar_labeled = transform.apply(F_bar_labeled,Y_bar_labeled);
+                                b = obj.solveForBeta(F_bar_labeled,Y_bar_labeled,reg);
+                                
+                                [~,trainPred] = max(obj.sumF(Xtrain,b),[],2);
+                                accVec = trainPred == Y_labeled(~isTest);
+                                regPerfTrain(regIdx) = regPerfTrain(regIdx) + mean(accVec);
+                                
+                                if useFCurrLabeled                                    
+                                    Xtest = Fcurr(isTest,:,:);
+                                else                                    
+                                    Xtest = F_labeled(isTest,:,:);
+                                end                                
+                                Ytest = Y_labeled(isTest);
+                                for i=1:size(Xtest,2)             
+                                    a = squeeze(Xtest(:,i,:));
+                                    Xtest(:,i,:) = transform.apply(a);
+                                end
+                                XbTest = obj.sumF(Xtest,b);
+                                [~,YtestPred] = max(XbTest,[],2);
+                                regPerf(regIdx) = regPerf(regIdx) + mean(YtestPred == Ytest);
+                            end
+                        end
+                        regPerfTrain = regPerfTrain ./ numFolds;
+                        regPerf = regPerf ./ numFolds;
+                        regInd = argmax(regPerf);
+                        reg = regVals(regInd);
+                        display(['best reg: ' num2str(reg)]);
+                        [F_bar_labeled,Y_bar_labeled] = obj.stackLabels(F_labeled,Y_labeled_mat);
+                        
+                        transform.learn(F_bar_labeled);
+                        F_bar_labeled = transform.apply(F_bar_labeled,Y_bar_labeled);
+                        
                         b = obj.solveForBeta(F_bar_labeled,Y_bar_labeled,reg);
                         [~,sortedFeatures] = sort(abs(b),'descend');
                     else
@@ -193,11 +232,17 @@ classdef SepLLGCMethod < LLGCMethod
                     end
                     
                     combineFeatures = false;                    
-                    if ~combineFeatures                        
+                    if ~combineFeatures                  
+                        
+                        for i=1:size(F_labeled,2)
+                            a = squeeze(F_labeled(:,i,:));
+                            F_labeled(:,i,:) = transform.apply(a);
+                        end
+                        
                         Fb_labeled = obj.sumF(F_labeled,b);
                         [~,Fb_labeledPred] = max(Fb_labeled,[],2);
                         accVec = Fb_labeledPred == distMat.Y(isLabeledInds);
-                        t = [Fb_labeledPred distMat.Y(isLabeledInds)];
+                        %t = [Fb_labeledPred distMat.Y(isLabeledInds)];
                         display(['TrainAcc: ' num2str(mean(accVec))]);
                     else
                         dims = sortedFeatures(1:featuresToUse);
@@ -234,6 +279,10 @@ classdef SepLLGCMethod < LLGCMethod
                 else                
                     %b = obj.solveForBeta(F_bar,Y_bar,reg);
                     if length(b) > 1
+                        for i=1:size(F,2)
+                            a = squeeze(F(:,i,:));
+                            F(:,i,:) = transform.apply(a);
+                        end
                         Fb = obj.sumF(F,b);
                     else
                         Fb = F;
@@ -243,6 +292,7 @@ classdef SepLLGCMethod < LLGCMethod
                     testResults.dataFU = sparse(Fb);                    
                 end              
             end
+            v = testResults.yPred;
             accVec = testResults.yPred == trueY;
             trainAcc = mean(accVec(isLabeledInds));
             testAcc = mean(accVec(distMat.isTargetTest()));
@@ -251,12 +301,20 @@ classdef SepLLGCMethod < LLGCMethod
         end
         
         function [Fb] = sumF(obj,F,b)
+            addBias = obj.get('addBias');
             if ~exist('b','var')
                 Fb = sum(F,3)./size(F,3);
             else
                 Fb = zeros(size(F,1),size(F,2));
-                for featIdx=1:length(b)
-                    Fb = Fb + F(:,:,featIdx)*b(featIdx);
+                if addBias
+                    Fb = Fb + b(1);
+                    for featIdx=1:(length(b)-1)
+                        Fb = Fb + F(:,:,featIdx)*b(featIdx+1);
+                    end
+                else
+                    for featIdx=1:length(b)
+                        Fb = Fb + F(:,:,featIdx)*b(featIdx);
+                    end
                 end
             end
         end
@@ -272,23 +330,33 @@ classdef SepLLGCMethod < LLGCMethod
                 finish = classIdx*numInstances;
                 F_bar(start:finish,:) = ...
                     reshape(F(:,classIdx,:),numInstances,numFeatures);
-                Y_bar(start:finish,:) = Y(:,classIdx);
-            end            
+                Y_bar(start:finish) = Y(:,classIdx);
+            end
+            if obj.get('addBias')
+            	%Y_bar(Y_bar==0) = -1;
+            end
         end
         
         function [b] = solveForBeta(obj,F_bar,Y_bar,reg)
-            numFeatures = size(F_bar,2);
-            u = ones(numFeatures,1)./numFeatures;
-            warning off
-            cvx_begin quiet
-                variable b(numFeatures,1)
-                %minimize(norm(F_bar*b-Y_bar,'fro') + reg*norm(b-u,2))
-                minimize(norm(F_bar*b-Y_bar) + reg*norm(b,2))
-                subject to
-                    %b >= 0
-            cvx_end  
-            warning on
+            if obj.get('addBias')
+                b = ridge(Y_bar,F_bar,reg,0); 
+                F_bar_bias = [ones(size(F_bar,1),1) F_bar];
+                d = F_bar_bias*b - Y_bar;
+            else
+                numFeatures = size(F_bar,2);            
+                u = ones(numFeatures,1)./numFeatures;
+                warning off
+                cvx_begin quiet
+                    variable b(numFeatures,1)
+                    %minimize(norm(F_bar*b-Y_bar,'fro') + reg*norm(b-u,2))
+                    minimize(norm(F_bar*b-Y_bar) + reg*norm(b,2))
+                    subject to
+                        %b >= 0
+                cvx_end  
+                warning on
+            end            
             %b(b < 0) = 0;
+            
         end
         
         function [] = updateConfigs(obj, newConfigs)
@@ -308,6 +376,9 @@ classdef SepLLGCMethod < LLGCMethod
                 nameParams{end+1} = 'uniform';
             else
                 nameParams{end+1} = 'regularized';
+            end
+            if obj.has('addBias') && obj.get('addBias')
+                nameParams{end+1} = 'addBias';
             end
         end
     end

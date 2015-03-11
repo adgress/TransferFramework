@@ -13,10 +13,15 @@ function [] = runVisualization()
     else
         title(a{1});
     end
-    labels = ProjectConfigs.labels;
+    labels = ProjectConfigs.getLabels();
+    d = vizConfigs.get('resultsDirectory');
     for i=1:length(labels)
         subplot(1,length(labels),i);
-        vizConfigs.set('labelsToUse',labels{i});
+        if ProjectConfigs.data == Constants.TOMMASI_DATA
+            vizConfigs.set('labelsToUse',labels{i});
+            newResultsDir = [d '/' num2str(labels{i}) '/'];
+            vizConfigs.set('resultsDirectory',newResultsDir);
+        end
         [~,returnStruct] = visualizeResults(vizConfigs,f);            
     end
 end

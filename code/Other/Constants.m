@@ -12,6 +12,7 @@ classdef Constants < handle
         TOMMASI_DATA = 3
         COIL20_DATA = 4
         USPS_DATA = 5
+        HOUSING_DATA = 6
         
         NO_TYPE = 0;
         TARGET_TRAIN = 1;

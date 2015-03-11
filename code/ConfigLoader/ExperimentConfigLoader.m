@@ -80,7 +80,7 @@ classdef ExperimentConfigLoader < ConfigLoader
         
         function [results] = ...
                 runExperiment(obj,experimentIndex,splitIndex)            
-            [learner] = obj.setExperimentConfigs(experimentIndex);
+            [learner,experiment] = obj.setExperimentConfigs(experimentIndex);
             [train,test,validate,featType] = obj.getSplit(splitIndex);
             train.setTargetTrain();
             test.setTargetTest();

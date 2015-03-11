@@ -12,15 +12,20 @@ classdef ProjectConfigs < handle
         
         instance = ProjectConfigs.CreateSingleton()
         
-        %labels = [10 15 23 25 26 30]
+        data = Constants.HOUSING_DATA
+        
+        useSavedSmallResults = 1
+        
+        %tommasiLabels = [10 15 23 25 26 30]
+        %housingLabels = [1 2];
         
         %Tommasi labels
-        labels = {[10 15], [10 23], [15 23]}
+        tommasiVizLabels = {[10 15], [10 23], [15 23]}
         
         %Housing labels
-        %labels = {[1 2]}
+        housingVizLabels = {[1 2]}
         
-        numRandomFeatures = 0
+        numRandomFeatures = 10
     end
     
     properties        
@@ -30,19 +35,26 @@ classdef ProjectConfigs < handle
         labelsToUse
         numLabeledPerClass        
         numFolds
-        reg
-        
-        tommasiLabels                
+        reg        
         
         dataSet
         cvParams
+        
+        makeSubDomains
+        labelNoise
+        computeLossFunction
+        processMeasureResults
     end
     
     methods(Static, Access=private)
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             
+            c.computeLossFunction = true;
+            c.processMeasureResults = false;
             
+            c.makeSubDomains = false;
+            c.labelNoise = 0;
             c.sigmaScale = .2;
             c.k=inf;
             c.alpha=.9;
@@ -55,8 +67,8 @@ classdef ProjectConfigs < handle
                 c.dataSet = Constants.TOMMASI_DATA;
                 c.labelsToUse = [];
                 c.numLabeledPerClass=[5 10 15 20 25];
-                %c.numLabeledPerClass=[25];
-                c.reg = [0 1e-3 1e-2 .1 1 10];
+                %c.numLabeledPerClass=25;
+                c.reg = [0 10.^(-8:4) ];   
                 c.numFolds = 3;                
 
             else
@@ -74,15 +86,16 @@ classdef ProjectConfigs < handle
         function [c] = BatchConfigs()
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
-            %{
-            if pc.dataSet == Constants.TOMMASI_DATA
+
+            if ProjectConfigs.data == Constants.HOUSING_DATA
+                c.get('mainConfigs').setHousingBinaryData(); 
+            elseif ProjectConfigs.data == Constants.TOMMASI_DATA
                 c.get('mainConfigs').setTommasiData(); 
             end
-            %}
-            %c.get('experimentConfigsClass').setHousingBinaryData(); 
-            c.get('mainConfigs').setTommasiData(); 
+            
             c.get('mainConfigs').setSepLLGCConfigs();
             %c.get('mainConfigs').setLLGCConfigs();
+            
             c.configsStruct.configLoader = ExperimentConfigLoader();
         end
         
@@ -110,15 +123,27 @@ classdef ProjectConfigs < handle
             
             pc = ProjectConfigs.Create();
             
-            if pc.dataSet == Constants.TOMMASI_DATA
+            
+            if ProjectConfigs.data == Constants.TOMMASI_DATA
                 c.set('prefix','results_tommasi');
                 c.set('dataSet',{'tommasi_data'});
+                c.set('resultsDirectory','results_tommasi/tommasi_data');
+            elseif ProjectConfigs.data == Constants.HOUSING_DATA            
+                c.set('prefix','results_housing');
+                c.set('dataSet',{'housingBinary'});
+                c.set('resultsDirectory','results_housing/housingBinary');
             end
-            
-            %{
-            c.set('prefix','results_housing');
-            c.set('dataSet',{'housingBinary'});
-            %}
+        end
+        
+        function [labels] = getLabels()
+            switch ProjectConfigs.data
+                case Constants.TOMMASI_DATA
+                    labels = ProjectConfigs.tommasiVizLabels;
+                case Constants.HOUSING_DATA
+                    labels = ProjectConfigs.housingVizLabels;
+                otherwise
+                    error('');
+            end
         end
         
         function [plotConfigs,legend,title] = makePlotConfigs()  
@@ -126,7 +151,7 @@ classdef ProjectConfigs < handle
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};
             pc = ProjectConfigs.Create();
-            legend = [];
+            legend = {};
             title = [];
             if ProjectConfigs.experimentSetting == ProjectConfigs.SEP_LLGC_EXPERIMENT
                 title = '';
@@ -150,6 +175,7 @@ classdef ProjectConfigs < handle
             for fileIdx=1:length(methodResultsFileNames)
                 configs = basePlotConfigs.copy();
                 configs.set('resultFileName',methodResultsFileNames{fileIdx});
+                configs.set('fieldToPlot','testResults');
                 plotConfigs{end+1} = configs;
             end
         end     

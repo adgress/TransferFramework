@@ -24,7 +24,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             end
             
             allParamsToVary = {};
-            numRandomFeatures = pc.numRandomFeatures;
+            numRandomFeatures = ProjectConfigs.numRandomFeatures;
             paramsToVary = obj.get('paramsToVary');
             for paramIdx=1:length(paramsToVary)
                 allParamsToVary{end+1} = obj.get(paramsToVary{paramIdx});
@@ -41,7 +41,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 [dataAndSplits] = obj.loadData(mainConfigsCopy);
 
                 if numRandomFeatures > 0
-                    error('Add random features to source data?');
+                    %error('Add random features to source data?');
                     display(['Adding ' num2str(numRandomFeatures) ' random features']);
                     X = dataAndSplits.allData.X;
                     dataAndSplits.allData.X = [X rand(size(X,1),numRandomFeatures)];
@@ -50,6 +50,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);                        
                 end                                   
                 if pc.makeSubDomains
+                    assert(numRandomFeatures == 0);
                     labelProduct = mainConfigsCopy.MakeLabelProduct();                    
                     if pc.addTargetDomain
                         labelProduct = obj.addTargetDomain(labelProduct);
@@ -66,6 +67,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigsCopy.set('sourceLabels',sourceLabels);                
                 else
                     if isfield(dataAndSplits,'sourceNames')
+                        assert(numRandomFeatures == 0);
                         allSourceNames = dataAndSplits.sourceNames;
                         currSourceNames = mainConfigsCopy.c.sourceDataSetToUse;
                         targetName = dataAndSplits.allData.name;   

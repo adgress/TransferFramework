@@ -36,34 +36,39 @@ function [] = runExperiment(configs)
         allResults.allResults{j}.experiment = ...
             configLoader.allExperiments{j};                   
     end
-    assert(configLoader.numExperiments == 1);
+    %assert(configLoader.numExperiments == 1);
+    shouldSaveTempResults = configLoader.numExperiments == 1;
     for j=1:configLoader.numExperiments
         splitResults = cell(configLoader.numSplits,1);
         if multithread
             parfor i=1:configLoader.numSplits  
                 display(sprintf('%d',i));
                 t = makeTempFile(outputFile,i);
-                if exist(t,'file')
-                    
+                if exist(t,'file') && shouldSaveTempResults
+                    display('Found Temp results - loading...');
                     splitResults{i} = loadTempResults(t);
                     continue;
                 end
                 [splitResults{i}] = ...
-                    configLoader.runExperiment(j,i);                               
-                saveTempResults(t,splitResults{i});
+                    configLoader.runExperiment(j,i);
+                if shouldSaveTempResults
+                    saveTempResults(t,splitResults{i});
+                end
             end            
         else
             for i=1:configLoader.numSplits                
                 display(sprintf('%d',i));
                 t = makeTempFile(outputFile,i);
-                if exist(t,'file')
+                if exist(t,'file') && shouldSaveTempResults
                     display('Found Temp results - loading...');
                     splitResults{i} = loadTempResults(t);                    
                     continue;
                 end
                 [splitResults{i}] = ...
                     configLoader.runExperiment(j,i);
-                saveTempResults(t,splitResults{i});
+                if shouldSaveTempResults
+                    saveTempResults(t,splitResults{i});
+                end
             end
         end
         allResults.allResults{j}.splitResults = splitResults;

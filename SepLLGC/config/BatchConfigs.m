@@ -13,7 +13,8 @@ classdef BatchConfigs < Configs
             obj.configsStruct.sigmaScale = num2cell(c.sigmaScale);
             obj.configsStruct.k = num2cell(c.k);
             obj.configsStruct.alpha = num2cell(c.alpha);
-            obj.configsStruct.mainConfigs=SepLLGCMainConfigs();                        
+            obj.configsStruct.mainConfigs=SepLLGCMainConfigs();    
+            obj.configsStruct.overrideConfigs = {Configs()};
         end        
     end
 end

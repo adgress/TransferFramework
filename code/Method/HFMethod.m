@@ -52,7 +52,8 @@ classdef HFMethod < Method
                     instanceIDs = instanceIDs(inds);                
                     W = Helpers.CreateDistanceMatrix(Xall);
                     error('check makeRBF');
-                elseif obj.get('useSeparableDistanceMatrix')
+                elseif obj.has('useSeparableDistanceMatrix') && ...
+                        obj.get('useSeparableDistanceMatrix')
                     assert(makeRBF);
                     W = zeros(size(Xall,1));
                     for featureIdx=1:size(Xall,2)

@@ -20,10 +20,11 @@ function [f, returnStruct] = visualizeResults(options,f)
             continue
         end
         smallFileName = getSmallFile(fileName);
-        if exist(smallFileName,'file')
+        if exist(smallFileName,'file') && ProjectConfigs.useSavedSmallResults
             load(smallFileName);
         else
-            allResults = fileManager.load(fileName);
+            %allResults = fileManager.load(fileName);
+            allResults = load(fileName);
             allResults = allResults.results;
             measure = options.get('measure');
             allResults.computeLossFunction(measure);
@@ -45,8 +46,8 @@ function [f, returnStruct] = visualizeResults(options,f)
         if options.has('sizeToUse')
             assert(~isempty(intersect(sizes,options.c.sizeToUse)));
             sizes = options.c.sizeToUse;
-        end
-        [results] = getResultsWithSize(results,sizes);
+            [results] = getResultsWithSize(results,sizes);
+        end        
         fieldToPlot = 'testResults';
         if plotConfigs.has('fieldToPlot')
             fieldToPlot = plotConfigs.get('fieldToPlot');
@@ -126,6 +127,7 @@ function [newResults] = getResultsWithSize(results,size)
     newResults = {};
     for i=1:length(results)
         r = results{i};
+        error('TODO: what if size is a vector?');
         if r.experiment.numLabeledPerClass == size
             newResults{end+1} = r;
         end
@@ -150,11 +152,14 @@ function [displayVal] = plotResults(results,sizes,field,colors,options)
     if true
         if length(means) == length(sizes)
             errorbar(sizes,means,vars,'color',colors);    
-        else
-            errorbar(1:length(means),means,vars,'color',colors);    
-            %errorbar(1:length(means),means,low,high,'color',colors);    
-            %a = ksr(1:length(means),means,2);
-            %plot(a.x,a.f,'color',colors);
+        else            
+            if ProjectConfigs.useKSR
+                a = ksr(1:length(means),means,2);
+                plot(a.x,a.f,'color',colors);
+            else
+                errorbar(1:length(means),means,vars,'color',colors);    
+                %errorbar(1:length(means),means,low,high,'color',colors);    
+            end
         end
     end
     displayVal = makeResultsStruct(means,vars);
