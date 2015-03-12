@@ -12,7 +12,8 @@ classdef ProjectConfigs < handle
         
         instance = ProjectConfigs.CreateSingleton()
         
-        data = Constants.HOUSING_DATA
+        %data = Constants.HOUSING_DATA
+        data = Constants.TOMMASI_DATA
         
         useSavedSmallResults = 1
         
@@ -162,7 +163,7 @@ classdef ProjectConfigs < handle
                         'LLGC Sep Uniform',...
                         'LLGC Sep Weighted',...                                                .                                        
                 };
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=1.mat';
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized';
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=1-addBias=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias';
