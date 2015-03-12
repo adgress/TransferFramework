@@ -377,7 +377,7 @@ classdef SepLLGCMethod < LLGCMethod
         end
         function [nameParams] = getNameParams(obj)
             nameParams = {'sigmaScale'};
-            if length(obj.get('alpha')) > 1
+            if length(obj.get('alpha')) == 1
                 nameParams{end+1} = 'alpha';
             end
             if obj.has('sum') && obj.get('sum')
