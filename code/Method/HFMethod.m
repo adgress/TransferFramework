@@ -174,6 +174,54 @@ classdef HFMethod < Method
                 Wrbf = distMat.W;
             end
             alpha = obj.get('alpha');
+            alphaScores = zeros(size(alpha));
+            numFolds = 10;
+            isLabeled = distMat.isLabeledTarget() & distMat.isTargetTrain();
+            labeledInds = find(isLabeled);
+            Ytrain = distMat.Y(isLabeled);
+            if length(alpha) > 1
+                folds = {};
+                for foldIdx=1:numFolds
+                    folds{foldIdx} = DataSet.generateSplit([.8 .2],Ytrain) == 1;
+                end       
+                savedData = [];
+                for alphaIdx=1:length(alpha)
+                    currAlpha = alpha(alphaIdx);
+                    for foldIdx=1:numFolds                        
+                        isTrain = folds{foldIdx};
+                        isTest = ~isTrain;
+                        %isTrainInds = labeledInds(isTrain);
+                        testInds = labeledInds(~isTrain);
+                        YtrainCurr = distMat.Y;
+                        YtrainCurr(testInds) = -1;
+                        YtrainCurr(~isLabeled) = -1;
+                        YtrainMatCurr = Helpers.createLabelMatrix(YtrainCurr);
+                        
+                        if exist('savedData','var') && isfield(savedData,'invM')
+                            [fu] = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, savedData.invM);
+                        else
+                            [fu] = LLGC.llgc_LS(Wrbf, YtrainMatCurr, currAlpha);                            
+                            if exist('savedData','var')
+                                savedData.invM = LLGC.makeInvM(Wrbf,currAlpha);
+                            else
+                                savedData = [];
+                            end
+                        end
+                        
+                        [fu] = LLGC.llgc_LS(Wrbf, YtrainMatCurr, currAlpha);
+                        fuTest = fu(testInds,:);
+                        [~,yPred] = max(fuTest,[],2);
+                        yActual = Ytrain(isTest);
+                        accVec = yPred == yActual;
+                        alphaScores(alphaIdx) = alphaScores(alphaIdx) + mean(accVec);                        
+                    end
+                    if exist('savedData','var') && isfield(savedData,'invM')
+                        savedData = rmfield(savedData,'invM');
+                    end
+                end
+                alphaScores = alphaScores ./ numFolds;
+                alpha = alpha(argmax(alphaScores));
+            end
             if exist('savedData','var') && isfield(savedData,'invM')
                 [fu] = LLGC.llgc_inv(Wrbf, YtrainMat, alpha, savedData.invM);
             else
@@ -184,6 +232,7 @@ classdef HFMethod < Method
                     savedData = [];
                 end
             end
+            
             fu(isnan(fu(:))) = 0;
             assert(isempty(find(isnan(fu))));
         end

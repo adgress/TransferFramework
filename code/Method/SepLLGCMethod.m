@@ -56,6 +56,8 @@ classdef SepLLGCMethod < LLGCMethod
             featureGroups = num2cell(1:size(trainCopy.X,2));
             F = zeros(numInstances,numClasses,length(featureGroups));
             perGroupAcc = zeros(length(featureGroups),1);
+            llgcMethod = LLGCMethod(LearnerConfigs);
+            llgcMethod.updateConfigs(obj.configs());
             for groupIdx=1:length(featureGroups);
                 dims = featureGroups{groupIdx};
                 trainCopy.X = train.X(:,dims);
@@ -73,10 +75,14 @@ classdef SepLLGCMethod < LLGCMethod
                         distMat.W = distMat.W + d.W;
                     end
                 else
-                    [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,d);                    
-
+                    %{
+                    [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,d);                                        
                     invM{end+1} = LLGC.makeInvM_unbiased(Wrbf,alpha,YtrainMat);
                     [F(:,:,groupIdx),~] = LLGC.llgc_inv_unbiased([],YtrainMat,alpha,invM{groupIdx});
+                    %}
+                    savedData = struct();
+                    [F(:,:,groupIdx),savedData,~] = llgcMethod.runLLGC(d,true,savedData);
+                    invM{end+1} = savedData.invM;
                     [~,Fpred] = max(F(:,:,groupIdx),[],2);
                     accVec = distMat.trueY == Fpred;
                     perGroupAcc(groupIdx) = mean(accVec(distMat.isTargetTest()));
@@ -113,7 +119,7 @@ classdef SepLLGCMethod < LLGCMethod
                          %[F(:,:,groupIdx),~] = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
                          %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
                          
-                         a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
+                         a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
                          F_labeled(instanceIdx,:,groupIdx) = a(ind,:);
                          
                          %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
@@ -165,14 +171,14 @@ classdef SepLLGCMethod < LLGCMethod
                             
                             
                             for groupIdx=1:length(featureGroups)                                
-                                a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
+                                a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
                                 Fcurr(:,:,groupIdx) = a(isLabeledInds,:);
                                                                 
                                 for cvIdx=1:length(cvLabeledInds)
                                     Y_copy2 = Y_copy;
                                     Y_copy2(cvLabeledInds(cvIdx)) = -1;
                                     Y_copy2Mat = Helpers.createLabelMatrix(Y_copy2);
-                                    a = LLGC.llgc_inv_unbiased([],Y_copy2Mat,alpha,invM{groupIdx});
+                                    a = LLGC.llgc_inv_unbiased([],Y_copy2Mat,[],invM{groupIdx});
                                     FcurrLabeled(cvIdx,:,groupIdx) = a(cvIdx,:);
                                 end
                             end
@@ -255,6 +261,7 @@ classdef SepLLGCMethod < LLGCMethod
                         [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat);
                         %invM = LLGC.makeInvM_unbiased(Wrbf,alpha,YtrainMat);
                         %F = LLGC.llgc_inv_unbiased([],YtrainMat,alpha,invM);
+                        error('Use llgcMethod.runLLGC');
                         F = LLGC.llgc_inv(Wrbf,YtrainMat,alpha);
                         b = 1;                        
                     end                                        

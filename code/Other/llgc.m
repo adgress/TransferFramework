@@ -12,8 +12,12 @@ classdef LLGC < handle
             end
             fu = invM*fl;            
             fu = Helpers.normRows(fu);
-            assert(~any(isnan(fu(:))));
-            assert(~any(isinf(fu(:))));
+            isInvalid = isnan(fu) | isinf(fu);
+            if any(isInvalid(:))
+                %display('LLGC:llgc_ls : inf or nan - randing out');
+                r = rand(size(fu));
+                fu(isInvalid) = r(isInvalid);
+            end
             %display('llgc: Normalizing fu');
         end
 
@@ -99,8 +103,13 @@ classdef LLGC < handle
             M = ((1+alpha)*I-WN);
             fu = M\((1-alpha)*fl);
             fu = Helpers.normRows(fu);
-            assert(~any(isnan(fu(:))));
-            assert(~any(isinf(fu(:))));
+            
+            isInvalid = isnan(fu) | isinf(fu);
+            if any(isInvalid(:))
+                %display('LLGC:llgc_ls : inf or nan - randing out');
+                r = rand(size(fu));
+                fu(isInvalid) = r(isInvalid);
+            end
         %toc
             %display('llgc: Normalizing fu');
         end

@@ -9,10 +9,11 @@ classdef BatchConfigs < Configs
         function [obj] = BatchConfigs()
             obj = obj@Configs();
             c = ProjectConfigs.Create();
-            obj.configsStruct.paramsToVary={'sigmaScale','k','alpha'};
+            %obj.configsStruct.paramsToVary={'sigmaScale','k','alpha'};
+            obj.configsStruct.paramsToVary={'sigmaScale','k'};
             obj.configsStruct.sigmaScale = num2cell(c.sigmaScale);
             obj.configsStruct.k = num2cell(c.k);
-            obj.configsStruct.alpha = num2cell(c.alpha);
+            obj.configsStruct.alpha = c.alpha;
             obj.configsStruct.mainConfigs=SepLLGCMainConfigs();    
             obj.configsStruct.overrideConfigs = {Configs()};
         end        

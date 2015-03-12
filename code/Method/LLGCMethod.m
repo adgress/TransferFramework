@@ -26,8 +26,11 @@ classdef LLGCMethod < HFMethod
             prefix = 'LLGC';
         end
         function [nameParams] = getNameParams(obj)
-            %nameParams = {'sigma','sigmaScale','k','alpha'};
-            nameParams = {'sigmaScale','alpha'};
+            %nameParams = {'sigma','sigmaScale','k','alpha'};            
+            nameParams = {'sigmaScale'};
+            if length(obj.get('alpha')) == 1
+                nameParams{end+1} = 'alpha';
+            end
         end
         function [d] = getDirectory(obj)
             error('Do we save based on method?');

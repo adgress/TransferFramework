@@ -25,7 +25,7 @@ classdef ProjectConfigs < handle
         %Housing labels
         housingVizLabels = {[1 2]}
         
-        numRandomFeatures = 30
+        numRandomFeatures = 0
     end
     
     properties        
@@ -57,7 +57,7 @@ classdef ProjectConfigs < handle
             c.labelNoise = 0;
             c.sigmaScale = .2;
             c.k=inf;
-            c.alpha=.9;
+            c.alpha=10.^(-5:5);
             c.numFolds = 3;
             c.reg = 0;
             
@@ -96,7 +96,7 @@ classdef ProjectConfigs < handle
             
             c.get('mainConfigs').setSepLLGCConfigs();
             %c.get('mainConfigs').setLLGCConfigs();
-            
+            c.get('mainConfigs').get('learners').set('alpha',pc.alpha);
             c.configsStruct.configLoader = ExperimentConfigLoader();
         end
         
@@ -166,7 +166,7 @@ classdef ProjectConfigs < handle
                 legend{end+1} = 'LLGC Sep Weighted Regularized';
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=1-addBias=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias';
-                methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2-alpha=0.9.mat';
+                methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
                 legend{end+1} = 'LLGC';                
                 %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';
                                     %'LLGC Sep Sum',...                                                    
