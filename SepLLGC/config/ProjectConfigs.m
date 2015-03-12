@@ -25,7 +25,7 @@ classdef ProjectConfigs < handle
         %Housing labels
         housingVizLabels = {[1 2]}
         
-        numRandomFeatures = 10
+        numRandomFeatures = 30
     end
     
     properties        

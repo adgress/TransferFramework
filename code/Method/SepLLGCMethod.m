@@ -18,7 +18,7 @@ classdef SepLLGCMethod < LLGCMethod
                 obj.set('sum',false);
             end
             if ~obj.has('addBias')
-                obj.set('addBias',1);
+                obj.set('addBias',0);
             end
         end
         
