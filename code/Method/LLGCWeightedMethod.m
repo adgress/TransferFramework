@@ -7,6 +7,7 @@ classdef LLGCWeightedMethod < LLGCMethod
     
     methods
         function obj = LLGCWeightedMethod(configs)
+            error('TODO: alpha or (1-alpha)?');
             obj = obj@LLGCMethod(configs);
             if ~obj.has('oracle')
                 obj.set('oracle',false);
