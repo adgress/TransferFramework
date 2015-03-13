@@ -172,9 +172,18 @@ classdef ProjectConfigs < handle
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias - Best Feature';
                 fields{end+1} = 'featureTestAccsBest';
                 
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-redoLLGC=1.mat';
+                legend{end+1} = 'LLGC Sep Weighted Regularized with Bias, nonneg';
+                fields{end+1} = 'testResults';
+                
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-redoLLGC=1.mat';
+                legend{end+1} = 'LLGC Sep Subset';
+                fields{end+1} = 'subsetTestAcc';
+                %{
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-lasso=1-slZ=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized Lasso';
                 fields{end+1} = 'testResults';
+                %}
                 methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
                 legend{end+1} = 'LLGC';       
                 fields{end+1} = 'testResults';

@@ -33,7 +33,10 @@ classdef SepLLGCMethod < LLGCMethod
                 obj.set('redoLLGC',1);
             end
             if ~obj.has('nonneg')
-                obj.set('nonneg',1);
+                obj.set('nonneg',0);
+            end
+            if ~obj.has('negY')
+                obj.set('negY',1);
             end
         end
         
@@ -359,7 +362,8 @@ classdef SepLLGCMethod < LLGCMethod
             
             [sortedAccs,inds] = sort(featureTrainAccs,'descend');
             
-            featsToUse = inds(1:2);
+            %featsToUse = inds(1:2);
+            featsToUse = inds(1:10);
             
             trainCopy = input.train.copy();
             testCopy = input.test.copy();  
@@ -414,8 +418,8 @@ classdef SepLLGCMethod < LLGCMethod
                 %display('Not stacking all');
                 break;
             end
-            if obj.get('addBias')
-            	%Y_bar(Y_bar==0) = -1;
+            if obj.get('negY')
+            	Y_bar(Y_bar==0) = -1;
             end
         end
         
