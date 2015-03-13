@@ -69,8 +69,8 @@ classdef ProjectConfigs < handle
                 c.labelsToUse = [];
                 %c.numLabeledPerClass=[5 10 15 20 25];
                 c.numLabeledPerClass=[10 20 30 40 50];
-                %c.numLabeledPerClass=25;
-                c.reg = [0 10.^(-8:0) ];   
+                %c.numLabeledPerClass=50;
+                c.reg = [0 10.^(-8:0) 10.^(1:8)];   
                 c.numFolds = 3;                
 
             else
@@ -157,16 +157,12 @@ classdef ProjectConfigs < handle
             title = [];
             if ProjectConfigs.experimentSetting == ProjectConfigs.SEP_LLGC_EXPERIMENT
                 title = '';
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-uniform=1.mat';                 
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=0.mat';                                  
-                legend = {...
-                        'LLGC Sep Uniform',...
-                        'LLGC Sep Weighted',...                                                .                                        
-                };
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized';
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-regularized=1-addBias=1.mat';
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias';
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-lasso=1.mat';
+                legend{end+1} = 'LLGC Sep Weighted Regularized Lasso';
                 methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
                 legend{end+1} = 'LLGC';                
                 %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';

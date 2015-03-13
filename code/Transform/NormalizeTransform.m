@@ -5,7 +5,6 @@ classdef NormalizeTransform < TransformBase
     properties
         mean
         stdevs
-        Z
     end
     
     methods
@@ -17,7 +16,7 @@ classdef NormalizeTransform < TransformBase
         end
         
         function [] = learn(obj,X,Y)
-            [obj.Z,obj.mean,obj.stdevs] = zscore(X);
+            [~,obj.mean,obj.stdevs] = zscore(X);
         end
         
         function [Z] = apply(obj,X,Y)

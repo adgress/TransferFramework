@@ -21,7 +21,10 @@ classdef SepLLGCMethod < LLGCMethod
                 obj.set('addBias',1);
             end
             if ~obj.has('lasso')
-                obj.set('lasso',1);
+                obj.set('lasso',0);
+            end
+            if ~obj.has('slZ')
+                obj.set('slZ',1);
             end
         end
         
@@ -104,7 +107,7 @@ classdef SepLLGCMethod < LLGCMethod
             Y_labeled_mat = Helpers.createLabelMatrix(Y_labeled);
             isLabeledInds = find(isLabeledInds);
 
-            if obj.get('addBias') && false
+            if obj.get('slZ')
                 transform = NormalizeTransform();
             else
                 transform = TransformBase();
@@ -123,7 +126,8 @@ classdef SepLLGCMethod < LLGCMethod
                          %[F(:,:,groupIdx),~] = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,alpha,invM{groupIdx});
                          %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
                          
-                         a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
+                         %a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
+                         a = LLGC.llgc_inv([],YMatCurrRemoved,[],invM{groupIdx});
                          F_labeled(instanceIdx,:,groupIdx) = a(ind,:);
                          
                          %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
@@ -200,9 +204,14 @@ classdef SepLLGCMethod < LLGCMethod
                                 Ytrain = Helpers.createLabelMatrix(Y_labeled(~isTest));
                                 [F_bar_labeled, Y_bar_labeled] = obj.stackLabels(Xtrain,Ytrain);
                                                                                                 
-                                transform.learn(F_bar_labeled);                    
+                                transform.learn(F_bar_labeled);   
                                 F_bar_labeled = transform.apply(F_bar_labeled,Y_bar_labeled);
                                 b = obj.solveForBeta(F_bar_labeled,Y_bar_labeled,reg);
+                                
+                                for i=1:size(Xtrain,2)
+                                    a = squeeze(Xtrain(:,i,:));
+                                    Xtrain(:,i,:) = transform.apply(a);
+                                end
                                 
                                 [~,trainPred] = max(obj.sumF(Xtrain,b),[],2);
                                 accVec = trainPred == Y_labeled(~isTest);
@@ -213,10 +222,12 @@ classdef SepLLGCMethod < LLGCMethod
                                 else                                    
                                     Xtest = F_labeled(isTest,:,:);
                                 end                                
-                                Ytest = Y_labeled(isTest);
+                                Ytest = Y_labeled(isTest);                                
+                                
                                 for i=1:size(Xtest,2)             
                                     a = squeeze(Xtest(:,i,:));
                                     Xtest(:,i,:) = transform.apply(a);
+                                    
                                 end
                                 XbTest = obj.sumF(Xtest,b);
                                 [~,YtestPred] = max(XbTest,[],2);
@@ -349,13 +360,15 @@ classdef SepLLGCMethod < LLGCMethod
             numClasses = size(F,2);
             numFeatures = size(F,3);
             F_bar = zeros(numInstances*numClasses,numFeatures);
-            Y_bar = zeros(size(F_bar,1),1);            
+            Y_bar = zeros(size(F_bar,1),1);
             for classIdx=1:numClasses
                 start = (classIdx-1)*numInstances + 1;
                 finish = classIdx*numInstances;
-                F_bar(start:finish,:) = ...
-                    reshape(F(:,classIdx,:),numInstances,numFeatures);
+                %F_bar(start:finish,:) = reshape(F(:,classIdx,:),numInstances,numFeatures);
+                F_bar(start:finish,:) = squeeze(F(:,classIdx,:));
                 Y_bar(start:finish) = Y(:,classIdx);
+                display('Not stacking all');
+                break;
             end
             if obj.get('addBias')
             	%Y_bar(Y_bar==0) = -1;
@@ -416,6 +429,9 @@ classdef SepLLGCMethod < LLGCMethod
             end
             if obj.has('lasso') && obj.get('lasso')
                 nameParams{end+1} = 'lasso';
+            end
+            if obj.has('slZ') && obj.get('slZ')
+                nameParams{end+1} = 'slZ';
             end
         end
     end
