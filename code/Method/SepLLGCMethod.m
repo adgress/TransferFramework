@@ -18,7 +18,10 @@ classdef SepLLGCMethod < LLGCMethod
                 obj.set('sum',false);
             end
             if ~obj.has('addBias')
-                obj.set('addBias',0);
+                obj.set('addBias',1);
+            end
+            if ~obj.has('lasso')
+                obj.set('lasso',1);
             end
         end
         
@@ -32,8 +35,8 @@ classdef SepLLGCMethod < LLGCMethod
             testCopy = test.copy();            
             numClasses = max(train.Y);
             numInstances = size(trainCopy.X,1) + size(testCopy.X,1);         
-            invM = {};      
-            alpha = obj.get('alpha');
+            invM = {};     
+            W = {};
             
             %Different views for feature groups
             %featureGroups = {1:300,301:328,329:368,369:405};            
@@ -83,6 +86,7 @@ classdef SepLLGCMethod < LLGCMethod
                     savedData = struct();
                     [F(:,:,groupIdx),savedData,~] = llgcMethod.runLLGC(d,true,savedData);
                     invM{end+1} = savedData.invM;
+                    W{groupIdx} = d.W;
                     [~,Fpred] = max(F(:,:,groupIdx),[],2);
                     accVec = distMat.trueY == Fpred;
                     perGroupAcc(groupIdx) = mean(accVec(distMat.isTargetTest()));
@@ -129,8 +133,8 @@ classdef SepLLGCMethod < LLGCMethod
                 assert(~any(isnan(F(:))));
                 F_labeled(isnan(F_labeled)) = 0;         
                 
-                trainAccs = [];
-                testAccs = [];
+                trainAccs = zeros(length(featureGroups),1);
+                testAccs = trainAccs;
                 for groupIdx=1:length(featureGroups);
                     Fcurr = F_labeled(:,:,groupIdx);
                     [~,FcurrPred] = max(Fcurr,[],2);
@@ -166,20 +170,21 @@ classdef SepLLGCMethod < LLGCMethod
                             Fcurr = zeros(length(Y_labeled),size(F,2),size(F,3));                            
                             FcurrLabeled = zeros(length(cvLabeledInds),size(F,2),size(F,3));
                             Y_copy = distMat.Y;
-                            Y_copy(isLabeledInds(isTest)) = -1;
-                            YMatCurrRemoved = Helpers.createLabelMatrix(Y_copy);
+                            Y_copy(isLabeledInds(isTest)) = -1;                            
                             
-                            
-                            for groupIdx=1:length(featureGroups)                                
-                                a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
-                                Fcurr(:,:,groupIdx) = a(isLabeledInds,:);
-                                                                
-                                for cvIdx=1:length(cvLabeledInds)
-                                    Y_copy2 = Y_copy;
-                                    Y_copy2(cvLabeledInds(cvIdx)) = -1;
-                                    Y_copy2Mat = Helpers.createLabelMatrix(Y_copy2);
-                                    a = LLGC.llgc_inv_unbiased([],Y_copy2Mat,[],invM{groupIdx});
-                                    FcurrLabeled(cvIdx,:,groupIdx) = a(cvIdx,:);
+                            if useFCurrLabeled
+                                YMatCurrRemoved = Helpers.createLabelMatrix(Y_copy);
+                                for groupIdx=1:length(featureGroups)                                
+                                    a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
+                                    Fcurr(:,:,groupIdx) = a(isLabeledInds,:);
+
+                                    for cvIdx=1:length(cvLabeledInds)
+                                        Y_copy2 = Y_copy;
+                                        Y_copy2(cvLabeledInds(cvIdx)) = -1;
+                                        Y_copy2Mat = Helpers.createLabelMatrix(Y_copy2);
+                                        a = LLGC.llgc_inv_unbiased([],Y_copy2Mat,[],invM{groupIdx});
+                                        FcurrLabeled(cvIdx,:,groupIdx) = a(cvIdx,:);
+                                    end
                                 end
                             end
                     
@@ -299,12 +304,25 @@ classdef SepLLGCMethod < LLGCMethod
                     testResults.dataFU = sparse(Fb);                    
                 end              
             end
+            featureSmoothness = zeros(length(W),1);
+            for i=1:length(W)
+                featureSmoothness(i) = LLGC.smoothness(W{i},distMat.trueY);
+            end
+            testResults.learnerStats.featureWeights = b;
+            if obj.get('addBias')
+                testResults.learnerStats.featureWeights = b(2:end);
+                testResults.learnerStats.bias = b(1);
+            end
+            testResults.learnerStats.featureTrainAccs = trainAccs;
+            testResults.learnerStats.featureTestAccs = testAccs;
+            testResults.learnerStats.featureSmoothness = featureSmoothness;
             v = testResults.yPred;
             accVec = testResults.yPred == trueY;
             trainAcc = mean(accVec(isLabeledInds));
             testAcc = mean(accVec(distMat.isTargetTest()));
             display([num2str(trainAcc) ' ' num2str(testAcc)]);
             assert(~any(isnan(testResults.dataFU(:))));
+            t = [trainAccs testAccs featureSmoothness testResults.learnerStats.featureWeights];
         end
         
         function [Fb] = sumF(obj,F,b)
@@ -346,10 +364,16 @@ classdef SepLLGCMethod < LLGCMethod
         
         function [b] = solveForBeta(obj,F_bar,Y_bar,reg)
             if obj.get('addBias')
-                b = ridge(Y_bar,F_bar,reg,0); 
+                if obj.get('lasso')
+                    [B,stats] = lasso(F_bar,Y_bar,'Lambda',reg);
+                    b = [stats.Intercept ; B];
+                else
+                    b = ridge(Y_bar,F_bar,reg,0);                 
+                end
                 F_bar_bias = [ones(size(F_bar,1),1) F_bar];
                 d = F_bar_bias*b - Y_bar;
             else
+                assert(~obj.get('lasso'));
                 numFeatures = size(F_bar,2);            
                 u = ones(numFeatures,1)./numFeatures;
                 warning off
@@ -379,7 +403,7 @@ classdef SepLLGCMethod < LLGCMethod
             nameParams = {'sigmaScale'};
             if length(obj.get('alpha')) == 1
                 nameParams{end+1} = 'alpha';
-            end
+            end            
             if obj.has('sum') && obj.get('sum')
                 nameParams{end+1} = 'sum';
             elseif obj.has('uniform') && obj.get('uniform')
@@ -389,6 +413,9 @@ classdef SepLLGCMethod < LLGCMethod
             end
             if obj.has('addBias') && obj.get('addBias')
                 nameParams{end+1} = 'addBias';
+            end
+            if obj.has('lasso') && obj.get('lasso')
+                nameParams{end+1} = 'lasso';
             end
         end
     end

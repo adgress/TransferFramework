@@ -7,6 +7,7 @@ classdef FisherScoreTransform < TransformBase
     
     methods
         function [obj] = NormalizeTransform(configs)
+            error('TODO');
             if ~exist('configs','var')
                 configs = Configs();
             end

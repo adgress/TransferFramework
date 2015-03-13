@@ -11,7 +11,11 @@ classdef ResultsVector < double
         end        
         
         function [m] = getMean(obj)
-            m = mean(obj);
+            if size(obj,1) == 1
+                m = double(obj);
+            else
+                m = mean(obj);
+            end
         end
         function [v] = getVar(obj)
             v = var(obj);
@@ -20,6 +24,10 @@ classdef ResultsVector < double
             v = std(obj);
         end
         function [v] = getConfidenceInterval(obj,confInterval)
+            if size(obj,1) == 1
+                v = zeros(size(obj));
+                return;
+            end
             if confInterval == VisualizationConfigs.CONF_INTERVAL_STD
                 v = obj.getSTD();
             elseif confInterval == VisualizationConfigs.CONF_INTERVAL_BINOMIAL

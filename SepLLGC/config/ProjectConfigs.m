@@ -12,8 +12,8 @@ classdef ProjectConfigs < handle
         
         instance = ProjectConfigs.CreateSingleton()
         
-        %data = Constants.HOUSING_DATA
-        data = Constants.TOMMASI_DATA
+        data = Constants.HOUSING_DATA
+        %data = Constants.TOMMASI_DATA
         
         useSavedSmallResults = 1
         

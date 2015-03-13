@@ -1,14 +1,35 @@
 classdef LLGC < handle    
     methods(Static)
+        
+        function [v] = smoothness(W,f)            
+            if size(f,2) == 1
+                f = Helpers.createLabelMatrix(f);
+            end
+            assert(all(sum(f,2) > 0));
+            L = LLGC.make_L(W);
+            classScores = [];
+            for i=1:size(f,2)
+                fi = f(:,i);
+                if ~any(fi)
+                    continue
+                end                
+                classScores(end+1) = fi' * L * fi;
+            end
+            v = mean(classScores);
+        end
+        
         function [fu,invM] = llgc_inv(W,fl,alpha,invM)
             %alpha = .5;       
             W(logical(speye(size(W)))) = 0;
 
             if ~exist('invM','var')
+                %{
                 Disq = diag(sum(W).^-.5);
                 WN = Disq*W*Disq;
                 I = eye(size(WN,1));
                 invM = (1-alpha)*inv((1+alpha)*I - WN);               
+                %}
+                invM = LLGC.makeInvM(W,alpha);
             end
             fu = invM*fl;            
             fu = Helpers.normRows(fu);
@@ -21,6 +42,10 @@ classdef LLGC < handle
             %display('llgc: Normalizing fu');
         end
 
+        function [WN] = make_WN(W)
+            Disq = diag(sum(W).^-.5);
+            WN = Disq*W*Disq;
+        end
         function [L] = make_L_unnormalized(W)
             L = diag(sum(W)) - W;
         end
@@ -69,7 +94,8 @@ classdef LLGC < handle
             Disq = diag(sum(W).^-.5);
             WN = Disq*W*Disq;
             I = eye(size(WN,1));
-            invM = (1-alpha)*inv((1+alpha)*I-WN);
+            %invM = (1-alpha)*inv((1+alpha)*I-WN);
+            invM = alpha*inv((1+alpha)*I-WN);
         end
         
         function [invM] = makeInvM_unbiased(W,alpha,Y)
@@ -83,7 +109,8 @@ classdef LLGC < handle
             I = eye(size(WN,1));
             A = diag(Y);
             eps = 1e-6;
-            invM = (1-alpha)*inv(I*(1+eps) - WN + alpha*A);
+            %invM = (1-alpha)*inv(I*(1+eps) - WN + alpha*A);
+            invM = alpha*inv(I*(1+eps) - WN + alpha*A);
         end
         
         function [fu] = llgc_LS(W,fl,alpha)
@@ -101,7 +128,8 @@ classdef LLGC < handle
             WN = Disq*W*Disq;
             I = speye(size(WN,1));
             M = ((1+alpha)*I-WN);
-            fu = M\((1-alpha)*fl);
+            %fu = M\((1-alpha)*fl);
+            fu = M\(alpha*fl);
             fu = Helpers.normRows(fu);
             
             isInvalid = isnan(fu) | isinf(fu);
