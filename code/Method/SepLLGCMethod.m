@@ -26,6 +26,15 @@ classdef SepLLGCMethod < LLGCMethod
             if ~obj.has('slZ')
                 obj.set('slZ',1);
             end
+            if ~obj.has('logReg')
+                obj.set('logReg',0);
+            end
+            if ~obj.has('redoLLGC')
+                obj.set('redoLLGC',1);
+            end
+            if ~obj.has('nonneg')
+                obj.set('nonneg',1);
+            end
         end
         
         function [testResults,savedData] = ...
@@ -62,7 +71,7 @@ classdef SepLLGCMethod < LLGCMethod
             featureGroups = num2cell(1:size(trainCopy.X,2));
             F = zeros(numInstances,numClasses,length(featureGroups));
             perGroupAcc = zeros(length(featureGroups),1);
-            llgcMethod = LLGCMethod(LearnerConfigs);
+            llgcMethod = LLGCMethod(LearnerConfigs());
             llgcMethod.updateConfigs(obj.configs());
             for groupIdx=1:length(featureGroups);
                 dims = featureGroups{groupIdx};
@@ -334,6 +343,41 @@ classdef SepLLGCMethod < LLGCMethod
             display([num2str(trainAcc) ' ' num2str(testAcc)]);
             assert(~any(isnan(testResults.dataFU(:))));
             t = [trainAccs testAccs featureSmoothness testResults.learnerStats.featureWeights];
+            display(['Best feat test Acc: ' num2str(testAccs(argmax(trainAccs)))]);
+            if obj.get('redoLLGC')
+                [subsetTrainAcc, subsetTestAcc] = ...
+                    obj.redoLLGC(input,trainAccs);
+                testResults.learnerStats.subsetTrainAcc = subsetTrainAcc;
+                testResults.learnerStats.subsetTestAcc = subsetTestAcc;
+                display(['Redo Acc: ' num2str(subsetTrainAcc) ' ' num2str(subsetTestAcc)]);
+            end
+        end
+        
+        function [trainAcc,testAcc] = redoLLGC(obj,input,featureTrainAccs)
+            llgcMethod = LLGCMethod(LearnerConfigs());
+            llgcMethod.updateConfigs(obj.configs());
+            
+            [sortedAccs,inds] = sort(featureTrainAccs,'descend');
+            
+            featsToUse = inds(1:2);
+            
+            trainCopy = input.train.copy();
+            testCopy = input.test.copy();  
+            
+            trainCopy.X = trainCopy.X(:,featsToUse);
+            testCopy.X = testCopy.X(:,featsToUse);   
+            useHF = false;
+            makeRBF = true;
+            distMat = obj.createDistanceMatrix(trainCopy,testCopy,...
+                useHF,obj.configs,makeRBF);                                
+            distMat.removeTestLabels();
+
+            savedData = struct();
+            [fu] = llgcMethod.runLLGC(distMat,true,savedData);
+            [~,Fpred] = max(fu,[],2);
+            accVec = distMat.trueY == Fpred;
+            trainAcc = mean(accVec(distMat.isLabeled()));
+            testAcc = mean(accVec(distMat.isTargetTest()));
         end
         
         function [Fb] = sumF(obj,F,b)
@@ -367,7 +411,7 @@ classdef SepLLGCMethod < LLGCMethod
                 %F_bar(start:finish,:) = reshape(F(:,classIdx,:),numInstances,numFeatures);
                 F_bar(start:finish,:) = squeeze(F(:,classIdx,:));
                 Y_bar(start:finish) = Y(:,classIdx);
-                display('Not stacking all');
+                %display('Not stacking all');
                 break;
             end
             if obj.get('addBias')
@@ -381,10 +425,23 @@ classdef SepLLGCMethod < LLGCMethod
                     [B,stats] = lasso(F_bar,Y_bar,'Lambda',reg);
                     b = [stats.Intercept ; B];
                 else
-                    b = ridge(Y_bar,F_bar,reg,0);                 
+                    warning off
+                    %b = ridge(Y_bar,F_bar,reg,0);  
+                    
+                    F_bar = [ones(size(F_bar,1),1) F_bar];
+                    numFeatures = size(F_bar,2); 
+                    cvx_begin quiet
+                    variable b(numFeatures,1)
+                    %minimize(norm(F_bar*b-Y_bar,'fro') + reg*norm(b-u,2))
+                    minimize(norm(F_bar*b-Y_bar) + reg*norm(b(2:end),2))
+                    subject to
+                        b(2:end) >= 0
+                    cvx_end 
+                    
+                    warning on
                 end
-                F_bar_bias = [ones(size(F_bar,1),1) F_bar];
-                d = F_bar_bias*b - Y_bar;
+                %F_bar_bias = [ones(size(F_bar,1),1) F_bar];
+                %d = F_bar_bias*b - Y_bar;
             else
                 assert(~obj.get('lasso'));
                 numFeatures = size(F_bar,2);            
@@ -432,6 +489,12 @@ classdef SepLLGCMethod < LLGCMethod
             end
             if obj.has('slZ') && obj.get('slZ')
                 nameParams{end+1} = 'slZ';
+            end
+            if obj.has('nonneg') && obj.get('nonneg')
+                nameParams{end+1} = 'nonneg';
+            end
+            if obj.has('redoLLGC') && obj.get('redoLLGC')
+                nameParams{end+1} = 'redoLLGC';
             end
         end
     end

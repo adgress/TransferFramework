@@ -141,6 +141,16 @@ classdef Measure < Saveable
                     end                
                 end
                 
+                if isfield(sm1.learnerStats,'featureTestAccs')
+                    testAccs = Helpers.getValuesOfField(learnerStats,'featureTestAccs');
+                    trainAccs = Helpers.getValuesOfField(learnerStats,'featureTrainAccs');
+                    accsBest = zeros(size(trainAccs,1),1);
+                    for splitIdx=1:size(trainAccs,1)
+                        bestInd = argmax(trainAccs(splitIdx,:));
+                        accsBest(splitIdx) = testAccs(splitIdx,bestInd);
+                    end                    
+                    aggregatedResults.featureTestAccsBest = ResultsVector(accsBest);
+                end
                 if isfield(sm1,'isNoisyAcc')
                     isNoisyAccs = Helpers.getValuesOfField(splitMeasures,'isNoisyAcc');
                     aggregatedResults.isNoisyAccs = ResultsVector(isNoisyAccs);

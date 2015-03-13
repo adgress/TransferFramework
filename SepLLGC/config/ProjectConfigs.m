@@ -27,6 +27,7 @@ classdef ProjectConfigs < handle
         housingVizLabels = {[1 2]}
         
         numRandomFeatures = 0
+        
     end
     
     properties        
@@ -155,16 +156,28 @@ classdef ProjectConfigs < handle
             pc = ProjectConfigs.Create();
             legend = {};
             title = [];
+            fields = {};
             if ProjectConfigs.experimentSetting == ProjectConfigs.SEP_LLGC_EXPERIMENT
                 title = '';
+                %{
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized';
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1.mat';
+                fields{end+1} = 'testResults';
+                %}
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias';
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-lasso=1.mat';
+                fields{end+1} = 'testResults';
+                
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1.mat';
+                legend{end+1} = 'LLGC Sep Weighted Regularized with Bias - Best Feature';
+                fields{end+1} = 'featureTestAccsBest';
+                
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-lasso=1-slZ=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized Lasso';
+                fields{end+1} = 'testResults';
                 methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
-                legend{end+1} = 'LLGC';                
+                legend{end+1} = 'LLGC';       
+                fields{end+1} = 'testResults';
                 %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';
                                     %'LLGC Sep Sum',...                                                    
             else
