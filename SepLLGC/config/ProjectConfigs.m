@@ -12,8 +12,8 @@ classdef ProjectConfigs < handle
         
         instance = ProjectConfigs.CreateSingleton()
         
-        data = Constants.HOUSING_DATA
-        %data = Constants.TOMMASI_DATA
+        %data = Constants.HOUSING_DATA
+        data = Constants.TOMMASI_DATA
         
         useSavedSmallResults = 1
         
@@ -46,11 +46,13 @@ classdef ProjectConfigs < handle
         labelNoise
         computeLossFunction
         processMeasureResults
+        rerunExperiments
     end
     
     methods(Static, Access=private)
         function [c] = CreateSingleton()
             c = ProjectConfigs();
+            c.rerunExperiments = 0;
             
             c.computeLossFunction = true;
             c.processMeasureResults = false;
@@ -164,19 +166,22 @@ classdef ProjectConfigs < handle
                 legend{end+1} = 'LLGC Sep Weighted Regularized';
                 fields{end+1} = 'testResults';
                 %}
+                %{
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias';
                 fields{end+1} = 'testResults';
+                %}
                 
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1.mat';
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias - Best Feature';
                 fields{end+1} = 'featureTestAccsBest';
                 
+                %{
                 methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-redoLLGC=1.mat';
                 legend{end+1} = 'LLGC Sep Weighted Regularized with Bias, nonneg';
                 fields{end+1} = 'testResults';
-                
-                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-redoLLGC=1.mat';
+                %}
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
                 legend{end+1} = 'LLGC Sep Subset';
                 fields{end+1} = 'subsetTestAcc';
                 %{
@@ -184,6 +189,10 @@ classdef ProjectConfigs < handle
                 legend{end+1} = 'LLGC Sep Weighted Regularized Lasso';
                 fields{end+1} = 'testResults';
                 %}
+                methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
+                legend{end+1} = 'LLGC Weighted Reg Bias, negY';       
+                fields{end+1} = 'testResults';
+                
                 methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
                 legend{end+1} = 'LLGC';       
                 fields{end+1} = 'testResults';
@@ -196,7 +205,7 @@ classdef ProjectConfigs < handle
             for fileIdx=1:length(methodResultsFileNames)
                 configs = basePlotConfigs.copy();
                 configs.set('resultFileName',methodResultsFileNames{fileIdx});
-                configs.set('fieldToPlot','testResults');
+                configs.set('fieldToPlot',fields{fileIdx});
                 plotConfigs{end+1} = configs;
             end
         end     
