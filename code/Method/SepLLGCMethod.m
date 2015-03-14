@@ -225,7 +225,10 @@ classdef SepLLGCMethod < LLGCMethod
                                     Xtrain(:,i,:) = transform.apply(a);
                                 end
                                 
-                                [~,trainPred] = max(obj.sumF(Xtrain,b),[],2);
+                                %[~,trainPred] = max(obj.sumF(Xtrain,b),[],2);
+                                XtrainB = obj.sumF(Xtrain,b);
+                                trainPred = (XtrainB(:,1) > 0)*train.classes(1);
+                                trainPred(trainPred == 0) = train.classes(2);
                                 accVec = trainPred == Y_labeled(~isTest);
                                 regPerfTrain(regIdx) = regPerfTrain(regIdx) + mean(accVec);
                                 
@@ -242,7 +245,9 @@ classdef SepLLGCMethod < LLGCMethod
                                     
                                 end
                                 XbTest = obj.sumF(Xtest,b);
-                                [~,YtestPred] = max(XbTest,[],2);
+                                %[~,YtestPred] = max(XbTest,[],2);
+                                YtestPred = (XbTest(:,1) > 0)*train.classes(1);
+                                YtestPred(YtestPred == 0) = train.classes(2);
                                 regPerf(regIdx) = regPerf(regIdx) + mean(YtestPred == Ytest);
                             end
                         end
@@ -271,14 +276,15 @@ classdef SepLLGCMethod < LLGCMethod
                         for i=1:size(F_labeled,2)
                             a = squeeze(F_labeled(:,i,:));
                             F_labeled(:,i,:) = transform.apply(a);
-                        end
-                        
+                        end                        
                         Fb_labeled = obj.sumF(F_labeled,b);
-                        [~,Fb_labeledPred] = max(Fb_labeled,[],2);
+                        Fb_labeledPred = (Fb_labeled(:,1) > 0)*train.classes(1);
+                        Fb_labeledPred(Fb_labeledPred == 0) = train.classes(2);
                         accVec = Fb_labeledPred == distMat.Y(isLabeledInds);
                         %t = [Fb_labeledPred distMat.Y(isLabeledInds)];
                         display(['TrainAcc: ' num2str(mean(accVec))]);
                     else
+                        error('Update');
                         dims = sortedFeatures(1:featuresToUse);
                         trainCopy.X = train.X(:,dims);
                         testCopy.X = test.X(:,dims);   
@@ -307,6 +313,7 @@ classdef SepLLGCMethod < LLGCMethod
                 testResults.yPred = FsumPred;
             else                
                 if obj.get('uniform')
+                    error('update');
                     Faverage = obj.sumF(F);
                     [~,FavePred] = max(Faverage,[],2);
                     testResults.yPred = FavePred;
@@ -322,7 +329,9 @@ classdef SepLLGCMethod < LLGCMethod
                     else
                         Fb = F;
                     end
-                    [~,FbPred] = max(Fb,[],2);
+                    FbPred = (Fb(:,1) > 0)*train.classes(1);
+                    FbPred(FbPred == 0) = train.classes(2);
+                    %[~,FbPred] = max(Fb,[],2);
                     testResults.yPred = FbPred;                    
                     testResults.dataFU = sparse(Fb);                    
                 end              
@@ -404,6 +413,8 @@ classdef SepLLGCMethod < LLGCMethod
         end
         
         function [F_bar,Y_bar] = stackLabels(obj,F,Y)
+            Y( :, ~any(Y,1) ) = [];
+            assert(size(Y,2) == 2);
             numInstances = size(F,1);
             numClasses = size(F,2);
             numFeatures = size(F,3);
