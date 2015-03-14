@@ -511,6 +511,9 @@ classdef SepLLGCMethod < LLGCMethod
             if obj.has('redoLLGC') && obj.get('redoLLGC')
                 nameParams{end+1} = 'redoLLGC';
             end
+            if obj.has('negY') && obj.get('negY')
+                nameParams{end+1} = 'negY';
+            end
         end
     end
     
