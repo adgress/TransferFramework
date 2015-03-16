@@ -8,7 +8,7 @@ classdef TransferRepCoverage < ActiveMethod
     methods
         function obj = TransferRepCoverage(configs)            
             obj = obj@ActiveMethod(configs);
-            obj.set('method',6);
+            obj.set('method',9);
         end
         
         function [queriedIdx,scores] = queryLabel(obj,input,results,s)   
@@ -16,6 +16,8 @@ classdef TransferRepCoverage < ActiveMethod
                 targetEntropy = TargetEntropyActiveMethod(Configs());
                 [queriedIdx,scores] = targetEntropy.queryLabel(input,results,s);
             else
+                [queriedIdx,scores] = queryLabel@ActiveMethod(obj,input,results,s);
+                %{
                 unlabeledScores = obj.getScores(input,results,s);
                 [~,maxIdx] = max(unlabeledScores);
                 unlabeledInds = find(input.train.Y < 0);
@@ -23,6 +25,7 @@ classdef TransferRepCoverage < ActiveMethod
 
                 scores = -ones*size(input.train.Y);
                 scores(unlabeledInds) = unlabeledScores;
+                %}
             end
             
         end  
@@ -40,6 +43,9 @@ classdef TransferRepCoverage < ActiveMethod
             labeledTarget2source = Wrbf(labeledTargetInds,sourceInds);
             unlabeled2source = Wrbf(unlabeledInds,sourceInds);
             
+            targetEntropy = TargetEntropyActiveMethod(Configs());
+            [~,entropyScores] = targetEntropy.queryLabel(input,results,s);
+            
             switch obj.get('method')
                 case 0
                     sourceScores = sum(labeledTarget2source);
@@ -55,15 +61,12 @@ classdef TransferRepCoverage < ActiveMethod
                     scores = unlabeled2source*sourceScores';
                     %display('');
                 case 3
-                    targetEntropy = TargetEntropyActiveMethod(Configs());
-                    [~,entropyScores] = targetEntropy.queryLabel(input,results,s);
+                    
                     %s1 = Helpers.NormalizeRange(scores);        
                     D = diag(sum(unlabeled2source,2));
                     sourceScores = entropyScores(sourceInds);
                     scores = inv(D)*unlabeled2source*sourceScores';
-                case 4
-                    targetEntropy = TargetEntropyActiveMethod(Configs());
-                    [~,entropyScores] = targetEntropy.queryLabel(input,results,s);                    
+                case 4                    
                     sourceScores = entropyScores(sourceInds);
                     sourceScores = Helpers.NormalizeRange(sourceScores);
                     scores = unlabeled2source*sourceScores';
@@ -88,6 +91,19 @@ classdef TransferRepCoverage < ActiveMethod
                     sourceScores = ones(size(unlabeled2source,2),1);
                     scores2 = unlabeled2source*sourceScores;
                     display(['5: ' num2str(argmax(scores)) ', 4: ' num2str(argmax(scores2))]);
+                case {7,8,9}
+                    unlabeledScores = sum(unlabeled2source,2);  
+                    entropyScores = entropyScores';
+                    unlabeledEntropyScores = entropyScores(unlabeledInds);
+                    unlabeledEntropyScores = Helpers.NormalizeRange(unlabeledEntropyScores);
+                    if obj.get('method') == 8
+                        unlabeledScores = Helpers.NormalizeRange(unlabeledScores);
+                    end
+                    if obj.get('method') == 9
+                        scores = unlabeledScores + unlabeledEntropyScores;
+                    else
+                        scores = unlabeledScores .* unlabeledEntropyScores;
+                    end
                 otherwise
                     error('');
             end            

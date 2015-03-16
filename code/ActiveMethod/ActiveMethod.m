@@ -12,6 +12,18 @@ classdef ActiveMethod < Saveable
         function n = getDisplayName(obj)
             n = obj.getPrefix();
         end
+        
+        function [queriedIdx,scores] = queryLabel(obj,input,results,s)               
+            labelsPerIteration = obj.get('labelsPerIteration');
+            unlabeledScores = obj.getScores(input,results,s);
+            unlabeledInds = find(input.train.Y < 0);
+            %[~,maxIdx] = max(unlabeledScores);
+            [sortedScores,scoreInds] = sort(unlabeledScores,'descend');
+            queriedIdx = scoreInds(1:labelsPerIteration);
+            
+            scores = -ones*size(input.train.Y);
+            scores(unlabeledInds) = unlabeledScores;
+        end  
         function [nameParams] = getNameParams(obj)
             nameParams = {};
         end
@@ -20,8 +32,8 @@ classdef ActiveMethod < Saveable
         end
     end
     
-    methods(Abstract)
-        [queriedIdx,scores] = queryLabel(obj,input,results)   
+    methods(Abstract)  
+        [scores] = getScores(obj,input,results,s)
     end  
     
 end

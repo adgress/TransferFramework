@@ -38,7 +38,8 @@ classdef ActiveMainConfigs < MainConfigs
             obj.set('transferMeasure',MethodTransferMeasure(transferMeasureConfigs));
             obj.set('learners',LogisticRegressionMethod(learnerConfigs));
             
-            obj.configsStruct.labelBudget = 20;
+            obj.configsStruct.activeIterations = ProjectConfigs.activeIterations;
+            obj.configsStruct.labelsPerIteration = ProjectConfigs.labelsPerIteration;
             %obj.configsStruct.labelsToUse = pc.labelsToUse;            
             
             switch pc.data

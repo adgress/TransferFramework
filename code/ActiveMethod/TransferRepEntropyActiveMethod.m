@@ -9,7 +9,7 @@ classdef TransferRepEntropyActiveMethod < ActiveMethod
         function obj = TransferRepEntropyActiveMethod(configs)            
             obj = obj@ActiveMethod(configs);
         end
-        
+        %{
         function [queriedIdx,scores] = queryLabel(obj,input,results,s)                           
             unlabeledScores = obj.getScores(input,results,s);
             
@@ -20,7 +20,7 @@ classdef TransferRepEntropyActiveMethod < ActiveMethod
             scores = -ones*size(input.train.Y);
             scores(unlabeledInds) = unlabeledScores;
         end  
-        
+        %}
         function [scores] = getScores(obj,input,results,s)
             targetEntropy = TargetEntropyActiveMethod(Configs());
             transferRep = TransferRepresentativeActiveMethod(Configs());

@@ -48,9 +48,10 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             input.test = test;
             input.learner = learner;
             input.sharedConfigs = obj.configs;
-            labelBudget = obj.get('labelBudget');
-
-            [activeMethodObj] = obj.get('activeMethodObj');
+            activeIterations = obj.get('activeIterations');
+            labelsPerIteration = obj.get('labelsPerIteration');
+            activeMethodObj = obj.get('activeMethodObj');
+            activeMethodObj.set('labelsPerIteration',labelsPerIteration);
             activeResults = ActiveLearningResults();                        
             
             measureSavedData = struct();
@@ -69,7 +70,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             %Note: This assumes the first N instances in train and
             %originalTrain are target instances
             s = struct();
-            for budgetIdx=1:labelBudget
+            for budgetIdx=1:activeIterations
                 resultsForAL = activeResults.iterationResults{end}.copy();
                 if ~isempty(transferMethodObj)
                     s.preTransferResults = ...
@@ -77,7 +78,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                 end
                 s.preTransferInput = preTransferInput;
                 queriedIdx = activeMethodObj.queryLabel(input,resultsForAL,s);
-                activeResults.queriedLabelIdx(end+1) = queriedIdx;
+                activeResults.queriedLabelIdx(end+1,:) = queriedIdx;
                 input.train.labelData(queriedIdx);
                 preTransferInput.train.labelData(queriedIdx);
                 [activeResults.iterationResults{end+1}, ...
@@ -154,6 +155,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             activeMethodObj = obj.configs.get('activeMethodObj');
             s = activeMethodObj.getResultFileName('_',false);
             outputFile = [s '_' outputFile];
+            outputFile = [outputFile '_' num2str(obj.get('activeIterations')) '_' num2str(obj.get('labelsPerIteration'))];
             outputFileName = [outputDir outputFile '.mat'];
             Helpers.MakeDirectoryForFile(outputFileName);
         end   

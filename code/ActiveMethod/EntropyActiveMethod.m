@@ -9,7 +9,7 @@ classdef EntropyActiveMethod < ActiveMethod
         function obj = EntropyActiveMethod(configs)            
             obj = obj@ActiveMethod(configs);
         end
-        
+        %{
         function [queriedIdx,scores] = queryLabel(obj,input,results,s)   
             H = obj.getScores(input,results,s);
             [~,maxInd] = max(H);
@@ -18,7 +18,7 @@ classdef EntropyActiveMethod < ActiveMethod
             scores = -ones*size(input.train.Y);
             scores(unlabeledInds) = H;
         end        
-        
+        %}
         function [scores] = getScores(obj,input,results,s)
             scores = [];
             fuTrain = results.trainFU;

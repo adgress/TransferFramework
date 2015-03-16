@@ -10,7 +10,7 @@ classdef TransferRepresentativeActiveMethod < ActiveMethod
         function obj = TransferRepresentativeActiveMethod(configs)            
             obj = obj@ActiveMethod(configs);
         end
-        
+        %{
         function [queriedIdx,scores] = queryLabel(obj,input,results,s)               
             
             unlabeledScores = obj.getScores(input,results,s);
@@ -21,7 +21,7 @@ classdef TransferRepresentativeActiveMethod < ActiveMethod
             scores = -ones*size(input.train.Y);
             scores(unlabeledInds) = unlabeledScores;
         end  
-        
+        %}
         function [scores] = getScores(obj,input,results,s)
             sigmaScale = .2;
             W = Helpers.CreateDistanceMatrix(input.train.X);

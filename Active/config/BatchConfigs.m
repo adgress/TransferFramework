@@ -42,12 +42,13 @@ classdef BatchConfigs < Configs
                     TargetEntropyActiveMethod(activeConfigs),...                    
                 };
                 %}
-                activeMethods = {
+                activeMethods = {                    
                     RandomActiveMethod(activeConfigs),...
                     TransferRepresentativeActiveMethod(activeConfigs),...
                     TransferRepCoverage(activeConfigs),...
                     EntropyActiveMethod(activeConfigs), ...
                     TargetEntropyActiveMethod(activeConfigs),...                    
+                    SumEntropyActiveMethod(activeConfigs),...
                 };
                 newOverrideConfigs = {};
                 for i=1:length(overrideConfigs)
@@ -94,6 +95,10 @@ classdef BatchConfigs < Configs
             targetLabelSets{end+1} = [10 15];
             targetLabelSets{end+1} = [105 145];
             
+            targetLabelSets{end+1} = [10 15];
+            targetLabelSets{end+1} = [10 15];            
+            targetLabelSets{end+1} = [105 57];
+            targetLabelSets{end+1} = [105 145];
             
             sourceLabelSets = {};
             sourceLabelSets{end+1} = [250 124];
@@ -101,6 +106,10 @@ classdef BatchConfigs < Configs
             sourceLabelSets{end+1} = [25 26];
             sourceLabelSets{end+1} = [250 252];            
             
+            sourceLabelSets{end+1} = [250 124];
+            sourceLabelSets{end+1} = [250 252];
+            sourceLabelSets{end+1} = [30 41];
+            sourceLabelSets{end+1} = [25 26];
             for idx=1:length(targetLabelSets)
                 c = Configs();
                 c.set('targetLabels',targetLabelSets{idx});

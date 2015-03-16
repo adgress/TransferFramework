@@ -25,18 +25,30 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         useOverrideConfigs = 1        
         
+        useSavedSmallResults = 1
+        useKSR = 1
+        
         showBothPerformance = 0
-        showPreTransferPerformance = 1
+        showPreTransferPerformance = 0
         showTransferPerformance = 0
         
         showTransferDifference = 1
-        showTransferPrediction = 0
-        
+        showTransferPrediction = 1
+                        
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
-        showWeightedTransferLoss = 0;
         
-        activeMethodsToPlot = {'Random','Entropy','TargetEntropy','TransferRep'}
+        showWeightedPrecisionTransferLoss = 0
+         
+        activeIterations = 10;
+        labelsPerIteration = 5;
+        
+        %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
+        activeMethodsToPlot = {'Random','TransferRepCov_method=9','TargetEntropy'}
+        %activeMethodsToPlot = {'TransferRepCov_method=6','TransferRepCov_method=5'}
+        %activeMethodsToPlot = {'TargetEntropy','TransferRepCov_method=5','TransferRep'}
+        %activeMethodsToPlot = {'Entropy','TargetEntropy','TransferRep'}
+        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','TransferRep'}
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
         %activeMethodsToPlot = {'Entropy','TargetEntropy','SumEntropy'}
@@ -52,7 +64,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             '25  26-to-10  15',...
             '30  41-to-10  15',...
             '250  124-to-105   57',...
-            '250  252-to-105  145'...
+            '250  252-to-105  145',...
             }
         
         cvDomainsToViz = {...
@@ -189,6 +201,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             
             c.configsStruct.xAxisDisplay = 'Active Learning Iterations';
             c.configsStruct.axisToUse = [0 10 -.5 1.1];
+            %c.configsStruct.axisToUse = [0 10 -.05 .1];
             pc = ProjectConfigs.Create();
             
             [d] = ProjectConfigs.getResultsDirectory();
@@ -251,7 +264,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 plotFields = {}; 
                 legendSuffixes = {};
                 %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
-                fileSuffix = '_S+T_LogReg.mat';
+                fileSuffix = '_S+T_LogReg_10_5.mat';
                 
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];
@@ -281,7 +294,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                     plotFields{end+1} = 'preTransferMeasurePerfDiff';
                     legendSuffixes{end+1} = 'Transfer abs(Measure-Perf)';
                 end
-                if ProjectConfigs.showWeightedTransferLoss
+                if ProjectConfigs.showWeightedPrecisionTransferLoss
                     plotFields{end+1} = 'weightedPrecisionTransferLoss';
                     legendSuffixes{end+1} = 'Weighted Precision Transfer Loss';
                 end
