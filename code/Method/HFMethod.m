@@ -257,6 +257,8 @@ classdef HFMethod < Method
             [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
             
             savedData.alpha = alpha;
+            savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
+            savedData.cvAcc = max(alphaScores);
             fu(isnan(fu(:))) = 0;
 
             assert(isempty(find(isnan(fu))));
@@ -288,7 +290,7 @@ classdef HFMethod < Method
                 if exist('savedData','var')
                     [fu,savedData,sigma] = runLLGC(obj,distMat, makeRBF, savedData);
                 else
-                    [fu,~,sigma] = runLLGC(obj,distMat, makeRBF);
+                    [fu,savedData,sigma] = runLLGC(obj,distMat, makeRBF);
                 end
             end
             [maxVal,predicted] = max(fu,[],2);
@@ -343,6 +345,7 @@ classdef HFMethod < Method
             testResults.yPred = [train.Y; predicted];
             testResults.yActual = [train.Y; YTest];
             testResults.learnerMetadata.sigma = sigma;
+            testResults.learnerStats.featureSmoothness = savedData.featureSmoothness;
         end
         
         function [testResults,savedData] = ...

@@ -184,7 +184,7 @@ classdef LabeledData < matlab.mixin.Copyable
             percentageArray = cumsum(percentageArray);
             dataSize = size(Y,1);
             split = zeros(dataSize,1);
-            uniqueY = unique(Y);
+            uniqueY = unique(Y(Y > 0));
             for i=1:length(uniqueY)                
                 thisClass = find(Y == uniqueY(i));
                 numThisClass = numel(thisClass);
@@ -213,7 +213,8 @@ classdef LabeledData < matlab.mixin.Copyable
                 end
                 assert(sum(split(thisClassRandomized) == 1) == numToPick(1));
             end
-            assert(sum(split==0) == 0);
+            splitIsLabeled = split(Y > 0);
+            assert(sum(splitIsLabeled==0) == 0);
         end
         
         function [I] = ResampleTargetTrainData(type)

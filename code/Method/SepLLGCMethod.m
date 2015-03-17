@@ -76,6 +76,7 @@ classdef SepLLGCMethod < LLGCMethod
             perGroupAcc = zeros(length(featureGroups),1);
             llgcMethod = LLGCMethod(LearnerConfigs());
             llgcMethod.updateConfigs(obj.configs());
+            featureCVAccs = [];
             for groupIdx=1:length(featureGroups);
                 dims = featureGroups{groupIdx};
                 trainCopy.X = train.X(:,dims);
@@ -103,6 +104,7 @@ classdef SepLLGCMethod < LLGCMethod
                     [F(:,:,groupIdx),savedData,~] = llgcMethod.runLLGC(d,true,savedData);
                     warning on;
                     invM{end+1} = savedData.invM;
+                    featureCVAccs(groupIdx) = savedData.cvAcc;
                     W{groupIdx} = d.W;
                     [~,Fpred] = max(F(:,:,groupIdx),[],2);
                     accVec = distMat.trueY == Fpred;
@@ -347,12 +349,16 @@ classdef SepLLGCMethod < LLGCMethod
             featureSmoothness = zeros(length(W),1);
             for i=1:length(W)
                 featureSmoothness(i) = LLGC.smoothness(W{i},distMat.trueY);
+                if isnan(featureSmoothness(i))
+                    a = LLGC.smoothness(W{i},distMat.trueY);
+                end
             end
             testResults.learnerStats.featureWeights = b;
             if obj.get('addBias')
                 testResults.learnerStats.featureWeights = b(2:end);
                 testResults.learnerStats.bias = b(1);
             end
+            testResults.learnerStats.featureCVAccs = featureCVAccs;
             testResults.learnerStats.featureTrainAccs = trainAccs;
             testResults.learnerStats.featureTestAccs = testAccs;
             testResults.learnerStats.featureSmoothness = featureSmoothness;
@@ -364,12 +370,12 @@ classdef SepLLGCMethod < LLGCMethod
             t = [trainAccs testAccs featureSmoothness testResults.learnerStats.featureWeights];            
             if obj.get('redoLLGC')
                 [subsetTrainAcc, subsetTestAcc] = ...
-                    obj.redoLLGC(input,trainAccs);
+                    obj.redoLLGC(input,featureCVAccs);
                 testResults.learnerStats.subsetTrainAcc = subsetTrainAcc;
                 testResults.learnerStats.subsetTestAcc = subsetTestAcc;
                 display(['Redo Acc: ' num2str(subsetTrainAcc) ' ' num2str(subsetTestAcc)]);
             end            
-            display(['Best feat test Acc: ' num2str(testAccs(argmax(trainAccs)))]);
+            display(['Best feat test Acc: ' num2str(testAccs(argmax(featureCVAccs)))]);
             display([num2str(trainAcc) ' ' num2str(testAcc)]);
         end
         
@@ -379,21 +385,48 @@ classdef SepLLGCMethod < LLGCMethod
             
             [sortedAccs,inds] = sort(featureTrainAccs,'descend');
             numFeats = sum(sortedAccs >= .6);
-            %featsToUse = inds(1:2);
-            featsToUse = inds(1:numFeats);
+            %featsToUse = inds(1:2);            
             
-            trainCopy = input.train.copy();
-            testCopy = input.test.copy();  
-            
-            trainCopy.X = trainCopy.X(:,featsToUse);
-            testCopy.X = testCopy.X(:,featsToUse);   
             useHF = false;
             makeRBF = true;
+            numFolds = 10;
+            accs = zeros(numFeats,numFolds);
+            savedData = struct();
+            for featIdx=1:numFeats
+                featsToUse = inds(1:featIdx);
+                for foldIdx=1:numFolds
+                    trainCopy = input.train.copy();
+                    testCopy = input.test.copy();  
+                    
+                    trainCopy.X = trainCopy.X(:,featsToUse);
+                    testCopy.X = testCopy.X(:,featsToUse);               
+                    distMat = obj.createDistanceMatrix(trainCopy,testCopy,...
+                        useHF,obj.configs,makeRBF);                                
+                    distMat.removeTestLabels();
+                    split = DataSet.generateSplit([.8 .2],distMat.Y);
+                    isTrain = split == 1;
+                    isTest = split == 2;
+                    distMat.Y(isTrain) = -1;
+                    
+                    [fu] = llgcMethod.runLLGC(distMat,true,savedData);
+                    [~,Fpred] = max(fu,[],2);
+                    accVec = distMat.trueY == Fpred;                    
+                    accs(featIdx,foldIdx) = mean(accVec(isTest));
+                end
+            end
+            avgPerf = mean(accs,2);
+            assert(length(avgPerf) == numFeats);
+            bestFeat = argmax(avgPerf);
+            
+            trainCopy = input.train.copy();
+            testCopy = input.test.copy();
+            featsToUse = inds(1:bestFeat);
+            trainCopy.X = trainCopy.X(:,featsToUse);
+            testCopy.X = testCopy.X(:,featsToUse);               
             distMat = obj.createDistanceMatrix(trainCopy,testCopy,...
                 useHF,obj.configs,makeRBF);                                
             distMat.removeTestLabels();
-
-            savedData = struct();
+            
             [fu] = llgcMethod.runLLGC(distMat,true,savedData);
             [~,Fpred] = max(fu,[],2);
             accVec = distMat.trueY == Fpred;

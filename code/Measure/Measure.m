@@ -167,6 +167,17 @@ classdef Measure < Saveable
                     a(isnan(a)) = 0;
                     aggregatedResults.weightedPrecisionTransferLoss = ResultsVector(a);
                 end
+                if isfield(l1,'featureSmoothness') && ...
+                        isfield(l1,'featureWeights')                    
+                    s = Helpers.StructField2Mat(l,'featureSmoothness');
+                    if any(isnan(s(:)))
+                        s(isnan(s)) = max(s(:));
+                    end                    
+                    w = abs(Helpers.StructField2Mat(l,'featureWeights'));
+                    w = Helpers.NormalizeRows(w);                    
+                    sw = sum(s.*w,2);
+                    aggregatedResults.weightedFeatureSmoothness = ResultsVector(sw);
+                end
             end
         end                
         function [prefix] = getPrefix(obj)
