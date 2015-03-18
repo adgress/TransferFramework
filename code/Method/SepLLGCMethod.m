@@ -440,7 +440,8 @@ classdef SepLLGCMethod < LLGCMethod
             distMat.removeTestLabels();
             
             [fu] = llgcMethod.runLLGC(distMat,true,savedData);
-            [~,Fpred] = max(fu,[],2);
+            %[~,Fpred] = max(fu,[],2);
+            Fpred = LLGC.getPrediction(fu);
             accVec = distMat.trueY == Fpred;
             trainAcc = mean(accVec(distMat.isLabeled()));
             testAcc = mean(accVec(distMat.isTargetTest()));
