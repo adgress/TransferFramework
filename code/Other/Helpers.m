@@ -7,6 +7,10 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [v] = RemoveNullColumns(v)
+            v( :, ~any(v,1) ) = [];
+        end
+        
         function [v] = Normalize(val,allVals)
             minVal = min(allVals);
             maxVal = max(allVals);

@@ -1,6 +1,6 @@
 classdef LLGC < handle    
     properties(Constant)
-        normRows = 0
+        normRows = 1
     end
     methods(Static)
         
@@ -127,19 +127,27 @@ classdef LLGC < handle
         end
         
         function [f] = labelMatrix2vector(fl)
+            fl = Helpers.RemoveNullColumns(fl);
             assert(size(fl,2) == 2);
             f = zeros(size(fl,1),1);
             f(fl(:,1) == 1) = 1;
             f(fl(:,2) == 1) = -1;
         end
         
-        function [p] = getPrediction(fu)
+        function [p] = getPrediction(fu,classes)
+            if ~exist('classes','var')
+                classes = 1:size(fu,2);
+                if length(classes) == 1 && ~LLGC.normRows
+                    classes = 1:2;
+                end
+            end
             if LLGC.normRows
                 [~,p] = max(fu,[],2);
             else
+                assert(length(classes) == 2);
                 p = zeros(size(fu,1),1);
-                p(fu >= 0) = 1;
-                p(fu < 0) = 2;
+                p(fu >= 0) = classes(1);
+                p(fu < 0) = classes(2);
             end
         end
         

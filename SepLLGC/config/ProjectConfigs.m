@@ -76,7 +76,7 @@ classdef ProjectConfigs < handle
                 %c.numLabeledPerClass=[5 10 15 20 25];
                 c.numLabeledPerClass=[10 20 30 40 50];
                 %c.numLabeledPerClass=50;
-                c.reg = [0 10.^(-8:0) 10.^(1:8)];   
+                c.reg = [0 10.^(-4:4)];
                 c.numFolds = 3;                
 
             else
@@ -206,6 +206,10 @@ classdef ProjectConfigs < handle
                     %}
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
                     legend{end+1} = 'LLGC Weighted Reg Bias, negY';       
+                    fields{end+1} = 'testResults';
+                    
+                    methodResultsFileNames{end+1} = '_just1_SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
+                    legend{end+1} = 'LLGC Weighted Reg Bias, negY, normRows=0';       
                     fields{end+1} = 'testResults';
 
                     methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';

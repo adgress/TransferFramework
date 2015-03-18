@@ -111,7 +111,7 @@ classdef SepLLGCMethod < LLGCMethod
                     featureCVAccs(groupIdx) = savedData.cvAcc;
                     W{groupIdx} = d.W;
                     %[~,Fpred] = max(F(:,:,groupIdx),[],2);
-                    Fpred = LLGC.getPrediction(F(:,:,groupIdx));
+                    Fpred = LLGC.getPrediction(F(:,:,groupIdx),distMat.classes);
                     accVec = distMat.trueY == Fpred;
                     perGroupAcc(groupIdx) = mean(accVec(distMat.isTargetTest()));
                 end
@@ -171,15 +171,15 @@ classdef SepLLGCMethod < LLGCMethod
                 for groupIdx=1:length(featureGroups);
                     Fcurr = F_labeled(:,:,groupIdx);
                     %[~,FcurrPred] = max(Fcurr,[],2);
-                    FcurrPred = LLGC.getPrediction(Fcurr);
-                    FcurrPred = d.classes(FcurrPred);
+                    FcurrPred = LLGC.getPrediction(Fcurr,distMat.classes);
+                    %FcurrPred = d.classes(FcurrPred);
                     accVec = FcurrPred == distMat.trueY(isLabeledInds);
                     trainAccs(groupIdx) = mean(accVec);
                     
                     Fcurr = F(:,:,groupIdx);
                     %[~,FcurrPred] = max(Fcurr,[],2);
-                    FcurrPred = LLGC.getPrediction(Fcurr);
-                    FcurrPred = d.classes(FcurrPred);
+                    FcurrPred = LLGC.getPrediction(Fcurr,distMat.classes);
+                    %FcurrPred = d.classes(FcurrPred);
                     accVec = FcurrPred == distMat.trueY;
                     testAccs(groupIdx) = mean(accVec);
                 end
@@ -421,7 +421,7 @@ classdef SepLLGCMethod < LLGCMethod
                     
                     [fu] = llgcMethod.runLLGC(distMat,true,savedData);
                     %[~,Fpred] = max(fu,[],2);
-                    Fpred = LLGC.getPrediction(fu);
+                    Fpred = LLGC.getPrediction(fu,distMat.classes);
                     accVec = distMat.trueY == Fpred;                    
                     accs(featIdx,foldIdx) = mean(accVec(isTest));
                 end
@@ -441,7 +441,7 @@ classdef SepLLGCMethod < LLGCMethod
             
             [fu] = llgcMethod.runLLGC(distMat,true,savedData);
             %[~,Fpred] = max(fu,[],2);
-            Fpred = LLGC.getPrediction(fu);
+            Fpred = LLGC.getPrediction(fu,distMat.classes);
             accVec = distMat.trueY == Fpred;
             trainAcc = mean(accVec(distMat.isLabeled()));
             testAcc = mean(accVec(distMat.isTargetTest()));
