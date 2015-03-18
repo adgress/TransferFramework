@@ -34,6 +34,9 @@ classdef LLGC < handle
                 %}
                 invM = LLGC.makeInvM(W,alpha);
             end
+            if ~LLGC.normRows
+                fl = LLGC.labelMatrix2vector(fl);
+            end
             fu = invM*fl;         
             if LLGC.normRows
                 fu = Helpers.normRows(fu);
@@ -70,6 +73,9 @@ classdef LLGC < handle
 
             if ~exist('invM','var')
                 invM = LLGC.makeInvM_unbiased(W,alpha,fl);              
+            end
+            if ~LLGC.normRows
+                fl = LLGC.labelMatrix2vector(fl);
             end
             fu = invM*fl;
             if LLGC.normRows
@@ -120,6 +126,23 @@ classdef LLGC < handle
             invM = alpha*inv(I*(1+eps) - WN + alpha*A);
         end
         
+        function [f] = labelMatrix2vector(fl)
+            assert(size(fl,2) == 2);
+            f = zeros(size(fl,1),1);
+            f(fl(:,1) == 1) = 1;
+            f(fl(:,2) == 1) = -1;
+        end
+        
+        function [p] = getPrediction(fu)
+            if LLGC.normRows
+                [~,p] = max(fu,[],2);
+            else
+                p = zeros(size(fu,1),1);
+                p(fu >= 0) = 1;
+                p(fu < 0) = 2;
+            end
+        end
+        
         function [fu] = llgc_LS(W,fl,alpha)
         %tic
             %alpha = .5;   
@@ -136,6 +159,10 @@ classdef LLGC < handle
             I = speye(size(WN,1));
             M = ((1+alpha)*I-WN);
             %fu = M\((1-alpha)*fl);
+            
+            if ~LLGC.normRows
+                fl = LLGC.labelMatrix2vector(fl);
+            end
             fu = M\(alpha*fl);
             
             if LLGC.normRows

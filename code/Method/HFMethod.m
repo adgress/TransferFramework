@@ -227,7 +227,8 @@ classdef HFMethod < Method
                         
                         %fu = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, invM);
                         fuTest = fu(testInds,:);
-                        [~,yPred] = max(fuTest,[],2);
+                        %[~,yPred] = max(fuTest,[],2);
+                        yPred = LLGC.getPrediction(fuTest);
                         yActual = Ytrain(isTest);
                         accVec = yPred == yActual;
                         alphaScores(alphaIdx) = alphaScores(alphaIdx) + mean(accVec);                        

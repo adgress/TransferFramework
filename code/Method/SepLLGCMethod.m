@@ -72,7 +72,11 @@ classdef SepLLGCMethod < LLGCMethod
             %featuresToUse = 5;
             
             featureGroups = num2cell(1:size(trainCopy.X,2));
-            F = zeros(numInstances,numClasses,length(featureGroups));
+            if LLGC.normRows
+                F = zeros(numInstances,numClasses,length(featureGroups));
+            else
+                F = zeros(numInstances,1,length(featureGroups));
+            end
             perGroupAcc = zeros(length(featureGroups),1);
             llgcMethod = LLGCMethod(LearnerConfigs());
             llgcMethod.updateConfigs(obj.configs());
@@ -106,14 +110,19 @@ classdef SepLLGCMethod < LLGCMethod
                     invM{end+1} = savedData.invM;
                     featureCVAccs(groupIdx) = savedData.cvAcc;
                     W{groupIdx} = d.W;
-                    [~,Fpred] = max(F(:,:,groupIdx),[],2);
+                    %[~,Fpred] = max(F(:,:,groupIdx),[],2);
+                    Fpred = LLGC.getPrediction(F(:,:,groupIdx));
                     accVec = distMat.trueY == Fpred;
                     perGroupAcc(groupIdx) = mean(accVec(distMat.isTargetTest()));
                 end
             end
             F(isnan(F(:))) = 0;
-            labelsToRemove = true(size(F,2),1);
-            labelsToRemove(d.classes) = false;
+            if ~LLGC.normRows
+                labelsToRemove = false;
+            else
+                labelsToRemove = true(size(F,2),1);
+                labelsToRemove(d.classes) = false;
+            end
             F(:,labelsToRemove,:) = [];
             assert(~any(isnan(F(:))));
             if obj.get('sum')
@@ -161,13 +170,15 @@ classdef SepLLGCMethod < LLGCMethod
                 testAccs = trainAccs;
                 for groupIdx=1:length(featureGroups);
                     Fcurr = F_labeled(:,:,groupIdx);
-                    [~,FcurrPred] = max(Fcurr,[],2);
+                    %[~,FcurrPred] = max(Fcurr,[],2);
+                    FcurrPred = LLGC.getPrediction(Fcurr);
                     FcurrPred = d.classes(FcurrPred);
                     accVec = FcurrPred == distMat.trueY(isLabeledInds);
                     trainAccs(groupIdx) = mean(accVec);
                     
                     Fcurr = F(:,:,groupIdx);
-                    [~,FcurrPred] = max(Fcurr,[],2);
+                    %[~,FcurrPred] = max(Fcurr,[],2);
+                    FcurrPred = LLGC.getPrediction(Fcurr);
                     FcurrPred = d.classes(FcurrPred);
                     accVec = FcurrPred == distMat.trueY;
                     testAccs(groupIdx) = mean(accVec);
