@@ -420,7 +420,8 @@ classdef SepLLGCMethod < LLGCMethod
                     distMat.Y(isTrain) = -1;
                     
                     [fu] = llgcMethod.runLLGC(distMat,true,savedData);
-                    [~,Fpred] = max(fu,[],2);
+                    %[~,Fpred] = max(fu,[],2);
+                    Fpred = LLGC.getPrediction(fu);
                     accVec = distMat.trueY == Fpred;                    
                     accs(featIdx,foldIdx) = mean(accVec(isTest));
                 end
