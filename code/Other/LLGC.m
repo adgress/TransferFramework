@@ -1,4 +1,7 @@
 classdef LLGC < handle    
+    properties(Constant)
+        normRows = 0
+    end
     methods(Static)
         
         function [v] = smoothness(W,f)            
@@ -31,8 +34,10 @@ classdef LLGC < handle
                 %}
                 invM = LLGC.makeInvM(W,alpha);
             end
-            fu = invM*fl;            
-            fu = Helpers.normRows(fu);
+            fu = invM*fl;         
+            if LLGC.normRows
+                fu = Helpers.normRows(fu);
+            end
             isInvalid = isnan(fu) | isinf(fu);
             if any(isInvalid(:))
                 %display('LLGC:llgc_ls : inf or nan - randing out');
@@ -67,7 +72,9 @@ classdef LLGC < handle
                 invM = LLGC.makeInvM_unbiased(W,alpha,fl);              
             end
             fu = invM*fl;
-            fu = Helpers.normRows(fu);
+            if LLGC.normRows
+                fu = Helpers.normRows(fu);
+            end
             %display('llgc: Normalizing fu');
         end
         
@@ -130,7 +137,10 @@ classdef LLGC < handle
             M = ((1+alpha)*I-WN);
             %fu = M\((1-alpha)*fl);
             fu = M\(alpha*fl);
-            fu = Helpers.normRows(fu);
+            
+            if LLGC.normRows
+                fu = Helpers.normRows(fu);
+            end
             
             isInvalid = isnan(fu) | isinf(fu);
             if any(isInvalid(:))
