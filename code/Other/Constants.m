@@ -13,6 +13,7 @@ classdef Constants < handle
         COIL20_DATA = 4
         USPS_DATA = 5
         HOUSING_DATA = 6
+        YEAST_BINARY_DATA = 7
         
         NO_TYPE = 0;
         TARGET_TRAIN = 1;

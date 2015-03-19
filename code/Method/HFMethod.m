@@ -71,10 +71,16 @@ classdef HFMethod < Method
                     end
                     %W = exp(W);
                 else
-                    W = Helpers.CreateDistanceMatrix(Xall);
+                    WDist = Helpers.CreateDistanceMatrix(Xall);
                     if makeRBF
-                        sigma = sigmaScale*mean(W(:));
-                        W = Helpers.distance2RBF(W,sigma);
+                        sigma = sigmaScale*mean(WDist(:));
+                        W = Helpers.distance2RBF(WDist,sigma);
+                    else
+                        W = WDist;
+                    end
+                    
+                    if any(isnan(W(:)))
+                        warning('');
                     end
                     %{
                     if obj.has('Wsparsity')
@@ -130,6 +136,9 @@ classdef HFMethod < Method
                     obj.configs.get('useMeanSigma'),useHF);
             end
             Wrbf = Helpers.distance2RBF(distMat.W,sigma);
+            if any(isnan(Wrbf))
+                warning('Nan in Wrbf');
+            end
             %Wrbf = Helpers.SparsifyDistanceMatrix(Wrbf,obj.get('k'));
             instanceIDs = distMat.instanceIDs;
         end
@@ -228,7 +237,8 @@ classdef HFMethod < Method
                         %fu = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, invM);
                         fuTest = fu(testInds,:);
                         %[~,yPred] = max(fuTest,[],2);
-                        yPred = LLGC.getPrediction(fuTest);
+                        
+                        yPred = LLGC.getPrediction(fuTest,distMat.classes);
                         yActual = Ytrain(isTest);
                         accVec = yPred == yActual;
                         alphaScores(alphaIdx) = alphaScores(alphaIdx) + mean(accVec);                        

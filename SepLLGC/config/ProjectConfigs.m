@@ -14,10 +14,13 @@ classdef ProjectConfigs < handle
         
         useKSR = false
         
-        data = Constants.HOUSING_DATA
+        %data = Constants.HOUSING_DATA
         %data = Constants.TOMMASI_DATA
+        data = Constants.YEAST_BINARY_DATA
         
         useSavedSmallResults = 1
+        
+        useSepLLGC = 1
         
         %tommasiLabels = [10 15 23 25 26 30]
         %housingLabels = [1 2];
@@ -75,8 +78,8 @@ classdef ProjectConfigs < handle
                 c.labelsToUse = [];
                 %c.numLabeledPerClass=[5 10 15 20 25];
                 c.numLabeledPerClass=[10 20 30 40 50];
-                %c.numLabeledPerClass=50;
-                c.reg = [0 10.^(-4:4)];
+                c.numLabeledPerClass=50;
+                c.reg = fliplr([0 10.^(-6:6)]);
                 c.numFolds = 3;                
 
             else
@@ -95,14 +98,19 @@ classdef ProjectConfigs < handle
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
 
-            if ProjectConfigs.data == Constants.HOUSING_DATA
-                c.get('mainConfigs').setHousingBinaryData(); 
-            elseif ProjectConfigs.data == Constants.TOMMASI_DATA
-                c.get('mainConfigs').setTommasiData(); 
+            switch ProjectConfigs.data
+                case Constants.HOUSING_DATA
+                    c.get('mainConfigs').setHousingBinaryData(); 
+                case Constants.TOMMASI_DATA
+                    c.get('mainConfigs').setTommasiData(); 
+                case Constants.YEAST_BINARY_DATA
+                    c.get('mainConfigs').setYeastBinaryData();
             end
-            
-            c.get('mainConfigs').setSepLLGCConfigs();
-            %c.get('mainConfigs').setLLGCConfigs();
+            if ProjectConfigs.useSepLLGC
+                c.get('mainConfigs').setSepLLGCConfigs();
+            else
+                c.get('mainConfigs').setLLGCConfigs();
+            end
             c.get('mainConfigs').get('learners').set('alpha',pc.alpha);
             c.configsStruct.configLoader = ExperimentConfigLoader();
         end
@@ -131,15 +139,22 @@ classdef ProjectConfigs < handle
             
             pc = ProjectConfigs.Create();
             
-            
-            if ProjectConfigs.data == Constants.TOMMASI_DATA
-                c.set('prefix','results_tommasi');
-                c.set('dataSet',{'tommasi_data'});
-                c.set('resultsDirectory','results_tommasi/tommasi_data');
-            elseif ProjectConfigs.data == Constants.HOUSING_DATA            
-                c.set('prefix','results_housing');
-                c.set('dataSet',{'housingBinary'});
-                c.set('resultsDirectory','results_housing/housingBinary');
+            switch ProjectConfigs.data
+                case Constants.TOMMASI_DATA
+                    c.set('prefix','results_tommasi');
+                    c.set('dataSet',{'tommasi_data'});
+                    c.set('resultsDirectory','results_tommasi/tommasi_data');
+                case Constants.HOUSING_DATA
+                    c.set('prefix','results_housing');
+                    c.set('dataSet',{'housingBinary'});
+                    c.set('resultsDirectory','results_housing/housingBinary');
+                case Constants.YEAST_BINARY_DATA
+                    c.set('prefix','results_yeast');
+                    c.set('dataSet',{'yeastBinary'});
+                    c.set('resultsDirectory','results_yeast/yeastBinary');
+                otherwise
+                    error('');
+                    
             end
             if ProjectConfigs.plotFeatureSmoothness
                 c.delete('axisToUse');
@@ -152,6 +167,8 @@ classdef ProjectConfigs < handle
                     labels = ProjectConfigs.tommasiVizLabels;
                 case Constants.HOUSING_DATA
                     labels = ProjectConfigs.housingVizLabels;
+                case Constants.YEAST_BINARY_DATA
+                    labels = {[1 8]};
                 otherwise
                     error('');
             end
@@ -232,7 +249,7 @@ classdef ProjectConfigs < handle
         
          function [c] = SplitConfigs()
              c = SplitConfigs();
-             c.setHousingBinary();
+             c.setYeastUCIBinary();
          end
     end
     methods(Access = private)

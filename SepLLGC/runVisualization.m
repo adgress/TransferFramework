@@ -25,12 +25,12 @@ function [] = runVisualization()
     d = vizConfigs.get('resultsDirectory');
     for i=1:length(labels)
         subplot(1,length(labels),i);
-        if ProjectConfigs.data == Constants.TOMMASI_DATA
-            vizConfigs.set('labelsToUse',labels{i});
-            newResultsDir = [d '/' num2str(labels{i}) '/'];            
-        elseif ProjectConfigs.data == Constants.HOUSING_DATA
+        if ProjectConfigs.data == Constants.HOUSING_DATA
             newResultsDir = [d  labels{i} '/'];
             title(housingDirs{i});
+        else
+            vizConfigs.set('labelsToUse',labels{i});
+            newResultsDir = [d '/' num2str(labels{i}) '/'];                    
         end
         vizConfigs.set('resultsDirectory',newResultsDir);
         [~,returnStruct] = visualizeResults(vizConfigs,f);                    

@@ -29,7 +29,14 @@ classdef SepLLGCMainConfigs < MainConfigs
             obj.set('resultsDir','results_housing');
             obj.set('dataSet','housing_split_data');            
             obj.delete('labelsToUse');
-        end                               
+        end     
+        
+        function [] = setYeastBinaryData(obj)
+            obj.set('dataName','yeastBinary');
+            obj.set('resultsDir','results_yeast');
+            obj.set('dataSet','yeastBinary_split_data');            
+            obj.delete('labelsToUse');
+        end
     end        
     
 end

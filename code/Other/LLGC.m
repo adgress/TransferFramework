@@ -1,6 +1,6 @@
 classdef LLGC < handle    
     properties(Constant)
-        normRows = 1
+        normRows = 0
     end
     methods(Static)
         
@@ -134,15 +134,21 @@ classdef LLGC < handle
             f(fl(:,2) == 1) = -1;
         end
         
-        function [p] = getPrediction(fu,classes)
+        function [p] = getPrediction(fu,classes)            
             if ~exist('classes','var')
                 classes = 1:size(fu,2);
                 if length(classes) == 1 && ~LLGC.normRows
                     classes = 1:2;
                 end
             end
+            numF = size(fu,2);
+            assert(numF == 1 || numF == length(classes));
             if LLGC.normRows
-                [~,p] = max(fu,[],2);
+                [~,origPred] = max(fu,[],2);
+                p = origPred;
+                for classIdx=1:length(classes)
+                    p(origPred == classIdx) = classes(classIdx);
+                end
             else
                 assert(length(classes) == 2);
                 p = zeros(size(fu,1),1);

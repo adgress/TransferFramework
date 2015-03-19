@@ -16,6 +16,19 @@ classdef SplitConfigs < Configs
             obj.setUSPS();
         end
         
+        function [] = setYeastUCIBinary(obj)
+            obj.delete('maxTrainNumPerLabel');
+            
+            obj.configsStruct.inputFilePrefix='Data/pmtkdata-master/yeastUci/';
+            obj.configsStruct.inputDataSets={'yestUci_binary.mat'};
+            obj.configsStruct.dataSetAcronyms={'YeastBinary'};
+            obj.configsStruct.outputFilePrefix='Data/yeastBinary/';            
+            obj.configsStruct.outputFile='yeastBinary_split_data.mat';
+            obj.set('numToUsePerLabel',150);
+            obj.set('XName','X');
+            obj.set('YName','y');            
+        end
+        
         function [] = setSpam(obj)
             obj.delete('maxTrainNumPerLabel');
             obj.configsStruct.inputFilePrefix='../Data/pmtkdata-master/spamData/';

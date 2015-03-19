@@ -71,7 +71,7 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                     X = [];
                     Y = [];
                     for nameIdx=1:length(XName)
-                        
+                        error('TODO');
                     end
                 else
                     X = data.(XName);

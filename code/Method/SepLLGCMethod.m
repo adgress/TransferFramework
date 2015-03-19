@@ -30,7 +30,7 @@ classdef SepLLGCMethod < LLGCMethod
                 obj.set('logReg',0);
             end
             if ~obj.has('redoLLGC')
-                obj.set('redoLLGC',1);
+                obj.set('redoLLGC',0);
             end
             if ~obj.has('nonneg')
                 obj.set('nonneg',0);
@@ -46,6 +46,18 @@ classdef SepLLGCMethod < LLGCMethod
             makeRBF = true;
             train = input.train;
             test = input.test;
+            
+            Xall = [train.X ; test.X];
+            useFeat = true(size(Xall,2),1);
+            for featIdx=1:size(Xall,2)
+                if length(unique(Xall(:,featIdx))) == 1
+                    useFeat(featIdx) = false;
+                end
+            end            
+            train.X = train.X(:,useFeat);
+            test.X = test.X(:,useFeat);
+            
+            
             trainCopy = train.copy();
             testCopy = test.copy();            
             numClasses = max(train.Y);
@@ -111,7 +123,11 @@ classdef SepLLGCMethod < LLGCMethod
                     featureCVAccs(groupIdx) = savedData.cvAcc;
                     W{groupIdx} = d.W;
                     %[~,Fpred] = max(F(:,:,groupIdx),[],2);
-                    Fpred = LLGC.getPrediction(F(:,:,groupIdx),distMat.classes);
+                    classes = 1:max(distMat.classes);
+                    if ~LLGC.normRows
+                        classes = distMat.classes;
+                    end
+                    Fpred = LLGC.getPrediction(F(:,:,groupIdx),classes);
                     accVec = distMat.trueY == Fpred;
                     perGroupAcc(groupIdx) = mean(accVec(distMat.isTargetTest()));
                 end
@@ -155,10 +171,12 @@ classdef SepLLGCMethod < LLGCMethod
                          %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
                          
                          %a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
-                         a = LLGC.llgc_inv([],YMatCurrRemoved,[],invM{groupIdx});
-                         F_labeled(instanceIdx,:,groupIdx) = a(ind,~labelsToRemove);
-                         
-                         %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
+                         if LLGC.normRows || true
+                             a = LLGC.llgc_inv([],YMatCurrRemoved,[],invM{groupIdx});
+                             F_labeled(instanceIdx,:,groupIdx) = a(ind,~labelsToRemove);
+                         else
+                             F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
+                         end
                     end                    
                 end
                 %F_labeled(:,labelsToRemove,:) = [];
@@ -380,8 +398,8 @@ classdef SepLLGCMethod < LLGCMethod
             assert(~any(isnan(testResults.dataFU(:))));
             t = [trainAccs testAccs featureSmoothness testResults.learnerStats.featureWeights];            
             if obj.get('redoLLGC')
-                [subsetTrainAcc, subsetTestAcc] = ...
-                    obj.redoLLGC(input,featureCVAccs);
+                %[subsetTrainAcc, subsetTestAcc] = obj.redoLLGC(input,featureCVAccs);
+                [subsetTrainAcc, subsetTestAcc] = obj.redoLLGC(input,b(2:end));
                 testResults.learnerStats.subsetTrainAcc = subsetTrainAcc;
                 testResults.learnerStats.subsetTestAcc = subsetTestAcc;
                 display(['Redo Acc: ' num2str(subsetTrainAcc) ' ' num2str(subsetTestAcc)]);
@@ -395,7 +413,8 @@ classdef SepLLGCMethod < LLGCMethod
             llgcMethod.updateConfigs(obj.configs());
             
             [sortedAccs,inds] = sort(featureTrainAccs,'descend');
-            numFeats = sum(sortedAccs >= .6);
+            %numFeats = sum(sortedAccs >= .6);
+            numFeats = length(sortedAccs);
             %featsToUse = inds(1:2);            
             
             useHF = false;
@@ -421,7 +440,11 @@ classdef SepLLGCMethod < LLGCMethod
                     
                     [fu] = llgcMethod.runLLGC(distMat,true,savedData);
                     %[~,Fpred] = max(fu,[],2);
-                    Fpred = LLGC.getPrediction(fu,distMat.classes);
+                    classes = 1:max(distMat.classes);
+                    if ~LLGC.normRows
+                        classes = distMat.classes;
+                    end
+                    Fpred = LLGC.getPrediction(fu,classes);
                     accVec = distMat.trueY == Fpred;                    
                     accs(featIdx,foldIdx) = mean(accVec(isTest));
                 end
@@ -441,7 +464,11 @@ classdef SepLLGCMethod < LLGCMethod
             
             [fu] = llgcMethod.runLLGC(distMat,true,savedData);
             %[~,Fpred] = max(fu,[],2);
-            Fpred = LLGC.getPrediction(fu,distMat.classes);
+            classes = 1:max(distMat.classes);
+            if ~LLGC.normRows
+                classes = distMat.classes;
+            end
+            Fpred = LLGC.getPrediction(fu,classes);
             accVec = distMat.trueY == Fpred;
             trainAcc = mean(accVec(distMat.isLabeled()));
             testAcc = mean(accVec(distMat.isTargetTest()));
