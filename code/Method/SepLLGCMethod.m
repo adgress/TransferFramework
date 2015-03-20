@@ -171,7 +171,7 @@ classdef SepLLGCMethod < LLGCMethod
                          %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
                          
                          %a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
-                         if LLGC.normRows || true
+                         if LLGC.normRows && false
                              a = LLGC.llgc_inv([],YMatCurrRemoved,[],invM{groupIdx});
                              F_labeled(instanceIdx,:,groupIdx) = a(ind,~labelsToRemove);
                          else
@@ -211,7 +211,7 @@ classdef SepLLGCMethod < LLGCMethod
                     end        
                     solveForBeta = true;
                     numFolds = 10;
-                    useFCurrLabeled = 0;
+                    useFCurrLabeled = 1;
                     if solveForBeta              
                         pc = ProjectConfigs.Create();
                         regVals = pc.reg;            
@@ -230,16 +230,25 @@ classdef SepLLGCMethod < LLGCMethod
                             if useFCurrLabeled
                                 YMatCurrRemoved = Helpers.createLabelMatrix(Y_copy);
                                 for groupIdx=1:length(featureGroups)                                
-                                    a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
+                                    a = LLGC.llgc_inv([],YMatCurrRemoved,[],invM{groupIdx});
                                     Fcurr(:,:,groupIdx) = a(isLabeledInds,~labelsToRemove);
-
+                                    
                                     for cvIdx=1:length(cvLabeledInds)
                                         Y_copy2 = Y_copy;
                                         Y_copy2(cvLabeledInds(cvIdx)) = -1;
                                         Y_copy2Mat = Helpers.createLabelMatrix(Y_copy2);
-                                        a = LLGC.llgc_inv_unbiased([],Y_copy2Mat,[],invM{groupIdx});
-                                        FcurrLabeled(cvIdx,:,groupIdx) = a(cvIdx,~labelsToRemove);
-                                    end
+                                        a = LLGC.llgc_inv([],Y_copy2Mat,[],invM{groupIdx});
+                                        FcurrLabeled(cvIdx,:,groupIdx) = a(cvIdx,~labelsToRemove);                                        
+                                    end                                    
+                                    FcurrLabeled(:,:,groupIdx) = Fcurr(~isTest,:,groupIdx);
+                                    
+                                    %{
+                                    Y_copy2 = Y_copy;
+                                    %Y_copy2(isLabeledInds(isTest)) = -1;
+                                    Y_copy2Mat = Helpers.createLabelMatrix(Y_copy2);
+                                    a = LLGC.llgc_inv([],Y_copy2Mat,[],invM{groupIdx});
+                                    FcurrLabeled(:,:,groupIdx) = a(~isTest,:);
+                                    %}
                                 end
                             end
                     
@@ -268,8 +277,8 @@ classdef SepLLGCMethod < LLGCMethod
                                 XtrainB = obj.sumF(Xtrain,b);
                                 trainPred = (XtrainB(:,1) > 0)*train.classes(1);
                                 trainPred(trainPred == 0) = train.classes(2);
-                                accVec = trainPred == Y_labeled(~isTest);
-                                regPerfTrain(regIdx) = regPerfTrain(regIdx) + mean(accVec);
+                                accVecTrain = trainPred == Y_labeled(~isTest);
+                                regPerfTrain(regIdx) = regPerfTrain(regIdx) + mean(accVecTrain);
                                 
                                 if useFCurrLabeled                                    
                                     Xtest = Fcurr(isTest,:,:);
@@ -284,10 +293,23 @@ classdef SepLLGCMethod < LLGCMethod
                                     
                                 end
                                 XbTest = obj.sumF(Xtest,b);
+                                
+                                
+                                XAll = Fcurr;
+                                XAll(:,1,:) = transform.apply(squeeze(Fcurr));
+                                
+                                XbAll = obj.sumF(XAll,b);
+                                predAll = LLGC.getPrediction(XbAll,train.classes);
                                 %[~,YtestPred] = max(XbTest,[],2);
+                                YtestPred = LLGC.getPrediction(XbTest,train.classes);
+                                %{
                                 YtestPred = (XbTest(:,1) > 0)*train.classes(1);
                                 YtestPred(YtestPred == 0) = train.classes(2);
-                                regPerf(regIdx) = regPerf(regIdx) + mean(YtestPred == Ytest);
+                                %}
+                                accVecTest = YtestPred == Ytest;
+                                regPerf(regIdx) = regPerf(regIdx) + mean(accVecTest);
+                                accAll = mean(predAll == Y_labeled);
+                                a = [XbAll predAll Y_labeled];
                             end
                         end
                         regPerfTrain = regPerfTrain ./ numFolds;
@@ -522,8 +544,8 @@ classdef SepLLGCMethod < LLGCMethod
                     b = [stats.Intercept ; B];
                 else
                     warning off
-                    %b = ridge(Y_bar,F_bar,reg,0);  
-                    
+                    b = ridge(Y_bar,F_bar,reg,0);  
+                    %{
                     F_bar = [ones(size(F_bar,1),1) F_bar];
                     numFeatures = size(F_bar,2); 
                     cvx_begin quiet
@@ -533,11 +555,11 @@ classdef SepLLGCMethod < LLGCMethod
                     subject to
                         b(2:end) >= 0
                     cvx_end 
-                    
+                    %}
                     warning on
                 end
-                %F_bar_bias = [ones(size(F_bar,1),1) F_bar];
-                %d = F_bar_bias*b - Y_bar;
+                F_bar_bias = [ones(size(F_bar,1),1) F_bar];
+                d = F_bar_bias*b - Y_bar;
             else
                 assert(~obj.get('lasso'));
                 numFeatures = size(F_bar,2);            

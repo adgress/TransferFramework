@@ -15,8 +15,8 @@ classdef ProjectConfigs < handle
         useKSR = false
         
         %data = Constants.HOUSING_DATA
-        %data = Constants.TOMMASI_DATA
-        data = Constants.YEAST_BINARY_DATA
+        data = Constants.TOMMASI_DATA
+        %data = Constants.YEAST_BINARY_DATA
         
         useSavedSmallResults = 1
         
@@ -80,6 +80,7 @@ classdef ProjectConfigs < handle
                 c.numLabeledPerClass=[10 20 30 40 50];
                 %c.numLabeledPerClass=50;
                 c.reg = fliplr([0 10.^(-6:6)]);
+                %c.reg = 1;
                 c.numFolds = 3;                
 
             else
@@ -232,6 +233,14 @@ classdef ProjectConfigs < handle
                     methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
                     legend{end+1} = 'LLGC';       
                     fields{end+1} = 'testResults';
+                    
+                    methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-negY=1.mat';
+                    legend{end+1} = 'LLGC: No Redo';       
+                    fields{end+1} = 'testResults';
+                    
+                    methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-negY=1.mat';
+                    legend{end+1} = 'LLGC: No Redo - Best Feature';
+                    fields{end+1} = 'featureTestAccsBest';
                     %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';
                                         %'LLGC Sep Sum',...     
                 end
