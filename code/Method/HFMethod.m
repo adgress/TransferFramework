@@ -236,9 +236,15 @@ classdef HFMethod < Method
                         
                         %fu = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, invM);
                         fuTest = fu(testInds,:);
-                        %[~,yPred] = max(fuTest,[],2);
-                        
-                        yPred = LLGC.getPrediction(fuTest,distMat.classes);
+                        if size(fuTest,2) > 1
+                            fuTest = Helpers.RemoveNullColumns(fuTest);
+                        end
+                        %[~,yPred] = max(fuTest,[],2);                        
+                        classes = distMat.classes;
+                        if size(fuTest,2) > length(classes)
+                            classes = 1:max(distMat.classes);
+                        end
+                        yPred = LLGC.getPrediction(fuTest,classes);
                         yActual = Ytrain(isTest);
                         accVec = yPred == yActual;
                         alphaScores(alphaIdx) = alphaScores(alphaIdx) + mean(accVec);                        

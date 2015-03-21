@@ -33,10 +33,13 @@ classdef SepLLGCMethod < LLGCMethod
                 obj.set('redoLLGC',0);
             end
             if ~obj.has('nonneg')
-                obj.set('nonneg',0);
+                obj.set('nonneg',1);
             end
             if ~obj.has('negY')
                 obj.set('negY',1);
+            end
+            if ~obj.has('useFL')
+                obj.set('useFL',1);
             end
         end
         
@@ -171,7 +174,7 @@ classdef SepLLGCMethod < LLGCMethod
                          %F_labeled(instanceIdx,:,groupIdx) = F(ind,:,groupIdx);
                          
                          %a = LLGC.llgc_inv_unbiased([],YMatCurrRemoved,[],invM{groupIdx});
-                         if LLGC.normRows && false
+                         if obj.get('useFL')
                              a = LLGC.llgc_inv([],YMatCurrRemoved,[],invM{groupIdx});
                              F_labeled(instanceIdx,:,groupIdx) = a(ind,~labelsToRemove);
                          else
@@ -296,8 +299,9 @@ classdef SepLLGCMethod < LLGCMethod
                                 
                                 
                                 XAll = Fcurr;
-                                XAll(:,1,:) = transform.apply(squeeze(Fcurr));
-                                
+                                for idx=1:size(Xall,2)
+                                    XAll(:,i,:) = transform.apply(squeeze(XAll(:,i,:)));
+                                end
                                 XbAll = obj.sumF(XAll,b);
                                 predAll = LLGC.getPrediction(XbAll,train.classes);
                                 %[~,YtestPred] = max(XbTest,[],2);
@@ -309,7 +313,7 @@ classdef SepLLGCMethod < LLGCMethod
                                 accVecTest = YtestPred == Ytest;
                                 regPerf(regIdx) = regPerf(regIdx) + mean(accVecTest);
                                 accAll = mean(predAll == Y_labeled);
-                                a = [XbAll predAll Y_labeled];
+                                a = [XbAll predAll Y_labeled];                                
                             end
                         end
                         regPerfTrain = regPerfTrain ./ numFolds;
@@ -333,16 +337,41 @@ classdef SepLLGCMethod < LLGCMethod
                     
                     combineFeatures = false;                    
                     if ~combineFeatures                  
-                        
+                        %{
+                        testRegPerf = [];
                         for i=1:size(F_labeled,2)
                             a = squeeze(F_labeled(:,i,:));
                             F_labeled(:,i,:) = transform.apply(a);
-                        end                        
+                        end
+                        for regIdx = 1:length(regVals)
+                            reg = regVals(regIdx);
+                            [b] = obj.solveForBeta(F_bar_labeled,Y_bar_labeled,reg);
+                            
+                                                                                                         
+                            %Fb_labeled = obj.sumF(F_labeled,b);
+                            Fb_labeled = obj.sumF(F_labeled,b);;
+                            %Fb_labeled2 = b(1) + F_bar_labeled*b(2:end);
+                            Fb_labeledPred = LLGC.getPrediction(Fb_labeled,distMat.classes);
+                            %Fb_labeledPred = (Fb_labeled(:,1) > 0)*train.classes(1);
+                            %Fb_labeledPred(Fb_labeledPred == 0) = train.classes(2);
+                            accVec = Fb_labeledPred == distMat.Y(isLabeledInds);
+                            %t = [Fb_labeledPred distMat.Y(isLabeledInds)];
+                            display(['TrainAcc: ' num2str(mean(accVec))]);
+                                  
+                            F2 = F;
+                            for i=1:size(F2,2)
+                                a = squeeze(F2(:,i,:));
+                                F2(:,i,:) = transform.apply(a);
+                            end
+                            FbRegTest = obj.sumF(F2,b);
+                            FbPred = LLGC.getPrediction(FbRegTest,distMat.classes);
+                            accVec = FbPred == distMat.trueY;
+                            testRegPerf(regIdx) = mean(accVec(distMat.isTargetTest()));
+                        end
+                        %}
                         Fb_labeled = obj.sumF(F_labeled,b);
-                        Fb_labeledPred = (Fb_labeled(:,1) > 0)*train.classes(1);
-                        Fb_labeledPred(Fb_labeledPred == 0) = train.classes(2);
+                        Fb_labeledPred = LLGC.getPrediction(Fb_labeled,distMat.classes);
                         accVec = Fb_labeledPred == distMat.Y(isLabeledInds);
-                        %t = [Fb_labeledPred distMat.Y(isLabeledInds)];
                         display(['TrainAcc: ' num2str(mean(accVec))]);
                     else
                         error('Update');
@@ -427,7 +456,8 @@ classdef SepLLGCMethod < LLGCMethod
                 display(['Redo Acc: ' num2str(subsetTrainAcc) ' ' num2str(subsetTestAcc)]);
             end            
             display(['Best feat test Acc: ' num2str(testAccs(argmax(featureCVAccs)))]);
-            display([num2str(trainAcc) ' ' num2str(testAcc)]);
+            display([num2str(trainAcc) ' ' num2str(testAcc) ' bestReg: ' num2str(reg)]);
+            a = [b(2:end)  featureCVAccs' testAccs];
         end
         
         function [trainAcc,testAcc] = redoLLGC(obj,input,featureTrainAccs)
@@ -436,7 +466,8 @@ classdef SepLLGCMethod < LLGCMethod
             
             [sortedAccs,inds] = sort(featureTrainAccs,'descend');
             %numFeats = sum(sortedAccs >= .6);
-            numFeats = length(sortedAccs);
+            %numFeats = length(sortedAccs);
+            numFeats = sum(sortedAccs > 1e-6);
             %featsToUse = inds(1:2);            
             
             useHF = false;
@@ -501,15 +532,24 @@ classdef SepLLGCMethod < LLGCMethod
             if ~exist('b','var')
                 Fb = sum(F,3)./size(F,3);
             else
-                Fb = zeros(size(F,1),size(F,2));
-                if addBias
-                    Fb = Fb + b(1);
-                    for featIdx=1:(length(b)-1)
-                        Fb = Fb + F(:,:,featIdx)*b(featIdx+1);
-                    end
+                if isstruct(b)
+                    F = squeeze(F);
+                    y = ones(size(F),1);
+                    y(1) = 2;
+                    [pred,~,Fb] = predict(y,sparse(F),b,'-b 1 -q');
+                    Fb = Fb(:,1);
+                    Fb = Fb - .5;
                 else
-                    for featIdx=1:length(b)
-                        Fb = Fb + F(:,:,featIdx)*b(featIdx);
+                    Fb = zeros(size(F,1),size(F,2));
+                    if addBias
+                        Fb = Fb + b(1);
+                        for featIdx=1:(length(b)-1)
+                            Fb = Fb + F(:,:,featIdx)*b(featIdx+1);
+                        end
+                    else
+                        for featIdx=1:length(b)
+                            Fb = Fb + F(:,:,featIdx)*b(featIdx);
+                        end
                     end
                 end
             end
@@ -539,27 +579,32 @@ classdef SepLLGCMethod < LLGCMethod
         
         function [b] = solveForBeta(obj,F_bar,Y_bar,reg)
             if obj.get('addBias')
-                if obj.get('lasso')
+                if obj.get('logReg')
+                    options = ['-s 0 -c ' num2str(reg) ' -B 1 -q'];
+                    b = train(Y_bar,sparse(F_bar),options);
+                elseif obj.get('lasso')
                     [B,stats] = lasso(F_bar,Y_bar,'Lambda',reg);
                     b = [stats.Intercept ; B];
                 else
                     warning off
-                    b = ridge(Y_bar,F_bar,reg,0);  
-                    %{
-                    F_bar = [ones(size(F_bar,1),1) F_bar];
-                    numFeatures = size(F_bar,2); 
-                    cvx_begin quiet
-                    variable b(numFeatures,1)
-                    %minimize(norm(F_bar*b-Y_bar,'fro') + reg*norm(b-u,2))
-                    minimize(norm(F_bar*b-Y_bar) + reg*norm(b(2:end),2))
-                    subject to
-                        b(2:end) >= 0
-                    cvx_end 
-                    %}
+                    if ~obj.get('nonneg')                        
+                        b = ridge(Y_bar,F_bar,reg,0);  
+                        F_bar = [ones(size(F_bar,1),1) F_bar];
+                    else
+                        F_bar = [ones(size(F_bar,1),1) F_bar];
+                        numFeatures = size(F_bar,2); 
+                        cvx_begin quiet
+                        variable b(numFeatures,1)
+                        %minimize(norm(F_bar*b-Y_bar,'fro') + reg*norm(b-u,2))
+                        minimize(norm(F_bar*b-Y_bar) + reg*norm(b(2:end),2))
+                        subject to
+                            b(2:end) >= 0
+                        cvx_end                         
+                    end
                     warning on
+                    
+                    d = F_bar*b - Y_bar;                    
                 end
-                F_bar_bias = [ones(size(F_bar,1),1) F_bar];
-                d = F_bar_bias*b - Y_bar;
             else
                 assert(~obj.get('lasso'));
                 numFeatures = size(F_bar,2);            
@@ -574,8 +619,7 @@ classdef SepLLGCMethod < LLGCMethod
                 cvx_end  
                 warning on
             end            
-            %b(b < 0) = 0;
-            
+            %b(b < 0) = 0;            
         end
         
         function [] = updateConfigs(obj, newConfigs)
@@ -616,6 +660,9 @@ classdef SepLLGCMethod < LLGCMethod
             end
             if obj.has('negY') && obj.get('negY')
                 nameParams{end+1} = 'negY';
+            end
+            if obj.has('useFL') && obj.get('useFL')
+                nameParams{end+1} = 'useFL';
             end
         end
     end
