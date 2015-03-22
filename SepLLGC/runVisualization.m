@@ -14,20 +14,22 @@ function [] = runVisualization()
         title(a{1});
     end
     labels = ProjectConfigs.getLabels();
-    housingDirs = {...
+    randomFeaturesDirs = {...
         ' (0 random features)',...
         ' (10 random features)',...
         ' (30 random features)',...
     };
-    if ProjectConfigs.data == Constants.HOUSING_DATA
-        labels = housingDirs;
+    isRandomFeatureDataSet = ProjectConfigs.data == Constants.HOUSING_DATA || ...
+            ProjectConfigs.data == Constants.YEAST_BINARY_DATA;
+    if isRandomFeatureDataSet
+        labels = randomFeaturesDirs;
     end
     d = vizConfigs.get('resultsDirectory');
     for i=1:length(labels)
         subplot(1,length(labels),i);
-        if ProjectConfigs.data == Constants.HOUSING_DATA
+        if isRandomFeatureDataSet
             newResultsDir = [d  labels{i} '/'];
-            title(housingDirs{i});
+            title(randomFeaturesDirs{i});
         else
             vizConfigs.set('labelsToUse',labels{i});
             newResultsDir = [d '/' num2str(labels{i}) '/'];                    

@@ -14,13 +14,14 @@ classdef ProjectConfigs < handle
         
         useKSR = false
         
-        data = Constants.HOUSING_DATA
+        %data = Constants.HOUSING_DATA
         %data = Constants.TOMMASI_DATA
-        %data = Constants.YEAST_BINARY_DATA
+        data = Constants.YEAST_BINARY_DATA
         
         useSavedSmallResults = 1
         
         useSepLLGC = 1
+        useMahaLLGC = 1
         
         %tommasiLabels = [10 15 23 25 26 30]
         %housingLabels = [1 2];
@@ -31,9 +32,11 @@ classdef ProjectConfigs < handle
         %Housing labels
         housingVizLabels = {[1 2]}
         
-        numRandomFeatures = 0
+        numRandomFeatures = 10
         
         plotFeatureSmoothness = 0
+        
+        smallReg = fliplr(5.^[-10:10])
     end
     
     properties        
@@ -112,6 +115,11 @@ classdef ProjectConfigs < handle
                 c.get('mainConfigs').setSepLLGCConfigs();
             else
                 c.get('mainConfigs').setLLGCConfigs();
+            end
+            if ProjectConfigs.useMahaLLGC
+                a = c.get('mainConfigs');            
+                llgcObj = MahaLLGC(LearnerConfigs());           	
+                a.configsStruct.learners=llgcObj;
             end
             c.get('mainConfigs').get('learners').set('alpha',pc.alpha);
             c.configsStruct.configLoader = ExperimentConfigLoader();
@@ -205,24 +213,27 @@ classdef ProjectConfigs < handle
                     legend{end+1} = 'LLGC Sep Weighted Regularized with Bias';
                     fields{end+1} = 'testResults';
                     %}
-
+                    %{
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
                     legend{end+1} = 'LLGC Sep Weighted Regularized with Bias - Best Feature';
                     fields{end+1} = 'featureTestAccsBest';
-
+                    %}
                     %{
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-redoLLGC=1.mat';
                     legend{end+1} = 'LLGC Sep Weighted Regularized with Bias, nonneg';
                     fields{end+1} = 'testResults';
                     %}
+                    %{
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
                     legend{end+1} = 'LLGC Sep Subset';
                     fields{end+1} = 'subsetTestAcc';
+                    %}
                     %{
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-lasso=1-slZ=1.mat';
                     legend{end+1} = 'LLGC Sep Weighted Regularized Lasso';
                     fields{end+1} = 'testResults';
                     %}
+                    %{
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
                     legend{end+1} = 'LLGC Weighted Reg Bias, negY';       
                     fields{end+1} = 'testResults';
@@ -230,21 +241,25 @@ classdef ProjectConfigs < handle
                     methodResultsFileNames{end+1} = '_just1_SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-redoLLGC=1-negY=1.mat';
                     legend{end+1} = 'LLGC Weighted Reg Bias, negY, normRows=0';       
                     fields{end+1} = 'testResults';
-
+%}
                     methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
                     legend{end+1} = 'LLGC';       
                     fields{end+1} = 'testResults';
                     
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-negY=1-useFL=1.mat';
                     %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-negY=1.mat';
-                    legend{end+1} = 'LLGC: No Redo';       
+                    legend{end+1} = 'Our Method';       
                     fields{end+1} = 'testResults';
-                    
+                    %{
                     methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-negY=1-useFL=1.mat';
                     legend{end+1} = 'LLGC: No Redo - Best Feature';
                     fields{end+1} = 'featureTestAccsBest';
-                    %methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-alpha=0.9-sum=1.mat';
-                                        %'LLGC Sep Sum',...     
+                    %}
+                    %{
+                    methodResultsFileNames{end+1} = 'SepLLGC-sigmaScale=0.2-regularized=1-addBias=1-slZ=1-nonneg=1-negY=1-useFL=1-smallReg=1.mat';
+                    legend{end+1} = 'SepLLGC: SmallReg';
+                    fields{end+1} = 'testResults';
+                    %}                    
                 end
             else
                 error('TODO');

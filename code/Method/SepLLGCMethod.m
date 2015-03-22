@@ -41,6 +41,9 @@ classdef SepLLGCMethod < LLGCMethod
             if ~obj.has('useFL')
                 obj.set('useFL',1);
             end
+            if ~obj.has('smallReg')
+                obj.set('smallReg',0);
+            end
         end
         
         function [testResults,savedData] = ...
@@ -218,6 +221,9 @@ classdef SepLLGCMethod < LLGCMethod
                     if solveForBeta              
                         pc = ProjectConfigs.Create();
                         regVals = pc.reg;            
+                        if obj.get('smallReg')
+                            regVals = ProjectConfigs.smallReg;
+                        end
                         
                         regPerf = zeros(size(regVals));
                         regPerfTrain = regPerf;                        
@@ -460,6 +466,10 @@ classdef SepLLGCMethod < LLGCMethod
             a = [b(2:end)  featureCVAccs' testAccs];
         end
         
+        function [trainAcc,testAcc] = mergeBestFeatures(obj,distMat,F,featureTrainAccs)
+            
+        end
+        
         function [trainAcc,testAcc] = redoLLGC(obj,input,featureTrainAccs)
             llgcMethod = LLGCMethod(LearnerConfigs());
             llgcMethod.updateConfigs(obj.configs());
@@ -663,6 +673,9 @@ classdef SepLLGCMethod < LLGCMethod
             end
             if obj.has('useFL') && obj.get('useFL')
                 nameParams{end+1} = 'useFL';
+            end
+            if obj.has('smallReg') && obj.get('smallReg')
+                nameParams{end+1} = 'smallReg';
             end
         end
     end

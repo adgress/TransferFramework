@@ -77,6 +77,28 @@ classdef Helpers < handle
             f = file;
         end                
         
+        %NOTE: Computes squared distances
+        function [D] = CreateDistanceMatrixMahabolis(X,V)
+            assert(size(V,1) == size(V,2));
+            XV = X*V;            
+            XV = XV';            
+            Xt = X';
+            D = bsxfun(@plus,dot(Xt,XV,1)',dot(XV,Xt,1))-2*(Xt'*XV);
+            D = real(D);
+            %{
+            D2 = zeros(size(X,2));            
+            for i=1:size(X,1);
+                for j=1:size(X,1)
+                    Xi = X(i,:);
+                    Xj = X(j,:);
+                    D2(i,j) = (Xi-Xj)*V*(Xi-Xj)';
+                end
+            end
+            norm(D - D2)
+            %}
+        end
+        
+        %NOTE: Computes squared distances
         function [D] = CreateDistanceMatrix(X,Y)
             if nargin < 2
                 Y = X;
@@ -374,7 +396,7 @@ classdef Helpers < handle
             W = W ./ repmat(v',1,size(W,2));
         end        
         function [W] = distance2RBF(W,sigma)
-            W = W.^2;
+            %W = W.^2;
             W = -W./(2*sigma^2);
             W = exp(W);
         end

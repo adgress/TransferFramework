@@ -310,6 +310,8 @@ classdef HFMethod < Method
                     [fu,savedData,sigma] = runLLGC(obj,distMat, makeRBF);
                 end
             end
+            predicted = LLGC.getPrediction(fu,distMat.classes);
+            %{
             [maxVal,predicted] = max(fu,[],2);
             
             %Sometimes fu(i,:) will be all 0, resulting in '1' always being
@@ -325,6 +327,7 @@ classdef HFMethod < Method
             if numNan > 0
                 display(['numNan: ' num2str(numNan)]);
             end
+            %}
             %{
             if useHF
                 %distMat entries should be sorted properly
