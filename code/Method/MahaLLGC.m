@@ -32,10 +32,15 @@ classdef MahaLLGC < LLGCMethod
             sigmaScale = obj.get('sigmaScale');
             W = Helpers.CreateDistanceMatrix(X);
             sigmaNormal = sigmaScale*mean(W(:));
-            sigma = -2/(sigmaNormal^2);
+            %sigma = -2/(sigmaNormal^2);
+            sigma = -1;
+            %sigma = sigma*1;
+            %sigma = -1;
             %V0 = ones(size(X,2),1) ./ sigma;
+            bVal = 1;
             V0 = ones(size(X,2),1);
-            V = V0;
+            V0 = V0 / (bVal*sum(V0));
+            V = V0;                        
             fx = [];  
             trainPerf = [];
             testPerf = [];
@@ -48,7 +53,7 @@ classdef MahaLLGC < LLGCMethod
             splitTest = split == 2;            
             
             useSameY = 0;
-            yTrain = yBinary;     
+            yTrain = yBinary;  
             if useSameY
                 yTest = yBinary;
                 %yTest(isTrain) = 0;
@@ -73,22 +78,31 @@ classdef MahaLLGC < LLGCMethod
             useFMinCon = 1;
             i = 1;
             fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
+            fuPre = fu;
+            yScale = mean(abs(fu));
+            %yScale = 1;
+            %yTrain = yScale*yTrain;
+            %yTest = yScale*yTest;
             Ypred = LLGC.getPrediction(fu,train.classes);
             accVec = trueY == Ypred;
             trainPerf(i) = mean(accVec(isLabeled));
             testPerf(i) = mean(accVec(~isTrain));
             cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
-            fx(i) = obj.evaluate(X,V,V0,yBinary,alpha,reg,S,yTest,sigma);
+            fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
             if useFMinCon
                 options = optimset('GradObj','on','Algorithm','interior-point');
                 func = makeOptimHandle(obj,X,V0,yTrain,alpha,reg,S,yTest,sigma);
                 
                 %UB = -1e-6*ones(size(V0,1),1);
                 LB = 0*ones(size(V0));
-                UB = 100*ones(size(V0));
+                %UB = 1*ones(size(V0));
+                UB = [];
                 tic
-                
-                [V,g] = fmincon(func,V0,[],[],[],[],LB,UB,[],options);
+                Aeq = [];
+                Beq = [];
+                A = ones(1,size(V,1));
+                B = bVal;
+                [V,g] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                 toc
                 i = 2;
                 fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
@@ -97,7 +111,7 @@ classdef MahaLLGC < LLGCMethod
                 trainPerf(i) = mean(accVec(isLabeled));
                 testPerf(i) = mean(accVec(~isTrain));
                 cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
-                fx(i) = obj.evaluate(X,V,V0,yBinary,alpha,reg,S,yTest,sigma);
+                fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
             else
                 for i=1:100
                     %{
@@ -150,9 +164,11 @@ classdef MahaLLGC < LLGCMethod
             end
             vals = [V V0 V*sigma V0*sigma];
             perf = [trainPerf' cvPerf' testPerf'];
+            yScales = [yScale mean(abs(fu))];
             vals
             perf            
             fx
+            yScales
             
             testResults = FoldResults();
             testResults.dataFU = sparse(fu);

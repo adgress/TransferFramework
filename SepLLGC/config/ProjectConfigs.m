@@ -14,9 +14,9 @@ classdef ProjectConfigs < handle
         
         useKSR = false
         
-        %data = Constants.HOUSING_DATA
+        data = Constants.HOUSING_DATA
         %data = Constants.TOMMASI_DATA
-        data = Constants.YEAST_BINARY_DATA
+        %data = Constants.YEAST_BINARY_DATA
         
         useSavedSmallResults = 1
         
@@ -32,7 +32,7 @@ classdef ProjectConfigs < handle
         %Housing labels
         housingVizLabels = {[1 2]}
         
-        numRandomFeatures = 10
+        numRandomFeatures = 0
         
         plotFeatureSmoothness = 0
         
