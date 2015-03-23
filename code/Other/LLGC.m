@@ -34,7 +34,7 @@ classdef LLGC < handle
                 %}
                 invM = LLGC.makeInvM(W,alpha);
             end
-            if ~LLGC.normRows
+            if ~LLGC.normRows && size(fl,2) > 1
                 fl = LLGC.labelMatrix2vector(fl);
             end
             fu = invM*fl;         
