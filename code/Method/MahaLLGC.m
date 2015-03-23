@@ -174,6 +174,7 @@ classdef MahaLLGC < LLGCMethod
             testResults.dataFU = sparse(fu);
             testResults.yPred = Ypred;
             testResults.yActual = trueY;
+            testResults.dataType = type;
             testResults.learnerMetadata.reg = reg;
             testResults.learnerMetadata.useSameY = useSameY;
             testResults.learnerMetadata.alpha = alpha;
