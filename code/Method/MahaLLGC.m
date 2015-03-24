@@ -8,6 +8,9 @@ classdef MahaLLGC < LLGCMethod
     methods
         function obj = MahaLLGC(configs)
             obj = obj@LLGCMethod(configs);
+            if ~obj.has('useLOO')
+                obj.set('useLOO',1);
+            end
         end
         
         function [testResults,savedData] = ...
@@ -47,7 +50,8 @@ classdef MahaLLGC < LLGCMethod
             diff = [];
             
             %regs = fliplr([1e-8 1e-6 1e-4 1e-2 1 1e2 1e4]);
-            regs = fliplr(10.^(-8:4));            
+            regs = fliplr(10.^(-8:4));
+            %regs = 10.^(-8:4);
             regPerf = zeros(size(regs));
             
             isLabeledTrain = find(isLabeled & isTrain);
@@ -57,21 +61,22 @@ classdef MahaLLGC < LLGCMethod
                 splitTrain = split == 1;
                 splitTest = split == 2;            
 
-                useSameY = 0;
+                useSameY = 1;
                 yTrain = yBinary;  
-                if useSameY
-                    yTest = yBinary;
-                    %yTest(isTrain) = 0;
-                    %yTest(yTest == 0) = [];                                                
-                    %S = obj.makeSelectionMatrix(~isTrain);
-                    S = eye(size(yTest,1));
+                if useSameY                    
+                    yTrain(isLabeledTrain(splitTest)) = 0;
+                    yTest = yTrain(isLabeledTrain(splitTrain));    
+                    I = zeros(size(trueY));
+                    I(isLabeledTrain(splitTrain)) = 1;
+                    %S = eye(size(yTest,1));
+                    S = obj.makeSelectionMatrix(I);
                 else
                     yTrain(isLabeledTrain(splitTest)) = 0;
                     yTest = trueY;
                     yTest(trueY > 1) = -1;
-                    yTest(trueY == -1) = 0;
+                    yTest(trueY == -1) = 0;                    
                     yTest = yTest(isLabeledTrain(splitTest));
-
+                    
                     I = zeros(size(trueY));
                     I(isLabeledTrain(splitTest)) = 1;
                     S = obj.makeSelectionMatrix(I);
@@ -104,6 +109,8 @@ classdef MahaLLGC < LLGCMethod
                     Ypred = LLGC.getPrediction(fu,train.classes);
                     accVec = trueY == Ypred;
 
+                    trainAcc = mean(accVec(isLabeledTrain(splitTrain)));
+                    testAcc = mean(accVec(~isTrain));
                     regPerf(regIdx) = regPerf(regIdx) + mean(accVec(isLabeledTrain(splitTest)));
                     %display([num2str(regs(regIdx)) ': ' num2str(regPerf(regIdx))]);
                     %{
@@ -118,6 +125,11 @@ classdef MahaLLGC < LLGCMethod
             regPerf = regPerf ./ numFolds;
             reg = regs(argmax(regPerf));
             display(['Best reg: ' num2str(reg)]);
+            
+            if obj.get('useLOO')
+                yTrain = zeros(size(yBinary));
+                yTrain(isLabeledTrain) = yBinary(isLabeledTrain);
+            end
             
             i = 1;
             fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
@@ -191,7 +203,20 @@ classdef MahaLLGC < LLGCMethod
             L = (1+alpha)*D - W;
             invL = inv(L);
             %fx = norm(alpha*invL*y - y)^2 + reg*norm(V - V0)^2;
-            fx = norm(alpha*S*invL*y - yTest)^2 + reg*norm(V - V0)^2;
+            if obj.get('useLOO')
+                fx = 0;
+                isLabeled = find(y);
+                for idx=isLabeled'
+                    yCopy = y;
+                    yCopy(idx) = 0;
+                    fu = alpha*invL*yCopy;
+                    r = norm(fu(idx)- y(idx));
+                    fx = fx + r;
+                end                
+            else
+                fx = norm(alpha*S*invL*y - yTest)^2;
+            end
+            fx = fx +  + reg*norm(V - V0)^2;
         end
         
         function [g] = gradient(obj, X, V, V0, y, alpha, reg, S, yTest,sigma)
@@ -263,13 +288,48 @@ classdef MahaLLGC < LLGCMethod
                 %}
                 
                 Vii_diff = 2 * (V(i)-V0(i));
-                
-                g1 = -alpha^2 * y' * (invL2*dL_Vii*S'*S*invL + invL*S'*S*dL_Vii*invL2) * y;
-                g2 = 2*alpha*yTest'*S*invL*dL_Vii*invL*y;
+                %obj.set('useLOO',0);
+                if obj.get('useLOO')
+                    g1 = 0;
+                    g2 = 0;
+                    isLabeled = find(y);    
+                    M1 = invL2*dL_Vii;
+                    M2 = dL_Vii*invL2;
+                    M3 = invL*dL_Vii*invL;
+                    for idx=isLabeled'
+                        yCurr = y;
+                        yCurr(idx) = 0;
+                        yCurrTest = y(idx);
+                        I = zeros(size(yCurr));
+                        I(idx) = 1;
+                        Scurr = obj.makeSelectionMatrix(I);
+                        %g1 = g1 + -alpha^2 * yCurr' * (invL2*dL_Vii*Scurr'*Scurr*invL + invL*Scurr'*Scurr*dL_Vii*invL2) * yCurr;
+                        %g2 = g2 + 2*alpha*yCurrTest'*Scurr*invL*dL_Vii*invL*yCurr;
+                        M1S = M1(:,idx);
+                        SIL = invL(idx,:);
+                        SM2 = M2(idx,:);
+                        SM3 = M3(idx,:);
+                        %{
+                        assert(all(M1S == M1*Scurr'));
+                        assert(all(SIL == Scurr*invL));
+                        assert(all(SM2 == Scurr*M2));
+                        assert(all(SM3 == Scurr*M3));
+                        %}
+                        %g1_ = g1 + -alpha^2 * yCurr' * (M1*Scurr'*Scurr*invL + invL*Scurr'*Scurr*M2) * yCurr;
+                        g1 = g1 + -alpha^2 * yCurr' * (M1S*SIL + SIL'*SM2) * yCurr;
+                        %assert(g1 == g1_);
+                        %g2_ = g2 + 2*alpha*yCurrTest'*Scurr*M3*yCurr;
+                        g2 = g2 + 2*alpha*yCurrTest'*SM3*yCurr;
+                        %assert(g2 == g2_);
+                    end
+                else
+                    g1 = -alpha^2 * y' * (invL2*dL_Vii*S'*S*invL + invL*S'*S*dL_Vii*invL2) * y;
+                    g2 = 2*alpha*yTest'*S*invL*dL_Vii*invL*y;
+                end
                 %g3 = 2*reg*Vii_diff;
                 g3 = 2*reg*V(i);
                 g(i) = g1 + g2 + g3;
-                
+                                
                 %f1 = y'*(invL2 + invL)*y
                 %{
                 g(i) = -alpha^2 * y' * (invL2*dL_Vii*invL + invL*dL_Vii*invL2) * y  ...
@@ -278,6 +338,11 @@ classdef MahaLLGC < LLGCMethod
                 %}
             end
             %g = diag(g);
+            %{ 
+            f1 = obj.evaluate(X, V, V0, y, alpha, reg, S, yTest,sigma);
+            V2 = V - 1*g;
+            f2 = obj.evaluate(X, V2, V0, y, alpha, reg, S, yTest,sigma);
+            %}
         end
         
         function [prefix] = getPrefix(obj)
@@ -288,6 +353,9 @@ classdef MahaLLGC < LLGCMethod
             nameParams = {'sigmaScale'};
             if length(obj.get('alpha')) == 1
                 nameParams{end+1} = 'alpha';
+            end
+            if obj.has('useLOO')
+                nameParams{end+1} = 'useLOO';
             end
         end
     end
