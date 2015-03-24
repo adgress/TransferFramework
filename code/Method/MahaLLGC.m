@@ -27,7 +27,7 @@ classdef MahaLLGC < LLGCMethod
             yBinary(y==-1) = 0;
             y = Helpers.createLabelMatrix(y);
             alpha = 1;
-            reg = 0;
+            reg = 1e-7;
             %t = .1;
             sigmaScale = obj.get('sigmaScale');
             W = Helpers.CreateDistanceMatrix(X);
@@ -39,7 +39,7 @@ classdef MahaLLGC < LLGCMethod
             %V0 = ones(size(X,2),1) ./ sigma;
             bVal = 1;
             V0 = ones(size(X,2),1);
-            V0 = V0 / (bVal*sum(V0));
+            %V0 = V0 / (bVal*sum(V0));
             V = V0;                        
             fx = [];  
             trainPerf = [];
@@ -75,93 +75,71 @@ classdef MahaLLGC < LLGCMethod
                     
             
             
-            useFMinCon = 1;
             i = 1;
             fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
             fuPre = fu;
             yScale = mean(abs(fu));
             %yScale = 1;
-            %yTrain = yScale*yTrain;
-            %yTest = yScale*yTest;
+            yTrain = yScale*yTrain;
+            yTest = yScale*yTest;
             Ypred = LLGC.getPrediction(fu,train.classes);
             accVec = trueY == Ypred;
             trainPerf(i) = mean(accVec(isLabeled));
             testPerf(i) = mean(accVec(~isTrain));
             cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
             fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
-            if useFMinCon
-                options = optimset('GradObj','on','Algorithm','interior-point');
+            regs = fliplr([1e-8 1e-6 1e-4 1e-2 1 1e2 1e4]);
+            
+            %UB = -1e-6*ones(size(V0,1),1);
+            LB = 0*ones(size(V0));
+            %UB = 1*ones(size(V0));
+            UB = [];
+            Aeq = [];
+            Beq = [];
+            %A = ones(1,size(V,1));
+            %B = bVal;
+            A = [];
+            B = [];
+            options = optimset('GradObj','on','Algorithm','interior-point');
+            regPerf = zeros(size(regs));
+            for regIdx=1:length(regs)
+                reg = regs(regIdx);                
                 func = makeOptimHandle(obj,X,V0,yTrain,alpha,reg,S,yTest,sigma);
-                
-                %UB = -1e-6*ones(size(V0,1),1);
-                LB = 0*ones(size(V0));
-                %UB = 1*ones(size(V0));
-                UB = [];
                 tic
-                Aeq = [];
-                Beq = [];
-                A = ones(1,size(V,1));
-                B = bVal;
                 [V,g] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                 toc
-                i = 2;
                 fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
                 Ypred = LLGC.getPrediction(fu,train.classes);
                 accVec = trueY == Ypred;
-                trainPerf(i) = mean(accVec(isLabeled));
-                testPerf(i) = mean(accVec(~isTrain));
-                cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
-                fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
-            else
-                for i=1:100
-                    %{
-                    W = Helpers.CreateDistanceMatrix(X);
-                    Wrbf = Helpers.distance2RBF(W,sigmaNormal);                
-                    W2 = exp(Helpers.CreateDistanceMatrixMahabolis(X,V));
-                    fu = LLGC.llgc_inv(Wrbf,y,alpha);
-                    %}
-                    fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
-                    Ypred = LLGC.getPrediction(fu,train.classes);
-                    accVec = trueY == Ypred;
+                
+                regPerf(regIdx) = regPerf(regIdx) + mean(accVec(isLabeledTrain(splitTest)));
+                display([num2str(regs(regIdx)) ': ' num2str(regPerf(regIdx))]);
+                %{
+                    i = 2;
                     trainPerf(i) = mean(accVec(isLabeled));
                     testPerf(i) = mean(accVec(~isTrain));
                     cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
-                    %testPerf(i)
-
-                    g = obj.gradient(X,V,V0,yBinary,alpha,reg,S,yTest,sigma);
-                    if norm(g) < 1e-6
-                        display(['Converged after ' num2str(i) ' iterations.']);
-                        break;
-                    end
-                    fx(i) = obj.evaluate(X,V,V0,yBinary,alpha,reg,S,yTest,sigma);
-                    t = 1;
-                    lineSearchFailed = false;
-                    while true
-                        Vcurr = V - t*g;
-                        t = t * .5;
-                        lineSearchFailed = t < 1e-32;
-                        if lineSearchFailed
-                            break;
-                        end
-                        if any(Vcurr > 0)
-                            display(['Positive entry in V - skipping']);
-                            continue;
-                        end
-                        fxCurr = obj.evaluate(X,Vcurr,V0,yBinary,alpha,reg,S,yTest,sigma);
-                        if fxCurr < fx(i)
-                            display('Found better fx...');
-                            break;
-                        end
-
-                    end
-                    if lineSearchFailed
-                        display(['Line Search Failed after ' num2str(i) ' iterations - breaking...']);
-                        break;
-                    end
-                    V = V - t*g;
-                    diff(i) = norm(V - V0);
-                end                
+                    fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
+                %}
             end
+            reg = regs(argmax(regPerf));
+            display(['Best reg: ' num2str(reg)]);
+            func = makeOptimHandle(obj,X,V0,yTrain,alpha,reg,S,yTest,sigma);
+            tic
+            [V,g] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
+            toc
+            
+            fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
+            Ypred = LLGC.getPrediction(fu,train.classes);
+            accVec = trueY == Ypred;
+            
+            i = 2;
+            trainPerf(i) = mean(accVec(isLabeled));
+            testPerf(i) = mean(accVec(~isTrain));
+            cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
+            fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
+            
+            
             vals = [V V0 V*sigma V0*sigma];
             perf = [trainPerf' cvPerf' testPerf'];
             yScales = [yScale mean(abs(fu))];
@@ -284,7 +262,8 @@ classdef MahaLLGC < LLGCMethod
                 
                 g1 = -alpha^2 * y' * (invL2*dL_Vii*S'*S*invL + invL*S'*S*dL_Vii*invL2) * y;
                 g2 = 2*alpha*yTest'*S*invL*dL_Vii*invL*y;
-                g3 = 2*reg*Vii_diff;
+                %g3 = 2*reg*Vii_diff;
+                g3 = 2*reg*V(i);
                 g(i) = g1 + g2 + g3;
                 
                 %f1 = y'*(invL2 + invL)*y

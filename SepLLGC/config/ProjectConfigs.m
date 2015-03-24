@@ -14,9 +14,9 @@ classdef ProjectConfigs < handle
         
         useKSR = false
         
-        data = Constants.HOUSING_DATA
+        %data = Constants.HOUSING_DATA
         %data = Constants.TOMMASI_DATA
-        %data = Constants.YEAST_BINARY_DATA
+        data = Constants.YEAST_BINARY_DATA
         
         useSavedSmallResults = 1
         
@@ -260,6 +260,9 @@ classdef ProjectConfigs < handle
                     legend{end+1} = 'SepLLGC: SmallReg';
                     fields{end+1} = 'testResults';
                     %}                    
+                    methodResultsFileNames{end+1} = 'MahaLLGC-sigmaScale=0.2.mat';
+                    legend{end+1} = 'MahaLLGC';
+                    fields{end+1} = 'testResults';
                 end
             else
                 error('TODO');
