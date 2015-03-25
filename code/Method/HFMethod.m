@@ -10,7 +10,7 @@ classdef HFMethod < Method
             obj = obj@Method(configs);
         end
         
-        function [distMat,savedData] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs,makeRBF,savedData)
+        function [distMat,savedData,Xall] = createDistanceMatrix(obj,train,test,useHF,learnerConfigs,makeRBF,savedData,V)
             if useHF    
                 error('Caching assumes ordering doesn''t change');
                 trainLabeled = train.Y > 0;
@@ -49,8 +49,12 @@ classdef HFMethod < Method
                     Y = Y(inds);
                     type = type(inds);
                     trueY = trueY(inds);
-                    instanceIDs = instanceIDs(inds);                
-                    W = Helpers.CreateDistanceMatrix(Xall);
+                    instanceIDs = instanceIDs(inds);       
+                    if exists('V','var')
+                        error('');
+                    else
+                        W = Helpers.CreateDistanceMatrix(Xall);
+                    end
                     error('check makeRBF');
                 elseif obj.has('useSeparableDistanceMatrix') && ...
                         obj.get('useSeparableDistanceMatrix')
@@ -71,7 +75,11 @@ classdef HFMethod < Method
                     end
                     %W = exp(W);
                 else
-                    WDist = Helpers.CreateDistanceMatrix(Xall);
+                    if exist('V','var')
+                        WDist = Helpers.CreateDistanceMatrixMahabolis(Xall,V);
+                    else
+                        WDist = Helpers.CreateDistanceMatrix(Xall);
+                    end
                     if makeRBF
                         sigma = sigmaScale*mean(WDist(:));
                         W = Helpers.distance2RBF(WDist,sigma);

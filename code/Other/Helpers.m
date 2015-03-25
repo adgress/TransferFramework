@@ -7,6 +7,15 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [yBinary] = MakeLabelsBinary(y)
+            u = unique(y);
+            u(u == -1) = [];
+            assert(length(u) == 2);
+            yBinary = zeros(size(y));
+            yBinary(y == u(1)) = 1;
+            yBinary(y == u(2)) = -1;
+        end
+        
         function [v] = RemoveNullColumns(v)
             v( :, ~any(v,1) ) = [];
         end
