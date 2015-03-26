@@ -14,6 +14,9 @@ classdef MahaLLGC < LLGCMethod
             if ~obj.has('useAlt')
                 obj.set('useAlt',1);
             end
+            if ~obj.has('useL1')
+                obj.set('useL1',0);
+            end
         end
         
         function [testResults,savedData] = ...
@@ -41,6 +44,7 @@ classdef MahaLLGC < LLGCMethod
                 trainPerf = cvPerf;
                 numFolds = 10;
                 maxIters = 10;
+                useHessian = 0;
                 for foldIdx=1:numFolds
                     
                     [distMat,~,X] = llgcMethod.createDistanceMatrix(train,test,...
@@ -82,11 +86,27 @@ classdef MahaLLGC < LLGCMethod
                             
 
                             %yTrain = mean(abs(F))*yTrain;
-                            func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);
+                            
                             tic
                             A = []; B = []; Aeq = []; Beq = [];
+                            func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);                            
+                            hessianFunc = makeHessianHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);
+                            if obj.get('useL1')
+                                l2Reg = 1e-6;
+                                func = makeOptimHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha);
+                                hessianFunc = makeHessianHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha);
+                                A = ones(1,length(V));
+                                B = reg;
+                            end
                             LB = zeros(size(V)); UB = [];
-                            options = optimset('GradObj','on','Algorithm','interior-point');
+                            if useHessian
+                                options = optimset('GradObj','on',...
+                                    'Algorithm','interior-point',...
+                                    'Hessian','user-supplied',...
+                                    'HessFcn',hessianFunc);
+                            else
+                                options = optimset('GradObj','on','Algorithm','interior-point');                            
+                            end
                             [V,fx,exitflag,output,lambda,grad] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                             toc
                             F = obj.runLLGC(X,V,Y,alpha,sigma);
@@ -297,32 +317,57 @@ classdef MahaLLGC < LLGCMethod
             W = exp(W*sigma);
             fu = LLGC.llgc_inv(W,y,alpha);
         end
-        
+                        
         function [fx] = evaluate_alt(obj,X,V,V0,y,F,reg,sigma,alpha)
+            %tic
             W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
             W = exp(W*sigma);
             D = diag(sum(W,2));
             L = (1+alpha)*D - W;
             fx = F'*L*F + alpha*norm(F-y)^2 + reg*norm(V)^2;                                    
+            %toc
         end
         
         function [g] = gradient_alt(obj,X,V,V0,y,F,reg,sigma,alpha)
+            %{
+            distMats = cell(size(V));
+            for i=1:length(V)
+                distMats{i} = sigma*Helpers.CreateDistanceMatrixMahabolis(X(:,i),1);
+            end
+            %}
+            %tic
             W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
             W = exp(W*sigma);
+            
             for featIdx=1:length(V)
-                W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),V(featIdx));
+                %W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),V(featIdx));
+                W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                %W_Vi = W .* distMats{featIdx};
                 W_Vi = W_Vi * sigma;
                 D = diag(sum(W_Vi,2));
                 L = (1+alpha)*D - W_Vi;
                 g(featIdx) = F'*L*F + 2*reg*V(featIdx);
             end
-            %{
-            for i=1:size(W,1)
-                for j=1:size(W,2)
-                    
+            %toc
+        end
+        
+        function [H] = hessian_alt(obj,X,V,V0,y,F,reg,sigma,alpha)
+            H = zeros(length(V));
+            W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
+            W = exp(W*sigma);
+            
+            distMats = cell(size(V));
+            for i=1:length(V)
+                distMats{i} = Helpers.CreateDistanceMatrixMahabolis(X(:,i),V(i));
+            end
+            for i=1:length(V)
+                for j=1:length(V)
+                    W_Vij = W.*distMats{i}.*distMats{j}*(sigma^2);
+                    D = diag(sum(W_Vij,2));
+                    L = (1+alpha)*D - W_Vij;
+                    H(i,j) = F'*L*F;
                 end
             end
-            %}
         end
         
         function [fx] = evaluate(obj, X, V, V0, y, alpha, reg, S, yTest,sigma)
@@ -489,6 +534,9 @@ classdef MahaLLGC < LLGCMethod
             end
             if obj.has('useAlt')
                 nameParams{end+1} = 'useAlt';
+            end
+            if obj.has('useL1')
+                nameParams{end+1} = 'useL1';
             end
         end
     end
