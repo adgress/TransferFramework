@@ -32,12 +32,14 @@ classdef MahaLLGC < LLGCMethod
 
                 reg = 1e-3;
                 
-                regs = fliplr(10.^(-8:4));
+                %regs = fliplr(10.^(-8:4));
+                regs = fliplr(10.^(-8:2:4));
+                %regs = fliplr(10.^(-8));
                 %regs = fliplr(10.^(-8:-4));
                 cvPerf = zeros(size(regs));
                 testPerf = cvPerf;
                 trainPerf = cvPerf;
-                numFolds = 10;                
+                numFolds = 10;
                 maxIters = 10;
                 for foldIdx=1:numFolds
                     
@@ -484,6 +486,9 @@ classdef MahaLLGC < LLGCMethod
             end
             if obj.has('useLOO')
                 nameParams{end+1} = 'useLOO';
+            end
+            if obj.has('useAlt')
+                nameParams{end+1} = 'useAlt';
             end
         end
     end

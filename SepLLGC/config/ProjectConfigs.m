@@ -261,7 +261,7 @@ classdef ProjectConfigs < handle
                     fields{end+1} = 'testResults';
                     %}                    
                     
-                    methodResultsFileNames{end+1} = 'MahaLLGC-sigmaScale=0.2-useLOO=1.mat';
+                    methodResultsFileNames{end+1} = 'MahaLLGC-sigmaScale=0.2-useLOO=1-useAlt=1.mat';
                     legend{end+1} = 'MahaLLGC Alternate';
                     fields{end+1} = 'testResults';
                 end

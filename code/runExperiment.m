@@ -40,6 +40,15 @@ function [] = runExperiment(configs)
     shouldSaveTempResults = configLoader.numExperiments == 1;
     for j=1:configLoader.numExperiments
         splitResults = cell(configLoader.numSplits,1);
+        if ~shouldSaveTempResults
+            t = makeTempFile(outputFile,j);
+            if exist(t,'file')
+                display('Found Temp results - loading...');
+                splitResults = loadTempResults(t);
+                allResults.allResults{j}.splitResults = splitResults;
+                continue;
+            end
+        end
         if multithread
             parfor i=1:configLoader.numSplits  
                 display(sprintf('%d',i));
@@ -70,6 +79,10 @@ function [] = runExperiment(configs)
                     saveTempResults(t,splitResults{i});
                 end
             end
+        end
+        if ~shouldSaveTempResults
+            t = makeTempFile(outputFile,j);
+            saveTempResults(t,splitResults);
         end
         allResults.allResults{j}.splitResults = splitResults;
     end    
