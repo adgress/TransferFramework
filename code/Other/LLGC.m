@@ -174,7 +174,7 @@ classdef LLGC < handle
             M = ((1+alpha)*I-WN);
             %fu = M\((1-alpha)*fl);
             
-            if ~LLGC.normRows
+            if ~LLGC.normRows && size(fl,2) > 1
                 fl = LLGC.labelMatrix2vector(fl);
             end
             fu = M\(alpha*fl);

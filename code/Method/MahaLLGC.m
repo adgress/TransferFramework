@@ -17,6 +17,9 @@ classdef MahaLLGC < LLGCMethod
             if ~obj.has('useL1')
                 obj.set('useL1',0);
             end
+            if ~obj.has('smallTol')
+                obj.set('smallTol',1);
+            end
         end
         
         function [testResults,savedData] = ...
@@ -33,11 +36,9 @@ classdef MahaLLGC < LLGCMethod
                 useHF = false;
                 makeRBF = false;    
 
-                reg = 1e-3;
-                
-                %regs = fliplr(10.^(-8:4));
+                %reg = 1e-3;
+                                
                 regs = fliplr(10.^(-8:2:4));
-                %regs = fliplr(10.^(-8));
                 %regs = fliplr(10.^(-8:-4));
                 cvPerf = zeros(size(regs));
                 testPerf = cvPerf;
@@ -60,9 +61,15 @@ classdef MahaLLGC < LLGCMethod
                     YOrig = Y;
                     Y(labeledInds(splitTest)) = 0;                    
                     
+                    distMats = {};
+                    for featIdx=1:length(V)
+                        distMats{end+1} = Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                    end
+                    
                     for regIdx=1:length(regs) 
                         reg = regs(regIdx);
                         V = V0;
+                        V2 = V;
                         llgcMethod.set('alpha',alphaVals);
                         %{
                         [F,savedData,sigma] = llgcMethod.runLLGC(distMat,makeRBF,struct());
@@ -72,7 +79,7 @@ classdef MahaLLGC < LLGCMethod
                         %sigma = -1/(2*sigma^2);
                         sigma = -1/(2);
                         distMat.W = exp(sigma*distMat.W);
-                        F = LLGC.llgc_inv(distMat.W,Y,alpha);
+                        F = LLGC.llgc_LS(distMat.W,Y,alpha);
                         
                         llgcMethod.set('alpha',alpha);
                         yPred = LLGC.getPrediction(F,classes);
@@ -88,32 +95,55 @@ classdef MahaLLGC < LLGCMethod
                             %yTrain = mean(abs(F))*yTrain;
                             
                             tic
-                            A = []; B = []; Aeq = []; Beq = [];
-                            func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);                            
+                            A = []; B = []; Aeq = []; Beq = [];                            
+                            func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha,distMats);                            
                             hessianFunc = makeHessianHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);
                             if obj.get('useL1')
                                 l2Reg = 1e-6;
-                                func = makeOptimHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha);
+                                func = makeOptimHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha,distMats);
                                 hessianFunc = makeHessianHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha);
                                 A = ones(1,length(V));
                                 B = reg;
                             end
                             LB = zeros(size(V)); UB = [];
+                            tol = 1e-6;
+                            if obj.get('smallTol')
+                                tolFun = 1e-6;
+                                tolX = 1e-5;
+                            end
                             if useHessian
                                 options = optimset('GradObj','on',...
                                     'Algorithm','interior-point',...
                                     'Hessian','user-supplied',...
-                                    'HessFcn',hessianFunc);
+                                    'HessFcn',hessianFunc,...
+                                    'TolFun',tolFun,...
+                                    'TolX',tolX);
                             else
-                                options = optimset('GradObj','on','Algorithm','interior-point');                            
+                                options = optimset('GradObj','on','Algorithm','interior-point',...
+                                    'Display', 'off','TolFun',tolFun,...
+                                    'TolX',tolX);                            
                             end
-                            [V,fx,exitflag,output,lambda,grad] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
-                            toc
+                            [V,fx,exitflag,output,lambda,grad] = fmincon(func,V,A,B,Aeq,Beq,LB,UB,[],options);
+                            toc        
+                            %{
+                            options = optimset('GradObj','on','Algorithm','interior-point',...
+                                'Display', 'off','TolX',1e-5,'TolFun',1e-6);
+                            tic
+                            [V2,fx,exitflag,output,lambda,grad] = fmincon(func,V2,A,B,Aeq,Beq,LB,UB,[],options);
+                            toc        
+                            %}
+                            %{
+                            options = optimset('GradObj','on','Algorithm','interior-point',...
+                                'Display', 'off','TolFun',1e-6);
+                            tic
+                            [V2,fx,exitflag,output,lambda,grad] = fmincon(func,V2,A,B,Aeq,Beq,LB,UB,[],options);
+                            toc  
+                            %}
                             F = obj.runLLGC(X,V,Y,alpha,sigma);
-                            display(norm(Vold-V));
+                            %display(norm(Vold-V));
                             numIters = numIters + 1;
-                            if norm(Vold - V) < 1e-6
-                                display('Converged...');
+                            if norm(Vold - V)/norm(V) < 1e-4
+                                display(['Converged: ' num2str(norm(Vold-V)) ]);
                                 break;
                             end
                             if numIters >= maxIters
@@ -126,6 +156,7 @@ classdef MahaLLGC < LLGCMethod
                         testPerf(regIdx) = testPerf(regIdx) + mean(accVec(distMat.isTargetTest()));
                         trainPerf(regIdx) = trainPerf(regIdx) + mean(accVec(labeledInds(splitTrain)));
                         cvPerf(regIdx) = cvPerf(regIdx) + mean(accVec(labeledInds(splitTest)));
+                        %[V V2]
                     end
                 end
                 cvPerf = cvPerf / numFolds;
@@ -315,40 +346,62 @@ classdef MahaLLGC < LLGCMethod
         function [fu] = runLLGC(obj, X, V, y, alpha,sigma)
             W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
             W = exp(W*sigma);
-            fu = LLGC.llgc_inv(W,y,alpha);
+            %fu = LLGC.llgc_inv(W,y,alpha);
+            fu = LLGC.llgc_LS(W,y,alpha);
         end
                         
-        function [fx] = evaluate_alt(obj,X,V,V0,y,F,reg,sigma,alpha)
-            %tic
+        function [fx,W] = evaluate_alt(obj,X,V,V0,y,F,reg,sigma,alpha)
             W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
-            W = exp(W*sigma);
-            D = diag(sum(W,2));
-            L = (1+alpha)*D - W;
-            fx = F'*L*F + alpha*norm(F-y)^2 + reg*norm(V)^2;                                    
-            %toc
+            W = exp(W*sigma);                
+            useNew = 1;
+            d = sum(W,2);
+            if useNew
+                L = -W;
+                n = size(W,1);
+                I = spdiags(true(n,1),0,n,n);
+                L(I) = L(I) + d*(1+alpha);
+            else
+                D = diag(d);
+                L = (1+alpha)*D - W;
+            end               
+            fx = F'*L*F + alpha*norm(F-y)^2 + reg*norm(V)^2;            
         end
         
-        function [g] = gradient_alt(obj,X,V,V0,y,F,reg,sigma,alpha)
+        function [g] = gradient_alt(obj,X,V,V0,y,F,reg,sigma,alpha,distMats,W)
             %{
             distMats = cell(size(V));
             for i=1:length(V)
                 distMats{i} = sigma*Helpers.CreateDistanceMatrixMahabolis(X(:,i),1);
             end
             %}
-            %tic
-            W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
-            W = exp(W*sigma);
-            
+            useDistMats = true;
+            if ~exist('W','var')
+                W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
+                W = exp(W*sigma);
+            end
+            %This saves needing to multiple by sigma each iteration
+            W = W*sigma;
+            n = size(W,1);
+            I = spdiags(true(n,1),0,n,n);
             for featIdx=1:length(V)
                 %W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),V(featIdx));
-                W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                if useDistMats && ~isempty(distMats)
+                    W_Vi = W .* distMats{featIdx};
+                    %W_Vi2 = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                    %assert(all(W_Vi(:) == W_Vi2(:)));
+                else
+                    W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                end
                 %W_Vi = W .* distMats{featIdx};
-                W_Vi = W_Vi * sigma;
-                D = diag(sum(W_Vi,2));
-                L = (1+alpha)*D - W_Vi;
+                
+                %W_Vi = W_Vi * sigma;
+                d = (1+alpha)*sum(W_Vi,2);
+                %D = diag(d);
+                %L = D - W_Vi;
+                L = -W_Vi;
+                L(I) = L(I) + d;
                 g(featIdx) = F'*L*F + 2*reg*V(featIdx);
             end
-            %toc
         end
         
         function [H] = hessian_alt(obj,X,V,V0,y,F,reg,sigma,alpha)
@@ -537,6 +590,9 @@ classdef MahaLLGC < LLGCMethod
             end
             if obj.has('useL1')
                 nameParams{end+1} = 'useL1';
+            end
+            if obj.has('smallTol')
+                nameParams{end+1} = 'smallTol';
             end
         end
     end
