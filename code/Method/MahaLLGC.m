@@ -15,7 +15,7 @@ classdef MahaLLGC < LLGCMethod
                 obj.set('useAlt',1);
             end
             if ~obj.has('useL1')
-                obj.set('useL1',0);
+                obj.set('useL1',1);
             end
             if ~obj.has('smallTol')
                 obj.set('smallTol',1);
@@ -37,8 +37,13 @@ classdef MahaLLGC < LLGCMethod
                 makeRBF = false;    
 
                 %reg = 1e-3;
-                                
-                regs = fliplr(10.^(-8:2:4));
+                 
+                regs = fliplr(10.^(-8:1:4));
+                %regs = fliplr(10.^(-8:2:4));
+                if obj.get('useL1')
+                    %regs = fliplr(regs);
+                    regs = 10.^(-8:4);
+                end
                 %regs = fliplr(10.^(-8:-4));
                 cvPerf = zeros(size(regs));
                 testPerf = cvPerf;
@@ -127,7 +132,7 @@ classdef MahaLLGC < LLGCMethod
                             toc        
                             %{
                             options = optimset('GradObj','on','Algorithm','interior-point',...
-                                'Display', 'off','TolX',1e-5,'TolFun',1e-6);
+                                'Display', 'off','TolX',1e-10,'TolFun',1e-6);
                             tic
                             [V2,fx,exitflag,output,lambda,grad] = fmincon(func,V2,A,B,Aeq,Beq,LB,UB,[],options);
                             toc        
@@ -156,7 +161,8 @@ classdef MahaLLGC < LLGCMethod
                         testPerf(regIdx) = testPerf(regIdx) + mean(accVec(distMat.isTargetTest()));
                         trainPerf(regIdx) = trainPerf(regIdx) + mean(accVec(labeledInds(splitTrain)));
                         cvPerf(regIdx) = cvPerf(regIdx) + mean(accVec(labeledInds(splitTest)));
-                        %[V V2]
+                       % [V V2]
+                        %V
                     end
                 end
                 cvPerf = cvPerf / numFolds;
