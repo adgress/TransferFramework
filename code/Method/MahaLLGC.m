@@ -18,11 +18,13 @@ classdef MahaLLGC < LLGCMethod
                 obj.set('useL1',0);
             end
             if ~obj.has('smallTol')
-                obj.set('smallTol',0);
+                obj.set('smallTol',1);
             end
             if ~obj.has('redoLLGC')
                 obj.set('redoLLGC',0);
             end
+            obj.set('useAlt',1);
+            obj.set('useGrad',1);
         end
         
         function [V,F] = solveForV(obj,X,V0,Y,F,reg,sigma,alpha,useL1,distMats,trueY)
@@ -62,6 +64,7 @@ classdef MahaLLGC < LLGCMethod
             a = [f fy 10000000*accVec 100000*(1:length(f))'];
             a
             %}
+            useGrad = obj.get('useGrad');
             while true
                 Vold = V;
                 %[F,savedData,sigma] = llgcMethod.runLLGC(distMat,makeRBF,struct());
@@ -71,12 +74,12 @@ classdef MahaLLGC < LLGCMethod
                 
                 tic
                 A = []; B = []; Aeq = []; Beq = [];
-                func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha,distMats);
+                func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha,distMats,useGrad);
                 hessianFunc = makeHessianHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);
                 if useL1
                     %l2Reg = 1e-6;
                     l2Reg = 0;
-                    func = makeOptimHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha,distMats);
+                    func = makeOptimHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha,distMats,useGrad);
                     hessianFunc = makeHessianHandle_alt(obj,X,V0,Y,F,l2Reg,sigma,alpha);
                     A = ones(1,length(V));
                     B = reg;
@@ -101,15 +104,16 @@ classdef MahaLLGC < LLGCMethod
                         'Display', 'off','TolFun',tolFun,...
                         'TolX',tolX,...
                         'DerivativeCheck','on');
-                    %}
-                    %{
-                    options = optimset('Algorithm','interior-point',...
-                        'Display', 'off','TolFun',tolFun,...
-                        'TolX',tolX);
-                    %}
-                    options = optimset('GradObj','on','Algorithm','interior-point',...
-                        'Display', 'off','TolFun',tolFun,...
-                        'TolX',tolX);
+                    %}                    
+                    if useGrad
+                        options = optimset('GradObj','on','Algorithm','interior-point',...
+                            'Display', 'off','TolFun',tolFun,...
+                            'TolX',tolX);
+                    else
+                        options = optimset('Algorithm','interior-point',...
+                            'Display', 'off','TolFun',tolFun,...
+                            'TolX',tolX);
+                    end
                 end
                 [V,fx,exitflag,output,lambda,grad] = fmincon(func,V,A,B,Aeq,Beq,LB,UB,[],options);
                 toc
@@ -224,7 +228,7 @@ classdef MahaLLGC < LLGCMethod
                         testPerf(regIdx) = testPerf(regIdx) + mean(accVec(distMat.isTargetTest()));
                         trainPerf(regIdx) = trainPerf(regIdx) + mean(accVec(labeledInds(splitTrain)));
                         cvPerf(regIdx) = cvPerf(regIdx) + mean(accVec(labeledInds(splitTest)));
-                        [V./ max(V) (1:length(V))']
+                        %[V./ max(V) (1:length(V))']
                     end
                 end
                 cvPerf = cvPerf / numFolds;
@@ -742,7 +746,10 @@ classdef MahaLLGC < LLGCMethod
             end
             if obj.has('redoLLGC') && obj.get('redoLLGC')
                 nameParams{end+1} = 'redoLLGC';
-            end                
+            end    
+            if obj.has('useGrad') && obj.get('useGrad')
+                nameParams{end+1} = 'useGrad';
+            end
         end
     end
     

@@ -81,7 +81,7 @@ classdef ProjectConfigs < handle
                 c.labelsToUse = [];
                 %c.numLabeledPerClass=[5 10 15 20 25];
                 c.numLabeledPerClass=[10 20 30 40 50];
-                c.numLabeledPerClass=50;
+                %c.numLabeledPerClass=50;
                 %c.reg = fliplr([0 10.^(-6:8)]);
                 c.reg = fliplr([10.^(-4:4)]);
                 %c.reg = 0;

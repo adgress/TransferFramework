@@ -1,4 +1,4 @@
-function [func] = makeOptimHandle_alt(obj,X,V0,y,F,reg,sigma,alpha,distMats)
+function [func] = makeOptimHandle_alt(obj,X,V0,y,F,reg,sigma,alpha,distMats,useGradient)
     func = @f;
     if ~exist('distMats','var')
         distMats = [];
@@ -6,8 +6,10 @@ function [func] = makeOptimHandle_alt(obj,X,V0,y,F,reg,sigma,alpha,distMats)
     function [val,grad] = f(V)
         %V = diag(V);
         [val,W] = obj.evaluate_alt(X,V,V0,y,F,reg,sigma,alpha);
-        grad = obj.gradient_alt(X,V,V0,y,F,reg,sigma,alpha,distMats,W);
-        %grad = 0;
+        grad = 0;
+        if useGradient
+            grad = obj.gradient_alt(X,V,V0,y,F,reg,sigma,alpha,distMats,W);
+        end
         %H = obj.hessian_alt(X,V,V0,y,F,reg,sigma,alpha);
         %grad = diag(grad);
     end
