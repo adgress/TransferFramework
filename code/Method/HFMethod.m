@@ -191,6 +191,7 @@ classdef HFMethod < Method
             if makeRBF
                 Wrbf = distMat.W;
             end
+            useAlt = obj.get('useAlt');
             alpha = obj.get('alpha');
             alphaScores = zeros(size(alpha));
             numFolds = 10;
@@ -229,15 +230,23 @@ classdef HFMethod < Method
                         YtrainMatCurr = Helpers.createLabelMatrix(YtrainCurr);
                         
                         if exist('savedData','var') && isfield(savedData,'invM')
-                            [fu] = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, savedData.invM);
+                            if useAlt
+                                [fu] = LLGC.llgc_inv_alt(Wrbf, YtrainMatCurr, currAlpha, savedData.invM);
+                            else
+                                [fu] = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, savedData.invM);
+                            end
                             %fu2 = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, invM2);
                             %[fu(:,2) fu2(:,2)]
                         else
-                            [fu] = LLGC.llgc_LS(Wrbf, YtrainMatCurr, currAlpha);                            
-                            if exist('savedData','var')
-                                savedData.invM = LLGC.makeInvM(Wrbf,currAlpha);
+                            if useAlt
+                                [fu,savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMatCurr, currAlpha);                            
                             else
-                                savedData = [];
+                                [fu] = LLGC.llgc_LS(Wrbf, YtrainMatCurr, currAlpha);                            
+                                if exist('savedData','var')
+                                    savedData.invM = LLGC.makeInvM(Wrbf,currAlpha);
+                                else
+                                    savedData = [];
+                                end
                             end
                         end
                         
@@ -278,9 +287,12 @@ classdef HFMethod < Method
                 end
             end
             %}
-            savedData.invM = LLGC.makeInvM(Wrbf,alpha);
-            [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
-            
+            if useAlt
+                [fu, savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMat, alpha);
+            else
+                savedData.invM = LLGC.makeInvM(Wrbf,alpha);            
+                [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
+            end
             savedData.alpha = alpha;
             savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
             savedData.cvAcc = max(alphaScores);

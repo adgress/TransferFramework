@@ -44,7 +44,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     %error('Add random features to source data?');
                     display(['Adding ' num2str(numRandomFeatures) ' random features']);
                     X = dataAndSplits.allData.X;
-                    dataAndSplits.allData.X = [X rand(size(X,1),numRandomFeatures)];
+                    randomFeatures = rand(size(X,1),numRandomFeatures);
+                    %randomFeatures = lognrnd(0,1,[size(X,1) numRandomFeatures]);
+                    dataAndSplits.allData.X = [X randomFeatures];
                 end
                 if isempty(dataAndSplits.allData.instanceIDs)
                     dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);                        

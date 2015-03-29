@@ -4,6 +4,35 @@ classdef LLGC < handle
     end
     methods(Static)
         
+        function [fu,invM] = llgc_inv_alt(W,fl,alpha,invM)
+            %W(logical(speye(size(W)))) = 0;
+            if ~exist('invM','var')
+                D = diag(sum(W,2));
+                L = D-W;
+                I = eye(size(L));
+                %invM = inv(L+D+alpha*I)*(W+I);
+                invM = inv(L+D*alpha)*(alpha*W);
+            end
+            if ~LLGC.normRows && size(fl,2) > 1
+                fl = LLGC.labelMatrix2vector(fl);
+            end
+            fu = invM*fl;
+            if LLGC.normRows
+                fu = Helpers.normRows(fu);
+            end
+        end
+        
+        function [fu,invM] = llgc_LS_alt(W,fl,alpha)
+            %W(logical(speye(size(W)))) = 0;
+            D = diag(sum(W,2));
+            L = D-W;
+            I = eye(size(L));
+            %Ly = (W+I)*fl;
+            %fu = (L+D+alpha*I)\Ly;
+            Ly = (W*alpha)*fl;
+            fu = (L+D*alpha)\Ly;
+        end
+        
         function [v] = smoothness(W,f)            
             if size(f,2) == 1
                 f = Helpers.createLabelMatrix(f);

@@ -8,6 +8,9 @@ classdef LLGCMethod < HFMethod
     methods
         function obj = LLGCMethod(configs)
             obj = obj@HFMethod(configs);
+            if ~obj.has('useAlt')
+                obj.set('useAlt',0);
+            end
         end
         
         function [testResults,savedData] = ...
@@ -30,6 +33,9 @@ classdef LLGCMethod < HFMethod
             nameParams = {'sigmaScale'};
             if length(obj.get('alpha')) == 1
                 nameParams{end+1} = 'alpha';
+            end
+            if obj.has('useAlt') && obj.get('useAlt')
+                nameParams{end+1} = 'useAlt';
             end
         end
         function [d] = getDirectory(obj)
