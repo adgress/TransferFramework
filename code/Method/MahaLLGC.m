@@ -15,7 +15,7 @@ classdef MahaLLGC < LLGCMethod
                 obj.set('useAlt',1);
             end
             if ~obj.has('useL1')
-                obj.set('useL1',0);
+                obj.set('useL1',1);
             end
             if ~obj.has('smallTol')
                 obj.set('smallTol',1);
@@ -23,17 +23,17 @@ classdef MahaLLGC < LLGCMethod
             if ~obj.has('redoLLGC')
                 obj.set('redoLLGC',0);
             end
-            obj.set('useAlt',1);
+            obj.set('useAlt',0);
             obj.set('useGrad',1);
         end
         
-        function [V,F] = solveForV(obj,X,V0,Y,F,reg,sigma,alpha,useL1,distMats,trueY)
+        function [V,F] = solveForV(obj,X,V0,Y,F,reg,sigma,alpha,useL1,distMats,trueY,options)
             llgcMethod = LLGCMethod(obj.configs);
             llgcMethod.set('alpha',alpha);
             llgcMethod.set('sigma',sigma);
             useHF = false;
             makeRBF = false;
-            maxIters = 10;
+            maxIters = 30;
             useHessian = 0;
             V = V0;
             V2 = V0;
@@ -90,31 +90,7 @@ classdef MahaLLGC < LLGCMethod
                 if obj.get('smallTol')
                     tolFun = 1e-6;
                     tolX = 1e-5;
-                end
-                if useHessian
-                    options = optimset('GradObj','on',...
-                        'Algorithm','interior-point',...
-                        'Hessian','user-supplied',...
-                        'HessFcn',hessianFunc,...
-                        'TolFun',tolFun,...
-                        'TolX',tolX);
-                else
-                    %{
-                    options = optimset('GradObj','on','Algorithm','interior-point',...
-                        'Display', 'off','TolFun',tolFun,...
-                        'TolX',tolX,...
-                        'DerivativeCheck','on');
-                    %}                    
-                    if useGrad
-                        options = optimset('GradObj','on','Algorithm','interior-point',...
-                            'Display', 'off','TolFun',tolFun,...
-                            'TolX',tolX);
-                    else
-                        options = optimset('Algorithm','interior-point',...
-                            'Display', 'off','TolFun',tolFun,...
-                            'TolX',tolX);
-                    end
-                end
+                end  
                 [V,fx,exitflag,output,lambda,grad] = fmincon(func,V,A,B,Aeq,Beq,LB,UB,[],options);
                 toc
                 %{
@@ -155,22 +131,44 @@ classdef MahaLLGC < LLGCMethod
             makeRBF = false;            
             V0 = ones(size(train.X,2),1);
             V = V0;
-            if obj.get('useAlt')                
-
-                %reg = 1e-3;
-                 
-                regs = fliplr(10.^(-8:1:4));
-                %regs = fliplr(10.^(-8:2:4));
-                if obj.get('useL1')
-                    %regs = fliplr(regs);
-                    regs = 10.^(-8:4);
-                end
-                %regs = fliplr(10.^(-8:-4));
-                cvPerf = zeros(size(regs));
-                testPerf = cvPerf;
-                trainPerf = cvPerf;
-                numFolds = 10;
-                
+            V0 = 0*V0;
+            regs = fliplr(10.^(-8:4));
+            if obj.get('useL1')
+                regs = fliplr(regs);
+            end
+            
+            cvPerf = zeros(size(regs));
+            testPerf = cvPerf;
+            trainPerf = cvPerf;
+            numFolds = 10;
+            alpha = 1;
+            sigma = -1/(2);
+            LB = 0*ones(size(V0));
+            UB = [];
+            Aeq = [];
+            Beq = [];
+            
+            A = [];
+            B = [];     
+            
+            tolFun = 1e-6;
+            tolX = 1e-10;
+            useGrad = obj.get('useGrad');
+            if obj.get('smallTol')
+                tolFun = 1e-6;
+                tolX = 1e-5;
+            end
+            if useGrad
+                options = optimset('GradObj','on','Algorithm','interior-point',...
+                    'Display', 'off','TolFun',tolFun,...
+                    'TolX',tolX);
+            else
+                options = optimset('Algorithm','interior-point',...
+                    'Display', 'off','TolFun',tolFun,...
+                    'TolX',tolX);
+            end
+            
+            if obj.get('useAlt')
                 for foldIdx=1:numFolds
                     llgcMethod = LLGCMethod(obj.configs);
                     [distMat,~,X] = llgcMethod.createDistanceMatrix(train,test,...
@@ -193,8 +191,10 @@ classdef MahaLLGC < LLGCMethod
                     
                     for regIdx=1:length(regs) 
                         reg = regs(regIdx);
-                        alpha = 1;
-                        sigma = -1/(2);
+                        if obj.get('useL1')
+                            A = ones(1,size(V,1));
+                            B = reg;
+                        end
                         distMat.W = exp(sigma*distMat.W);
                         F = LLGC.llgc_LS(distMat.W,Y,alpha);                                                
                         
@@ -219,7 +219,7 @@ classdef MahaLLGC < LLGCMethod
                             %V(toUse) = 1;
                             %V = ones(size(V));
                             %F = obj.runLLGC(X,V,Y,alpha,sigma);
-                            [Vnew,F] = obj.solveForV(X(:,toUse),V0(toUse),Y,F,1e-6,sigma,alpha,false,distMats(toUse));
+                            [Vnew,F] = obj.solveForV(X(:,toUse),V0(toUse),Y,F,1e-6,sigma,alpha,false,distMats(toUse),options);
                             V = zeros(size(V));
                             V(toUse) = Vnew;
                         end
@@ -237,6 +237,10 @@ classdef MahaLLGC < LLGCMethod
                 
                 useSameY = -1;
                 reg = argmax(cvPerf);
+                if obj.get('useL1')
+                    A = ones(1,size(V,1));
+                    B = reg;
+                end
                 func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);
                 [V,fx,exitflag,output,lambda,grad] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                 fu = obj.runLLGC(X,V,YOrig,alpha,sigma);
@@ -256,32 +260,15 @@ classdef MahaLLGC < LLGCMethod
                 yBinary = y;
                 yBinary(y > 1) = -1;
                 yBinary(y==-1) = 0;
-                y = Helpers.createLabelMatrix(y);
-                alpha = 1;
-                reg = 1e-7;
-                %t = .1;
-                sigmaScale = obj.get('sigmaScale');
-                W = Helpers.CreateDistanceMatrix(X);
-                sigmaNormal = sigmaScale*mean(W(:));
-                %sigma = -2/(sigmaNormal^2);
-                sigma = -1;
-                %sigma = sigma*1;
-                %sigma = -1;
-                %V0 = ones(size(X,2),1) ./ sigma;
-                bVal = 1;
                         
                 fx = [];  
                 trainPerf = [];
                 testPerf = [];
                 diff = [];
-
-                %regs = fliplr([1e-8 1e-6 1e-4 1e-2 1 1e2 1e4]);
-                regs = fliplr(10.^(-8:4));
-                %regs = 10.^(-8:4);
+                
                 cvPerf = zeros(size(regs));
 
-                isLabeledTrain = find(isLabeled & isTrain);
-                numFolds = 10;
+                isLabeledTrain = find(isLabeled & isTrain);                
                 for foldIdx=1:numFolds
                     split = DataSet.generateSplit([.8 .2], trueY(isLabeledTrain),Configs());
                     splitTrain = split == 1;
@@ -309,25 +296,22 @@ classdef MahaLLGC < LLGCMethod
                     end
 
                     fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
-                    yScale = mean(abs(fu));
-                    %yScale = 1;
-                    yTrain = yScale*yTrain;
-                    yTest = yScale*yTest;                                                
-
-                    %UB = -1e-6*ones(size(V0,1),1);
-                    LB = 0*ones(size(V0));
-                    %UB = 1*ones(size(V0));
-                    UB = [];
-                    Aeq = [];
-                    Beq = [];
-                    %A = ones(1,size(V,1));
-                    %B = bVal;
-                    A = [];
-                    B = [];
-                    options = optimset('GradObj','on','Algorithm','interior-point');                
+                                                                             
+                    tolFun = 1e-6;
+                    tolX = 1e-10;
+                    if obj.get('smallTol')
+                        tolFun = 1e-6;
+                        tolX = 1e-5;
+                    end                    
                     for regIdx=1:length(regs)
                         reg = regs(regIdx);                
-                        func = makeOptimHandle(obj,X,V0,yTrain,alpha,reg,S,yTest,sigma);
+                        l2Reg = reg;
+                        if obj.get('useL1')
+                            A = ones(1,size(V,1));
+                            B = reg;
+                            l2Reg = 0;
+                        end
+                        func = makeOptimHandle(obj,X,V0,yTrain,alpha,l2Reg,S,yTest,sigma);
                         tic
                         [V,g] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                         toc
@@ -335,8 +319,8 @@ classdef MahaLLGC < LLGCMethod
                         Ypred = LLGC.getPrediction(fu,train.classes);
                         accVec = trueY == Ypred;
 
-                        trainAcc = mean(accVec(isLabeledTrain(splitTrain)));
-                        testAcc = mean(accVec(~isTrain));
+                        trainAcc(regIdx) = mean(accVec(isLabeledTrain(splitTrain)));
+                        testAcc(regIdx) = mean(accVec(~isTrain));
                         cvPerf(regIdx) = cvPerf(regIdx) + mean(accVec(isLabeledTrain(splitTest)));
                         %display([num2str(regs(regIdx)) ': ' num2str(regPerf(regIdx))]);
                         %{
@@ -346,17 +330,24 @@ classdef MahaLLGC < LLGCMethod
                             cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
                             fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
                         %}
+                        V
                     end
                 end
                 cvPerf = cvPerf ./ numFolds;
                 reg = regs(argmax(cvPerf));
                 display(['Best reg: ' num2str(reg)]);
 
+                l2Reg = reg;
+                if obj.get('useL1')
+                    A = ones(1,size(V,1));
+                    B = reg;
+                    l2Reg = 0;
+                end
                 if obj.get('useLOO')
                     yTrain = zeros(size(yBinary));
                     yTrain(isLabeledTrain) = yBinary(isLabeledTrain);
                 end
-
+%{
                 i = 1;
                 fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
                 Ypred = LLGC.getPrediction(fu,train.classes);
@@ -364,9 +355,9 @@ classdef MahaLLGC < LLGCMethod
                 trainPerf(i) = mean(accVec(isLabeled));
                 testPerf(i) = mean(accVec(~isTrain));
                 cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
-                fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
-
-                func = makeOptimHandle(obj,X,V0,yTrain,alpha,reg,S,yTest,sigma);
+                fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,l2Reg,S,yTest,sigma);
+%}
+                func = makeOptimHandle(obj,X,V0,yTrain,alpha,l2Reg,S,yTest,sigma);
                 tic
                 [V,g] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                 toc
@@ -374,21 +365,21 @@ classdef MahaLLGC < LLGCMethod
                 fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
                 Ypred = LLGC.getPrediction(fu,train.classes);
                 accVec = trueY == Ypred;
-
+%{
                 i = 2;
                 trainPerf(i) = mean(accVec(isLabeled));
                 testPerf(i) = mean(accVec(~isTrain));
                 cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
-                fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
-
+                fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,l2Reg,S,yTest,sigma);
+%}
 
                 vals = [V V0 V*sigma V0*sigma];
+                %{
                 perf = [trainPerf' cvPerf' testPerf'];
-                %yScales = [yScale mean(abs(fu))];
                 vals
                 perf            
                 fx
-                %yScales
+                %}
             end
             testResults = FoldResults();
             testResults.dataFU = sparse(fu);
@@ -588,13 +579,13 @@ classdef MahaLLGC < LLGCMethod
                     yCopy = y;
                     yCopy(idx) = 0;
                     fu = alpha*invL*yCopy;
-                    r = norm(fu(idx)- y(idx));
+                    r = (fu(idx)- y(idx))^2;
                     fx = fx + r;
                 end                
             else
                 fx = norm(alpha*S*invL*y - yTest)^2;
             end
-            fx = fx +  + reg*norm(V - V0)^2;
+            fx = fx + reg*norm(V - V0)^2;
         end
         
         function [g] = gradient(obj, X, V, V0, y, alpha, reg, S, yTest,sigma)
