@@ -12,10 +12,10 @@ classdef MahaLLGC < LLGCMethod
                 obj.set('useLOO',1);
             end
             if ~obj.has('useAlt')
-                obj.set('useAlt',1);
+                %obj.set('useAlt',2);
             end
             if ~obj.has('useL1')
-                obj.set('useL1',1);
+                obj.set('useL1',0);
             end
             if ~obj.has('smallTol')
                 obj.set('smallTol',1);
@@ -25,6 +25,8 @@ classdef MahaLLGC < LLGCMethod
             end
             obj.set('useAlt',0);
             obj.set('useGrad',1);
+            obj.set('gradCheck',0);
+            obj.set('gradTest',0);
         end
         
         function [V,F] = solveForV(obj,X,V0,Y,F,reg,sigma,alpha,useL1,distMats,trueY,options)
@@ -33,45 +35,24 @@ classdef MahaLLGC < LLGCMethod
             llgcMethod.set('sigma',sigma);
             useHF = false;
             makeRBF = false;
-            maxIters = 30;
+            maxIters = 1;
+            if obj.get('useAlt') == 1
+                maxIters = 30;
+            end
             useHessian = 0;
             V = V0;
             V2 = V0;
             numIters = 0;            
-            
-            %{
-            alpha = 1;
-            f = zeros(size(V));
-            fy = f;
-            meanDist = f;
-            %sigma = sigma/1000;
-            accVec = f;
-            trueYBinary = Helpers.MakeLabelsBinary(trueY);
-            for i=1:size(X,2)
-                currV = zeros(size(V));
-                currV(i) = 1;
-                currF = obj.runLLGC(X,currV,Y,alpha,sigma);
-                accVec(i) = mean(sign(currF) == trueYBinary);
-                %currF = F;
-                currF = sign(currF);
-                currY = Y;
-                %currY(Y == 0) = currF(Y == 0);
-                f(i) = obj.evaluate_alt(X,currV,V0,currY,currF,reg,sigma,alpha);
-                fy(i) = obj.evaluate_alt(X,currV,V0,currY,currY,reg,sigma,alpha);
-                Wi = Helpers.CreateDistanceMatrixMahabolis(X,diag(currV));
-                meanDist(i) = mean(Wi(:));
-            end
-            a = [f fy 10000000*accVec 100000*(1:length(f))'];
-            a
-            %}
+  
+            tolFun = 1e-6;
+            tolX = 1e-10;
+            if obj.get('smallTol')
+                tolFun = 1e-6;
+                tolX = 1e-5;
+            end            
             useGrad = obj.get('useGrad');
             while true
                 Vold = V;
-                %[F,savedData,sigma] = llgcMethod.runLLGC(distMat,makeRBF,struct());
-                
-                
-                %yTrain = mean(abs(F))*yTrain;
-                
                 tic
                 A = []; B = []; Aeq = []; Beq = [];
                 func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha,distMats,useGrad);
@@ -85,30 +66,10 @@ classdef MahaLLGC < LLGCMethod
                     B = reg;
                 end
                 LB = zeros(size(V)); UB = [];
-                tolFun = 1e-6;
-                tolX = 1e-10;
-                if obj.get('smallTol')
-                    tolFun = 1e-6;
-                    tolX = 1e-5;
-                end  
+                 
                 [V,fx,exitflag,output,lambda,grad] = fmincon(func,V,A,B,Aeq,Beq,LB,UB,[],options);
                 toc
-                %{
-                options = optimset('GradObj','on','Algorithm','interior-point',...
-                    'Display', 'off','TolX',1e-10,'TolFun',1e-6);
-                tic
-                [V2,fx,exitflag,output,lambda,grad] = fmincon(func,V2,A,B,Aeq,Beq,LB,UB,[],options);
-                toc
-                %}
-                %{
-                options = optimset('GradObj','on','Algorithm','interior-point',...
-                    'Display', 'off','TolFun',1e-6);
-                tic
-                [V2,fx,exitflag,output,lambda,grad] = fmincon(func,V2,A,B,Aeq,Beq,LB,UB,[],options);
-                toc
-                %}
                 F = obj.runLLGC(X,V,Y,alpha,sigma);
-                %display(norm(Vold-V));
                 numIters = numIters + 1;
                 if norm(Vold - V)/norm(V) < 1e-4
                     display(['Converged: ' num2str(norm(Vold-V)) ]);
@@ -129,10 +90,10 @@ classdef MahaLLGC < LLGCMethod
             test = input.test;
             useHF = false;
             makeRBF = false;            
-            V0 = ones(size(train.X,2),1);
-            V = V0;
-            V0 = 0*V0;
+            V0 = 1*ones(size(train.X,2),1);            
+            %V0 = 0*V0;
             regs = fliplr(10.^(-8:4));
+            %regs = 10^3;
             if obj.get('useL1')
                 regs = fliplr(regs);
             end
@@ -140,14 +101,16 @@ classdef MahaLLGC < LLGCMethod
             cvPerf = zeros(size(regs));
             testPerf = cvPerf;
             trainPerf = cvPerf;
-            numFolds = 10;
+            numFolds = 1;
             alpha = 1;
-            sigma = -1/(2);
+            sigma = -1;
             LB = 0*ones(size(V0));
+            %V = 100*rand(size(V));
+            %V = 10*V;
             UB = [];
             Aeq = [];
             Beq = [];
-            
+
             A = [];
             B = [];     
             
@@ -159,9 +122,15 @@ classdef MahaLLGC < LLGCMethod
                 tolX = 1e-5;
             end
             if useGrad
-                options = optimset('GradObj','on','Algorithm','interior-point',...
-                    'Display', 'off','TolFun',tolFun,...
-                    'TolX',tolX);
+                if obj.get('gradCheck')                                    
+                    options = optimset('GradObj','on','Algorithm','interior-point',...
+                        'Display', 'iter-detailed','TolFun',tolFun,...
+                        'TolX',tolX,'DerivativeCheck','on');
+                else
+                    options = optimset('GradObj','on','Algorithm','interior-point',...
+                        'Display', 'off','TolFun',tolFun,...
+                        'TolX',tolX);
+                end
             else
                 options = optimset('Algorithm','interior-point',...
                     'Display', 'off','TolFun',tolFun,...
@@ -169,8 +138,8 @@ classdef MahaLLGC < LLGCMethod
             end
             
             if obj.get('useAlt')
-                for foldIdx=1:numFolds
-                    llgcMethod = LLGCMethod(obj.configs);
+                llgcMethod = LLGCMethod(obj.configs);
+                for foldIdx=1:numFolds                    
                     [distMat,~,X] = llgcMethod.createDistanceMatrix(train,test,...
                         useHF,obj.configs,makeRBF,struct(),diag(V));
                     
@@ -190,16 +159,12 @@ classdef MahaLLGC < LLGCMethod
                     end
                     
                     for regIdx=1:length(regs) 
-                        reg = regs(regIdx);
-                        if obj.get('useL1')
-                            A = ones(1,size(V,1));
-                            B = reg;
-                        end
+                        reg = regs(regIdx);                   
                         distMat.W = exp(sigma*distMat.W);
                         F = LLGC.llgc_LS(distMat.W,Y,alpha);                                                
                         
                         useL1 = obj.get('useL1');
-                        [V,F] = obj.solveForV(X,V0,Y,F,reg,sigma,alpha,useL1,distMats,distMat.trueY);
+                        [V,F] = obj.solveForV(X,V0,Y,F,reg,sigma,alpha,useL1,distMats,distMat.trueY,options);
                         %V
                         if obj.get('redoLLGC')                            
                             [sorted,I] = sort(V,'descend');
@@ -228,7 +193,8 @@ classdef MahaLLGC < LLGCMethod
                         testPerf(regIdx) = testPerf(regIdx) + mean(accVec(distMat.isTargetTest()));
                         trainPerf(regIdx) = trainPerf(regIdx) + mean(accVec(labeledInds(splitTrain)));
                         cvPerf(regIdx) = cvPerf(regIdx) + mean(accVec(labeledInds(splitTest)));
-                        %[V./ max(V) (1:length(V))']
+                        [V./ max(V) (1:length(V))']
+                        %[V (1:length(V))']
                     end
                 end
                 cvPerf = cvPerf / numFolds;
@@ -236,13 +202,15 @@ classdef MahaLLGC < LLGCMethod
                 trainPerf = trainPerf / numFolds;
                 
                 useSameY = -1;
-                reg = argmax(cvPerf);
-                if obj.get('useL1')
-                    A = ones(1,size(V,1));
-                    B = reg;
+                reg = regs(argmax(cvPerf));
+
+                [distMat,~,X] = llgcMethod.createDistanceMatrix(train,test,...
+                    useHF,obj.configs,makeRBF,struct(),diag(V));
+                distMats = cell(size(V,1),1);
+                for featIdx=1:length(V)
+                    distMats{featIdx} = Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
                 end
-                func = makeOptimHandle_alt(obj,X,V0,Y,F,reg,sigma,alpha);
-                [V,fx,exitflag,output,lambda,grad] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
+                [V,F] = obj.solveForV(X,V0,Y,F,reg,sigma,alpha,useL1,distMats,distMat.trueY,options);
                 fu = obj.runLLGC(X,V,YOrig,alpha,sigma);
                 Ypred = LLGC.getPrediction(fu,classes);
                 type = distMat.type;
@@ -256,46 +224,25 @@ classdef MahaLLGC < LLGCMethod
                 isLabeled = y > 0;
                 isTrain = type == Constants.TARGET_TRAIN;
                 X = zscore(X);
-                %X = X(:,1:2);
-                yBinary = y;
-                yBinary(y > 1) = -1;
-                yBinary(y==-1) = 0;
-                        
-                fx = [];  
-                trainPerf = [];
-                testPerf = [];
-                diff = [];
-                
-                cvPerf = zeros(size(regs));
+                yBinary = Helpers.MakeLabelsBinary(y);                
 
                 isLabeledTrain = find(isLabeled & isTrain);                
                 for foldIdx=1:numFolds
                     split = DataSet.generateSplit([.8 .2], trueY(isLabeledTrain),Configs());
+                    %split = DataSet.generateSplit([1 0], trueY(isLabeledTrain),Configs());
+                    %splitTrain = split >= 1;
+                    %splitTest = false(size(split));
                     splitTrain = split == 1;
                     splitTest = split == 2;            
 
-                    useSameY = 1;
-                    yTrain = yBinary;  
-                    if useSameY                    
-                        yTrain(isLabeledTrain(splitTest)) = 0;
-                        yTest = yTrain(isLabeledTrain(splitTrain));    
-                        I = zeros(size(trueY));
-                        I(isLabeledTrain(splitTrain)) = 1;
-                        %S = eye(size(yTest,1));
-                        S = obj.makeSelectionMatrix(I);
-                    else
-                        yTrain(isLabeledTrain(splitTest)) = 0;
-                        yTest = trueY;
-                        yTest(trueY > 1) = -1;
-                        yTest(trueY == -1) = 0;                    
-                        yTest = yTest(isLabeledTrain(splitTest));
-
-                        I = zeros(size(trueY));
-                        I(isLabeledTrain(splitTest)) = 1;
-                        S = obj.makeSelectionMatrix(I);
+                    distMats = cell(size(V0,1),1);
+                    for featIdx=1:length(V0)
+                        distMats{featIdx} = Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
                     end
+                    yTrain = yBinary;  
+                    yTrain(isLabeledTrain(splitTest)) = 0;
 
-                    fu = obj.runLLGC(X,V,yTrain,alpha,sigma);
+                    fu = obj.runLLGC(X,V0,yTrain,alpha,sigma);
                                                                              
                     tolFun = 1e-6;
                     tolX = 1e-10;
@@ -307,11 +254,11 @@ classdef MahaLLGC < LLGCMethod
                         reg = regs(regIdx);                
                         l2Reg = reg;
                         if obj.get('useL1')
-                            A = ones(1,size(V,1));
+                            A = ones(1,size(V0,1));
                             B = reg;
                             l2Reg = 0;
                         end
-                        func = makeOptimHandle(obj,X,V0,yTrain,alpha,l2Reg,S,yTest,sigma);
+                        func = makeOptimHandle(obj,X,V0,yTrain,alpha,l2Reg,sigma,distMats,useGrad);
                         tic
                         [V,g] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                         toc
@@ -319,17 +266,9 @@ classdef MahaLLGC < LLGCMethod
                         Ypred = LLGC.getPrediction(fu,train.classes);
                         accVec = trueY == Ypred;
 
-                        trainAcc(regIdx) = mean(accVec(isLabeledTrain(splitTrain)));
-                        testAcc(regIdx) = mean(accVec(~isTrain));
+                        trainPerf(regIdx) = mean(accVec(isLabeledTrain(splitTrain)));
+                        testPerf(regIdx) = mean(accVec(~isTrain));
                         cvPerf(regIdx) = cvPerf(regIdx) + mean(accVec(isLabeledTrain(splitTest)));
-                        %display([num2str(regs(regIdx)) ': ' num2str(regPerf(regIdx))]);
-                        %{
-                            i = 2;
-                            trainPerf(i) = mean(accVec(isLabeled));
-                            testPerf(i) = mean(accVec(~isTrain));
-                            cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
-                            fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,reg,S,yTest,sigma);
-                        %}
                         V
                     end
                 end
@@ -357,7 +296,11 @@ classdef MahaLLGC < LLGCMethod
                 cvPerf(i) = mean(accVec(isLabeledTrain(splitTest)));
                 fx(i) = obj.evaluate(X,V,V0,yTrain,alpha,l2Reg,S,yTest,sigma);
 %}
-                func = makeOptimHandle(obj,X,V0,yTrain,alpha,l2Reg,S,yTest,sigma);
+                distMats = cell(size(V,1),1);
+                for featIdx=1:length(V)
+                    distMats{featIdx} = Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                end
+                func = makeOptimHandle(obj,X,V0,yTrain,alpha,l2Reg,sigma,distMats,useGrad);
                 tic
                 [V,g] = fmincon(func,V0,A,B,Aeq,Beq,LB,UB,[],options);
                 toc
@@ -419,6 +362,7 @@ classdef MahaLLGC < LLGCMethod
         end
                         
         function [fx,W] = evaluate_alt2(obj,X,V,V0,y,F,reg,sigma,alpha)
+            gradTest = obj.get('gradTest');
             W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
             W = exp(W*sigma);                
             useNew = 1;
@@ -439,53 +383,84 @@ classdef MahaLLGC < LLGCMethod
             %fx = F'*L*F + y'*L*y + alpha*norm(F-y)^2 + reg*norm(V)^2;
             %fx = y'*L*y + reg*norm(V)^2;
             isLabeled = y ~= 0;
+            
             Wll = W(isLabeled,isLabeled);
+            nll = size(Wll,1);
+            Ill = spdiags(true(nll,1),0,nll,nll);
+            Wll(Ill) = 0;
             Yl = y(isLabeled);
             Dl = diag(sum(Wll,2));
-            Ll = Dl-Wll;
-            %fx = Yl'*Ll*Yl + reg*norm(V)^2;
+            Dl = Dl + 1e-6*eye(size(Dl));
+            Ll = Dl-Wll;            
+            
+            
+            if gradTest
+                fx = Yl'*inv(Dl)*Wll*Yl;
+                return
+            end
+            
             fx = norm(inv(Dl)*Wll*Yl - Yl)^2 + reg*norm(V)^2;
+            %fx = Yl'*Ll*Yl + reg*norm(V)^2;
+            %fx = norm(inv(Dl)*Wll*Yl - Yl)^2 + reg*norm(V)^2;
+            
         end
         
          function [g] = gradient_alt2(obj,X,V,V0,y,F,reg,sigma,alpha,distMats,W)
+             gradTest = obj.get('gradTest');
             %{
             distMats = cell(size(V));
             for i=1:length(V)
                 distMats{i} = sigma*Helpers.CreateDistanceMatrixMahabolis(X(:,i),1);
             end
             %}
-            useDistMats = true;
-            if ~exist('W','var')
+            useSpeedOptims = true;
+            if ~useSpeedOptims
                 W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
                 W = exp(W*sigma);
             end
             %This saves needing to multiple by sigma each iteration
-            W = W*sigma;
+            %W = W*sigma;
             n = size(W,1);
-            I = spdiags(true(n,1),0,n,n);
+            isLabeled = y ~= 0;            
+            Wll = W(isLabeled,isLabeled);
+            nll = size(Wll,1);
+            Ill = spdiags(true(nll,1),0,nll,nll);
+            Wll(Ill) = 0;            
+            Dll = diag(sum(Wll));
+            Dll = Dll + 1e-6*eye(size(Dll));
+            warning off;
+            Dll2_inv = inv(Dll*Dll);
+            warning on;
+            yl = y(isLabeled);
             for featIdx=1:length(V)
-                %W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),V(featIdx));
-                if useDistMats && ~isempty(distMats)
-                    W_Vi = W .* distMats{featIdx};
-                    %W_Vi2 = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
-                    %assert(all(W_Vi(:) == W_Vi2(:)));
+                if useSpeedOptims && ~isempty(distMats)
+                    W_Vi = sigma*W .* distMats{featIdx};
                 else
-                    W_Vi = W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                    W_Vi = sigma*W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
                 end
-                %W_Vi = W .* distMats{featIdx};
+                                
+                W_Vii_ll = W_Vi(isLabeled,isLabeled);
+                D_Vii_ll = diag(sum(W_Vii_ll,2));
+                if gradTest
+                    g(featIdx) = yl'*Dll2_inv*(Dll*W_Vii_ll - D_Vii_ll*Wll)*yl;
+                    continue;
+                end
+                %Wp = (W_Vii_ll*Dll + Wll*D_Vii_ll)*Dll2_inv
+                d = 0;
+                for k=1:length(yl)
+                    D_k = Dll(k,k);
+                    W_k = Wll(k,:);
+                    y_k = yl(k);
+                    Wp_k = W_Vii_ll(k,:);
+                    Dp_k = D_Vii_ll(k,k);
+                    D2inv_k = Dll2_inv(k,k);                    
+                    dk = 2*(inv(D_k)*W_k*yl - y_k);
+                    dk = dk + (D_k*Wp_k - Dp_k*W_k)*D2inv_k*yl;
+                    d = d + dk;
+                end
+                g(featIdx) = d;
                 
-                %W_Vi = W_Vi * sigma;
-                %d = (1+alpha)*sum(W_Vi,2);
-                d = sum(W_Vi,2);
-                %D = diag(d);
-                %L = D - W_Vi;
-                L = -W_Vi;
-                L(I) = L(I) + d;
-                n = length(d);
-                D = spdiags(d,0,n,n);
-                %g(featIdx) = F'*L*F + F'*L*y + 2*reg*V(featIdx);
-                %g(featIdx) = F'*L*F + F'*D*F + y'*D*y - 2*F'*W*y + 2*reg*V(featIdx);
-                g(featIdx) = F'*L*F + y'*L*y + 2*reg*V(featIdx);
+                %g(featIdx) = y'*L*y + 2*reg*V(featIdx);
             end
         end
         
@@ -564,12 +539,39 @@ classdef MahaLLGC < LLGCMethod
             end
         end
         
-        function [fx] = evaluate(obj, X, V, V0, y, alpha, reg, S, yTest,sigma)
-            W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
-            Worig = W;
-            W = exp(W*sigma);
+        function [fx,W] = evaluate(obj, X, V, V0, y, alpha, reg,sigma,distMats)
+            gradTest = obj.get('gradTest');
+            W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));            
+            W = exp(W*sigma);            
             D = diag(sum(W,2));
-            L = (1+alpha)*D - W;
+            %L = (1+alpha)*D - W;
+            L = D - W + alpha*eye(size(D));
+            if gradTest
+                
+                fx = 0;
+                isLabeled = find(y);
+                invL = inv(L);
+                for idx=isLabeled'
+                    yCopy = y;
+                    yCopy(idx) = 0;
+                    I = zeros(size(yCopy));
+                    I(idx) = 1;
+                    S = obj.makeSelectionMatrix(I);
+                    %fx = fx + (alpha^2)*yCopy'*invL*invL*yCopy;
+                    %fx = fx - 2*alpha*yCopy'*invL*Scurr'*y(idx);
+                    fx = fx + (alpha^2) * yCopy'*invL*S'*S*invL*yCopy;
+                end
+                
+                %fx = reg*norm(V)^2;
+                %{
+                invL = inv(L);
+                fx = y'*invL*invL*y;
+                %}
+                %fx = y'*inv(L)*y;
+                %fx = y'*L*y;                
+                %fx = y'*W*y;
+                return;
+            end
             invL = inv(L);
             %fx = norm(alpha*invL*y - y)^2 + reg*norm(V - V0)^2;
             if obj.get('useLOO')
@@ -583,135 +585,128 @@ classdef MahaLLGC < LLGCMethod
                     fx = fx + r;
                 end                
             else
-                fx = norm(alpha*S*invL*y - yTest)^2;
+                error('');
             end
-            fx = fx + reg*norm(V - V0)^2;
+            fx = fx + reg*norm(V)^2;
+            
         end
         
-        function [g] = gradient(obj, X, V, V0, y, alpha, reg, S, yTest,sigma)
+        function [g] = gradient(obj, X, V, V0, y, alpha, reg, sigma,distMats,W)
+            gradTest = obj.get('gradTest');
+            
+            
+            useSpeedOptims = true;
+            useSlow = false;
+            checkSlow = false;
+            if ~useSpeedOptims
+                clear W;
+                distMats = [];
+            end
             assert(size(V,2) == 1);
             assert(size(V0,2) == 1);
-            W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
-            W = exp(W*sigma);
+            
+            if ~exist('W','var')
+                W = Helpers.CreateDistanceMatrixMahabolis(X,diag(V));
+                W = exp(W*sigma);
+            end
             D = diag(sum(W,2));
-            L = (1+alpha) * D - W;
+            D = D + alpha*eye(size(D));
+            %L = (1+alpha) * D - W;
+            L = D - W;
             invL = inv(L);
             invL2 = invL*invL;
             g = zeros(size(V,1),1);
-            S2 = sparse(S'*S);
-            for i=1:size(V,1)
-                Xi = X(:,i);
-                Wi = sigma*Helpers.CreateDistanceMatrixMahabolis(Xi,1);                
-                dW_Vii = W .* Wi;
+            
+            testG = [];
+            for featIdx=1:size(V,1)
+                if useSpeedOptims && ~isempty(distMats)
+                    W_Vi = sigma*W .* distMats{featIdx};
+                else
+                    W_Vi = sigma*W .* Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
+                end
+                %dW_Vii = W .* W_Vi;
+                dW_Vii = W_Vi;
                 
-                t = 1;
-                %{
-                fW = y'*W*y;
-                gW_Vii = y'*dW_Vii*y;
-                V2 = V;
-                V2(i,i) = V2(i,i) - t*gW_Vii;                
-                W2 = Helpers.CreateDistanceMatrixMahabolis(X,V2);
-                W2 = exp(W2);
-                fW2 = y'*W2*y;
-                display([num2str(fW) ' ' num2str(fW2)]);
-                %}
                 
-                dD_Vii = diag(sum(dW_Vii));
-                dL_Vii = (1+alpha)*dD_Vii - dW_Vii;
-                %{
-                fL = y'*L*y;
-                gL_Vii = y'*dL_Vii*y;
-                V3 = V;
-                V3(i,i) = V3(i,i) - t*gL_Vii;
-                W3 = Helpers.CreateDistanceMatrixMahabolis(X,V3);
-                W3 = exp(W3);
-                D3 = diag(sum(W3,2));
-                L3 = (1+alpha)*D3 - W3;
-                fL2 = y'*L3*y;                
-                display([num2str(fL) ' ' num2str(fL2)]);
-                %}
-                
-                %{
-                f1 = y'*invL*y;
-                g = -2*y'*invL*dL_Vii*invL*y;
-                V2 = V;
-                V2(i,i) = V2(i,i) - t*g;
-                W2 = Helpers.CreateDistanceMatrixMahabolis(X,V2);
-                W2 = exp(W2);
-                L2 = (1+alpha)*diag(sum(W2)) - W2;
-                f2 = y'*inv(L2)*y;
-                display([num2str(f1) ' ' num2str(f2)]);
-                %}
-                
-                %{
-                f1 = y'*invL*invL*y;
-                g = -y'*(invL2*dL_Vii*invL + invL*dL_Vii*invL2)*y;
-                V2 = V;
-                V2(i,i) = V2(i,i) - t*g;
-                W2 = Helpers.CreateDistanceMatrixMahabolis(X,V2);
-                W2 = exp(W2);
-                L2 = (1+alpha)*diag(sum(W2)) - W2;
-                invL_2 = inv(L2);
-                f2 = y'*invL_2*invL_2*y;
-                display([num2str(f1) ' ' num2str(f2)]);
-                %}
-                
-                Vii_diff = 2 * (V(i)-V0(i));
-                %obj.set('useLOO',0);
-                if obj.get('useLOO')
-                    g1 = 0;
-                    g2 = 0;
-                    isLabeled = find(y);    
-                    M1 = invL2*dL_Vii;
-                    M2 = dL_Vii*invL2;
-                    M3 = invL*dL_Vii*invL;
+                %testG(featIdx) = y(1)'*dW_Vii(1,2)*y(2);
+
+                dD_Vii = diag(sum(dW_Vii,2));    
+                dL_Vii = dD_Vii - dW_Vii;                
+                g1 = 0;
+                g2 = 0;
+                g1Slow = 0;
+                g2Slow = 0;
+                isLabeled = find(y);
+
+                M1 = invL2*dL_Vii;
+                M2 = dL_Vii*invL2;
+                M3 = invL*dL_Vii*invL;
+                if gradTest
+                    
                     for idx=isLabeled'
                         yCurr = y;
                         yCurr(idx) = 0;
                         yCurrTest = y(idx);
+                        
                         I = zeros(size(yCurr));
                         I(idx) = 1;
-                        Scurr = obj.makeSelectionMatrix(I);
-                        %g1 = g1 + -alpha^2 * yCurr' * (invL2*dL_Vii*Scurr'*Scurr*invL + invL*Scurr'*Scurr*dL_Vii*invL2) * yCurr;
-                        %g2 = g2 + 2*alpha*yCurrTest'*Scurr*invL*dL_Vii*invL*yCurr;
+                        S = obj.makeSelectionMatrix(I);
+                        
                         M1S = M1(:,idx);
                         SIL = invL(idx,:);
                         SM2 = M2(idx,:);
                         SM3 = M3(idx,:);
-                        %{
-                        assert(all(M1S == M1*Scurr'));
-                        assert(all(SIL == Scurr*invL));
-                        assert(all(SM2 == Scurr*M2));
-                        assert(all(SM3 == Scurr*M3));
-                        %}
-                        %g1_ = g1 + -alpha^2 * yCurr' * (M1*Scurr'*Scurr*invL + invL*Scurr'*Scurr*M2) * yCurr;
-                        g1 = g1 + -alpha^2 * yCurr' * (M1S*SIL + SIL'*SM2) * yCurr;
-                        %assert(g1 == g1_);
-                        %g2_ = g2 + 2*alpha*yCurrTest'*Scurr*M3*yCurr;
-                        g2 = g2 + 2*alpha*yCurrTest'*SM3*yCurr;
-                        %assert(g2 == g2_);
+                        %g1 = g1 + -alpha^2 * yCurr' * (M1S*SIL + SIL'*SM2) * yCurr;
+                        %g1 = g1 - alpha^2*yCurr'*(invL2*dL_Vii*invL + invL*dL_Vii*invL2)*yCurr;
+                        %g2 = g2 + 2*alpha*yCurr'*(invL*dL_Vii*invL)*Scurr'*yCurrTest;
+                        g1 = g1 - (alpha^2)*yCurr'*(invL*dL_Vii*invL*S'*S*invL + invL*S'*S*invL*dL_Vii*invL)*yCurr;
                     end
-                else
-                    g1 = -alpha^2 * y' * (invL2*dL_Vii*S'*S*invL + invL*S'*S*dL_Vii*invL2) * y;
-                    g2 = 2*alpha*yTest'*S*invL*dL_Vii*invL*y;
+                    testG(featIdx) = g1;
+                    %testG(featIdx) = 2*reg*V(featIdx);
+                    %testG(featIdx) = -alpha^2 * y' * (invL2*dL_Vii*invL + invL*dL_Vii*invL2) * y;
+                    %testG(featIdx) = -y'*invL*dL_Vii*invL*y;
+                    %testG(featIdx) = y'*dL_Vii*y;
+                    %testG(featIdx) = y'*dW_Vii*y;
                 end
-                %g3 = 2*reg*Vii_diff;
-                g3 = 2*reg*V(i);
-                g(i) = g1 + g2 + g3;
-                                
-                %f1 = y'*(invL2 + invL)*y
-                %{
-                g(i) = -alpha^2 * y' * (invL2*dL_Vii*invL + invL*dL_Vii*invL2) * y  ...
-                    - 2*alpha*y'*invL*dL_Vii*invL*y  ...
-                    + 2*reg*Vii_diff;
-                %}
+                
+                for idx=isLabeled'
+                    yCurr = y;
+                    yCurr(idx) = 0;
+                    yCurrTest = y(idx);
+                    if checkSlow || useSlow
+                        I = zeros(size(yCurr));
+                        I(idx) = 1;
+                        S = obj.makeSelectionMatrix(I);
+                        g1Slow = g1Slow + -alpha^2 * yCurr' * (invL*dL_Vii*invL*S'*S*invL + invL*S'*S*invL*dL_Vii*invL) * yCurr;
+                        g2Slow = g2Slow + 2*alpha*yCurrTest'*S*invL*dL_Vii*invL*yCurr;
+                    end                        
+                    invL_idx = invL(idx,:);
+                    g1 = g1 - (alpha^2)*( yCurr'*invL*dL_Vii*invL_idx'*invL_idx*yCurr + yCurr'*invL_idx'*invL_idx*dL_Vii*invL*yCurr);
+                    g2 = g2 + 2*alpha*yCurrTest*invL_idx*dL_Vii*invL*yCurr;
+                    if useSlow
+                        g1 = g1Slow;
+                        g2 = g2Slow;
+                    end
+                end
+                g3 = 2*reg*V(featIdx);
+                g(featIdx) = g1 + g2 + g3;
+                if checkSlow
+                    %[g1 g1Slow ; g2 g2Slow]                    
+                    if abs(g1 - g1Slow)/abs(g1) > 1e-7
+                        display('');
+                        assert(g1 == g1Slow);
+                    end
+                    if abs(g2 - g2Slow)/abs(g2) > 1e-7
+                        display('');
+                        assert(g2 == g2Slow);
+                    end
+                    
+                end
             end
-            %g = diag(g);
-            %{ 
-            f1 = obj.evaluate(X, V, V0, y, alpha, reg, S, yTest,sigma);
-            V2 = V - 1*g;
-            f2 = obj.evaluate(X, V2, V0, y, alpha, reg, S, yTest,sigma);
-            %}
+            if gradTest
+                g = testG;
+            end
+            %g
         end
         
         function [prefix] = getPrefix(obj)

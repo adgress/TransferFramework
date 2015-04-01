@@ -95,15 +95,27 @@ classdef Helpers < handle
             D = bsxfun(@plus,dot(Xt,XV,1)',dot(XV,Xt,1))-2*(Xt'*XV);
             D = real(D);
             %{
-            D2 = zeros(size(X,2));            
-            for i=1:size(X,1);
-                for j=1:size(X,1)
-                    Xi = X(i,:);
-                    Xj = X(j,:);
-                    D2(i,j) = (Xi-Xj)*V*(Xi-Xj)';
+            if size(V,1) > 1 && V(1,1) ~= 1
+                D2 = zeros(size(X,2));            
+                for i=1:size(X,1);
+                    for j=1:size(X,1)
+                        Xi = X(i,:);
+                        Xj = X(j,:);
+                        D2(i,j) = (Xi-Xj)*V*(Xi-Xj)';
+                        d = D2(i,j);
+                        d2 = 0;
+                        for k=1:size(V,1)
+                            d2 = d2 + V(k,k)*(Xi(k)-Xj(k))^2;
+                        end
+                        if abs(d-d2) > 1e-12
+                            display('');
+                            assert(D2(i,j) == d2);
+                        end                        
+                    end
                 end
+                norm(D - D2)               
+                display('');
             end
-            norm(D - D2)
             %}
         end
         

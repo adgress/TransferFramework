@@ -25,66 +25,64 @@ function [] = runExperiment(configs)
         %Fix for laptop
         distcomp.feature( 'LocalUseMpiexec', false );
         matlabpool close force local;
-        matlabpool;
+        [~,name] = system('hostname');
+        name(end) = [];
+        if isequal(name,'Aubrey-Laptop')
+            matlabpool local 2;
+        else
+           matlabpool; 
+        end        
     end
     tic
 
     allResults = ResultsContainer(configLoader.numSplits,...
         configLoader.numExperiments);        
-    for j = 1:configLoader.numExperiments
-        configLoader.allExperiments{j}.learner = learner;
-        allResults.allResults{j}.experiment = ...
-            configLoader.allExperiments{j};                   
+    for expIdx = 1:configLoader.numExperiments
+        configLoader.allExperiments{expIdx}.learner = learner;
+        allResults.allResults{expIdx}.experiment = ...
+            configLoader.allExperiments{expIdx};                   
     end
     %assert(configLoader.numExperiments == 1);
-    shouldSaveTempResults = configLoader.numExperiments == 1;
-    for j=1:configLoader.numExperiments
+    %shouldSaveTempResults = configLoader.numExperiments == 1;
+    for expIdx=1:configLoader.numExperiments
         splitResults = cell(configLoader.numSplits,1);
-        if ~shouldSaveTempResults
-            t = makeTempFile(outputFile,j);
-            if exist(t,'file')
-                display('Found Temp results - loading...');
-                splitResults = loadTempResults(t);
-                allResults.allResults{j}.splitResults = splitResults;
-                continue;
-            end
+        t = makeTempFile(outputFile,expIdx);
+        if exist(t,'file')
+            display('Found Temp results - loading...');
+            splitResults = loadTempResults(t);
+            allResults.allResults{expIdx}.splitResults = splitResults;
+            continue;
         end
         if multithread
-            parfor i=1:configLoader.numSplits  
-                display(sprintf('%d',i));
-                t = makeTempFile(outputFile,i);
-                if exist(t,'file') && shouldSaveTempResults
+            parfor splitIdx=1:configLoader.numSplits  
+                display(sprintf('%d',splitIdx));
+                t = makeTempFile(outputFile,expIdx,splitIdx);
+                if exist(t,'file')
                     display('Found Temp results - loading...');
-                    splitResults{i} = loadTempResults(t);
+                    splitResults{splitIdx} = loadTempResults(t);
                     continue;
                 end
-                [splitResults{i}] = ...
-                    configLoader.runExperiment(j,i);
-                if shouldSaveTempResults
-                    saveTempResults(t,splitResults{i});
-                end
+                [splitResults{splitIdx}] = ...
+                    configLoader.runExperiment(expIdx,splitIdx);
+                saveTempResults(t,splitResults{splitIdx});
             end            
         else
-            for i=1:configLoader.numSplits                
-                display(sprintf('%d',i));
-                t = makeTempFile(outputFile,i);
+            for splitIdx=1:configLoader.numSplits                
+                display(sprintf('%d',splitIdx));
+                t = makeTempFile(outputFile,splitIdx,expIdx);
                 if exist(t,'file') && shouldSaveTempResults
                     display('Found Temp results - loading...');
-                    splitResults{i} = loadTempResults(t);                    
+                    splitResults{splitIdx} = loadTempResults(t);                    
                     continue;
                 end
-                [splitResults{i}] = ...
-                    configLoader.runExperiment(j,i);
-                if shouldSaveTempResults
-                    saveTempResults(t,splitResults{i});
-                end
+                [splitResults{splitIdx}] = ...
+                    configLoader.runExperiment(expIdx,splitIdx);
+                saveTempResults(t,splitResults{splitIdx});
             end
         end
-        if ~shouldSaveTempResults
-            t = makeTempFile(outputFile,j);
-            saveTempResults(t,splitResults);
-        end
-        allResults.allResults{j}.splitResults = splitResults;
+        t = makeTempFile(outputFile,expIdx);
+        saveTempResults(t,splitResults);
+        allResults.allResults{expIdx}.splitResults = splitResults;
     end    
 
     allResults.mainConfigs = configs.copy();
@@ -98,16 +96,21 @@ function [] = runExperiment(configs)
         allResults.aggregateMeasureResults();
     end
     allResults.saveResults(outputFile);
-    for i=1:configLoader.numSplits
-        t = makeTempFile(outputFile,i);
+    for splitIdx=1:configLoader.numSplits
+        t = makeTempFile(outputFile,splitIdx);
         delete(t);
     end
     toc
 end
 
-function [t] = makeTempFile(file,idx)
+function [t] = makeTempFile(file,expIdx,splitIdx)
     [path,name,ext] = fileparts(file);
-    t = [path '/TEMP/' num2str(idx) '_' name ext];
+    t = [path '/TEMP/' num2str(expIdx) '_'];
+    if exist('splitIdx','var')
+        t = [t num2str(splitIdx) '_'];
+    end
+    t = [t name ext];
+    %t = [path '/TEMP/' num2str(idx) '_' name ext];
 end
 
 function [] = saveTempResults(file,tempResults)
