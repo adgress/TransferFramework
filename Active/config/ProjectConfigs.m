@@ -23,28 +23,36 @@ classdef ProjectConfigs < ProjectConfigsBase
         logRegNumFeatures = inf
         useL1LogReg = false
         
+        axisToUse = [0 10 -.5 1.1]
+        %axisToUse = [0 10 -.05 .1]
+        %axisToUse = [0 10 -.5 .2]
         useOverrideConfigs = 1        
         
-        useSavedSmallResults = 1
-        useKSR = 1
+        useSavedSmallResults = 0
+        useKSR = 0
         
         showBothPerformance = 0
-        showPreTransferPerformance = 0
-        showTransferPerformance = 0
+        showPreTransferPerformance = 1
+        showTransferPerformance = 1
         
-        showTransferDifference = 1
-        showTransferPrediction = 1
+        showTransferDifference = 0
+        showTransferPrediction = 0
                         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         
-        showWeightedPrecisionTransferLoss = 0
-         
+        showWeightedPrecisionTransferLoss = 1
+         %{
         activeIterations = 10;
         labelsPerIteration = 5;
+        %}
         
+        activeIterations = 5;
+        labelsPerIteration = 5;
+        
+        activeMethodsToPlot = {'Random','TransferRepCov_method=9'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
-        activeMethodsToPlot = {'Random','TransferRepCov_method=9','TargetEntropy'}
+        %activeMethodsToPlot = {'Random','TargetEntropy','Entropy','SumEntropy','TransferRep'}
         %activeMethodsToPlot = {'TransferRepCov_method=6','TransferRepCov_method=5'}
         %activeMethodsToPlot = {'TargetEntropy','TransferRepCov_method=5','TransferRep'}
         %activeMethodsToPlot = {'Entropy','TargetEntropy','TransferRep'}
@@ -61,10 +69,14 @@ classdef ProjectConfigs < ProjectConfigsBase
         vizSourceLabels = [25 26];
         
         tommasiDomainsToViz = {...
-            '25  26-to-10  15',...
-            '30  41-to-10  15',...
+            '250  124-to-10  15',...
+            '250  252-to-10  15',...
             '250  124-to-105   57',...
-            '250  252-to-105  145',...
+            '250  124-to-10  15',...
+            '30  41-to-105   57',...
+            '30  41-to-10  15',...
+            '25  26-to-105  145',...
+            '25  26-to-10  15',...
             }
         
         cvDomainsToViz = {...
@@ -200,7 +212,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             end            
             
             c.configsStruct.xAxisDisplay = 'Active Learning Iterations';
-            c.configsStruct.axisToUse = [0 10 -.5 1.1];
+            c.configsStruct.axisToUse = ProjectConfigs.axisToUse;
+            %c.configsStruct.axisToUse = [0 10 -.5 1.1];
             %c.configsStruct.axisToUse = [0 10 -.05 .1];
             pc = ProjectConfigs.Create();
             
@@ -264,8 +277,15 @@ classdef ProjectConfigs < ProjectConfigsBase
                 plotFields = {}; 
                 legendSuffixes = {};
                 %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
-                fileSuffix = '_S+T_LogReg_10_5.mat';
-                
+                l = ProjectConfigs.labelsPerIteration;
+                a = ProjectConfigs.activeIterations;
+                %fileSuffix = '_S+T_LogReg_10_5.mat';
+                %fileSuffix = '_S+T_LogReg';
+                fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9';
+                if l > 0 && a > 0
+                    fileSuffix = [fileSuffix '_' num2str(a) '_' num2str(l)]; 
+                end
+                fileSuffix = [fileSuffix '.mat'];
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];
                     legendSuffixes = [legendSuffixes {'Transfer Performance','Performance'}];

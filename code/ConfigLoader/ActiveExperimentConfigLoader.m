@@ -155,7 +155,9 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             activeMethodObj = obj.configs.get('activeMethodObj');
             s = activeMethodObj.getResultFileName('_',false);
             outputFile = [s '_' outputFile];
-            outputFile = [outputFile '_' num2str(obj.get('activeIterations')) '_' num2str(obj.get('labelsPerIteration'))];
+            activeIterations = obj.get('activeIterations');
+            labelsPerIteration = obj.get('labelsPerIteration');
+            outputFile = [outputFile '_' num2str(activeIterations) '_' num2str(labelsPerIteration)];
             outputFileName = [outputDir outputFile '.mat'];
             Helpers.MakeDirectoryForFile(outputFileName);
         end   

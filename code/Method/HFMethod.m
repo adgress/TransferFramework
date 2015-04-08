@@ -19,6 +19,10 @@ classdef HFMethod < Method
                 %variable to make this code more clear?
                 trainLabeled = true(length(train.Y),1);
             end            
+            if isempty(test)
+                test = DataSet();
+                test.X = zeros(0,size(train.X,2));
+            end
             Y = [train.Y(trainLabeled) ; ...
                 train.Y(~trainLabeled) ; ...
                 test.Y];
@@ -198,7 +202,8 @@ classdef HFMethod < Method
             isLabeled = distMat.isLabeledTarget() & distMat.isTargetTrain();
             labeledInds = find(isLabeled);
             Ytrain = distMat.Y(isLabeled);
-            if length(alpha) > 1
+            computeCVAcc = true;
+            if length(alpha) > 1 || computeCVAcc
                 folds = {};
                 for foldIdx=1:numFolds
                     folds{foldIdx} = DataSet.generateSplit([.8 .2],Ytrain) == 1;
@@ -257,6 +262,7 @@ classdef HFMethod < Method
                             fuTest = Helpers.RemoveNullColumns(fuTest);
                         end
                         %[~,yPred] = max(fuTest,[],2);                        
+                        fuTest(isnan(fuTest(:))) = 0;
                         classes = distMat.classes;
                         if size(fuTest,2) > length(classes)
                             classes = 1:max(distMat.classes);
@@ -295,10 +301,10 @@ classdef HFMethod < Method
             end
             savedData.alpha = alpha;
             savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
-            savedData.cvAcc = max(alphaScores);
+            savedData.cvAcc = max(alphaScores);              
             fu(isnan(fu(:))) = 0;
-
             assert(isempty(find(isnan(fu))));
+            assert(~isnan(savedData.cvAcc));
         end
         
         function [testResults,savedData] = ...
@@ -373,19 +379,23 @@ classdef HFMethod < Method
             predicted = predicted(isYTest);
             testResults.dataFU = sparse(fu);
             %testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
-            val = sum(predicted == YTest)/...
-                    length(YTest);
-            if ~obj.configs.get('quiet')
-                if useHF
-                    display(['HFMethod Acc: ' num2str(val)]);
-                else
-                    display(['LLGCMethod Acc: ' num2str(val)]);
-                end
-            end            
+            if ~isempty(YTest)
+                val = sum(predicted == YTest)/...
+                        length(YTest);
+                assert(~isnan(val));
+                if ~obj.configs.get('quiet')
+                    if useHF
+                        display(['HFMethod Acc: ' num2str(val)]);
+                    else
+                        display(['LLGCMethod Acc: ' num2str(val)]);
+                    end
+                end            
+            end
             testResults.yPred = [train.Y; predicted];
             testResults.yActual = [train.Y; YTest];
             testResults.learnerMetadata.sigma = sigma;
-            testResults.learnerStats.featureSmoothness = savedData.featureSmoothness;
+            testResults.learnerMetadata.cvAcc = savedData.cvAcc;
+            testResults.learnerStats.featureSmoothness = savedData.featureSmoothness;            
         end
         
         function [testResults,savedData] = ...

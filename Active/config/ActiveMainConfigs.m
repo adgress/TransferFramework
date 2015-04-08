@@ -23,20 +23,20 @@ classdef ActiveMainConfigs < MainConfigs
             learnerConfigs.set('useSeparableDistanceMatrix',useSeparableDistanceMatrix);                        
             
             activeConfigs = Configs();            
-            %obj.configsStruct.activeMethodObj=RandomActiveMethod(activeConfigs);
-            obj.configsStruct.activeMethodObj=EntropyActiveMethod(activeConfigs);
+            obj.configsStruct.activeMethodObj=RandomActiveMethod(activeConfigs);
+            %obj.configsStruct.activeMethodObj=EntropyActiveMethod(activeConfigs);
             %obj.configsStruct.activeMethodObj=TargetEntropyActiveMethod(activeConfigs);
             %obj.configsStruct.activeMethodObj=VarianceMinimizationActiveMethod(activeConfigs);            
             
             transferMeasureConfigs = obj.makeDefaultLearnerConfigs();
-            transferMeasureConfigs.set('useSeparableDistanceMatrix',useSeparableDistanceMatrix);
+            transferMeasureConfigs.set('useSeparableDistanceMatrix',useSeparableDistanceMatrix);                                                                      
             
-            %obj.configsStruct.learners=LLGCMethod(learnerConfigs);
-            %obj.configsStruct.transferMeasure = LLGCTransferMeasure(transferMeasureConfigs);
-            
-            transferMeasureConfigs.set('learner',LogisticRegressionMethod(learnerConfigs));
+            %obj.set('learners',LogisticRegressionMethod(learnerConfigs));
+            %transferMeasureConfigs.set('learner',LogisticRegressionMethod(learnerConfigs));
+            obj.configsStruct.learners=LLGCMethod(learnerConfigs);
+            transferMeasureConfigs.set('learner',LLGCMethod(learnerConfigs));
             obj.set('transferMeasure',MethodTransferMeasure(transferMeasureConfigs));
-            obj.set('learners',LogisticRegressionMethod(learnerConfigs));
+            
             
             obj.configsStruct.activeIterations = ProjectConfigs.activeIterations;
             obj.configsStruct.labelsPerIteration = ProjectConfigs.labelsPerIteration;

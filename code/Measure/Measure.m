@@ -58,7 +58,7 @@ classdef Measure < Saveable
                 measureResults.learnerStats.transferDifference = transferDifference;
                 if ~isempty(preTransferMeasures)
                     measureResults.learnerStats.preTransferMeasures = preTransferMeasures;
-                    measureResults.learnerStats.preTransferMeasurePerfDiff = ...
+                    measureResults.learnerStats.preTransferMeasurePerfDiff = ...a
                         abs(preTransferMeasures - preTransferValTest);
                 end
                 if ~isempty(transferMeasures)                    
@@ -75,9 +75,21 @@ classdef Measure < Saveable
                     measureResults.learnerStats.negativeTransferPrediction = ...
                         (transferDifference >= 0) == ...
                         (transferMeasureDifference >= 0);
+                    %{
                     measureResults.learnerStats.weightedPrecisionTransferLoss = ...
                         (1 - measureResults.learnerStats.negativeTransferPrediction) .* ...
                         abs(transferDifference);                        
+                        %}
+                    a = measureResults.learnerStats.negativeTransferPrediction;
+                    b = preTransferValTest;
+                    c = valTest;
+                    d = transferMeasureDifference > 0;
+                    %{
+                    measureResults.learnerStats.weightedPrecisionTransferLoss = ...
+                        (1-a) .* abs(transferDifference);
+                    %}
+                    measureResults.learnerStats.weightedPrecisionTransferLoss = ...
+                        d.*c + (1-d).*b;
                 end
             else
                 if ~isempty(split.ID2Labels)
