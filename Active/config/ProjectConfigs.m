@@ -33,8 +33,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         useKSR = 0
         
         showBothPerformance = 0
-        showPreTransferPerformance = 1
-        showTransferPerformance = 1
+        showPreTransferPerformance = 0
+        showTransferPerformance = 0
         
         showTransferDifference = 0
         showTransferPrediction = 0
@@ -49,9 +49,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         %}
         
         activeIterations = 5;
-        labelsPerIteration = 5;
+        labelsPerIteration = 10;
         
-        activeMethodsToPlot = {'Random'}
+        activeMethodsToPlot = {'Random','SumEntropy','TransferRep'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy','SumEntropy','TransferRep'}
         %activeMethodsToPlot = {'TransferRepCov_method=6','TransferRepCov_method=5'}
@@ -281,8 +281,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                 l = ProjectConfigs.labelsPerIteration;
                 a = ProjectConfigs.activeIterations;
                 %fileSuffix = '_S+T_LogReg_10_5.mat';
-                %fileSuffix = '_S+T_LogReg';
-                fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9';
+                fileSuffix = '_S+T_LogReg';
+                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9';
                 if l > 0 && a > 0
                     fileSuffix = [fileSuffix '_' num2str(a) '_' num2str(l)]; 
                 end

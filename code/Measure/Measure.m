@@ -170,15 +170,6 @@ classdef Measure < Saveable
                 l = Helpers.Cell2StructArray(splitMeasures);
                 l = [l.learnerStats];
                 l1 = l(1);
-                if isfield(l1,'weightedPrecisionTransferLoss')
-                    %v = [l.weightedNegativeTransferLoss];
-                    v = Helpers.StructField2Mat(l,'weightedPrecisionTransferLoss');
-                    isNonzero = v > 0;
-                    %a = sum(v)./sum(isNonzero);
-                    a = v;
-                    a(isnan(a)) = 0;
-                    aggregatedResults.weightedPrecisionTransferLoss = ResultsVector(a);
-                end
                 if isfield(l1,'featureSmoothness') && ...
                         isfield(l1,'featureWeights')                    
                     s = Helpers.StructField2Mat(l,'featureSmoothness');

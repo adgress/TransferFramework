@@ -43,6 +43,7 @@ classdef BatchConfigs < Configs
                 };
                 %}
                 activeMethods = {                    
+                    SumEntropyActiveMethod(activeConfigs),...
                     RandomActiveMethod(activeConfigs),...
                 };
                 newOverrideConfigs = {};

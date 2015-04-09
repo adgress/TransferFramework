@@ -21,7 +21,7 @@ classdef ActiveMethod < Saveable
             [sortedScores,scoreInds] = sort(unlabeledScores,'descend');
             queriedIdx = scoreInds(1:labelsPerIteration);
             
-            scores = -ones*size(input.train.Y);
+            scores = -ones(size(input.train.Y,1),1);
             scores(unlabeledInds) = unlabeledScores;
         end  
         function [nameParams] = getNameParams(obj)
