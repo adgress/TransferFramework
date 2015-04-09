@@ -32,6 +32,12 @@ classdef MethodTransferMeasure < TransferMeasure
             measureResults.percCorrect = results.learnerMetadata.cvAcc;            
             measureResults.yPred = results.yPred;
             measureResults.yActual = results.yActual;
+            n = num2str(measureResults.score);
+            if obj.get('useSourceForTransfer')
+                display(['Transfer CV: ' n]);
+            else
+                display(['Pre-Transfer CV: ' n]);
+            end
         end
         function [name] = getPrefix(obj)
             name = ['TransferMeasure:' obj.get('learner').getPrefix()];

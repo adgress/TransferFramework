@@ -14,11 +14,12 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         instance = ProjectConfigs.CreateSingleton()
 
-        %data = Constants.NG_DATA
-        data = Constants.TOMMASI_DATA
+        data = Constants.NG_DATA
+        %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         
-        resampleTarget = true
+        resampleTarget = false
+        %kNumLabeledPerClass = 2
         kNumLabeledPerClass = 2
         logRegNumFeatures = inf
         useL1LogReg = false
@@ -50,7 +51,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeIterations = 5;
         labelsPerIteration = 5;
         
-        activeMethodsToPlot = {'Random','TransferRepCov_method=9'}
+        activeMethodsToPlot = {'Random'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy','SumEntropy','TransferRep'}
         %activeMethodsToPlot = {'TransferRepCov_method=6','TransferRepCov_method=5'}

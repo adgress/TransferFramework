@@ -31,10 +31,15 @@ classdef ActiveMainConfigs < MainConfigs
             transferMeasureConfigs = obj.makeDefaultLearnerConfigs();
             transferMeasureConfigs.set('useSeparableDistanceMatrix',useSeparableDistanceMatrix);                                                                      
             
-            %obj.set('learners',LogisticRegressionMethod(learnerConfigs));
-            %transferMeasureConfigs.set('learner',LogisticRegressionMethod(learnerConfigs));
+            obj.set('learners',LogisticRegressionMethod(learnerConfigs));
+            transferMeasureConfigs.set('learner',LogisticRegressionMethod(learnerConfigs));
+            %{
+            alpha = [.1 1 10];
+            learnerConfigs.set('alpha',alpha);
             obj.configsStruct.learners=LLGCMethod(learnerConfigs);
             transferMeasureConfigs.set('learner',LLGCMethod(learnerConfigs));
+            obj.set('alpha',alpha);
+            %}
             obj.set('transferMeasure',MethodTransferMeasure(transferMeasureConfigs));
             
             
@@ -53,8 +58,7 @@ classdef ActiveMainConfigs < MainConfigs
             end
             
             obj.set('sigmaScale',.2);
-            obj.set('k',inf);
-            obj.set('alpha',.9);
+            obj.set('k',inf);            
         end                                           
         
         function [] = setCVData(obj)      
