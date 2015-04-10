@@ -10,8 +10,8 @@ classdef LogisticRegressionMethod < Method
         
         function obj = LogisticRegressionMethod(configs)
             obj = obj@Method(configs);
-            if ~obj.get('fixReg')
-                obj.set('figReg',1');
+            if ~obj.has('fixReg')
+                obj.set('fixReg',1');
             end
         end
         
@@ -174,7 +174,7 @@ classdef LogisticRegressionMethod < Method
         function [nameParams] = getNameParams(obj)
             nameParams = {};
             if obj.has('fixReg') && obj.get('fixReg')
-                nameParams{end+1} = 'figReg';
+                nameParams{end+1} = 'fixReg';
             end
         end
         function [d] = getDirectory(obj)
