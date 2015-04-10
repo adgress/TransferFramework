@@ -281,7 +281,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 l = ProjectConfigs.labelsPerIteration;
                 a = ProjectConfigs.activeIterations;
                 %fileSuffix = '_S+T_LogReg_10_5.mat';
-                fileSuffix = '_S+T_LogReg';
+                fileSuffix = '_S+T_LogReg-fixReg=1';
                 %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9';
                 if l > 0 && a > 0
                     fileSuffix = [fileSuffix '_' num2str(a) '_' num2str(l)]; 
