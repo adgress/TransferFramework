@@ -51,7 +51,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeIterations = 5;
         labelsPerIteration = 10;
         
-        activeMethodsToPlot = {'Random','SumEntropy','TransferRep'}
+        activeMethodsToPlot = {'Random','SumEntropy_method=1'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy','SumEntropy','TransferRep'}
         %activeMethodsToPlot = {'TransferRepCov_method=6','TransferRepCov_method=5'}

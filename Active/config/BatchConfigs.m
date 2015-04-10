@@ -44,7 +44,6 @@ classdef BatchConfigs < Configs
                 %}
                 activeMethods = {                    
                     SumEntropyActiveMethod(activeConfigs),...
-                    RandomActiveMethod(activeConfigs),...
                 };
                 newOverrideConfigs = {};
                 for i=1:length(overrideConfigs)

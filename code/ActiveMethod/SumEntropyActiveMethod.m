@@ -8,7 +8,7 @@ classdef SumEntropyActiveMethod < EntropyActiveMethod
     methods
         function obj = SumEntropyActiveMethod(configs)            
             obj = obj@EntropyActiveMethod(configs);
-            obj.set('method',1);
+            obj.set('method',2);
         end
         function [scores] = getScores(obj,input,results,s)
             H = [];            
@@ -30,6 +30,14 @@ classdef SumEntropyActiveMethod < EntropyActiveMethod
             scores = H + HTarget;
             if obj.get('method') == 1
                 if pPosTransfer > .5
+                    [maxVal,maxInd] = max(H);
+                    scores = H;
+                else
+                    [maxVal,maxInd] = max(HTarget);
+                    scores = HTarget;
+                end
+            elseif obj.get('method') == 2
+                if rand() < pPosTransfer
                     [maxVal,maxInd] = max(H);
                     scores = H;
                 else
