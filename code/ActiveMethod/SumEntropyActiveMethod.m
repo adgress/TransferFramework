@@ -8,7 +8,7 @@ classdef SumEntropyActiveMethod < EntropyActiveMethod
     methods
         function obj = SumEntropyActiveMethod(configs)            
             obj = obj@EntropyActiveMethod(configs);
-            obj.set('method',2);
+            obj.set('method',1);
         end
         function [scores] = getScores(obj,input,results,s)
             H = [];            

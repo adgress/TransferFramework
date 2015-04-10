@@ -10,6 +10,9 @@ classdef LogisticRegressionMethod < Method
         
         function obj = LogisticRegressionMethod(configs)
             obj = obj@Method(configs);
+            if ~obj.get('fixReg')
+                obj.set('figReg',1');
+            end
         end
         
         function [testResults,savedData] = ...
@@ -33,6 +36,9 @@ classdef LogisticRegressionMethod < Method
             shouldUseFeature(t) = 1;
             %Hyperparameter is multiplied with the loss term
             C = 10.^(-5:5);
+            if obj.get('fixReg')
+                C = 1e-3;
+            end
             %C = 10^3;
             XLabeled = XLabeled(:,shouldUseFeature);
             %XLabeled = zscore(XLabeled);
@@ -167,6 +173,9 @@ classdef LogisticRegressionMethod < Method
         end
         function [nameParams] = getNameParams(obj)
             nameParams = {};
+            if obj.has('fixReg') && obj.get('fixReg')
+                nameParams{end+1} = 'figReg';
+            end
         end
         function [d] = getDirectory(obj)
             error('Do we save based on method?');
