@@ -20,7 +20,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         resampleTarget = false
         %kNumLabeledPerClass = 2
-        kNumLabeledPerClass = 2
+        kNumLabeledPerClass = 10
         logRegNumFeatures = inf
         useL1LogReg = false
         
@@ -29,7 +29,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         %axisToUse = [0 10 -.5 .2]
         useOverrideConfigs = 1        
         
-        useSavedSmallResults = 0
+        useSavedSmallResults = 1
         useKSR = 0
         
         showBothPerformance = 0
@@ -50,8 +50,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         activeIterations = 5;
         labelsPerIteration = 10;
-        
-        activeMethodsToPlot = {'Random','SumEntropy_method=1'}
+        activeMethodsToPlot = {'Random','SumEntropy_method'}
+        %activeMethodsToPlot = {'Random','SumEntropy_method=1'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy','SumEntropy','TransferRep'}
         %activeMethodsToPlot = {'TransferRepCov_method=6','TransferRepCov_method=5'}

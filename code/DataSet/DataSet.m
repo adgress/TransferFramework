@@ -53,6 +53,7 @@ classdef DataSet < LabeledData
             obj.ID2Labels = containers.Map;
             assert(length(obj.type) == length(obj.Y));
             assert(size(obj.X,1) == size(obj.Y,1));
+            obj.addEmptyFields();
         end                
         
         function [train,test,validation] = splitDataSet(obj,split)            
@@ -163,6 +164,7 @@ classdef DataSet < LabeledData
             obj.type = obj.type(~shouldRemove);
             obj.trueY = obj.trueY(~shouldRemove);
             obj.instanceIDs = obj.instanceIDs(~shouldRemove);
+            obj.isValidation = obj.isValidation(~shouldRemove);
         end
         
         function [d] = getSourceData(obj)
@@ -190,6 +192,9 @@ classdef DataSet < LabeledData
             obj.type = obj.type(permutation);
             obj.trueY = obj.trueY(permutation);
             obj.instanceIDs = obj.instanceIDs(permutation);
+            if isempty(obj.isValidation)                
+                obj.isValidation = false(size(obj.X,1),1);
+            end
         end
         function [inds] = hasLabel(obj,labels)
             labels = unique(labels);
@@ -217,6 +222,11 @@ classdef DataSet < LabeledData
                 obj.featureIDs = obj.featureIDs(inds);
             end
         end
+        function [] = addEmptyFields(obj)
+            if isempty(obj.isValidation)                
+                obj.isValidation = false(size(obj.X,1),1);
+            end
+        end
     end
     
     methods(Static)
@@ -233,8 +243,10 @@ classdef DataSet < LabeledData
         end
         function [f] = Combine(varargin)
             f = varargin{1}.copy();
+            f.addEmptyFields();
             for i=2:length(varargin)
                 m2 = varargin{i}.ID2Labels;
+                varargin{i}.addEmptyFields();
                 if ~isempty(m2) && ~isempty(f.ID2Labels)
                     %TODO: fix this check?
                     %assert(isempty(intersect(f.ID2Labels.keys,m2.keys)));
@@ -245,6 +257,7 @@ classdef DataSet < LabeledData
                 f.trueY = [f.trueY ; varargin{i}.trueY];
                 f.instanceIDs = [f.instanceIDs ; varargin{i}.instanceIDs];
                 f.ID2Labels = vertcat(f.ID2Labels,m2);
+                f.isValidation = [f.isValidation; varargin{i}.isValidation] ;
             end
         end        
     end
@@ -279,7 +292,7 @@ classdef DataSet < LabeledData
             newData.ID2Labels = data.ID2Labels;
             newData.featureNames = data.featureNames;
             newData.featureIDs = data.featureIDs;
-            newData.name = data.name;
+            newData.name = data.name;            
         end
         function [data] = MakeDataFromStruct(dataStruct)
             data = DataSet('','','',dataStruct.X,dataStruct.Y);

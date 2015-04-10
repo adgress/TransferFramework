@@ -11,7 +11,10 @@ classdef LogisticRegressionMethod < Method
         function obj = LogisticRegressionMethod(configs)
             obj = obj@Method(configs);
             if ~obj.has('fixReg')
-                obj.set('fixReg',1');
+                obj.set('fixReg',1);
+            end
+            if ~obj.has('useVal')
+                obj.set('useVal',1);
             end
         end
         
@@ -73,7 +76,8 @@ classdef LogisticRegressionMethod < Method
             bestC = C(bestCInd);
             bestCVAcc = accs(bestCInd) / 100;          
             testResults.learnerMetadata.cvAcc = bestCVAcc;
-            if sum(trainData.isSource()) > 0
+            useValidationSet = obj.get('useVal') && any(trainData.isValidation);
+            if sum(trainData.isSource()) > 0 || useValidationSet
                 labeledTargetInds = find(trainData.isLabeledTarget());
                 cvAcc = 0;
                 folds = 10;
@@ -81,12 +85,19 @@ classdef LogisticRegressionMethod < Method
                     folds = length(labeledTargetInds);
                 end
                 %for ind=1:length(labeledTargetInds)
+                if useValidationSet
+                    folds = 1;
+                end
                 for foldIdx=1:folds
-                    if length(labeledTargetInds) <= folds
-                        isTest = foldIdx;
+                    if useValidationSet
+                        isTest = trainData.isValidation(labeledTargetInds);
                     else
-                        isTest = DataSet.generateSplit([.8 .2 0],...
-                            trainData.Y(labeledTargetInds)) == 2;
+                        if length(labeledTargetInds) <= folds
+                            isTest = foldIdx;
+                        else
+                            isTest = DataSet.generateSplit([.8 .2 0],...
+                                trainData.Y(labeledTargetInds)) == 2;
+                        end
                     end
                     %idx = labeledTargetInds(ind);                    
                     testInds = labeledTargetInds(isTest);
@@ -175,6 +186,9 @@ classdef LogisticRegressionMethod < Method
             nameParams = {};
             if obj.has('fixReg') && obj.get('fixReg')
                 nameParams{end+1} = 'fixReg';
+            end
+            if obj.has('useVal') && obj.get('useVal')
+                nameParams{end+1} = 'useVal';
             end
         end
         function [d] = getDirectory(obj)

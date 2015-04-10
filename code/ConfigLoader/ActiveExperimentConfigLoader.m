@@ -79,6 +79,10 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                 s.preTransferInput = preTransferInput;
                 queriedIdx = activeMethodObj.queryLabel(input,resultsForAL,s);
                 activeResults.queriedLabelIdx(end+1,:) = queriedIdx;
+
+                s.preTransferInput.train.isValidation(queriedIdx) = true;
+                input.train.isValidation(queriedIdx) = true;
+                    
                 input.train.labelData(queriedIdx);
                 preTransferInput.train.labelData(queriedIdx);
                 [activeResults.iterationResults{end+1}, ...
@@ -158,6 +162,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             activeIterations = obj.get('activeIterations');
             labelsPerIteration = obj.get('labelsPerIteration');
             outputFile = [outputFile '_' num2str(activeIterations) '_' num2str(labelsPerIteration)];
+
             outputFileName = [outputDir outputFile '.mat'];
             Helpers.MakeDirectoryForFile(outputFileName);
         end   

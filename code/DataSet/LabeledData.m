@@ -8,6 +8,7 @@ classdef LabeledData < matlab.mixin.Copyable
         name
         trueY
         instanceIDs
+        isValidation
         
         %Map of Data Set IDs to original label data
         ID2Labels
@@ -24,6 +25,7 @@ classdef LabeledData < matlab.mixin.Copyable
         function [obj] = LabeledData()
             obj.Y = [];
             obj.type = [];
+            obj.isValidation = [];
             obj.name = '';
         end
         
@@ -45,8 +47,7 @@ classdef LabeledData < matlab.mixin.Copyable
         end
         function [I] = isTargetTest(obj)
             I = obj.type == Constants.TARGET_TEST;
-        end
-        
+        end        
         function [I] = isLabeledTarget(obj)
             I = obj.isTarget() & obj.isLabeled();
         end

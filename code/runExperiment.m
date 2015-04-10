@@ -1,7 +1,8 @@
 function [] = runExperiment(configs)    
     pc = ProjectConfigs.Create();
     setPaths;    
-    configLoader = configs.get('configLoader');
+    configLoader = configs.get('configLoader');    
+    configs.addConfigs(configLoader.configs);
     configLoader.setNewConfigs(configs);
     %configLoader.configs = configs;
     learners = configLoader.configs.get('learners');
