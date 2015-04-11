@@ -36,7 +36,8 @@ classdef LogisticRegressionMethod < Method
                 if length(unique(XLabeled(:,i))) <= 2
                     shouldUseFeature(i) = false;
                 end
-            end 
+            end
+            %display(num2str(sum(shouldUseFeature)));
             t = find(shouldUseFeature);
             if ProjectConfigs.logRegNumFeatures < length(t)                
                 t(ProjectConfigs.logRegNumFeatures+1:end) = [];
@@ -58,9 +59,6 @@ classdef LogisticRegressionMethod < Method
             
             accs = zeros(size(C));
             XLabeledCurr = XLabeled;
-            t = NormalizeTransform();
-            t.learn(XLabeledCurr);
-            XLabeledCurr = sparse(t.apply(XLabeledCurr));
             YLabeledCurr = YLabeled;
             
             liblinearMethod = 0;
@@ -179,10 +177,17 @@ classdef LogisticRegressionMethod < Method
                 [predTest,acc,testFU] = predict(test.Y, sparse(Xtest), model, '-q -b 1');
                 acc(1) = acc(1) / 100;
                 testResults.yPred = [predTrain;predTest];
-                testResults.yActual = [trainData.Y ; test.Y];
+                testResults.yActual = [trainData.trueY ; test.trueY];
                 testResults.dataFU = [trainFU ; testFU];
-                display(['LogReg Acc: ' num2str(acc(1))]);        
+                display(['LogReg Acc: ' num2str(acc(1))]);  
+                %mean(testResults.yPred==testResults.yActual)
             end
+            %{
+            if length(find(shouldUse)) < 20
+                display(find(shouldUse)');
+                shouldUse;
+            end
+            %}
         end 
         
         function [prefix] = getPrefix(obj)
