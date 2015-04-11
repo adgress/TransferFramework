@@ -23,8 +23,14 @@ classdef LogisticRegressionMethod < Method
             %error('TODO: Try resampling training data');
             testResults = FoldResults();
             trainData = input.train;
-            test = input.test;            
-            XLabeled = trainData.X(trainData.isLabeled(),:);
+            test = input.test;   
+            
+            useValidationSet = obj.get('useVal') && any(trainData.isValidation);
+            shouldUse = trainData.isLabeled();
+            if useValidationSet
+                shouldUse = shouldUse & ~trainData.isValidation;
+            end
+            XLabeled = trainData.X(shouldUse,:);
             shouldUseFeature = true(size(XLabeled,2),1);
             for i=1:size(XLabeled,2)
                 if length(unique(XLabeled(:,i))) <= 2
@@ -44,10 +50,11 @@ classdef LogisticRegressionMethod < Method
             end
             %C = 10^3;
             XLabeled = XLabeled(:,shouldUseFeature);
+            
             %XLabeled = zscore(XLabeled);
-            YLabeled = trainData.Y(trainData.isLabeled(),:);
+            YLabeled = trainData.Y(shouldUse,:);
             %B = mnrfit(XLabeled,YLabeled);                       
-            labeledType = trainData.type(trainData.isLabeled());
+            labeledType = trainData.type(shouldUse);
             
             accs = zeros(size(C));
             XLabeledCurr = XLabeled;
@@ -75,8 +82,7 @@ classdef LogisticRegressionMethod < Method
             bestCInd = argmax(accs);
             bestC = C(bestCInd);
             bestCVAcc = accs(bestCInd) / 100;          
-            testResults.learnerMetadata.cvAcc = bestCVAcc;
-            useValidationSet = obj.get('useVal') && any(trainData.isValidation);
+            testResults.learnerMetadata.cvAcc = bestCVAcc;            
             if sum(trainData.isSource()) > 0 || useValidationSet
                 labeledTargetInds = find(trainData.isLabeledTarget());
                 cvAcc = 0;
@@ -144,7 +150,7 @@ classdef LogisticRegressionMethod < Method
                 end
                 testResults.learnerMetadata.cvAcc = cvAcc;
             end
-            instanceWeights = ones(size(YLabeled));
+            instanceWeights = ones(size(YLabeled));            
             if ~isempty(test)
                 testResults.dataType = [trainData.type ; test.type];
                 options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(bestC) ' -B 1 -q'];
