@@ -84,7 +84,7 @@ classdef LogisticRegressionMethod < Method
             bestC = C(bestCInd);
             bestCVAcc = accs(bestCInd) / 100;          
             testResults.learnerMetadata.cvAcc = bestCVAcc;            
-            if sum(trainData.isSource()) > 0 || useValidationSet
+            if sum(trainData.isSource()) > 0 || useValidationSet || obj.get('useInitialVal')
                 labeledTargetInds = find(trainData.isLabeledTarget());
                 cvAcc = 0;
                 folds = 10;
