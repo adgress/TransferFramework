@@ -179,6 +179,8 @@ classdef LogisticRegressionMethod < Method
                 testResults.yPred = [predTrain;predTest];
                 testResults.yActual = [trainData.trueY ; test.trueY];
                 testResults.dataFU = [trainFU ; testFU];
+                testResults.yTrain = [trainData.Y ; -ones(size(test.Y))];
+                testResults.isValidation = [trainData.isValidation; test.isValidation];
                 display(['LogReg Acc: ' num2str(acc(1))]);  
                 %mean(testResults.yPred==testResults.yActual)
             end

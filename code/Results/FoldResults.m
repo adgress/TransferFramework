@@ -10,6 +10,8 @@ classdef FoldResults <  matlab.mixin.Copyable
         dataFU
         yPred
         yActual
+        yTrain
+        isValidation
         
         sources
         sampledTrain
