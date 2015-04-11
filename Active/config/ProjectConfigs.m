@@ -20,7 +20,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         resampleTarget = false
         %kNumLabeledPerClass = 2
-        kNumLabeledPerClass = 10
+        kNumLabeledPerClass = 5
         logRegNumFeatures = inf
         useL1LogReg = false
         
@@ -36,13 +36,13 @@ classdef ProjectConfigs < ProjectConfigsBase
         showPreTransferPerformance = 0
         showTransferPerformance = 0
         
-        showTransferDifference = 0
+        showTransferDifference = 1
         showTransferPrediction = 1
                         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         
-        showWeightedPrecisionTransferLoss = 1
+        showWeightedPrecisionTransferLoss = 0
          %{
         activeIterations = 10;
         labelsPerIteration = 5;
@@ -50,7 +50,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         activeIterations = 5;
         labelsPerIteration = 10;
-        activeMethodsToPlot = {'Random','TransferRep','TransferRepCov_method=9'}
+        %activeMethodsToPlot = {'Random'}
+        activeMethodsToPlot = {'Random','Disagreement'}
         %activeMethodsToPlot = {'Random','SumEntropy_method=1'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
         %activeMethodsToPlot = {'Random','TargetEntropy','Entropy','SumEntropy','TransferRep'}
