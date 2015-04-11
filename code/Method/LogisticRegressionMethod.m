@@ -14,7 +14,10 @@ classdef LogisticRegressionMethod < Method
                 obj.set('fixReg',1);
             end
             if ~obj.has('useVal')
-                obj.set('useVal',1);
+                obj.set('useVal',0);
+            end
+            if ~obj.has('justInitialVal')
+                obj.set('justInitialVal',1);
             end
         end
         
@@ -95,6 +98,15 @@ classdef LogisticRegressionMethod < Method
                 for foldIdx=1:folds
                     if useValidationSet
                         isTest = trainData.isValidation(labeledTargetInds);
+                    elseif obj.get('justInitialVal')                        
+                        isOriginalTarget = ~trainData.isValidation(labeledTargetInds);
+                        originalTargetInds = labeledTargetInds(isOriginalTarget);
+                        isTest = DataSet.generateSplit([.8 .2 0],...
+                                trainData.Y(originalTargetInds)) == 2;
+
+                        I = false(size(labeledTargetInds));
+                        I(isOriginalTarget) = isTest;
+                        isTest = I;
                     else
                         if length(labeledTargetInds) <= folds
                             isTest = foldIdx;
@@ -102,13 +114,10 @@ classdef LogisticRegressionMethod < Method
                             isTest = DataSet.generateSplit([.8 .2 0],...
                                 trainData.Y(labeledTargetInds)) == 2;
                         end
-                    end
-                    %idx = labeledTargetInds(ind);                    
+                    end          
                     testInds = labeledTargetInds(isTest);
                     options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(bestC) ' -B 1 -q'];
-                    %options = ['-s 0 -c ' num2str(bestC) ' -B 1'];
                     currToUse = trainData.isLabeled();
-                    %currToUse(idx) = 0;
                     currToUse(testInds) = false;
                     Xcurr = trainData.X(currToUse,shouldUseFeature);
                     Ycurr = trainData.Y(currToUse);
@@ -202,6 +211,9 @@ classdef LogisticRegressionMethod < Method
             end
             if obj.has('useVal') && obj.get('useVal')
                 nameParams{end+1} = 'useVal';
+            end
+            if obj.has('justInitialVal') && obj.get('justInitialVal')
+                nameParams{end+1} = 'justInitialVal';
             end
         end
         function [d] = getDirectory(obj)
