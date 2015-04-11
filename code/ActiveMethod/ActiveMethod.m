@@ -19,8 +19,8 @@ classdef ActiveMethod < Saveable
             unlabeledInds = find(input.train.Y < 0);
             %[~,maxIdx] = max(unlabeledScores);
             [sortedScores,scoreInds] = sort(unlabeledScores,'descend');
-            queriedIdx = scoreInds(1:labelsPerIteration);
-            
+            scoreIndsToChoose = scoreInds(1:labelsPerIteration);
+            queriedIdx = unlabeledInds(scoreIndsToChoose);
             scores = -ones(size(input.train.Y,1),1);
             scores(unlabeledInds) = unlabeledScores;
         end  

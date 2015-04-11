@@ -79,7 +79,10 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                 s.preTransferInput = preTransferInput;
                 queriedIdx = activeMethodObj.queryLabel(input,resultsForAL,s);
                 activeResults.queriedLabelIdx(end+1,:) = queriedIdx;
-
+                
+                queriedYVals = s.preTransferInput.train.Y(queriedIdx);
+                
+                assert(all(queriedYVals == -1));
                 s.preTransferInput.train.isValidation(queriedIdx) = true;
                 input.train.isValidation(queriedIdx) = true;
                     

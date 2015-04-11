@@ -29,15 +29,15 @@ classdef ProjectConfigs < ProjectConfigsBase
         %axisToUse = [0 10 -.5 .2]
         useOverrideConfigs = 1        
         
-        useSavedSmallResults = 1
+        useSavedSmallResults = 0
         useKSR = 0
         
         showBothPerformance = 0
-        showPreTransferPerformance = 0
-        showTransferPerformance = 0
+        showPreTransferPerformance = 1
+        showTransferPerformance = 1
         
-        showTransferDifference = 1
-        showTransferPrediction = 1
+        showTransferDifference = 0
+        showTransferPrediction = 0
                         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
