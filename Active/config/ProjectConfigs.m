@@ -14,8 +14,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         instance = ProjectConfigs.CreateSingleton()
 
-        data = Constants.NG_DATA
-        %data = Constants.TOMMASI_DATA
+        %data = Constants.NG_DATA
+        data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         
         resampleTarget = false
@@ -36,8 +36,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         showPreTransferPerformance = 0
         showTransferPerformance = 0
         
-        showTransferDifference = 1
-        showTransferPrediction = 0
+        showTransferDifference = 0
+        showTransferPrediction = 1
                         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0

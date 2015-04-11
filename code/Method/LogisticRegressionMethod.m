@@ -75,7 +75,7 @@ classdef LogisticRegressionMethod < Method
             for cIdx=1:length(C)
                 options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -v 10 -q'];                
                 %evalc('accs(cIdx) = train(YLabeledCurr,XLabeledCurr,options)');
-                evalc('accs(cIdx) = train(instanceWeights,YLabeledCurr,XLabeledCurr,options)');                
+                evalc('accs(cIdx) = train(instanceWeights,YLabeledCurr,sparse(XLabeledCurr),options)');                
             end
             bestCInd = argmax(accs);
             bestC = C(bestCInd);
