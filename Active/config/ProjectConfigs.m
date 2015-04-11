@@ -29,27 +29,27 @@ classdef ProjectConfigs < ProjectConfigsBase
         %axisToUse = [0 10 -.5 .2]
         useOverrideConfigs = 1        
         
-        useSavedSmallResults = 0
+        useSavedSmallResults = 1
         useKSR = 0
         
         showBothPerformance = 0
-        showPreTransferPerformance = 1
-        showTransferPerformance = 1
+        showPreTransferPerformance = 0
+        showTransferPerformance = 0
         
-        showTransferDifference = 0
+        showTransferDifference = 1
         showTransferPrediction = 0
                         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         
-        showWeightedPrecisionTransferLoss = 0
+        showWeightedPrecisionTransferLoss = 1
          %{
         activeIterations = 10;
         labelsPerIteration = 5;
         %}
         
-        activeIterations = 5;
-        labelsPerIteration = 10;
+        activeIterations = 10;
+        labelsPerIteration = 2;
         %activeMethodsToPlot = {'Random'}
         activeMethodsToPlot = {'Random','Disagreement'}
         %activeMethodsToPlot = {'Random','SumEntropy_method=1'}
