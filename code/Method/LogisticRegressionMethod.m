@@ -11,7 +11,7 @@ classdef LogisticRegressionMethod < Method
         function obj = LogisticRegressionMethod(configs)
             obj = obj@Method(configs);
             if ~obj.has('fixReg')
-                obj.set('fixReg',1);
+                obj.set('fixReg',0);
             end
             if ~obj.has('useVal')
                 obj.set('useVal',0);
@@ -20,7 +20,7 @@ classdef LogisticRegressionMethod < Method
                 obj.set('justInitialVal',0);
             end            
             if ~obj.has('trainAllReg')
-                obj.set('trainAllReg',1);
+                obj.set('trainAllReg',0);
             end
         end
         

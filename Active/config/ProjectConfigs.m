@@ -52,7 +52,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         labelsPerIteration = 5;
         %}
         
-        activeIterations = 1;
+        activeIterations = 20;
         labelsPerIteration = 5;
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
         activeMethodsToPlot = {'Random','Entropy'}
