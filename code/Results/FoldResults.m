@@ -159,8 +159,19 @@ classdef FoldResults <  matlab.mixin.Copyable
                 obj.dataType == Constants.TARGET_TEST | ...
                 obj.dataType == Constants.SOURCE));
         end
+        
+        function [] = shrink(obj)
+            obj.dataFU = [];
+            for idx=1:length(obj.modelResults)
+                obj.modelResults(idx).dataFU = [];
+            end
+        end
     end
-    
+    methods(Static)
+        function [] = shrink_static(obj)
+            obj.shrink();
+        end
+    end
     methods(Access = protected)
                
     end

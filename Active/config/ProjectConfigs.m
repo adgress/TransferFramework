@@ -32,6 +32,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         useOverrideConfigs = 1        
         
         useSavedSmallResults = 1
+        smallResultsFiles = 1
         useKSR = 0
         
         showBothPerformance = 0
@@ -51,8 +52,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         labelsPerIteration = 5;
         %}
         
-        activeIterations = 20;
+        activeIterations = 1;
         labelsPerIteration = 5;
+        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
         activeMethodsToPlot = {'Random','Entropy'}
         useDomainsToViz = 1
         
@@ -323,14 +325,12 @@ classdef ProjectConfigs < ProjectConfigsBase
                 
                 fileSuffixes{end+1} = '_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = '';
-                
-                
-                
+                                                
                 fileSuffixes{end+1} = '_valWeights=1_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = 'Weighted';
                 
-                %fileSuffixes{end+1} = '_valWeights=2_S+T_LogReg-fixReg=1';
-                %fileSuffixLegend{end+1} = 'Weighted2';
+                fileSuffixes{end+1} = '_valWeights=2_S+T_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Weighted2';
                 
                 
                 

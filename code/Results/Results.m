@@ -61,6 +61,12 @@ classdef Results <  matlab.mixin.Copyable
             end
             measureResults = ResultsVector(scores');
         end
+        
+        function [] = shrink(obj)
+            for idx=1:length(obj.results)
+                obj.results{idx}.shrink();
+            end
+        end
     end    
     methods(Static)        
     end

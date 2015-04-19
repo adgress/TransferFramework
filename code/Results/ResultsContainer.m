@@ -35,6 +35,14 @@ classdef ResultsContainer < handle
             end
         end
         function [] = saveResults(obj,filename)
+            if ProjectConfigs.smallResultsFiles
+                for idx=1:length(obj.allResults)
+                    for splitIdx=1:length(obj.allResults{idx})
+                        r = obj.allResults{idx}.splitResults{splitIdx};
+                        r.shrink();
+                    end
+                end
+            end
             results = obj;
             warning off;
             [~] = mkdir(fileparts(filename));

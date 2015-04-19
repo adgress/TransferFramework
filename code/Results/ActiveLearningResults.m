@@ -12,7 +12,11 @@ classdef ActiveLearningResults < matlab.mixin.Copyable
     end
     
     methods
-    end
-    
+        
+        function [] = shrink(obj)
+            cellfun(@FoldResults.shrink_static,obj.iterationResults);
+            cellfun(@FoldResults.shrink_static,obj.preTransferResults);
+        end
+    end        
 end
 
