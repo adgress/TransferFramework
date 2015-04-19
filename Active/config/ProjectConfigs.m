@@ -320,8 +320,20 @@ classdef ProjectConfigs < ProjectConfigsBase
                 legendSuffixes{end+1} = 'regs';
                 %}
             else                
+                
                 fileSuffixes{end+1} = '_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = '';
+                
+                
+                
+                fileSuffixes{end+1} = '_valWeights=1_S+T_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Weighted';
+                
+                %fileSuffixes{end+1} = '_valWeights=2_S+T_LogReg-fixReg=1';
+                %fileSuffixLegend{end+1} = 'Weighted2';
+                
+                
+                
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];
                     legendSuffixes = [legendSuffixes {'Transfer Performance','Performance'}];
