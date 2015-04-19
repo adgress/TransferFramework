@@ -38,13 +38,14 @@ classdef ProjectConfigs < ProjectConfigsBase
         showPreTransferPerformance = 0
         showTransferPerformance = 0
         
-        showTransferDifference = 1
+        showTransferDifference = 0
         showTransferPrediction = 0
                         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         
         showWeightedPrecisionTransferLoss = 1
+        showCVBias = 1
          %{
         activeIterations = 10;
         labelsPerIteration = 5;
@@ -209,9 +210,10 @@ classdef ProjectConfigs < ProjectConfigsBase
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
                 c.configsStruct.axisToUse = [0 1 0 1];
                 %c.configsStruct.axisToUse = [0 1 -5 5];
+            else
+                c.configsStruct.axisToUse = [0 10 -.5 1.1];
+                %c.configsStruct.axisToUse = [0 10 -.05 .1];
             end
-            %c.configsStruct.axisToUse = [0 10 -.5 1.1];
-            %c.configsStruct.axisToUse = [0 10 -.05 .1];
             pc = ProjectConfigs.Create();
             
             [d] = ProjectConfigs.getResultsDirectory();
@@ -318,12 +320,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                 legendSuffixes{end+1} = 'regs';
                 %}
             else                
-                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';               
-                %fileSuffix = '_S+T_LogReg_10_5.mat';
-                %fileSuffix = '_S+T_LogReg-fixReg=1-useVal=1';
-                %fileSuffix = '_S+T_LogReg-fixReg=1';
-                fileSuffixes{end+1} = '_S+T_LogReg-fixReg=1-justInitialVal=1';
-                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9';                                
+                fileSuffixes{end+1} = '_S+T_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = '';
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];
                     legendSuffixes = [legendSuffixes {'Transfer Performance','Performance'}];
@@ -355,7 +353,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if ProjectConfigs.showWeightedPrecisionTransferLoss
                     plotFields{end+1} = 'weightedPrecisionTransferLoss';
                     legendSuffixes{end+1} = 'Weighted Precision Transfer Loss';
-                end                
+                end    
+                if ProjectConfigs.showCVBias
+                    plotFields{end+1} = 'cvPerfDiff';
+                    legendSuffixes{end+1} = 'CV Accuracy';
+                end
             end
             if l > 0 && a > 0
                 for suffixIdx=1:length(fileSuffixes)
