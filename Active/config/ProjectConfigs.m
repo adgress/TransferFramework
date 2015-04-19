@@ -14,13 +14,15 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         instance = ProjectConfigs.CreateSingleton()
 
-        %data = Constants.NG_DATA
-        data = Constants.TOMMASI_DATA
+        data = Constants.NG_DATA
+        %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
+        %data = Constants.HOUSING_DATA
+        useTransfer = true;
         
-        resampleTarget = false
+        resampleTarget = true
         %kNumLabeledPerClass = 2
-        kNumLabeledPerClass = 5
+        kNumLabeledPerClass = 2
         logRegNumFeatures = inf
         useL1LogReg = false
         
@@ -36,8 +38,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         showPreTransferPerformance = 0
         showTransferPerformance = 0
         
-        showTransferDifference = 0
-        showTransferPrediction = 1
+        showTransferDifference = 1
+        showTransferPrediction = 0
                         
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
@@ -48,23 +50,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         labelsPerIteration = 5;
         %}
         
-        activeIterations = 10;
-        labelsPerIteration = 2;
-        %activeMethodsToPlot = {'Random'}
-        activeMethodsToPlot = {'Random','Disagreement'}
-        %activeMethodsToPlot = {'Random','SumEntropy_method=1'}
-        %activeMethodsToPlot = {'Random','TargetEntropy','Entropy'}
-        %activeMethodsToPlot = {'Random','TargetEntropy','Entropy','SumEntropy','TransferRep'}
-        %activeMethodsToPlot = {'TransferRepCov_method=6','TransferRepCov_method=5'}
-        %activeMethodsToPlot = {'TargetEntropy','TransferRepCov_method=5','TransferRep'}
-        %activeMethodsToPlot = {'Entropy','TargetEntropy','TransferRep'}
-        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','TransferRep'}
-        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
-        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy'}
-        %activeMethodsToPlot = {'Entropy','TargetEntropy','SumEntropy'}
-        %activeMethodsToPlot = {'Entropy','TargetEntropy'}
-        %activeMethodsToPlot = {'Entropy'}
-        %activeMethodsToPlot = {'Random'}
+        activeIterations = 20;
+        labelsPerIteration = 5;
+        activeMethodsToPlot = {'Random','Entropy'}
         useDomainsToViz = 1
         
         vizTargetLabels = [10 15]
@@ -113,12 +101,7 @@ classdef ProjectConfigs < ProjectConfigsBase
     end
     
     properties        
-        %sigmaScale
-        %k
-        %alpha
-        %labelsToUse
-        numLabeledPerClass                                
-        %tommasiLabels                       
+        numLabeledPerClass                                                  
         multiSourceTransfer
         makeSubDomains
         addTargetDomain
@@ -158,10 +141,13 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.numOverlap = 0;
             c.justTargetNoSource = false;
             c.maxSourceSize = inf;
-            if c.dataSet == Constants.CV_DATA
-                c.makeSubDomains = false;
-            elseif c.dataSet == Constants.NG_DATA
-                c.makeSubDomains = false;
+            switch ProjectConfigs.data
+                case Constants.CV_DATA
+                    c.makeSubDomains = false;
+                case Constants.NG_DATA
+                    c.makeSubDomains = false;
+                case Constants.HOUSING_DATA
+                    c.makeSubDomains = false;
             end
         end
     end
@@ -176,6 +162,11 @@ classdef ProjectConfigs < ProjectConfigsBase
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
             %c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
+            c.configsStruct.configLoader=ActiveExperimentConfigLoader();
+            c.set('transferMethodClass', FuseTransfer());        
+            if ~ProjectConfigs.useTransfer
+                c.set('transferMethodClass', []);
+            end
             switch pc.dataSet
                 case Constants.CV_DATA
                     c.get('mainConfigs').setCVData(); 
@@ -184,11 +175,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                 case Constants.NG_DATA
                     c.get('mainConfigs').setNGData();
                     c.get('mainConfigs').set('includeDataNameInResultsDirectory',false);
+                case Constants.HOUSING_DATA
+                    c.get('mainConfigs').setHousingBinaryData();                
                 otherwise
                     error('Unknown data set');
-            end
-            c.configsStruct.configLoader=ActiveExperimentConfigLoader();
-            c.set('transferMethodClass', FuseTransfer());        
+            end                        
             %c.set('transferMethodClass', Transfer());                    
         end
         
@@ -215,6 +206,10 @@ classdef ProjectConfigs < ProjectConfigsBase
             
             c.configsStruct.xAxisDisplay = 'Active Learning Iterations';
             c.configsStruct.axisToUse = ProjectConfigs.axisToUse;
+            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                c.configsStruct.axisToUse = [0 1 0 1];
+                %c.configsStruct.axisToUse = [0 1 -5 5];
+            end
             %c.configsStruct.axisToUse = [0 10 -.5 1.1];
             %c.configsStruct.axisToUse = [0 10 -.05 .1];
             pc = ProjectConfigs.Create();
@@ -237,6 +232,14 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.set('prefix','results_ng');
                     c.set('dataSet',{'CR2CR3CR42CR1'});
                     transferDir = 'CR42CR1';
+                    if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                        c.set('dataSet',{''});
+                        transferDir = 'CR1';
+                    end
+                case Constants.HOUSING_DATA
+                    c.set('prefix','');
+                    c.set('dataSet',{''});
+                    transferDir = '';
                 otherwise
                     error('Unknown data set');
             end            
@@ -253,6 +256,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     d = 'results/CV-small/';
                 case Constants.NG_DATA
                     d = 'results_ng/';
+                case Constants.HOUSING_DATA
+                    d = 'results_housing/housingBinary';
                 otherwise
                     error('Unknown data set');
             end           
@@ -268,26 +273,57 @@ classdef ProjectConfigs < ProjectConfigsBase
             legend = {};
             s = num2str(ProjectConfigs.vizTargetLabels);
             title = s;
-            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
-                methodResultsFileNames{end+1} = ['/Random_HF.mat'];
-                legend{end+1} = 'Random';
-                methodResultsFileNames{end+1} = ['/Entropy_HF.mat'];
-                legend{end+1} = 'Entropy';
-                methodResultsFileNames{end+1} = ['/VM_HF.mat'];
-                legend{end+1} = 'VM';
-            else
-                plotFields = {}; 
-                legendSuffixes = {};
-                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';
-                l = ProjectConfigs.labelsPerIteration;
-                a = ProjectConfigs.activeIterations;
+            l = ProjectConfigs.labelsPerIteration;
+            a = ProjectConfigs.activeIterations;
+            plotFields = {}; 
+            legendSuffixes = {};            
+            fileSuffixes = {};
+            fileSuffixLegend = {};
+            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE                               
+                
+                fileSuffixes{end+1} = '_LogReg';
+                fileSuffixLegend{end+1} = '';                                
+                %{
+                fileSuffixes{end+1} = '_valWeights=1_LogReg';
+                fileSuffixLegend{end+1} = 'Weighted';
+                
+                fileSuffixes{end+1} = '_valWeights=2_LogReg';
+                fileSuffixLegend{end+1} = 'Weighted2';
+                %}
+                fileSuffixes{end+1} = '_valWeights=3_LogReg';
+                fileSuffixLegend{end+1} = 'Weighted3';
+                
+                fileSuffixes{end+1} = '_valWeights=4_LogReg';
+                fileSuffixLegend{end+1} = 'Weighted4';
+                
+                %{
+                fileSuffixes{end+1} = '_valWeights=1_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Fixed Reg Weighted';
+                
+                fileSuffixes{end+1} = '_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Fixed Reg';
+                %}
+                
+                plotFields{end+1} = 'preTransferValTest';
+                legendSuffixes{end+1} = 'Pre Transfer Performance';
+                
+                %plotFields{end+1} = 'cvPerfDiff';
+                %legendSuffixes{end+1} = 'CV Accuracy';
+                
+                %{
+                plotFields{end+1} = 'bestRegs';
+                legendSuffixes{end+1} = 'bestRegs';
+                
+                plotFields{end+1} = 'regs';
+                legendSuffixes{end+1} = 'regs';
+                %}
+            else                
+                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9.mat';               
                 %fileSuffix = '_S+T_LogReg_10_5.mat';
-                fileSuffix = '_S+T_LogReg-fixReg=1-useVal=1';
-                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9';
-                if l > 0 && a > 0
-                    fileSuffix = [fileSuffix '_' num2str(a) '_' num2str(l)]; 
-                end
-                fileSuffix = [fileSuffix '.mat'];
+                %fileSuffix = '_S+T_LogReg-fixReg=1-useVal=1';
+                %fileSuffix = '_S+T_LogReg-fixReg=1';
+                fileSuffixes{end+1} = '_S+T_LogReg-fixReg=1-justInitialVal=1';
+                %fileSuffix = '_S+T_LLGC-sigmaScale=0.2-alpha=0.9';                                
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];
                     legendSuffixes = [legendSuffixes {'Transfer Performance','Performance'}];
@@ -319,18 +355,25 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if ProjectConfigs.showWeightedPrecisionTransferLoss
                     plotFields{end+1} = 'weightedPrecisionTransferLoss';
                     legendSuffixes{end+1} = 'Weighted Precision Transfer Loss';
+                end                
+            end
+            if l > 0 && a > 0
+                for suffixIdx=1:length(fileSuffixes)
+                    fileSuffixes{suffixIdx} = ...
+                        [fileSuffixes{suffixIdx} '_' num2str(a) '_' num2str(l) '.mat'];
                 end
-                %TODO: This assumes activeMethodsToPlot has length one                
-                methods = ProjectConfigs.activeMethodsToPlot;
-                fields = {};
-                for methodIdx=1:length(ProjectConfigs.activeMethodsToPlot)
-                    for legendIdx=1:length(legendSuffixes)
+            end
+            fields = {};
+            for methodIdx=1:length(ProjectConfigs.activeMethodsToPlot)
+                for legendIdx=1:length(legendSuffixes)
+                    for suffixIdx=1:length(fileSuffixes)
                         toPlot = ProjectConfigs.activeMethodsToPlot{methodIdx};
                         methodResultsFileNames{end+1} = ...
-                            [toPlot fileSuffix];
-                        legend{end+1} = [toPlot ': ' legendSuffixes{legendIdx}];
+                            [toPlot fileSuffixes{suffixIdx}];
+                        legend{end+1} = [toPlot ': ' ...
+                            legendSuffixes{legendIdx} ' ' fileSuffixLegend{suffixIdx}];
                         fields{end+1} = plotFields{legendIdx};
-                    end                
+                    end
                 end
             end
             plotConfigs = {};

@@ -23,8 +23,9 @@ classdef ActiveMainConfigs < MainConfigs
             learnerConfigs.set('useSeparableDistanceMatrix',useSeparableDistanceMatrix);                        
             
             activeConfigs = Configs();            
-            obj.configsStruct.activeMethodObj=RandomActiveMethod(activeConfigs);
+            %obj.configsStruct.activeMethodObj=RandomActiveMethod(activeConfigs);
             %obj.configsStruct.activeMethodObj=EntropyActiveMethod(activeConfigs);
+            obj.configsStruct.activeMethodObj=EntropyAllActiveMethod(activeConfigs);
             %obj.configsStruct.activeMethodObj=TargetEntropyActiveMethod(activeConfigs);
             %obj.configsStruct.activeMethodObj=VarianceMinimizationActiveMethod(activeConfigs);            
             
@@ -53,6 +54,7 @@ classdef ActiveMainConfigs < MainConfigs
                     obj.set('targetLabels',[10 15]);
                     obj.set('sourceLabels',[25 26]);
                 case Constants.NG_DATA
+                case Constants.HOUSING_DATA
                 otherwise
                     error('Unknown data set');
             end
@@ -66,7 +68,11 @@ classdef ActiveMainConfigs < MainConfigs
             obj.configsStruct.numSourcePerClass=Inf;
             obj.configsStruct.dataSet='ADW2C';
             obj.configsStruct.sourceDataSetToUse = {'A'};
-        end                    
+        end   
+        
+        function [] = setHousingBinaryData(obj)      
+            setHousingBinaryData@MainConfigs(obj);
+        end
         
         function [t,s] = GetTargetSourceLabels(obj)
             t = obj.get('targetLabels');
@@ -82,6 +88,16 @@ classdef ActiveMainConfigs < MainConfigs
         function [v] = get.labelsToUse(obj)
             v = obj.get('targetLabels');
         end
+        
+        function [] = setNGData(obj)
+            setNGData@MainConfigs(obj);                        
+            %obj.set('dataSet','CR2CR3CR4ST1ST2ST3ST42CR1');
+            %obj.set('dataSet','CR1CR3CR4ST1ST2ST3ST42CR2');
+            %obj.set('dataSet','CR1CR2CR4ST1ST2ST3ST42CR3');
+            obj.set('dataSet','CR1CR2CR3ST1ST2ST3ST42CR4');
+            %obj.set('sourceDataSetToUse',{'ST4'});
+        end
+        
     end        
     
 end

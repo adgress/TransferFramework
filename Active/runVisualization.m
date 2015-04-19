@@ -19,9 +19,14 @@ function [] = runVisualization()
         case Constants.TOMMASI_DATA
             domainsToViz = ProjectConfigs.tommasiDomainsToViz;
         case Constants.NG_DATA
-            domainsToViz = ProjectConfigs.ngDomainsToViz;
+            domainsToViz = ProjectConfigs.ngDomainsToViz;            
+        case Constants.HOUSING_DATA
+            
         otherwise
             error('unknown data set');
+    end
+    if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+        domainsToViz = {'CR1','CR2','CR3','CR4'};
     end
     [d] = ProjectConfigs.getResultsDirectory();
     if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz

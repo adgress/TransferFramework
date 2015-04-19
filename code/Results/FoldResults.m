@@ -23,6 +23,8 @@ classdef FoldResults <  matlab.mixin.Copyable
         %dataSetWeights
         ID2Labels
         learnerStats
+        
+        modelResults
     end
     properties(Dependent)
         trainType
@@ -48,6 +50,8 @@ classdef FoldResults <  matlab.mixin.Copyable
             obj.sampledTrain = [];
             obj.test = [];
             obj.learnerStats = struct();
+            
+            obj.modelResults = struct();
         end    
         function [v] = get.trainType(obj)
             %{

@@ -22,19 +22,22 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
 
             [numTrain,numPerClass] = obj.calculateSampling(experiment,originalTest);
             [sampledTrain] = originalTrain.stratifiedSampleByLabels(numTrain,[]);
-            sources = obj.dataAndSplits.allSplits{splitIndex}.sourceData;
-            for sourceIdx=1:length(sources)
-                sources{sourceIdx}.setSource();
-            end
+                        
             transferMethodObj = obj.get('transferMethodClass');
             transferMeasureObj = obj.get('transferMeasure');
+            
+            useTransfer = ~isempty(transferMethodObj);
             
             preTransferInput = struct();
             %preTransferInput.train = sampledTrain;
             %preTransferInput.test = originalTest;
             preTransferInput.learner = learner;
             preTransferInput.sharedConfigs = obj.configs;
-            if ~isempty(transferMethodObj)                
+            if useTransfer              
+                sources = obj.dataAndSplits.allSplits{splitIndex}.sourceData;
+                for sourceIdx=1:length(sources)
+                    sources{sourceIdx}.setSource();
+                end
                 [sampledTrain,test,~,~] = ...
                     transferMethodObj.performTransfer(sampledTrain,originalTest,sources);                
             else
@@ -43,11 +46,13 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             preTransferInput.train = sampledTrain.copy();
             preTransferInput.train.Y(preTransferInput.train.isSource()) = -1;
             preTransferInput.test = originalTest;
+            preTransferInput.validationWeights = ones(size(sampledTrain.Y));
             input = struct();
             input.train = sampledTrain;
             input.test = test;
             input.learner = learner;
             input.sharedConfigs = obj.configs;
+            input.validationWeights = ones(size(sampledTrain.Y));
             activeIterations = obj.get('activeIterations');
             labelsPerIteration = obj.get('labelsPerIteration');
             activeMethodObj = obj.get('activeMethodObj');
@@ -61,7 +66,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                 activeResults.preTransferResults{end+1},learnerSavedData] = ...
                 obj.runLearners(input,preTransferInput,transferMethodObj,...
                 learnerSavedData);
-            if ~isempty(transferMeasureObj)
+            if useTransfer
                 [activeResults.transferMeasureResults{end+1},...
                     activeResults.preTransferMeasureResults{end+1},...
                     measureSavedData] = obj.runTransferMeasures(sources,...
@@ -70,28 +75,32 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             %Note: This assumes the first N instances in train and
             %originalTrain are target instances
             s = struct();
-            for budgetIdx=1:activeIterations
-                resultsForAL = activeResults.iterationResults{end}.copy();
-                if ~isempty(transferMethodObj)
-                    s.preTransferResults = ...
-                        activeResults.preTransferResults{end}.copy();
+            for budgetIdx=1:activeIterations                
+                s.preTransferResults = ...
+                    activeResults.preTransferResults{end}.copy();                
+                resultsForAL = s.preTransferResults;
+                if useTransfer
+                    resultsForAL = activeResults.iterationResults{end}.copy();
                 end
                 s.preTransferInput = preTransferInput;
-                queriedIdx = activeMethodObj.queryLabel(input,resultsForAL,s);
+                [queriedIdx,scores] = activeMethodObj.queryLabel(input,resultsForAL,s);
                 activeResults.queriedLabelIdx(end+1,:) = queriedIdx;
                 
                 queriedYVals = s.preTransferInput.train.Y(queriedIdx);
                 
                 assert(all(queriedYVals == -1));
-                s.preTransferInput.train.isValidation(queriedIdx) = true;
+                preTransferInput.train.isValidation(queriedIdx) = true;
                 input.train.isValidation(queriedIdx) = true;
                     
-                input.train.labelData(queriedIdx);
+                preTransferInput.validationWeights(queriedIdx) = scores(queriedIdx);
+                input.validationWeights(queriedIdx) = scores(queriedIdx);
+                
+                input.train.labelData(queriedIdx);                
                 preTransferInput.train.labelData(queriedIdx);
                 [activeResults.iterationResults{end+1}, ...
-                    activeResults.preTransferResults{end+1},learnerSavedData] = ...
-                    obj.runLearners(input,preTransferInput,transferMethodObj,learnerSavedData);
-                if ~isempty(transferMeasureObj)
+                        activeResults.preTransferResults{end+1},learnerSavedData] = ...
+                        obj.runLearners(input,preTransferInput,transferMethodObj,learnerSavedData);
+                if useTransfer                                        
                     [activeResults.transferMeasureResults{end+1},...
                         activeResults.preTransferMeasureResults{end+1},measureSavedData]...
                         = obj.runTransferMeasures(sources,...
@@ -104,18 +113,19 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
         function [results,preTransferResults,savedData] = ...
                 runLearners(obj,input,preTransferInput,transferMethodObj,...
                 savedData)
+            results = [];
             if ~isfield(savedData,'postTransfer')
                 savedData.postTransfer = struct();
             end
             if ~isfield(savedData,'preTransfer')
                 savedData.preTransfer = struct();
-            end
-            [results,savedData.postTransfer] = input.learner.trainAndTest(input,...
-                savedData.postTransfer);
+            end 
+            [preTransferResults,savedData.preTransfer] = ...
+                input.learner.trainAndTest(preTransferInput,...
+                savedData.preTransfer);
             if ~isempty(transferMethodObj)
-                [preTransferResults,savedData.preTransfer] = ...
-                    input.learner.trainAndTest(preTransferInput,...
-                    savedData.preTransfer);
+                [results,savedData.postTransfer] = input.learner.trainAndTest(input,...
+                    savedData.postTransfer);                
             end
         end
         %TODO: This only works for FuseTransfer
@@ -161,6 +171,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             
             activeMethodObj = obj.configs.get('activeMethodObj');
             s = activeMethodObj.getResultFileName('_',false);
+
             outputFile = [s '_' outputFile];
             activeIterations = obj.get('activeIterations');
             labelsPerIteration = obj.get('labelsPerIteration');

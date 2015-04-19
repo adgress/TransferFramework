@@ -8,7 +8,7 @@ classdef SplitConfigs < Configs
     methods
         function [obj] = SplitConfigs()
             obj = obj@Configs();
-            obj.set('numSplits',10);
+            obj.set('numSplits',30);
             obj.set('percentTrain',.8);
             obj.set('percentTest',.2);         
             obj.set('maxTrainNumPerLabel',Inf);

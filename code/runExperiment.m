@@ -70,7 +70,7 @@ function [] = runExperiment(configs)
         else
             for splitIdx=1:configLoader.numSplits                
                 display(sprintf('%d',splitIdx));
-                t = makeTempFile(outputFile,splitIdx,expIdx);
+                t = makeTempFile(outputFile,expIdx,splitIdx);
                 if exist(t,'file')
                     display('Found Temp results - loading...');
                     splitResults{splitIdx} = loadTempResults(t);                    
@@ -97,8 +97,12 @@ function [] = runExperiment(configs)
         allResults.aggregateMeasureResults();
     end
     allResults.saveResults(outputFile);
-    for splitIdx=1:configLoader.numSplits
-        t = makeTempFile(outputFile,splitIdx);
+    for expIdx=1:configLoader.numExperiments
+        for splitIdx=1:configLoader.numSplits
+            t = makeTempFile(outputFile,expIdx,splitIdx);
+            delete(t);
+        end
+        t = makeTempFile(outputFile,expIdx);
         delete(t);
     end
     toc

@@ -17,7 +17,10 @@ classdef LogisticRegressionMethod < Method
                 obj.set('useVal',0);
             end
             if ~obj.has('justInitialVal')
-                obj.set('justInitialVal',1);
+                obj.set('justInitialVal',0);
+            end            
+            if ~obj.has('trainAllReg')
+                obj.set('trainAllReg',1);
             end
         end
         
@@ -40,7 +43,6 @@ classdef LogisticRegressionMethod < Method
                     shouldUseFeature(i) = false;
                 end
             end
-            %display(num2str(sum(shouldUseFeature)));
             t = find(shouldUseFeature);
             if ProjectConfigs.logRegNumFeatures < length(t)                
                 t(ProjectConfigs.logRegNumFeatures+1:end) = [];
@@ -50,17 +52,18 @@ classdef LogisticRegressionMethod < Method
             %Hyperparameter is multiplied with the loss term
             C = 10.^(-5:5);
             if obj.get('fixReg')
-                C = 1e-3;
+                C = 1e3;
             end
-            %C = 10^3;
             XLabeled = XLabeled(:,shouldUseFeature);
-            
-            %XLabeled = zscore(XLabeled);
-            YLabeled = trainData.Y(shouldUse,:);
-            %B = mnrfit(XLabeled,YLabeled);                       
+            validationWeights = [];
+            if isfield(input,'validationWeights')
+                validationWeights = input.validationWeights(shouldUse);
+            end
+            YLabeled = trainData.Y(shouldUse,:);                  
             labeledType = trainData.type(shouldUse);
             
             accs = zeros(size(C));
+            
             XLabeledCurr = XLabeled;
             YLabeledCurr = YLabeled;
             
@@ -68,6 +71,7 @@ classdef LogisticRegressionMethod < Method
             if ProjectConfigs.useL1LogReg
                 liblinearMethod = 6;
             end
+            
             instanceWeights = ones(size(YLabeledCurr));
             if ProjectConfigs.resampleTarget
                 numSource = sum(labeledType == Constants.SOURCE);
@@ -75,130 +79,145 @@ classdef LogisticRegressionMethod < Method
                 instanceWeights(labeledType == Constants.SOURCE) = 1/numSource;
                 instanceWeights(labeledType == Constants.TARGET_TRAIN) = 1/numTarget;
             end
+          
             for cIdx=1:length(C)
                 options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -v 10 -q'];                
-                %evalc('accs(cIdx) = train(YLabeledCurr,XLabeledCurr,options)');
                 evalc('accs(cIdx) = train(instanceWeights,YLabeledCurr,sparse(XLabeledCurr),options)');                
             end
             bestCInd = argmax(accs);
             bestC = C(bestCInd);
             bestCVAcc = accs(bestCInd) / 100;          
-            testResults.learnerMetadata.cvAcc = bestCVAcc;            
-            if sum(trainData.isSource()) > 0 || useValidationSet || obj.get('useInitialVal')
+            useInitialVal = obj.get('justInitialVal');
+            %useInitialVal = obj.get('useInitialVal');
+            if sum(trainData.isSource()) > 0 || useValidationSet || useInitialVal ...
+                    || ~isempty(validationWeights)
+                bestC = [];
+                bestCInd = [];
+                bestCVAcc = [];
+                accs = zeros(size(C));
                 labeledTargetInds = find(trainData.isLabeledTarget());
                 cvAcc = 0;
                 folds = 10;
                 if length(labeledTargetInds) < folds
                     folds = length(labeledTargetInds);
                 end
-                %for ind=1:length(labeledTargetInds)
                 if useValidationSet
                     folds = 1;
                 end
-                for foldIdx=1:folds
-                    if useValidationSet
-                        isTest = trainData.isValidation(labeledTargetInds);
-                    elseif obj.get('justInitialVal')                        
-                        isOriginalTarget = ~trainData.isValidation(labeledTargetInds);
-                        originalTargetInds = labeledTargetInds(isOriginalTarget);
-                        isTest = DataSet.generateSplit([.8 .2 0],...
-                                trainData.Y(originalTargetInds)) == 2;
-
-                        I = false(size(labeledTargetInds));
-                        I(isOriginalTarget) = isTest;
-                        isTest = I;
-                    else
-                        if length(labeledTargetInds) <= folds
-                            isTest = foldIdx;
-                        else
+                weightSums = zeros(size(C));
+                for cIdx=1:length(C)
+                    for foldIdx=1:folds
+                        if useValidationSet
+                            isTest = trainData.isValidation(labeledTargetInds);
+                        elseif useInitialVal                       
+                            isOriginalTarget = ~trainData.isValidation(labeledTargetInds);
+                            originalTargetInds = labeledTargetInds(isOriginalTarget);
                             isTest = DataSet.generateSplit([.8 .2 0],...
-                                trainData.Y(labeledTargetInds)) == 2;
+                                    trainData.Y(originalTargetInds)) == 2;
+
+                            I = false(size(labeledTargetInds));
+                            I(isOriginalTarget) = isTest;
+                            isTest = I;
+                        else
+                            if length(labeledTargetInds) <= folds
+                                isTest = foldIdx;
+                            else
+                                isTest = DataSet.generateSplit([.8 .2 0],...
+                                    trainData.Y(labeledTargetInds)) == 2;
+                            end
+                        end          
+                        testInds = labeledTargetInds(isTest);
+                        options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -q'];
+                        currToUse = trainData.isLabeled();
+                        currToUse(testInds) = false;
+                        Xcurr = trainData.X(currToUse,shouldUseFeature);
+                        Ycurr = trainData.Y(currToUse);
+                        type = trainData.type(currToUse);
+
+                        t = NormalizeTransform();
+                        t.learn(Xcurr);                    
+                        Xcurr = t.apply(Xcurr,Ycurr);
+                        instanceWeights = ones(size(Ycurr));
+                        if ProjectConfigs.resampleTarget
+                            numSource = sum(type == Constants.SOURCE);
+                            numTarget = sum(type == Constants.TARGET_TRAIN);
+                            instanceWeights(type == Constants.SOURCE) = 1/numSource;
+                            instanceWeights(type == Constants.TARGET_TRAIN) = 1/numTarget;
                         end
-                    end          
-                    testInds = labeledTargetInds(isTest);
-                    options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(bestC) ' -B 1 -q'];
-                    currToUse = trainData.isLabeled();
-                    currToUse(testInds) = false;
-                    Xcurr = trainData.X(currToUse,shouldUseFeature);
-                    Ycurr = trainData.Y(currToUse);
-                    type = trainData.type(currToUse);
-                    
-                    t = NormalizeTransform();
-                    t.learn(Xcurr);                    
-                    Xcurr = t.apply(Xcurr,Ycurr);
-                    instanceWeights = ones(size(Ycurr));
-                    if ProjectConfigs.resampleTarget
-                        numSource = sum(type == Constants.SOURCE);
-                        numTarget = sum(type == Constants.TARGET_TRAIN);
-                        instanceWeights(type == Constants.SOURCE) = 1/numSource;
-                        instanceWeights(type == Constants.TARGET_TRAIN) = 1/numTarget;
+                        m = train(instanceWeights,Ycurr,sparse(Xcurr),options);
+                        Ytest = trainData.Y(testInds);
+                        Xtest = trainData.X(testInds,shouldUseFeature);
+                        Xtest = t.apply(Xtest);
+                        [predLabels,t,~] = predict(Ytest, sparse(Xtest), m, '-q');
+                        if isempty(validationWeights)
+                            accs(cIdx) = accs(cIdx) + t(1)/folds;
+                        else
+                            assert(mean(predLabels == Ytest)*100 == t(1));
+                            accVec = (predLabels == Ytest) ./ validationWeights(isTest);
+                            accs(cIdx) = accs(cIdx) + sum(accVec);
+                            weightSums(cIdx) = weightSums(cIdx) + sum(1 ./ validationWeights(isTest));
+                        end
+                        
                     end
-                    %m = train(Ycurr,sparse(Xcurr),options);
-                    m = train(instanceWeights,Ycurr,sparse(Xcurr),options);
-                    Ytest = trainData.Y(testInds);
-                    Xtest = trainData.X(testInds,shouldUseFeature);
-                    Xtest = t.apply(Xtest);
-                    [~,t,~] = predict(Ytest, sparse(Xtest), m, '-q');
-                    %{
-                    % Find L2-regularized logistic
-                    nVars = size(Xcurr,2);
-                    X = [ones(size(Xcurr,1),1) Xcurr];
-                    Y = Ycurr;
-                    Y(Y == 2) = -1;
-                    funObj = @(w)LogisticLoss(w,X,Y);
-                    lambda = 1*ones(nVars+1,1);
-                    lambda(1) = 0; % Don't penalize bias
-                    minFuncOptions = struct();
-                    minFuncOptions.Display = 0;
-                    fprintf('Training L2-regularized logistic regression model...\n');
-                    wL2 = minFunc(@penalizedL2,zeros(nVars+1,1),minFuncOptions,funObj,lambda);
-                    %}
-                    cvAcc = cvAcc + t(1)/(100*folds);
                 end
-                testResults.learnerMetadata.cvAcc = cvAcc;
+                if ~isempty(validationWeights)
+                    accs = accs ./ weightSums;
+                    accs = accs * 100;
+                end
+                bestCInd = argmax(accs);
+                bestC = C(bestCInd);
+                bestCVAcc = accs(bestCInd) / 100;                     
             end
+            testResults.learnerMetadata.cvAcc = bestCVAcc;
+            testResults.learnerMetadata.reg = bestC;
             instanceWeights = ones(size(YLabeled));            
             if ~isempty(test)
-                testResults.dataType = [trainData.type ; test.type];
-                options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(bestC) ' -B 1 -q'];
+                testResults.dataType = [trainData.type ; test.type];                
+                testResults.yActual = [trainData.trueY ; test.trueY];
+                testResults.yTrain = [trainData.Y ; -ones(size(test.Y))];
+                testResults.isValidation = [trainData.isValidation; test.isValidation];
                 
                 t = NormalizeTransform();
                 t.learn(XLabeled,YLabeled);
                 XLabeled = t.apply(XLabeled,YLabeled);
                 
                 if ProjectConfigs.resampleTarget
-                    %I = LabeledData.ResampleTargetTrainData(labeledType);
-                    %XLabeled = XLabeled(I,:);
-                    %YLabeled = YLabeled(I);
                     numSource = sum(labeledType == Constants.SOURCE);
                     numTarget = sum(labeledType == Constants.TARGET_TRAIN);
                     instanceWeights(labeledType == Constants.SOURCE) = 1/numSource;
                     instanceWeights(labeledType == Constants.TARGET_TRAIN) = 1/numTarget;
                 end
                 
-                %model = train(YLabeled,sparse(XLabeled),options);
-                model = train(instanceWeights,YLabeled,sparse(XLabeled),options);
+                if ~obj.get('trainAllReg')
+                    C = bestC;
+                end
                 Xtrain = sparse(trainData.X(:,shouldUseFeature));            
                 Xtrain = t.apply(Xtrain);
-                [predTrain,~,trainFU] = predict(trainData.trueY, sparse(Xtrain), model, '-q -b 1');
                 Xtest = sparse(test.X(:,shouldUseFeature));
-                Xtest = t.apply(Xtest);
-                [predTest,acc,testFU] = predict(test.Y, sparse(Xtest), model, '-q -b 1');
-                acc(1) = acc(1) / 100;
-                testResults.yPred = [predTrain;predTest];
-                testResults.yActual = [trainData.trueY ; test.trueY];
-                testResults.dataFU = [trainFU ; testFU];
-                testResults.yTrain = [trainData.Y ; -ones(size(test.Y))];
-                testResults.isValidation = [trainData.isValidation; test.isValidation];
-                display(['LogReg Acc: ' num2str(acc(1))]);  
-                %mean(testResults.yPred==testResults.yActual)
+                    Xtest = t.apply(Xtest);
+                for cIdx=1:length(C)
+                    currC = C(cIdx);
+                    options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(currC) ' -B 1 -q'];
+                    model = train(instanceWeights,YLabeled,sparse(XLabeled),options);                    
+                    [predTrain,~,trainFU] = predict(trainData.trueY, sparse(Xtrain), model, '-q -b 1');
+                    
+                    [predTest,acc,testFU] = predict(test.Y, sparse(Xtest), model, '-q -b 1');                                        
+                    testResults.modelResults(cIdx).yPred = [predTrain;predTest];                    
+                    testResults.modelResults(cIdx).dataFU = [trainFU ; testFU];
+                    testResults.modelResults(cIdx).cvAcc = accs(cIdx);
+                    acc(1) = acc(1) / 100;
+                    testResults.modelResults(cIdx).testAcc = acc(1);
+                    testResults.modelResults(cIdx).reg = currC;
+                    if currC == bestC
+                        testResults.yPred = ...
+                            testResults.modelResults(cIdx).yPred;
+                        testResults.dataFU = ...
+                            testResults.modelResults(cIdx).dataFU;                        
+                        
+                        display(['LogReg Acc: ' num2str(acc(1))]);  
+                    end
+                end
             end
-            %{
-            if length(find(shouldUse)) < 20
-                display(find(shouldUse)');
-                shouldUse;
-            end
-            %}
         end 
         
         function [prefix] = getPrefix(obj)

@@ -54,7 +54,7 @@ classdef MainConfigs < Configs
             v = {...                
                 MainConfigs.OutputNameStruct('sourceNoise','sourceNoise',greaterThanZero,true)...
                 MainConfigs.OutputNameStruct('useMeanSigma','',isTrue),...
-                MainConfigs.OutputNameStruct('transferDataSetName','',trueFunc,true,false),...
+                MainConfigs.OutputNameStruct('dataSetName','',trueFunc,true,false),...
                 MainConfigs.OutputNameStruct('justKeptFeaturs','',isTrue),...
                 MainConfigs.OutputNameStruct('numVecs','numVecsExp',lengthGreaterThanOne),...
                 MainConfigs.OutputNameStruct('tau','tauExp',lengthGreaterThanOne),...
@@ -142,6 +142,21 @@ classdef MainConfigs < Configs
             obj.configsStruct.dataSet='ACW2D';
             obj.configsStruct.sourceDataSetToUse = {'W'};
         end
+        
+        function [] = setHousingBinaryData(obj)
+            obj.set('dataName','housingBinary');
+            obj.set('resultsDir','results_housing');
+            obj.set('dataSet','housing_split_data');            
+            obj.delete('labelsToUse');
+        end     
+        
+        function [] = setYeastBinaryData(obj)
+            obj.set('dataName','yeastBinary');
+            obj.set('resultsDir','results_yeast');
+            obj.set('dataSet','yeastBinary_split_data');            
+            obj.delete('labelsToUse');
+        end
+        
         function [] = setLLGCConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();

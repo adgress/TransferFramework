@@ -27,6 +27,10 @@ classdef BatchConfigs < Configs
                         overrideConfigs = BatchConfigs.makeTommasiOverrideConfigs();
                     case Constants.NG_DATA
                         overrideConfigs = BatchConfigs.makeNGOverrideConfigs();
+                    case Constants.NG_DATA
+                        overrideConfigs = BatchConfigs.makeNGOverrideConfigs();
+                    case Constants.HOUSING_DATA
+                        overrideConfigs = BatchConfigs.makeHousingOverrideConfigs();
                     otherwise
                         error('Unknown data set');
                 end
@@ -42,10 +46,21 @@ classdef BatchConfigs < Configs
                     TargetEntropyActiveMethod(activeConfigs),...                    
                 };
                 %}
-                activeMethods = {  
-                    DisagreementActiveMethod(activeConfigs),...
+                activeMethods = {                      
                     RandomActiveMethod(activeConfigs),...                    
+                    EntropyActiveMethod(activeConfigs), ...
                 };
+            
+                
+                activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
+                activeMethods{end}.set('valWeights',1);
+                activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
+                activeMethods{end}.set('valWeights',2);
+                activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
+                activeMethods{end}.set('valWeights',3);
+                activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
+                activeMethods{end}.set('valWeights',4);
+                
                 newOverrideConfigs = {};
                 for i=1:length(overrideConfigs)
                     c = overrideConfigs{i};
@@ -135,14 +150,31 @@ classdef BatchConfigs < Configs
                 configs{end+1} = c;
             end
             %}
-            sourceDataSetToUse = {'CR2','CR3','CR4','ST1','ST2','ST3','ST4'};
-            dataSet = 'CR2CR3CR4ST1ST2ST3ST42CR1';
-            for idx=1:length(sourceDataSetToUse)
-                c = Configs();
-                c.set('sourceDataSetToUse',sourceDataSetToUse{idx});
-                c.set('dataSet',dataSet);
-                configs{end+1} = c;
+            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                dataSets = { ...
+                    'CR2CR3CR4ST1ST2ST3ST42CR1',...
+                    'CR1CR3CR4ST1ST2ST3ST42CR2',...
+                    'CR1CR2CR4ST1ST2ST3ST42CR3',...
+                    'CR1CR2CR3ST1ST2ST3ST42CR4'
+                };
+                for idx=1:length(dataSets)
+                    c = Configs();
+                    c.set('dataSet',dataSets{idx});
+                    configs{end+1} = c;
+                end
+            else
+                sourceDataSetToUse = {'CR2','CR3','CR4','ST1','ST2','ST3','ST4'};
+                dataSet = 'CR2CR3CR4ST1ST2ST3ST42CR1';
+                for idx=1:length(sourceDataSetToUse)
+                    c = Configs();
+                    c.set('sourceDataSetToUse',sourceDataSetToUse{idx});
+                    c.set('dataSet',dataSet);
+                    configs{end+1} = c;
+                end
             end
+        end
+        function [configs] = makeHousingOverrideConfigs()
+            configs = {};
         end
     end
 end

@@ -36,7 +36,9 @@ classdef ResultsContainer < handle
         end
         function [] = saveResults(obj,filename)
             results = obj;
+            warning off;
             [~] = mkdir(fileparts(filename));
+            warning on;
             save(filename,'results');
         end
         function [results] = getResultsForMethod(obj,learnerClass,resultsQuery)

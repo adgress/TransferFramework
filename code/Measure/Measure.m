@@ -13,8 +13,10 @@ classdef Measure < Saveable
             obj = obj@Saveable(configs);
         end
         function [valTrain,valTest] = computeTrainTestResults(obj,r)
-            valTrain = sum(r.trainPredicted==r.trainActual)/...
-                        numel(r.trainPredicted); 
+            trainLabeled = r.yTrain > 0 & ~r.isValidation;
+            trainAccVec = r.trainPredicted==r.trainActual;            
+            trainAccVec = trainAccVec(trainLabeled);
+            valTrain = mean(trainAccVec);
             valTest = sum(r.testPredicted==r.testActual)/...
                         numel(r.testPredicted);   
         end
@@ -31,16 +33,23 @@ classdef Measure < Saveable
                 preTransferValTest = [];
                 transferMeasures = [];
                 preTransferMeasures = [];
-                
-                for resultIdx=1:length(iterationResults)
+                regs = [];
+                bestRegs = [];
+                cvAcc = [];
+                for resultIdx=1:length(iterationResults)                    
                     r = iterationResults{resultIdx};
-                    [valTrain(resultIdx),valTest(resultIdx)] = ...
-                        obj.computeTrainTestResults(r);
-                    if ~isempty(split.preTransferResults)
-                        r2 = split.preTransferResults{resultIdx};
+                    if ~isempty(r)
+                        [valTrain(resultIdx),valTest(resultIdx)] = ...
+                            obj.computeTrainTestResults(r);
+                    end
+                    r2 = split.preTransferResults{resultIdx};
+                    if ~isempty(r2)                        
                         [preTransferValTrain(resultIdx), ...
                             preTransferValTest(resultIdx)] = ...
                             obj.computeTrainTestResults(r2);                        
+                        regs(resultIdx) = r2.learnerMetadata.reg;
+                        cvAcc(resultIdx) = r2.learnerMetadata.cvAcc;
+                        bestRegs(resultIdx) = r2.modelResults(argmax([r2.modelResults.testAcc])).reg;                        
                     end
                     if ~isempty(split.transferMeasureResults)
                         transferMeasures(resultIdx) = ...
@@ -51,14 +60,25 @@ classdef Measure < Saveable
                             split.preTransferMeasureResults{resultIdx}.percCorrect;
                     end
                 end
-                transferDifference = ...
-                    valTest - preTransferValTest;                
-                measureResults.learnerStats.preTransferValTrain = preTransferValTrain; 
-                measureResults.learnerStats.preTransferValTest = preTransferValTest;
-                measureResults.learnerStats.transferDifference = transferDifference;
+                hasTransfer = ~isempty(r);
+                hasPreTransfer = ~isempty(r2);
+                hasBoth = hasPreTransfer && hasTransfer;
+                if hasBoth
+                    transferDifference = ...
+                        valTest - preTransferValTest;                
+                    measureResults.learnerStats.transferDifference = transferDifference;
+                end
+                if hasPreTransfer
+                    measureResults.learnerStats.preTransferValTrain = preTransferValTrain; 
+                    measureResults.learnerStats.preTransferValTest = preTransferValTest;                
+                    measureResults.learnerStats.regs = log10(regs);
+                    measureResults.learnerStats.bestRegs = log10(bestRegs);
+                    measureResults.learnerStats.regDiffs = abs(log10(bestRegs)-log10(regs));
+                    measureResults.learnerStats.cvPerfDiff = abs(preTransferValTest-cvAcc);
+                end                
                 if ~isempty(preTransferMeasures)
                     measureResults.learnerStats.preTransferMeasures = preTransferMeasures;
-                    measureResults.learnerStats.preTransferMeasurePerfDiff = ...a
+                    measureResults.learnerStats.preTransferMeasurePerfDiff = ...
                         abs(preTransferMeasures - preTransferValTest);
                 end
                 if ~isempty(transferMeasures)                    

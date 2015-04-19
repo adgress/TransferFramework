@@ -32,12 +32,16 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             paramsToVary{end+1} = 'overrideConfigs';
             allParamsToVary{end+1} = obj.get('overrideConfigs');
             allParams = Helpers.MakeCrossProduct(allParamsToVary{:});
+            if isempty(allParams)
+                allParams{1} = [];
+            end
             for paramIdx=1:length(allParams)                    
                 params = allParams{paramIdx};
                 mainConfigsCopy = mainConfigs.copy();
-                mainConfigsCopy.set(paramsToVary,params);  
-                mainConfigsCopy.addConfigs(params{end});
-
+                if ~isempty(params)
+                    mainConfigsCopy.set(paramsToVary,params);  
+                    mainConfigsCopy.addConfigs(params{end});
+                end
                 [dataAndSplits] = obj.loadData(mainConfigsCopy);
 
                 if numRandomFeatures > 0
@@ -63,12 +67,12 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigsCopy.set('numOverlap',pc.numOverlap);
                     mainConfigsCopy.set('addTargetDomain',pc.addTargetDomain);                    
                     mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
-                    mainConfigsCopy.set('transferDataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);             
+                    mainConfigsCopy.set('dataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);             
 
                     mainConfigsCopy.set('targetLabels',targetLabels);
                     mainConfigsCopy.set('sourceLabels',sourceLabels);                
                 else
-                    if isfield(dataAndSplits,'sourceNames')
+                    if isfield(dataAndSplits,'sourceNames') && ProjectConfigs.useTransfer
                         assert(numRandomFeatures == 0);
                         allSourceNames = dataAndSplits.sourceNames;
                         currSourceNames = mainConfigsCopy.c.sourceDataSetToUse;
@@ -82,9 +86,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         end
                         dataAndSplits.sourceDataSets = dataAndSplits.sourceDataSets(shouldUseSource);
                         dataAndSplits.sourceNames = dataAndSplits.sourceNames(shouldUseSource);
-                        transferDataSetName = [[dataAndSplits.sourceNames{:}] '2' targetName];
-                        mainConfigsCopy.set('transferDataSetName',transferDataSetName);
+                        dataSetName = [[dataAndSplits.sourceNames{:}] '2' targetName];                        
+                    else
+                        dataSetName = dataAndSplits.allData.name;                        
                     end
+                    mainConfigsCopy.set('dataSetName',dataSetName);
                     dataAndSplitsCopy = struct();
                     dataAndSplitsCopy.allSplits = {};
                     if isempty(dataAndSplits.configs)
