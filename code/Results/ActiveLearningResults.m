@@ -9,6 +9,7 @@ classdef ActiveLearningResults < matlab.mixin.Copyable
         transferMeasureResults = {}
         preTransferMeasureResults = {}
         trainingDataMetadata
+        activeMetadata = {}
     end
     
     methods

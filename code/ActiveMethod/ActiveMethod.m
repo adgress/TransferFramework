@@ -16,19 +16,23 @@ classdef ActiveMethod < Saveable
             n = obj.getPrefix();
         end
         
-        function [queriedIdx,scores] = queryLabel(obj,input,results,s)               
+        function [queriedIdx,scores,s] = queryLabel(obj,input,results,s)               
+            s = struct();
+            s.divergence = 0;
             labelsPerIteration = obj.get('labelsPerIteration');
             unlabeledScores = obj.getScores(input,results,s);  
             unlabeledScores = unlabeledScores .^ 5;
             unlabeledInds = find(input.train.Y < 0);
             %[~,maxIdx] = max(unlabeledScores);
                         
-            if obj.get('valWeights')           
+            if obj.get('valWeights')
                 remainingScores = unlabeledScores;
                 v = obj.get('valWeights');
-                if v == 1 || v == 3
+                if v == 3 || v == 4
                     remainingScores = remainingScores .^4;
                 end
+                o = ones(size(remainingScores))/length(remainingScores);
+                s.divergence = norm(remainingScores - o);
                 %remainingScores = ones(size(unlabeledScores));
                 
                 remainingInds = unlabeledInds;

@@ -55,6 +55,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeIterations = 20;
         labelsPerIteration = 5;
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
+        %activeMethodsToPlot = {'Random','Entropy'}
         activeMethodsToPlot = {'Entropy'}
         useDomainsToViz = 1
         
@@ -294,6 +295,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 fileSuffixes{end+1} = '_valWeights=2_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted2';
                 %}
+                
                 fileSuffixes{end+1} = '_valWeights=3_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted3';
                 
@@ -325,13 +327,21 @@ classdef ProjectConfigs < ProjectConfigsBase
                 %{
                 fileSuffixes{end+1} = '_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = '';
-                                                
+                
                 fileSuffixes{end+1} = '_valWeights=1_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = 'Weighted';
                 
                 fileSuffixes{end+1} = '_valWeights=2_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = 'Weighted2';
                 %}
+                %{
+                fileSuffixes{end+1} = '_valWeights=3_S+T_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Weighted3';
+                
+                fileSuffixes{end+1} = '_valWeights=4_S+T_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Weighted4';
+                %}
+                
                 fileSuffixes{end+1} = '_S+T_LogReg';
                 fileSuffixLegend{end+1} = '';
                 

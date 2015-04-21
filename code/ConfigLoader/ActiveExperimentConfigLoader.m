@@ -83,7 +83,8 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                     resultsForAL = activeResults.iterationResults{end}.copy();
                 end
                 s.preTransferInput = preTransferInput;
-                [queriedIdx,scores] = activeMethodObj.queryLabel(input,resultsForAL,s);
+                [queriedIdx,scores,activeMetadata] = activeMethodObj.queryLabel(input,resultsForAL,s);
+                activeResults.activeMetadata{budgetIdx} = activeMetadata;
                 activeResults.queriedLabelIdx(end+1,:) = queriedIdx;
                 
                 queriedYVals = s.preTransferInput.train.Y(queriedIdx);
