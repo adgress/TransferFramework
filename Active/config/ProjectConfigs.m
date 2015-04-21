@@ -55,7 +55,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeIterations = 20;
         labelsPerIteration = 5;
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
-        activeMethodsToPlot = {'Random','Entropy'}
+        activeMethodsToPlot = {'Entropy'}
         useDomainsToViz = 1
         
         vizTargetLabels = [10 15]
@@ -322,7 +322,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 legendSuffixes{end+1} = 'regs';
                 %}
             else                
-                
+                %{
                 fileSuffixes{end+1} = '_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = '';
                                                 
@@ -331,8 +331,15 @@ classdef ProjectConfigs < ProjectConfigsBase
                 
                 fileSuffixes{end+1} = '_valWeights=2_S+T_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = 'Weighted2';
+                %}
+                fileSuffixes{end+1} = '_S+T_LogReg';
+                fileSuffixLegend{end+1} = '';
                 
+                fileSuffixes{end+1} = '_valWeights=1_S+T_LogReg';
+                fileSuffixLegend{end+1} = 'Weighted';
                 
+                fileSuffixes{end+1} = '_valWeights=2_S+T_LogReg';
+                fileSuffixLegend{end+1} = 'Weighted2';
                 
                 if ProjectConfigs.showBothPerformance
                     plotFields = [plotFields {'testResults','preTransferValTest'}];

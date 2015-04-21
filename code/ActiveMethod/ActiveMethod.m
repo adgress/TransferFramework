@@ -25,6 +25,10 @@ classdef ActiveMethod < Saveable
                         
             if obj.get('valWeights')           
                 remainingScores = unlabeledScores;
+                v = obj.get('valWeights');
+                if v == 1 || v == 3
+                    remainingScores = remainingScores .^4;
+                end
                 %remainingScores = ones(size(unlabeledScores));
                 
                 remainingInds = unlabeledInds;
