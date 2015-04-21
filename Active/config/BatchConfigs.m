@@ -58,12 +58,12 @@ classdef BatchConfigs < Configs
                 activeMethods{end}.set('valWeights',1);
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',2);
-                %{
+                
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',3);
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',4);
-                %}
+                
                 newOverrideConfigs = {};
                 for i=1:length(overrideConfigs)
                     c = overrideConfigs{i};
