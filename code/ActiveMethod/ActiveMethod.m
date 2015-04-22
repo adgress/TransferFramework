@@ -16,9 +16,9 @@ classdef ActiveMethod < Saveable
             n = obj.getPrefix();
         end
         
-        function [queriedIdx,scores,s] = queryLabel(obj,input,results,s)               
-            s = struct();
-            s.divergence = 0;
+        function [queriedIdx,scores,metadata] = queryLabel(obj,input,results,s)               
+            metadata = struct();
+            metadata.divergence = 0;
             labelsPerIteration = obj.get('labelsPerIteration');
             unlabeledScores = obj.getScores(input,results,s);  
             unlabeledScores = unlabeledScores .^ 5;
@@ -32,7 +32,7 @@ classdef ActiveMethod < Saveable
                     remainingScores = remainingScores .^4;
                 end
                 o = ones(size(remainingScores))/length(remainingScores);
-                s.divergence = norm(remainingScores - o);
+                metadata.divergence = norm(remainingScores - o);
                 %remainingScores = ones(size(unlabeledScores));
                 
                 remainingInds = unlabeledInds;
