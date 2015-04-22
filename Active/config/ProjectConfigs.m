@@ -8,7 +8,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         EXPERIMENT_ACTIVE = 1
         EXPERIMENT_ACTIVE_TRANSFER = 2
-        experimentSetting = 2
+        experimentSetting = 1
         
         numRandomFeatures = 0
         
@@ -18,7 +18,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         %data = Constants.HOUSING_DATA
-        useTransfer = true;
+        useTransfer = false;
         
         resampleTarget = true
         %kNumLabeledPerClass = 2
@@ -55,8 +55,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeIterations = 20;
         labelsPerIteration = 5;
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
-        %activeMethodsToPlot = {'Random','Entropy'}
-        activeMethodsToPlot = {'Entropy'}
+        activeMethodsToPlot = {'Random','Entropy'}
+        %activeMethodsToPlot = {'Entropy'}
         useDomainsToViz = 1
         
         vizTargetLabels = [10 15]
@@ -285,29 +285,40 @@ classdef ProjectConfigs < ProjectConfigsBase
             fileSuffixes = {};
             fileSuffixLegend = {};
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE                               
-                
+                %{
                 fileSuffixes{end+1} = '_LogReg';
                 fileSuffixLegend{end+1} = '';                                
-                
+                %}
+                %{
                 fileSuffixes{end+1} = '_valWeights=1_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted';
                 
                 fileSuffixes{end+1} = '_valWeights=2_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted2';
-                
-                
+                %}
+                %{
                 fileSuffixes{end+1} = '_valWeights=3_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted3';
                 
                 fileSuffixes{end+1} = '_valWeights=4_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted4';
-                
-                %{
-                fileSuffixes{end+1} = '_valWeights=1_LogReg-fixReg=1';
-                fileSuffixLegend{end+1} = 'Fixed Reg Weighted';
+                %}                                
                 
                 fileSuffixes{end+1} = '_LogReg-fixReg=1';
                 fileSuffixLegend{end+1} = 'Fixed Reg';
+                
+                fileSuffixes{end+1} = '_valWeights=1_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Fixed Reg Weighted';
+                
+                fileSuffixes{end+1} = '_valWeights=2_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Fixed Reg Weighted2';
+                
+                %{
+                fileSuffixes{end+1} = '_valWeights=3_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Fixed Reg Weighted3';
+                
+                fileSuffixes{end+1} = '_valWeights=4_LogReg-fixReg=1';
+                fileSuffixLegend{end+1} = 'Fixed Reg Weighted4';
                 %}
                 
                 plotFields{end+1} = 'preTransferValTest';
@@ -316,6 +327,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                 plotFields{end+1} = 'cvPerfDiff';
                 legendSuffixes{end+1} = 'CV Accuracy';
                 
+                %{
+                plotFields{end+1} = 'divergence';
+                legendSuffixes{end+1} = 'Divergence';
+                %}
                 %{
                 plotFields{end+1} = 'bestRegs';
                 legendSuffixes{end+1} = 'bestRegs';

@@ -36,7 +36,12 @@ classdef Measure < Saveable
                 regs = [];
                 bestRegs = [];
                 cvAcc = [];
-                for resultIdx=1:length(iterationResults)                    
+                divergence = zeros(length(iterationResults),1);
+                for resultIdx=1:length(iterationResults)
+                    if resultIdx > 1 && ~isempty(split.activeMetadata)
+                        m = split.activeMetadata{resultIdx-1};
+                        divergence(resultIdx) = m.divergence;
+                    end
                     r = iterationResults{resultIdx};
                     if ~isempty(r)
                         [valTrain(resultIdx),valTest(resultIdx)] = ...
@@ -68,6 +73,7 @@ classdef Measure < Saveable
                         valTest - preTransferValTest;                
                     measureResults.learnerStats.transferDifference = transferDifference;
                 end
+                measureResults.learnerStats.divergence = divergence;
                 if hasPreTransfer
                     measureResults.learnerStats.preTransferValTrain = preTransferValTrain; 
                     measureResults.learnerStats.preTransferValTest = preTransferValTest;                

@@ -32,6 +32,7 @@ classdef ActiveMethod < Saveable
                     remainingScores = remainingScores .^4;
                 end
                 o = ones(size(remainingScores))/length(remainingScores);
+                remainingScores = remainingScores ./ sum(remainingScores);
                 metadata.divergence = norm(remainingScores - o);
                 %remainingScores = ones(size(unlabeledScores));
                 

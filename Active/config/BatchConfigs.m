@@ -46,23 +46,29 @@ classdef BatchConfigs < Configs
                     TargetEntropyActiveMethod(activeConfigs),...                    
                 };
                 %}
-                
+                %{
                 activeMethods = {                      
                     RandomActiveMethod(activeConfigs),...                    
                     EntropyActiveMethod(activeConfigs), ...
                     SumEntropyActiveMethod(activeConfigs), ...
                     TargetEntropyActiveMethod(activeConfigs), ...
                 };
+                %}
                 
-                %activeMethods={};
+                activeMethods={
+                    RandomActiveMethod(activeConfigs),...                    
+                    EntropyActiveMethod(activeConfigs),...
+                };
                 
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',1);
+                
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
-                activeMethods{end}.set('valWeights',2);
+                activeMethods{end}.set('valWeights',2);                
                 %{
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',3);
+                
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',4);
                 %}
