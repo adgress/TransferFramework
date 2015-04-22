@@ -8,7 +8,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         EXPERIMENT_ACTIVE = 1
         EXPERIMENT_ACTIVE_TRANSFER = 2
-        experimentSetting = 2
+        experimentSetting = 1
         
         numRandomFeatures = 0
         
@@ -18,7 +18,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         %data = Constants.HOUSING_DATA
-        useTransfer = true;
+        useTransfer = false;
         
         resampleTarget = true
         %kNumLabeledPerClass = 2
@@ -313,8 +313,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                 plotFields{end+1} = 'preTransferValTest';
                 legendSuffixes{end+1} = 'Pre Transfer Performance';
                 
-                %plotFields{end+1} = 'cvPerfDiff';
-                %legendSuffixes{end+1} = 'CV Accuracy';
+                plotFields{end+1} = 'cvPerfDiff';
+                legendSuffixes{end+1} = 'CV Accuracy';
                 
                 %{
                 plotFields{end+1} = 'bestRegs';
