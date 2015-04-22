@@ -8,7 +8,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         EXPERIMENT_ACTIVE = 1
         EXPERIMENT_ACTIVE_TRANSFER = 2
-        experimentSetting = 1
+        experimentSetting = 2
         
         numRandomFeatures = 0
         
@@ -18,7 +18,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         %data = Constants.HOUSING_DATA
-        useTransfer = false;
+        useTransfer = true;
         
         resampleTarget = true
         %kNumLabeledPerClass = 2
@@ -288,13 +288,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                 
                 fileSuffixes{end+1} = '_LogReg';
                 fileSuffixLegend{end+1} = '';                                
-                %{
+                
                 fileSuffixes{end+1} = '_valWeights=1_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted';
                 
                 fileSuffixes{end+1} = '_valWeights=2_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted2';
-                %}
+                
                 
                 fileSuffixes{end+1} = '_valWeights=3_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted3';
