@@ -169,6 +169,9 @@ classdef FoldResults <  matlab.mixin.Copyable
     end
     methods(Static)
         function [] = shrink_static(obj)
+            if isempty(obj)
+                return;
+            end
             obj.shrink();
         end
     end
