@@ -57,6 +57,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 end                                   
                 if pc.makeSubDomains
                     assert(numRandomFeatures == 0);
+                    assert(ProjectConfigs.useTransfer)
                     labelProduct = mainConfigsCopy.MakeLabelProduct();                    
                     if pc.addTargetDomain
                         labelProduct = obj.addTargetDomain(labelProduct);
@@ -70,7 +71,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigsCopy.set('dataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);             
 
                     mainConfigsCopy.set('targetLabels',targetLabels);
-                    mainConfigsCopy.set('sourceLabels',sourceLabels);                
+                    mainConfigsCopy.set('sourceLabels',sourceLabels);   
                 else
                     if isfield(dataAndSplits,'sourceNames') && ProjectConfigs.useTransfer
                         assert(numRandomFeatures == 0);
@@ -88,7 +89,15 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         dataAndSplits.sourceNames = dataAndSplits.sourceNames(shouldUseSource);
                         dataSetName = [[dataAndSplits.sourceNames{:}] '2' targetName];                        
                     else
-                        dataSetName = dataAndSplits.allData.name;                        
+                        %dataSetName = dataAndSplits.allData.name;                        
+                        dataSetName = '';
+                        if ~strcmp(dataAndSplits.allData.name,'USPS')
+                            dataSetName = dataAndSplits.allData.name;
+                        end
+                        l = mainConfigsCopy.get('labelsToUse',[]);
+                        if ~isempty(l)
+                            dataSetName = num2str(l);
+                        end
                     end
                     mainConfigsCopy.set('dataSetName',dataSetName);
                     dataAndSplitsCopy = struct();
@@ -101,6 +110,14 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     labelsToUse = [];
                     if mainConfigsCopy.has('targetLabels')
                         labelsToUse = mainConfigsCopy.c.targetLabels;
+                    end
+                    l = [];
+                    if mainConfigsCopy.has('labelsToUse')
+                        l = mainConfigsCopy.get('labelsToUse');
+                    end
+                    if ~isempty(l)
+                        assert(isempty(labelsToUse));
+                        labelsToUse = l;
                     end
                     for splitIdx=1:length(dataAndSplits.allSplits)
                         split = dataAndSplits.allSplits{splitIdx};

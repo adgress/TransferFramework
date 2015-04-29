@@ -27,12 +27,17 @@ classdef BatchConfigs < Configs
                         overrideConfigs = BatchConfigs.makeTommasiOverrideConfigs();
                     case Constants.NG_DATA
                         overrideConfigs = BatchConfigs.makeNGOverrideConfigs();
-                    case Constants.NG_DATA
-                        overrideConfigs = BatchConfigs.makeNGOverrideConfigs();
                     case Constants.HOUSING_DATA
                         overrideConfigs = BatchConfigs.makeHousingOverrideConfigs();
+                    case Constants.YEAST_BINARY_DATA
+                        overrideConfigs = {};
+                    case Constants.USPS_DATA
+                        overrideConfigs = {};
                     otherwise
                         error('Unknown data set');
+                end
+                if isempty(overrideConfigs)
+                    overrideConfigs = {Configs()};
                 end
                 activeConfigs = Configs();
                 %{
@@ -59,12 +64,14 @@ classdef BatchConfigs < Configs
                     RandomActiveMethod(activeConfigs),...                    
                     EntropyActiveMethod(activeConfigs),...
                 };
-                
+                activeMethods = {};
+                %activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',1);
                 
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',2);                
+                
                 %{
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',3);
@@ -110,33 +117,41 @@ classdef BatchConfigs < Configs
         
         function [configs] = makeTommasiOverrideConfigs()
             configs = {};            
-            
-            targetLabelSets = {};
-            targetLabelSets{end+1} = [105 57];
-            targetLabelSets{end+1} = [10 15];
-            targetLabelSets{end+1} = [10 15];
-            targetLabelSets{end+1} = [105 145];
-            
-            targetLabelSets{end+1} = [10 15];
-            targetLabelSets{end+1} = [10 15];            
-            targetLabelSets{end+1} = [105 57];
-            targetLabelSets{end+1} = [105 145];
-            
-            sourceLabelSets = {};
-            sourceLabelSets{end+1} = [250 124];
-            sourceLabelSets{end+1} = [30 41];
-            sourceLabelSets{end+1} = [25 26];
-            sourceLabelSets{end+1} = [250 252];            
-            
-            sourceLabelSets{end+1} = [250 124];
-            sourceLabelSets{end+1} = [250 252];
-            sourceLabelSets{end+1} = [30 41];
-            sourceLabelSets{end+1} = [25 26];
-            for idx=1:length(targetLabelSets)
-                c = Configs();
-                c.set('targetLabels',targetLabelSets{idx});
-                c.set('sourceLabels',sourceLabelSets{idx});
-                configs{end+1} = c;
+            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                targetLabelSets = {[10 15],[10 23], [23 25]};
+                for idx=1:length(targetLabelSets)
+                    c = Configs();
+                    c.set('labelsToUse',targetLabelSets{idx});
+                    configs{end+1} = c;
+                end
+            else
+                targetLabelSets = {};
+                targetLabelSets{end+1} = [105 57];
+                targetLabelSets{end+1} = [10 15];
+                targetLabelSets{end+1} = [10 15];
+                targetLabelSets{end+1} = [105 145];
+
+                targetLabelSets{end+1} = [10 15];
+                targetLabelSets{end+1} = [10 15];            
+                targetLabelSets{end+1} = [105 57];
+                targetLabelSets{end+1} = [105 145];
+
+                sourceLabelSets = {};
+                sourceLabelSets{end+1} = [250 124];
+                sourceLabelSets{end+1} = [30 41];
+                sourceLabelSets{end+1} = [25 26];
+                sourceLabelSets{end+1} = [250 252];            
+
+                sourceLabelSets{end+1} = [250 124];
+                sourceLabelSets{end+1} = [250 252];
+                sourceLabelSets{end+1} = [30 41];
+                sourceLabelSets{end+1} = [25 26];
+                for idx=1:length(targetLabelSets)
+                    c = Configs();
+                    c.set('targetLabels',targetLabelSets{idx});
+                    c.set('sourceLabels',sourceLabelSets{idx});
+                    configs{end+1} = c;
+                end
             end
         end
         

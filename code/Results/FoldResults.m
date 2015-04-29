@@ -162,8 +162,16 @@ classdef FoldResults <  matlab.mixin.Copyable
         
         function [] = shrink(obj)
             obj.dataFU = [];
+            obj.yPred = Helpers.makeInt8(obj.yPred);            
+            obj.yActual = Helpers.makeInt8(obj.yActual);
+            obj.yTrain = Helpers.makeInt8(obj.yTrain);
+            obj.isValidation = Helpers.makeInt8(obj.isValidation);
+            obj.dataType = Helpers.makeInt8(obj.dataType);
+            
             for idx=1:length(obj.modelResults)
                 obj.modelResults(idx).dataFU = [];
+                a = obj.modelResults(idx).yPred;
+                obj.modelResults(idx).yPred = Helpers.makeInt8(a);
             end
         end
     end

@@ -7,17 +7,31 @@ function [f, returnStruct] = visualizeResults(options,f)
     displayVals = {};
     allPlotConfigs = options.get('plotConfigs');
     numColors = length(allPlotConfigs);
-    colors = colormap(hsv(numColors));
+    colors = hsv(3);
     fileManager = FileManager();
     fileExists = true(length(allPlotConfigs),1);
     sizes = [];
-    for i=1:length(allPlotConfigs)
+    method2colorMap = containers.Map;
+    colorIdx=1;
+    for i=1:length(allPlotConfigs)        
         plotConfigs = allPlotConfigs{i};                
         fileName = options.makeResultsFileName(plotConfigs.get('resultFileName'));
         if ~exist(fileName,'file')
             display([fileName ' doesn''t exist - skipping']);
             fileExists(i) = false;
             continue
+        end
+        lineStyle = '-';
+        methodId = num2str(plotConfigs.get('methodId'));
+        if isKey(method2colorMap,methodId)
+            color = method2colorMap(methodId);
+        else
+            color = colors(colorIdx,:);
+            method2colorMap(methodId) = color;
+            colorIdx = colorIdx + 1;
+        end
+        if plotConfigs.has('lineStyle')
+            lineStyle = plotConfigs.get('lineStyle');
         end
         smallFileName = getSmallFile(fileName);
         if exist(smallFileName,'file') && ProjectConfigs.useSavedSmallResults
@@ -31,7 +45,8 @@ function [f, returnStruct] = visualizeResults(options,f)
             allResults.aggregateResults(measure);
             configs = allResults.mainConfigs;
 
-            learners = configs.get('learners');
+            %learners = configs.get('learners');
+            learners = allResults.allResults{1}.experiment.learner;
             learnerClassString = '';
             if numel(learners) > 0
                 learnerClassString = class(learners);
@@ -55,9 +70,9 @@ function [f, returnStruct] = visualizeResults(options,f)
         if options.has('vizBarChartForField') && ...
                 options.c.vizBarChartForField
             displayVals{end+1} = plotField(results,...
-                fieldToPlot,colors(index,:),options);
+                fieldToPlot,color,lineStyle,options);
         else           
-            displayVals{end+1} = plotResults(results,sizes,fieldToPlot,colors(index,:),options);
+            displayVals{end+1} = plotResults(results,sizes,fieldToPlot,color,lineStyle,options);
         end
         index = index + 1;
     end
@@ -134,7 +149,8 @@ function [newResults] = getResultsWithSize(results,size)
     end
 end
 
-function [displayVal] = plotField(results,field,color,options)
+function [displayVal] = plotField(results,field,color,lineStyle,options)
+    error('Color? Linestyle?');
     assert(length(results) == 1);
     vars = getVariances(results,field,options);
     means = getMeans(results,field);    
@@ -144,20 +160,20 @@ function [displayVal] = plotField(results,field,color,options)
     displayVal = makeResultsStruct(means,vars);
 end
 
-function [displayVal] = plotResults(results,sizes,field,colors,options)        
+function [displayVal] = plotResults(results,sizes,field,colors,lineStyle,options)        
     vars = getVariances(results,field,options);
     %[high,low] = getVariances(results,field,options);
     means = getMeans(results,field);
     %if ~options.c.vizMeasureCorrelation
     if true
         if length(means) == length(sizes)
-            errorbar(sizes,means,vars,'color',colors);    
+            errorbar(sizes,means,vars,'color',colors,'LineStyle',lineStyle);    
         else            
             if ProjectConfigs.useKSR
                 a = ksr(1:length(means),means,2);
                 plot(a.x,a.f,'color',colors);
             else
-                errorbar(1:length(means),means,vars,'color',colors);    
+                errorbar(1:length(means),means,vars,'color',colors,'LineStyle',lineStyle);
                 %errorbar(1:length(means),means,low,high,'color',colors);    
             end
         end

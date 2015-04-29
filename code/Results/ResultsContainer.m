@@ -43,11 +43,14 @@ classdef ResultsContainer < handle
                     end
                 end
             end
+            c = obj.mainConfigs;
+            obj.mainConfigs = [];
             results = obj;
             warning off;
             [~] = mkdir(fileparts(filename));
             warning on;
             save(filename,'results');
+            obj.mainConfigs = c;
         end
         function [results] = getResultsForMethod(obj,learnerClass,resultsQuery)
             results = {};

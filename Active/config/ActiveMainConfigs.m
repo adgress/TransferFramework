@@ -51,10 +51,14 @@ classdef ActiveMainConfigs < MainConfigs
             switch pc.data
                 case Constants.CV_DATA
                 case Constants.TOMMASI_DATA
-                    obj.set('targetLabels',[10 15]);
-                    obj.set('sourceLabels',[25 26]);
+                    if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE_TRANSFER
+                        obj.set('targetLabels',[10 15]);
+                        obj.set('sourceLabels',[25 26]);
+                    end
                 case Constants.NG_DATA
                 case Constants.HOUSING_DATA
+                case Constants.YEAST_BINARY_DATA
+                case Constants.USPS_DATA
                 otherwise
                     error('Unknown data set');
             end

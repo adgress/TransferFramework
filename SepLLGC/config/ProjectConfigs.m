@@ -32,7 +32,7 @@ classdef ProjectConfigs < handle
         %Housing labels
         housingVizLabels = {[1 2]}
         
-        numRandomFeatures = 0
+        numRandomFeatures = 10
         
         plotFeatureSmoothness = 0
         
@@ -245,13 +245,17 @@ classdef ProjectConfigs < handle
                     methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2.mat';
                     legend{end+1} = 'LLGC';       
                     fields{end+1} = 'testResults';
-
-                    methodResultsFileNames{end+1} = 'LLGC-sigmaScale=0.2-useAlt=1.mat';
-                    legend{end+1} = 'LLGC Alternate';       
+                    %{
+                    methodResultsFileNames{end+1} = 'MahaLLGC-sigmaScale=0.2-useLOO=1-useAlt=0-useL1=0-smallTol=1.mat';
+                    legend{end+1} = 'MahaLLGC';
                     fields{end+1} = 'testResults';
-
+                    %}
                     methodResultsFileNames{end+1} = 'MahaLLGC-sigmaScale=0.2-useLOO=1-useAlt=2-useL1=0-smallTol=1.mat';
-                    legend{end+1} = 'LLGC Alternate 2';
+                    legend{end+1} = 'MahaLLGC Alternate 2';
+                    fields{end+1} = 'testResults';
+                    
+                    methodResultsFileNames{end+1} = 'MahaLLGC-sigmaScale=0.2-useLOO=1-useAlt=2-useL1=1-smallTol=1.mat';
+                    legend{end+1} = 'MahaLLGC Alternate 2 l1';
                     fields{end+1} = 'testResults';
                     
                     %{

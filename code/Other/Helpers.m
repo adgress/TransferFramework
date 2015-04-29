@@ -7,6 +7,14 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [a] = makeInt8(v)
+            a = int8(v);
+            if isempty(v)
+                return;
+            end
+            assert(all(v==a));
+        end
+        
         function [yBinary] = MakeLabelsBinary(y)
             u = unique(y);
             u(u == -1) = [];

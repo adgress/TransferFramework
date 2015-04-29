@@ -61,10 +61,16 @@ function [] = runExperiment(configs)
                 if exist(t,'file')
                     display('Found Temp results - loading...');
                     splitResults{splitIdx} = loadTempResults(t);
+                    if ProjectConfigs.smallResultsFiles
+                        splitResults{splitIdx}.shrink()
+                    end
                     continue;
                 end
                 [splitResults{splitIdx}] = ...
                     configLoader.runExperiment(expIdx,splitIdx);
+                if ProjectConfigs.smallResultsFiles
+                    splitResults{splitIdx}.shrink()
+                end
                 saveTempResults(t,splitResults{splitIdx});
             end            
         else
@@ -74,10 +80,16 @@ function [] = runExperiment(configs)
                 if exist(t,'file')
                     display('Found Temp results - loading...');
                     splitResults{splitIdx} = loadTempResults(t);                    
+                    if ProjectConfigs.smallResultsFiles
+                        splitResults{splitIdx}.shrink()
+                    end
                     continue;
                 end
                 [splitResults{splitIdx}] = ...
                     configLoader.runExperiment(expIdx,splitIdx);
+                if ProjectConfigs.smallResultsFiles
+                    splitResults{splitIdx}.shrink()
+                end
                 saveTempResults(t,splitResults{splitIdx});
             end
         end
@@ -104,8 +116,17 @@ function [] = runExperiment(configs)
         end
         t = makeTempFile(outputFile,expIdx);
         delete(t);
-    end
+    end    
+    deleteTempDirIfEmpty(outputFile);
     toc
+end
+
+function [] = deleteTempDirIfEmpty(file)
+    [path,name,ext] = fileparts(file);
+    t = [path '/TEMP/'];
+    if length(dir(t)) == 2
+        rmdir(t);
+    end
 end
 
 function [t] = makeTempFile(file,expIdx,splitIdx)

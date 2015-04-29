@@ -267,7 +267,7 @@ classdef HFMethod < Method
                         if size(fuTest,2) > length(classes)
                             classes = 1:max(distMat.classes);
                         end
-                        yPred = LLGC.getPrediction(fuTest,classes);
+                        yPred = LLGC.getPrediction(fuTest,classes,YtrainMatCurr);
                         yActual = Ytrain(isTest);
                         accVec = yPred == yActual;
                         alphaScores(alphaIdx) = alphaScores(alphaIdx) + mean(accVec);                        
@@ -299,9 +299,11 @@ classdef HFMethod < Method
                 savedData.invM = LLGC.makeInvM(Wrbf,alpha);            
                 [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
             end
+            
             savedData.alpha = alpha;
             savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
             savedData.cvAcc = max(alphaScores);              
+            savedData.predicted = LLGC.getPrediction(fu,classes,YtrainMat);;
             fu(isnan(fu(:))) = 0;
             assert(isempty(find(isnan(fu))));
             assert(~isnan(savedData.cvAcc));
@@ -336,7 +338,8 @@ classdef HFMethod < Method
                     [fu,savedData,sigma] = runLLGC(obj,distMat, makeRBF);
                 end
             end
-            predicted = LLGC.getPrediction(fu,distMat.classes);
+            %predicted = LLGC.getPrediction(fu,distMat.classes,Helpers.createLabelMatrix(distMat.Y));
+            predicted = savedData.predicted;
             %{
             [maxVal,predicted] = max(fu,[],2);
             

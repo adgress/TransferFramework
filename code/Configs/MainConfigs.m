@@ -181,6 +181,30 @@ classdef MainConfigs < Configs
             llgcObj = SepLLGCMethod(learnerConfigs);           	
             obj.configsStruct.learners=llgcObj;
         end   
+        function [] = setUSPSSmall(obj)
+            obj.setUSPS();
+            obj.configsStruct.dataName='USPS-small';
+        end
+        
+        function [] = setUSPS(obj)            
+            obj.configsStruct.dataName='USPS';
+            obj.configsStruct.dataDir='Data';
+            obj.configsStruct.resultsDir='results_usps';
+            obj.configsStruct.outputDir='results_usps';
+            obj.configsStruct.dataSet='splits';
+        end
+        
+        function [] = setCOIL20(obj,classNoise)            
+            obj.configsStruct.dataName='COIL20';
+            obj.configsStruct.dataDir='Data';
+            obj.configsStruct.resultsDir='results';
+            obj.configsStruct.outputDir='results';
+            obj.configsStruct.dataSet='splits';
+            if classNoise > 0
+                obj.configsStruct.dataSet = [obj.configsStruct.dataSet ...
+                    '-classNoise=' num2str(classNoise)];
+            end
+        end    
     end   
     
     methods(Static)

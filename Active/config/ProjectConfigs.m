@@ -18,11 +18,12 @@ classdef ProjectConfigs < ProjectConfigsBase
         %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         %data = Constants.HOUSING_DATA
+        %data = Constants.YEAST_BINARY_DATA
+        %data = Constants.USPS_DATA
         useTransfer = false;
         
         resampleTarget = true
-        %kNumLabeledPerClass = 2
-        kNumLabeledPerClass = 2
+        %kNumLabeledPerClass = 2        
         logRegNumFeatures = inf
         useL1LogReg = false
         
@@ -52,12 +53,35 @@ classdef ProjectConfigs < ProjectConfigsBase
         labelsPerIteration = 5;
         %}
         
+        kNumLabeledPerClass = 2
+        activeIterations = 100;
+        labelsPerIteration = 1;
+        
+        %{
+        kNumLabeledPerClass = 2
         activeIterations = 20;
         labelsPerIteration = 5;
+        %}
+        %labelsPerIteration = 4;
+        
+        
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
-        activeMethodsToPlot = {'Random','Entropy'}
-        %activeMethodsToPlot = {'Entropy'}
+        %activeMethodsToPlot = {'Random','Entropy'}
+        activeMethodsToPlot = {'Entropy'}
         useDomainsToViz = 1
+        fixReg = 0
+        activeMethodScale = 1
+        showNewCVWeight = 0
+        
+        showRegular = 1
+        showWeighted1 = 1      
+        showWeighted2 = 1
+        
+        showFixReg = 0
+        showTestPerf = 1
+        showCVPerf = 0
+        showCVDelta = 1
+        showDivergence = 0
         
         vizTargetLabels = [10 15]
         vizSourceLabels = [25 26];
@@ -140,7 +164,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.tommasiLabels = [10 15 23 25 26 30 41 56 57];
                     
                         
-            c.makeSubDomains = true;
+            c.makeSubDomains = false;
             c.addTargetDomain = false;
             c.numOverlap = 0;
             c.justTargetNoSource = false;
@@ -152,6 +176,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.makeSubDomains = false;
                 case Constants.HOUSING_DATA
                     c.makeSubDomains = false;
+                case Constants.TOMMASI_DATA
+                    c.makeSubDomains = ProjectConfigs.experimentSetting ...
+                        == ProjectConfigs.EXPERIMENT_ACTIVE_TRANSFER;
             end
         end
     end
@@ -180,7 +207,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.get('mainConfigs').setNGData();
                     c.get('mainConfigs').set('includeDataNameInResultsDirectory',false);
                 case Constants.HOUSING_DATA
-                    c.get('mainConfigs').setHousingBinaryData();                
+                    c.get('mainConfigs').setHousingBinaryData();    
+                case Constants.YEAST_BINARY_DATA
+                    c.get('mainConfigs').setYeastBinaryData();    
+                case Constants.USPS_DATA
+                    c.get('mainConfigs').setUSPS();
+                    %c.get('mainConfigs').set('labelsToUse',[1 7]);
+                    c.get('mainConfigs').set('labelsToUse',[3 8]);
                 otherwise
                     error('Unknown data set');
             end                        
@@ -191,7 +224,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             pc = ProjectConfigs.Create();
             c = SplitConfigs();            
             %c.setTommasi();
-            c.set20NG();
+            %c.set20NG();
+            c.setUSPS();
         end
         
         function [c] = VisualizationConfigs()            
@@ -211,7 +245,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.configsStruct.xAxisDisplay = 'Active Learning Iterations';
             c.configsStruct.axisToUse = ProjectConfigs.axisToUse;
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
-                c.configsStruct.axisToUse = [0 1 0 1];
+                c.configsStruct.axisToUse = [0 1 -.1 1];
                 %c.configsStruct.axisToUse = [0 1 -5 5];
             else
                 c.configsStruct.axisToUse = [0 10 -.5 1.1];
@@ -220,6 +254,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             pc = ProjectConfigs.Create();
             
             [d] = ProjectConfigs.getResultsDirectory();
+            transferDir = '';
             switch ProjectConfigs.data
                 case Constants.TOMMASI_DATA
                     c.set('prefix','results_tommasi');
@@ -243,8 +278,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                     end
                 case Constants.HOUSING_DATA
                     c.set('prefix','');
+                    c.set('dataSet',{''});                    
+                case Constants.YEAST_BINARY_DATA
+                    c.set('prefix','');
                     c.set('dataSet',{''});
-                    transferDir = '';
+                case Constants.USPS_DATA
+                    c.set('prefix','');
+                    c.set('dataSet',{''});
                 otherwise
                     error('Unknown data set');
             end            
@@ -263,8 +303,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                     d = 'results_ng/';
                 case Constants.HOUSING_DATA
                     d = 'results_housing/housingBinary';
+                case Constants.YEAST_BINARY_DATA
+                    d = 'results_yeast/yeastBinary';
+                case Constants.USPS_DATA
+                    d = 'results_usps/USPS';
                 otherwise
                     error('Unknown data set');
+                    
             end           
             if pc.labelNoise > 0
                 d = [d '/labelNoise=' num2str(pc.labelNoise) '/'];
@@ -284,18 +329,44 @@ classdef ProjectConfigs < ProjectConfigsBase
             legendSuffixes = {};            
             fileSuffixes = {};
             fileSuffixLegend = {};
+            newCVWeight = [];
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE                               
-                %{
-                fileSuffixes{end+1} = '_LogReg';
-                fileSuffixLegend{end+1} = '';                                
-                %}
-                %{
-                fileSuffixes{end+1} = '_valWeights=1_LogReg';
-                fileSuffixLegend{end+1} = 'Weighted';
+                s = ProjectConfigs.activeMethodScale;
+                if ProjectConfigs.showRegular
+                    fileSuffixes{end+1} = '_LogReg';
+                    fileSuffixLegend{end+1} = '';
+                    newCVWeight(end+1) = false;
+                end
+                if ProjectConfigs.showWeighted1
+                    fileSuffixes{end+1} = '_valWeights=1_LogReg';
+                    if s ~= 1
+                        fileSuffixes{end} = ['_valWeights=1_scale=' num2str(s) '_LogReg'];
+                    end
+                    fileSuffixLegend{end+1} = 'Our Method';
+                    newCVWeight(end+1) = true;
+                end
+                if ProjectConfigs.showWeighted2
+                    fileSuffixes{end+1} = '_valWeights=2_LogReg';
+                    if s ~= 1
+                        fileSuffixes{end} = ['_valWeights=2_scale=' num2str(s) '_LogReg'];
+                    end
+                    fileSuffixLegend{end+1} = 'Our Method No CV Weighting';
+                    newCVWeight(end+1) = false;
+                end
                 
-                fileSuffixes{end+1} = '_valWeights=2_LogReg';
-                fileSuffixLegend{end+1} = 'Weighted2';
-                %}
+                if ProjectConfigs.showFixReg
+                    for idx=1:length(fileSuffixes)
+                        fileSuffixes{idx} = [fileSuffixes{idx} '-fixReg=1'];
+                    end
+                end
+                if ProjectConfigs.showNewCVWeight
+                    for idx=1:length(fileSuffixes)
+                        if newCVWeight(idx)
+                            fileSuffixes{idx} = [fileSuffixes{idx} '-cvWeight=1-LOOCV=1'];
+                            fileSuffixLegend{idx} = ['NEW WEIGHTS ' fileSuffixLegend{idx}];
+                        end
+                    end
+                end
                 %{
                 fileSuffixes{end+1} = '_valWeights=3_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted3';
@@ -303,34 +374,22 @@ classdef ProjectConfigs < ProjectConfigsBase
                 fileSuffixes{end+1} = '_valWeights=4_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted4';
                 %}                                
-                
-                fileSuffixes{end+1} = '_LogReg-fixReg=1';
-                fileSuffixLegend{end+1} = 'Fixed Reg';
-                
-                fileSuffixes{end+1} = '_valWeights=1_LogReg-fixReg=1';
-                fileSuffixLegend{end+1} = 'Fixed Reg Weighted';
-                
-                fileSuffixes{end+1} = '_valWeights=2_LogReg-fixReg=1';
-                fileSuffixLegend{end+1} = 'Fixed Reg Weighted2';
-                
-                %{
-                fileSuffixes{end+1} = '_valWeights=3_LogReg-fixReg=1';
-                fileSuffixLegend{end+1} = 'Fixed Reg Weighted3';
-                
-                fileSuffixes{end+1} = '_valWeights=4_LogReg-fixReg=1';
-                fileSuffixLegend{end+1} = 'Fixed Reg Weighted4';
-                %}
-                
-                plotFields{end+1} = 'preTransferValTest';
-                legendSuffixes{end+1} = 'Pre Transfer Performance';
-                
-                plotFields{end+1} = 'cvPerfDiff';
-                legendSuffixes{end+1} = 'CV Accuracy';
-                
-                %{
-                plotFields{end+1} = 'divergence';
-                legendSuffixes{end+1} = 'Divergence';
-                %}
+                if ProjectConfigs.showTestPerf
+                    plotFields{end+1} = 'preTransferValTest';
+                    legendSuffixes{end+1} = 'Performance';
+                end
+                if ProjectConfigs.showCVPerf
+                    plotFields{end+1} = 'cvPerfDiff';
+                    legendSuffixes{end+1} = 'CV Accuracy';
+                end
+                if ProjectConfigs.showCVDelta
+                    plotFields{end+1} = 'cvPerfDelta';
+                    legendSuffixes{end+1} = 'CV Delta';
+                end
+                if ProjectConfigs.showDivergence
+                    plotFields{end+1} = 'divergence';
+                    legendSuffixes{end+1} = 'Divergence';
+                end
                 %{
                 plotFields{end+1} = 'bestRegs';
                 legendSuffixes{end+1} = 'bestRegs';
@@ -409,17 +468,25 @@ classdef ProjectConfigs < ProjectConfigsBase
                         [fileSuffixes{suffixIdx} '_' num2str(a) '_' num2str(l) '.mat'];
                 end
             end
+            lineStyles = {'-','--',':'};
+            methodSuffixID = [];
+            methodSuffixIdx = 1;
+            fieldLineStyles = {};
             fields = {};
-            for methodIdx=1:length(ProjectConfigs.activeMethodsToPlot)
-                for legendIdx=1:length(legendSuffixes)
-                    for suffixIdx=1:length(fileSuffixes)
+            for methodIdx=1:length(ProjectConfigs.activeMethodsToPlot)                
+                for suffixIdx=1:length(fileSuffixes)
+                    
+                    for legendIdx=1:length(legendSuffixes)
                         toPlot = ProjectConfigs.activeMethodsToPlot{methodIdx};
                         methodResultsFileNames{end+1} = ...
                             [toPlot fileSuffixes{suffixIdx}];
                         legend{end+1} = [toPlot ': ' ...
                             legendSuffixes{legendIdx} ' ' fileSuffixLegend{suffixIdx}];
                         fields{end+1} = plotFields{legendIdx};
+                        fieldLineStyles{end+1} = lineStyles{legendIdx};
+                        methodSuffixID(end+1) = methodSuffixIdx;
                     end
+                    methodSuffixIdx = methodSuffixIdx+1;
                 end
             end
             plotConfigs = {};
@@ -429,6 +496,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if exist('fields','var')
                     configs.set('fieldToPlot',fields{fileIdx});
                 end
+                configs.set('lineStyle',fieldLineStyles{fileIdx});
+                configs.set('methodId',methodSuffixID(fileIdx));
                 plotConfigs{end+1} = configs;
             end
         end                

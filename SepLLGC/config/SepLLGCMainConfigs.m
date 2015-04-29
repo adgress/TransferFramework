@@ -22,21 +22,7 @@ classdef SepLLGCMainConfigs < MainConfigs
             obj.configsStruct.measure=Measure();
             obj.configsStruct.dataDir='Data';
             %obj.configsStruct.labelsToUse=[10 15];
-        end                           
-        
-        function [] = setHousingBinaryData(obj)
-            obj.set('dataName','housingBinary');
-            obj.set('resultsDir','results_housing');
-            obj.set('dataSet','housing_split_data');            
-            obj.delete('labelsToUse');
-        end     
-        
-        function [] = setYeastBinaryData(obj)
-            obj.set('dataName','yeastBinary');
-            obj.set('resultsDir','results_yeast');
-            obj.set('dataSet','yeastBinary_split_data');            
-            obj.delete('labelsToUse');
-        end
+        end                                          
     end        
     
 end

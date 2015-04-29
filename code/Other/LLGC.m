@@ -1,9 +1,10 @@
 classdef LLGC < handle    
     properties(Constant)
-        normRows = 0
+        normRows = 1
+        useCMN = 1
     end
     methods(Static)
-        
+                        
         function [fu,invM] = llgc_inv_alt(W,fl,alpha,invM)
             %W(logical(speye(size(W)))) = 0;
             if ~exist('invM','var')
@@ -163,7 +164,7 @@ classdef LLGC < handle
             f(fl(:,2) == 1) = -1;
         end
         
-        function [p] = getPrediction(fu,classes)            
+        function [p] = getPrediction(fu,classes,fl)            
             if ~exist('classes','var')
                 classes = 1:size(fu,2);
                 if length(classes) == 1 && ~LLGC.normRows
@@ -173,12 +174,23 @@ classdef LLGC < handle
             numF = size(fu,2);
             assert(numF == 1 || numF == length(classes));
             if LLGC.normRows
+                if LLGC.useCMN
+                    if mod(sum(fl(:)),10) ~= 0
+                        display('');
+                    end
+                    %with laplace smoothing                    
+                    q = sum(fl)+1;
+                    fu = fu .*repmat(q./sum(fu),size(fu,1),1);
+                    %fu = fu ./ repmat(q,size(fu,1),1);
+                    fu = Helpers.normRows(fu);
+                end                
                 [~,origPred] = max(fu,[],2);
                 p = origPred;
                 for classIdx=1:length(classes)
                     p(origPred == classIdx) = classes(classIdx);
                 end
             else
+                assert(~LLGC.useCMN);
                 assert(length(classes) == 2);
                 p = zeros(size(fu,1),1);
                 p(fu >= 0) = classes(1);

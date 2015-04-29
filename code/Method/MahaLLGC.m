@@ -15,7 +15,7 @@ classdef MahaLLGC < LLGCMethod
                 %obj.set('useAlt',2);
             end
             if ~obj.has('useL1')
-                obj.set('useL1',0);
+                obj.set('useL1',1);
             end
             if ~obj.has('smallTol')
                 obj.set('smallTol',1);
@@ -23,7 +23,7 @@ classdef MahaLLGC < LLGCMethod
             if ~obj.has('redoLLGC')
                 obj.set('redoLLGC',0);
             end
-            obj.set('useAlt',0);
+            obj.set('useAlt',2);
             obj.set('useGrad',1);
             obj.set('gradCheck',0);
             obj.set('gradTest',0);
@@ -93,6 +93,7 @@ classdef MahaLLGC < LLGCMethod
             V0 = 1*ones(size(train.X,2),1);            
             %V0 = 0*V0;
             regs = fliplr(10.^(-8:4));
+            %regs = 0;
             %regs = 10^3;
             if obj.get('useL1')
                 regs = fliplr(regs);
@@ -101,7 +102,7 @@ classdef MahaLLGC < LLGCMethod
             cvPerf = zeros(size(regs));
             testPerf = cvPerf;
             trainPerf = cvPerf;
-            numFolds = 1;
+            numFolds = 10;
             alpha = 1;
             sigma = -1;
             LB = 0*ones(size(V0));
@@ -141,7 +142,7 @@ classdef MahaLLGC < LLGCMethod
                 llgcMethod = LLGCMethod(obj.configs);
                 for foldIdx=1:numFolds                    
                     [distMat,~,X] = llgcMethod.createDistanceMatrix(train,test,...
-                        useHF,obj.configs,makeRBF,struct(),diag(V));
+                        useHF,obj.configs,makeRBF,struct(),diag(V0));
                     
                     classes = distMat.classes;                    
                     distMat.Y(distMat.isTargetTest()) = -1;
@@ -153,8 +154,8 @@ classdef MahaLLGC < LLGCMethod
                     YOrig = Y;
                     Y(labeledInds(splitTest)) = 0;                    
                     
-                    distMats = cell(size(V,1),1);
-                    for featIdx=1:length(V)
+                    distMats = cell(size(V0,1),1);
+                    for featIdx=1:length(V0)
                         distMats{featIdx} = Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
                     end
                     
@@ -193,7 +194,7 @@ classdef MahaLLGC < LLGCMethod
                         testPerf(regIdx) = testPerf(regIdx) + mean(accVec(distMat.isTargetTest()));
                         trainPerf(regIdx) = trainPerf(regIdx) + mean(accVec(labeledInds(splitTrain)));
                         cvPerf(regIdx) = cvPerf(regIdx) + mean(accVec(labeledInds(splitTest)));
-                        [V./ max(V) (1:length(V))']
+                        %[V./ max(V) (1:length(V))']
                         %[V (1:length(V))']
                     end
                 end
@@ -211,6 +212,8 @@ classdef MahaLLGC < LLGCMethod
                     distMats{featIdx} = Helpers.CreateDistanceMatrixMahabolis(X(:,featIdx),1);
                 end
                 [V,F] = obj.solveForV(X,V0,Y,F,reg,sigma,alpha,useL1,distMats,distMat.trueY,options);
+                display(['Best Reg: ' num2str(reg)]);
+                [V./ max(V) (1:length(V))']
                 fu = obj.runLLGC(X,V,YOrig,alpha,sigma);
                 Ypred = LLGC.getPrediction(fu,classes);
                 type = distMat.type;
@@ -330,7 +333,6 @@ classdef MahaLLGC < LLGCMethod
             testResults.yActual = trueY;
             testResults.dataType = type;
             testResults.learnerMetadata.reg = reg;
-            testResults.learnerMetadata.useSameY = useSameY;
             testResults.learnerMetadata.alpha = alpha;
             testResults.learnerMetadata.V0 = V0;
             
@@ -455,10 +457,10 @@ classdef MahaLLGC < LLGCMethod
                     Dp_k = D_Vii_ll(k,k);
                     D2inv_k = Dll2_inv(k,k);                    
                     dk = 2*(inv(D_k)*W_k*yl - y_k);
-                    dk = dk + (D_k*Wp_k - Dp_k*W_k)*D2inv_k*yl;
+                    dk = dk*(D_k*Wp_k - Dp_k*W_k)*D2inv_k*yl;
                     d = d + dk;
                 end
-                g(featIdx) = d;
+                g(featIdx) = d + 2*reg*V(featIdx);
                 
                 %g(featIdx) = y'*L*y + 2*reg*V(featIdx);
             end
@@ -733,9 +735,11 @@ classdef MahaLLGC < LLGCMethod
             if obj.has('redoLLGC') && obj.get('redoLLGC')
                 nameParams{end+1} = 'redoLLGC';
             end    
+            %{
             if obj.has('useGrad') && obj.get('useGrad')
                 nameParams{end+1} = 'useGrad';
             end
+            %}
         end
     end
     

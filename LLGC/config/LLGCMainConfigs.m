@@ -20,32 +20,7 @@ classdef LLGCMainConfigs < MainConfigs
             obj.setLLGCConfigs(learnerConfigs);            
                         
             obj.configsStruct.measure=Measure();
-        end                           
-        
-        function [] = setUSPSSmall(obj)
-            obj.setUSPS();
-            obj.configsStruct.dataName='USPS-small';
-        end
-        
-        function [] = setUSPS(obj)            
-            obj.configsStruct.dataName='USPS';
-            obj.configsStruct.dataDir='Data';
-            obj.configsStruct.resultsDir='results';
-            obj.configsStruct.outputDir='results';
-            obj.configsStruct.dataSet='splits';
-        end
-        
-        function [] = setCOIL20(obj,classNoise)            
-            obj.configsStruct.dataName='COIL20';
-            obj.configsStruct.dataDir='Data';
-            obj.configsStruct.resultsDir='results';
-            obj.configsStruct.outputDir='results';
-            obj.configsStruct.dataSet='splits';
-            if classNoise > 0
-                obj.configsStruct.dataSet = [obj.configsStruct.dataSet ...
-                    '-classNoise=' num2str(classNoise)];
-            end
-        end              
+        end                                                     
         
         function [] = setLLGCWeightedConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')

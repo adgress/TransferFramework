@@ -11,7 +11,7 @@ classdef LogisticRegressionMethod < Method
         function obj = LogisticRegressionMethod(configs)
             obj = obj@Method(configs);
             if ~obj.has('fixReg')
-                obj.set('fixReg',0);
+                obj.set('fixReg',ProjectConfigs.fixReg);
             end
             if ~obj.has('useVal')
                 obj.set('useVal',0);
@@ -21,6 +21,12 @@ classdef LogisticRegressionMethod < Method
             end            
             if ~obj.has('trainAllReg')
                 obj.set('trainAllReg',1);
+            end
+            if ~obj.has('cvWeight')
+                obj.set('cvWeight',0);
+            end
+            if ~obj.has('LOOCV')
+                obj.set('LOOCV',0);
             end
         end
         
@@ -98,13 +104,14 @@ classdef LogisticRegressionMethod < Method
                 labeledTargetInds = find(trainData.isLabeledTarget());
                 cvAcc = 0;
                 folds = 10;
-                if length(labeledTargetInds) < folds
+                if length(labeledTargetInds) < folds || obj.get('LOOCV')
                     folds = length(labeledTargetInds);
                 end
                 if useValidationSet
                     folds = 1;
                 end
                 weightSums = zeros(size(C));
+                weightSums2 = zeros(size(C));
                 for cIdx=1:length(C)
                     for foldIdx=1:folds
                         if useValidationSet
@@ -152,15 +159,32 @@ classdef LogisticRegressionMethod < Method
                         if isempty(validationWeights)
                             accs(cIdx) = accs(cIdx) + t(1)/folds;
                         else
+                            vWeights = 1 ./ validationWeights(isTest);
+                            %{
+                            if obj.get('cvWeight') == 1
+                                vWeights = validationWeights(isTest);
+                                %vWeights = vWeights ./ prod(vWeights);
+                                vWeights = ones(size(vWeights)) ./ prod(vWeights);
+                                vWeights = vWeights / length(vWeights);
+                            end
+                            %}
                             assert(mean(predLabels == Ytest)*100 == t(1));
-                            accVec = (predLabels == Ytest) ./ validationWeights(isTest);
+                            accVec = (predLabels == Ytest) .* vWeights;
                             accs(cIdx) = accs(cIdx) + sum(accVec);
-                            weightSums(cIdx) = weightSums(cIdx) + sum(1 ./ validationWeights(isTest));
-                        end
-                        
+                            weightSums2(cIdx) = weightSums2(cIdx) + sum(vWeights);
+                            if obj.get('cvWeight')
+                                weightSums(cIdx) = weightSums(cIdx) + length(vWeights);
+                            else
+                                weightSums(cIdx) = weightSums(cIdx) + sum(vWeights);
+                            end
+                        end                        
                     end
                 end
                 if ~isempty(validationWeights)
+                    if obj.get('cvWeight')
+                        %weightSums = 1./weightSums;
+                    end
+                    delta = weightSums - weightSums2;
                     accs = accs ./ weightSums;
                     accs = accs * 100;
                 end
@@ -233,6 +257,12 @@ classdef LogisticRegressionMethod < Method
             end
             if obj.has('justInitialVal') && obj.get('justInitialVal')
                 nameParams{end+1} = 'justInitialVal';
+            end
+            if obj.has('cvWeight') && obj.get('cvWeight')
+                nameParams{end+1} = 'cvWeight';
+            end
+            if obj.has('LOOCV') && obj.get('LOOCV')
+                nameParams{end+1} = 'LOOCV';
             end
         end
         function [d] = getDirectory(obj)

@@ -164,7 +164,9 @@ classdef DataSet < LabeledData
             obj.type = obj.type(~shouldRemove);
             obj.trueY = obj.trueY(~shouldRemove);
             obj.instanceIDs = obj.instanceIDs(~shouldRemove);
-            obj.isValidation = obj.isValidation(~shouldRemove);
+            if ~isempty(obj.isValidation)
+                obj.isValidation = obj.isValidation(~shouldRemove);
+            end
         end
         
         function [d] = getSourceData(obj)

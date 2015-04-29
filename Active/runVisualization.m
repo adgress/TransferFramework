@@ -21,12 +21,27 @@ function [] = runVisualization()
         case Constants.NG_DATA
             domainsToViz = ProjectConfigs.ngDomainsToViz;            
         case Constants.HOUSING_DATA
-            
+        case Constants.YEAST_BINARY_DATA
+        case Constants.USPS_DATA
         otherwise
             error('unknown data set');
     end
     if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
-        domainsToViz = {'CR1','CR2','CR3','CR4'};
+        domainsToViz = {};
+        switch ProjectConfigs.data
+            case Constants.NG_DATA
+                domainsToViz = {'CR1','CR2','CR3','CR4'};
+            case Constants.TOMMASI_DATA
+                domainsToViz = {'10  15','10  23','23  25'};
+            case Constants.HOUSING_DATA                
+            case Constants.YEAST_BINARY_DATA
+            case Constants.USPS_DATA
+                domainsToViz = {'3  8','1  7'};
+                
+            otherwise
+                error('unknown data set');
+        end
+        
     end
     [d] = ProjectConfigs.getResultsDirectory();
     if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz

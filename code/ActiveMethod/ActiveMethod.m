@@ -11,6 +11,7 @@ classdef ActiveMethod < Saveable
             if ~obj.has('valWeights')
                 obj.set('valWeights',0);
             end
+            obj.set('scale',ProjectConfigs.activeMethodScale);
         end
         function n = getDisplayName(obj)
             n = obj.getPrefix();
@@ -21,16 +22,13 @@ classdef ActiveMethod < Saveable
             metadata.divergence = 0;
             labelsPerIteration = obj.get('labelsPerIteration');
             unlabeledScores = obj.getScores(input,results,s);  
-            unlabeledScores = unlabeledScores .^ 5;
             unlabeledInds = find(input.train.Y < 0);
             %[~,maxIdx] = max(unlabeledScores);
                         
             if obj.get('valWeights')
                 remainingScores = unlabeledScores;
                 v = obj.get('valWeights');
-                if v == 3 || v == 4
-                    remainingScores = remainingScores .^4;
-                end
+                remainingScores = remainingScores .^ obj.get('scale');
                 o = ones(size(remainingScores))/length(remainingScores);
                 remainingScores = remainingScores ./ sum(remainingScores);
                 metadata.divergence = norm(remainingScores - o);
@@ -49,7 +47,9 @@ classdef ActiveMethod < Saveable
                     bestInd = min(I);
                     scoreIndsToChoose(i) = remainingInds(bestInd);                    
                     chosenScores(i) = ...
-                        length(remainingScores)*remainingScores(bestInd);                    
+                        length(remainingScores)*remainingScores(bestInd);
+                    pdfVals = remainingScores(bestInd);
+                    sizes = length(remainingScores);
                     remainingScores(bestInd) = [];
                     remainingInds(bestInd) = [];
                 end
@@ -66,15 +66,24 @@ classdef ActiveMethod < Saveable
                                     
             
             scores = -ones(size(input.train.Y,1),1);
+            metadata.pdfVals = scores;
+            metadata.sizes = scores;
             scores(unlabeledInds) = unlabeledScores;
-            if obj.get('valWeights') == 1 || obj.get('valWeights') == 3
+            
+            if obj.get('valWeights') == 1
+                metadata.sizes(queriedIdx) = sizes;
+                metadata.pdfVals(queriedIdx) = pdfVals;
                 scores(queriedIdx) = chosenScores;
             end
         end  
         function [nameParams] = getNameParams(obj)
-            nameParams = {};
-            if obj.has('valWeights') && obj.get('valWeights')
+            nameParams = {};           
+            useValWeights = obj.has('valWeights') && obj.get('valWeights');
+            if useValWeights
                 nameParams{end+1} = 'valWeights';
+            end
+            if obj.has('scale') && obj.get('scale') ~= 1 && useValWeights
+                nameParams{end+1} = 'scale';
             end
         end
         function [d] = getDirectory(obj)

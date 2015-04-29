@@ -81,6 +81,7 @@ classdef Measure < Saveable
                     measureResults.learnerStats.bestRegs = log10(bestRegs);
                     measureResults.learnerStats.regDiffs = abs(log10(bestRegs)-log10(regs));
                     measureResults.learnerStats.cvPerfDiff = abs(preTransferValTest-cvAcc);
+                    measureResults.learnerStats.cvPerfDelta = cvAcc-preTransferValTest;
                 end                
                 if ~isempty(preTransferMeasures)
                     measureResults.learnerStats.preTransferMeasures = preTransferMeasures;
