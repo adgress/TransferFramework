@@ -52,16 +52,16 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeIterations = 10;
         labelsPerIteration = 5;
         %}
-        
+        %{
         kNumLabeledPerClass = 2
         activeIterations = 100;
         labelsPerIteration = 1;
+        %}
         
-        %{
         kNumLabeledPerClass = 2
         activeIterations = 20;
         labelsPerIteration = 5;
-        %}
+        
         %labelsPerIteration = 4;
         
         
@@ -71,11 +71,12 @@ classdef ProjectConfigs < ProjectConfigsBase
         useDomainsToViz = 1
         fixReg = 0
         activeMethodScale = 1
-        showNewCVWeight = 0
+        
         
         showRegular = 1
         showWeighted1 = 1      
-        showWeighted2 = 1
+        showWeighted2 = 0
+        showNewCVWeight = 1
         
         showFixReg = 0
         showTestPerf = 1
@@ -353,20 +354,27 @@ classdef ProjectConfigs < ProjectConfigsBase
                     fileSuffixLegend{end+1} = 'Our Method No CV Weighting';
                     newCVWeight(end+1) = false;
                 end
-                
-                if ProjectConfigs.showFixReg
-                    for idx=1:length(fileSuffixes)
-                        fileSuffixes{idx} = [fileSuffixes{idx} '-fixReg=1'];
-                    end
-                end
                 if ProjectConfigs.showNewCVWeight
+                    fileSuffixes{end+1} = '_valWeights=1_LogReg-cvWeight=1';
+                    if s ~= 1
+                        fileSuffixes{end} = ['_valWeights=1_scale=' num2str(s) '_LogReg-cvWeight=1'];
+                    end
+                    fileSuffixLegend{end+1} = 'Standord CV Weighting';
+                    %{
                     for idx=1:length(fileSuffixes)
                         if newCVWeight(idx)
                             fileSuffixes{idx} = [fileSuffixes{idx} '-cvWeight=1-LOOCV=1'];
                             fileSuffixLegend{idx} = ['NEW WEIGHTS ' fileSuffixLegend{idx}];
                         end
                     end
+                    %}
                 end
+                if ProjectConfigs.showFixReg
+                    for idx=1:length(fileSuffixes)
+                        fileSuffixes{idx} = [fileSuffixes{idx} '-fixReg=1'];
+                    end
+                end
+                
                 %{
                 fileSuffixes{end+1} = '_valWeights=3_LogReg';
                 fileSuffixLegend{end+1} = 'Weighted3';

@@ -23,7 +23,7 @@ classdef LogisticRegressionMethod < Method
                 obj.set('trainAllReg',1);
             end
             if ~obj.has('cvWeight')
-                obj.set('cvWeight',0);
+                obj.set('cvWeight',1);
             end
             if ~obj.has('LOOCV')
                 obj.set('LOOCV',0);
