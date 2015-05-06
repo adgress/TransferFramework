@@ -14,6 +14,7 @@ classdef BatchConfigs < Configs
             obj.configsStruct.k = num2cell(c.k);
             obj.configsStruct.alpha = num2cell(c.alpha);
             obj.configsStruct.mainConfigs=LLGCMainConfigs();                        
+            obj.configsStruct.overrideConfigs = {Configs()};
         end        
     end
 end

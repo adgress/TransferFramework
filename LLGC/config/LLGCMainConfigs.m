@@ -20,6 +20,8 @@ classdef LLGCMainConfigs < MainConfigs
             obj.setLLGCConfigs(learnerConfigs);            
                         
             obj.configsStruct.measure=Measure();
+            obj.set('targetLabels',[10 15]);
+            obj.set('sourceLabels',[23 25 26 30]);
         end                                                     
         
         function [] = setLLGCWeightedConfigs(obj, learnerConfigs)
@@ -35,7 +37,7 @@ classdef LLGCMainConfigs < MainConfigs
             llgcObj.set('justTarget',c.useJustTarget);
             llgcObj.set('dataSetWeights',c.useDataSetWeights);
             llgcObj.set('useOracleNoise',c.useOracleNoise);
-            llgcObj.set('classNoise',c.classNoise);        
+            llgcObj.set('labelNoise',c.labelNoise);        
             llgcObj.set('justTargetNoSource',c.useJustTargetNoSource);
             llgcObj.set('robustLoss',c.useRobustLoss);
             obj.configsStruct.learners=llgcObj;

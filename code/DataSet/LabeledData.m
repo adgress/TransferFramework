@@ -38,6 +38,9 @@ classdef LabeledData < matlab.mixin.Copyable
             obj.type(targetInds) = Constants.SOURCE;
             obj.type(~targetInds) = Constants.TARGET_TRAIN;
         end
+        function [I] = isLabeledTargetTrain(obj)
+            I = obj.isTargetTrain() & obj.isLabeled();
+        end
         function [I] = isTarget(obj)
             I = obj.type == Constants.TARGET_TRAIN | ...
                 obj.type == Constants.TARGET_TEST;

@@ -166,7 +166,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             featuresToUse = 1;
             dataAndSplits.allData.keepFeatures(featuresToUse);                
         end
-        function [] = addTargetDomain(obj,labelProject)
+        function [labelProduct] = addTargetDomain(obj,labelProduct)
             t = labelProduct{1};
             t2 = labelProduct{1};
             t(2) = t(1);
@@ -199,17 +199,20 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     targetOverlap = 0;
                 end
                 isOverlap = targetDataCopy.stratifiedSelection(targetOverlap);
-                %targetDataCopy.remove(isOverlap);
+                
+                targetDataCopy.remove(isOverlap);
+                
                 targetDataCopy.Y(isOverlap) = -1;
                 targetDataCopy.ID2Labels = containers.Map;
                 targetDataCopy.ID2Labels(num2str(0)) = targetLabel;
                 newSplit.targetData = targetDataCopy;
                 newSplit.targetType = split.split;
                 newSplit.targetType = newSplit.targetType(targetClassInds);
+                newSplit.targetType(isOverlap) = [];
                 newSplit.sourceData = {};                
                 
                 for labelProductIdx=1:length(labelProduct)
-                    if pc.justTargetNoSource
+                    if pc.useJustTargetNoSource
                         break;
                     end
                     currLabels = labelProduct{labelProductIdx};

@@ -25,6 +25,19 @@ classdef MainConfigs < Configs
             obj.configsStruct.dataDir='Data';
             obj.set('includeDataNameInResultsDirectory',true);
         end        
+        
+        function [t,s] = GetTargetSourceLabels(obj)
+            t = obj.get('targetLabels');
+            s = obj.get('sourceLabels');
+        end    
+        function [labelProduct] = MakeLabelProduct(obj)
+            [t,s] = obj.GetTargetSourceLabels();                        
+            targetDomains = Helpers.MakeCrossProductOrdered(t,t);
+            %sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);
+            sourceDomains = Helpers.MakeCrossProductOrdered(s,s);
+            labelProduct = Helpers.MakeCrossProduct(targetDomains,sourceDomains);
+        end
+        
         function [v] = get.dataDirectory(obj)
             v = [obj.get('dataDir') '/' obj.get('dataName') '/'];
         end

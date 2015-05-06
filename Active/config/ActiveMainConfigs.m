@@ -77,18 +77,7 @@ classdef ActiveMainConfigs < MainConfigs
         function [] = setHousingBinaryData(obj)      
             setHousingBinaryData@MainConfigs(obj);
         end
-        
-        function [t,s] = GetTargetSourceLabels(obj)
-            t = obj.get('targetLabels');
-            s = obj.get('sourceLabels');
-        end    
-        function [labelProduct] = MakeLabelProduct(obj)
-            [t,s] = obj.GetTargetSourceLabels();                        
-            targetDomains = Helpers.MakeCrossProductOrdered(t,t);
-            %sourceDomains = Helpers.MakeCrossProductNoDupe(sourceLabels,sourceLabels);
-            sourceDomains = Helpers.MakeCrossProductOrdered(s,s);
-            labelProduct = Helpers.MakeCrossProduct(targetDomains,sourceDomains);
-        end
+                
         function [v] = get.labelsToUse(obj)
             v = obj.get('targetLabels');
         end

@@ -21,6 +21,9 @@ classdef ProjectConfigs < handle
         labels = [10 15 23 25 26 30]
         
         CLASS_NOISE = .25
+        
+        numRandomFeatures = 0
+        useTransfer = true
     end
     
     properties        
@@ -28,7 +31,7 @@ classdef ProjectConfigs < handle
         k
         alpha
         labelsToUse
-        classNoise
+        labelNoise
         numLabeledPerClass        
         numFolds
         reg
@@ -52,6 +55,9 @@ classdef ProjectConfigs < handle
         
         dataSet
         cvParams
+        
+        makeSubDomains
+        maxSourceSize
     end
     
     methods(Static, Access=private)
@@ -67,27 +73,30 @@ classdef ProjectConfigs < handle
             
             c.useDataSetWeights=false;                        
             
+            c.makeSubDomains = false;
+            
             c.addTargetDomain = true;
             c.useSort=true;
             c.sigmaScale = .2;
             c.k=inf;
             c.alpha=.9;
-            c.classNoise = 0;
+            c.labelNoise = 0;
             c.numFolds = 3;
             c.reg = 0;
             c.noise = 0;
             c.dataSet = Constants.COIL20_DATA;
             c.cvParams = {'reg','noise'};
+            c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
                 c.noise = 0:.05:.4;
                 c.labelsToUse = 1:20;
-                c.classNoise = .0;
+                c.labelNoise = .0;
                 c.numLabeledPerClass=[10 20 30 40 50];
                 c.alpha=.95;
                 c.sigmaScale = .2;
                 c.reg = 0;
                 if c.useOracleNoise
-                    c.noise = c.classNoise;
+                    c.noise = c.labelNoise;
                 end
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.HYPERPARAMETER_EXPERIMENTS
                 c.dataSet = Constants.USPS_DATA;
@@ -98,15 +107,17 @@ classdef ProjectConfigs < handle
                 c.labelsToUse=1:20;
                 c.numLabeledPerClass=2:2:8;
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+                c.makeSubDomains = true;
                 c.useDataSetWeights = true;
                 c.dataSet = Constants.TOMMASI_DATA;
                 c.labelsToUse = [];
-                c.numLabeledPerClass=[5 10 15 20 25];
-                %c.numLabeledPerClass=[25];
+                %c.numLabeledPerClass=[5 10 15 20 25];
+                c.numLabeledPerClass=[25];
                 %c.reg = [0 1e-6 1e-5 5e-5 1e-4 1e-3 5e-3 1e-2 .05 .1];
                 c.reg = .5:.5:4;
-                c.numFolds = 3;                
-                c.numOverlap = 60;
+                c.numFolds = 3; 
+                c.addTargetDomain = false;
+                c.numOverlap = 10;
                 c.numTarget = 2;
                 c.numSource = 4;
                 
@@ -131,7 +142,7 @@ classdef ProjectConfigs < handle
             pc = ProjectConfigs.Create();
             c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
             if pc.dataSet == Constants.COIL20_DATA
-                c.get('mainConfigs').setCOIL20(pc.classNoise);
+                c.get('mainConfigs').setCOIL20(pc.labelNoise);
             end
             if pc.dataSet == Constants.TOMMASI_DATA
                 c.get('mainConfigs').setTommasiData(); 
@@ -153,7 +164,7 @@ classdef ProjectConfigs < handle
             c = SplitConfigs();            
             c.setTommasi();
             %c.setUSPSSmall();
-            %c.setCOIL20(ProjectConfigs.classNoise);
+            %c.setCOIL20(ProjectConfigs.labelNoise);
             %c.setCOIL20(.25);
         end
         
@@ -214,10 +225,10 @@ classdef ProjectConfigs < handle
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
                 if ProjectConfigs.vizIncreasingNoise
                      title = 'Accuracy with Label Noise';
-                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0-unweighted=1.mat';
-                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0.05-unweighted=1.mat';
-                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0.15-unweighted=1.mat';
-                     methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0.25-unweighted=1.mat';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=0-unweighted=1.mat';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=0.05-unweighted=1.mat';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=0.15-unweighted=1.mat';
+                     methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=0.25-unweighted=1.mat';
                      legend = {...
                             'LLGC: 0% Noise',...
                             'LLGC: 5% Noise',...
@@ -228,15 +239,15 @@ classdef ProjectConfigs < handle
 
                     title = ['Class Noise: ' num2str(ProjectConfigs.CLASS_NOISE)];
                     if ProjectConfigs.vizNoisyAcc
-                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=%s.mat';
                         legend = {...
                             'Noise Precision',...
                             'Predicted Noise Level',...
                         };
                     else
-                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
-                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
-                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=%s-oracle=1.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=%s.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-labelNoise=%s-unweighted=1.mat';
                         legend = {...
                             'LLGC: Oracle Weights',...
                             'LLGC: Learn Weights',...
