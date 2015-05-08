@@ -52,6 +52,13 @@ classdef LLGCWeightedMethod < LLGCMethod
             test = input.test;   
             testResults = FoldResults();   
             makeRBF = false;
+            %{
+            numTrain = size(train.X,1);
+            numComp = 100;
+            [~,a] = princomp([train.X ; test.X]);
+            train.X = a(1:numTrain,1:numComp);
+            test.X = a(numTrain+1:end,1:numComp);
+            %}
             if isfield(input,'distanceMatrix')
                 distMat = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
@@ -60,15 +67,23 @@ classdef LLGCWeightedMethod < LLGCMethod
                 [distMat] = obj.createDistanceMatrix(train,test,useHF,obj.configs,makeRBF);
                 testResults.dataType = distMat.type;
             end
-            [Wrbf,YtrainMat,sigma,Y_testCleared,instanceIDs] = obj.makeLLGCMatrices(distMat);
+            [Wrbf,~,sigma,Y_testCleared,instanceIDs] = obj.makeLLGCMatrices(distMat);
             %error('use targetLabels instead?');
             %labels = pc.labelsToUse;
             labels = [];
             if isempty(labels)
                 labels = distMat.classes;
-            end
+            end            
             YtrainMat = Helpers.createLabelMatrix(Y_testCleared);
-            
+            %{
+            dataSetIDs = unique(distMat.instanceIDs);
+            for i=1:length(dataSetIDs)
+                d = dataSetIDs(i);
+                I = distMat.instanceIDs == d & Y_testCleared > 0;
+                n = sum(I);
+                YtrainMat(I,:) = YtrainMat(I,:) / n;
+            end
+            %}
             M = obj.makeM(Wrbf);  
             M_inv = inv(M);
             distMatRBF = DistanceMatrix(M,Y_testCleared,distMat.type,distMat.trueY,distMat.instanceIDs);            
@@ -182,7 +197,8 @@ classdef LLGCWeightedMethod < LLGCMethod
                     display(['Best noise: ' num2str(obj.get('noise'))]);
                     display(['Best reg: ' num2str(obj.get('reg'))]);
                 else   
-                    obj.set('reg',.01);
+                    assert(length(pc.reg) == 1);
+                    obj.set('reg',pc.reg);
                     %error('TODO: Default params?');
                     %reg = pc.reg;
                 end
@@ -337,6 +353,14 @@ classdef LLGCWeightedMethod < LLGCMethod
                 warning off
                 
                 useLOO = true;
+                %{
+                for idx=1:length(dataSets)
+                    d = dataSets(idx);
+                    I = instanceIDs == d;
+                    n = sum(I);
+                    Y(I,:) = 10*Y(I,:) ./ n;
+                end
+                %}
                 if useLOO
                     assert(numUniqueLabels == 2);
                     y1 = uniqueLabels(1);
@@ -345,29 +369,78 @@ classdef LLGCWeightedMethod < LLGCMethod
                     mask = mask - eye(size(mask));
                     mask = logical(mask);
                     targetInds = find(isTarget);
+                    
+                    [~,Yvec] = max(Ytarget,[],2);
+                    y1Inds = find(Yvec == y1);
+                    y2Inds = find(Yvec == y2);
+                    
+                    targetIndsOrig = targetInds;
+                    %TODO: Reorder targetInds?
+                    %{
+                    for i=1:length(Yvec)/2
+                        mask(i,:) = ones(size(mask(i,:)));
+                        mask(i,y1Inds(i)) = 0;
+                        mask(i,y2Inds(i)) = 0;
+                        maskIdx(2*i-1) = i;
+                        maskIdx(2*i) = i;
+                        targetInds(2*i-1) = y1Inds(i);
+                        targetInds(2*i) = y2Inds(i);
+                    end
+                    %}
+                    %{
+                    for i=1:length(targetInds)
+                        tInd = targetInds(i);
+                        mask(tInd,:) = ones(size(mask(tInd,:)));
+                        mask(tInd,tInd) = 0;
+                        if Yvec(tInd) == y1
+                            mask(tInd,y2Inds(1)) = 0;
+                        else
+                            mask(tInd,y1Inds(1)) = 0;
+                        end
+                        assert(sum(mask(tInd,:) == 0) == 2);
+                    end
+                    %}
+                    mask = logical(mask);
+                    AaSub = [];
+                    for idx=1:numTarget
+                        AaSub(idx,:) = A(targetInds(idx),mask(targetInds(idx),:))*Y(mask(targetInds(idx),:),:);
+                    end
+                    %sparse(AaSub
+                    Ytarget(Ytarget > 0) = 1;
                     cvx_begin quiet
                         variable a(numDataSets)
                         variable aDup(numInstances)
                         variable AaSub(numTarget,numLabels)
-                        %variable Aa(numInstances,numLabels)          
+                        variable Aa(numInstances,numLabels)          
                         variable Ya(numInstances,numLabels)
-                        %minimize(norm(vec(AaSub-Ytarget),2)/numUniqueLabels + reg*norm(a(2:end),1))
-                        %minimize(norm(vec(AaSub-Ytarget),2)/numUniqueLabels)
                         minimize(norm(vec(AaSub-Ytarget),2))
                         subject to             
-                            norm(a,1) <= 1000000000*reg
+                            %norm(a(2:end),1) <= reg
+                            %norm(a,1) <= 50*reg
+                            %norm(a,1) <= 100
+                            %norm(a,2) <= 30
+                            %a(1) == 0
                             a >= 0
-                            %AaSub == Aa(isTarget,:)
-                            %Aa1 == A*Ya
-                            %Y1 = Ya(:,y1);
-                            %Y2 = Ya(:,y2);
+                            %a(1) == 1
+                            %a(2:end) == 0
                             aDup == a(instanceIDs+dataSetOffset)
                             Ya == Y.*repmat(aDup,1,numLabels)                            
-                            for idx=1:numTarget
-                                %AaSub(idx,:) == A(targetInds(idx),mask(targetInds(idx),:))*Ya(mask(targetInds(idx),:),:);
-                                AaSub(idx,:) == A(targetInds(idx),:)*Ya(:,:);
-                            end                                                        
-                    cvx_end  
+                            
+                            for idx=1:numTarget                                
+                                AaSub(idx,:) == A(targetInds(idx),mask(targetInds(idx),:))*Ya(mask(targetInds(idx),:),:);
+                                %AaSub(idx,:) == A(targetInds(idx),:)*Ya(:,:);
+                            end
+                            
+                            %{
+                            for idx=1:numTarget                                
+                                AaSub(targetInds(idx),:) == A(targetInds(idx),mask(maskIdx(idx),:))*Ya(mask(maskIdx(idx),:),:);
+                                %AaSub(idx,:) == A(targetInds(idx),:)*Ya(:,:);
+                            end
+                            %}
+                    cvx_end                     
+                    %a(1) = max(a);
+                    aDup = a(instanceIDs+dataSetOffset);
+                    a
                     a;
                 else
                     cvx_begin quiet
@@ -387,8 +460,8 @@ classdef LLGCWeightedMethod < LLGCMethod
                             a >= 0
                             a <= 1               
                     cvx_end  
-                end
-                a                
+                    a
+                end                               
                 warning on                 
                 undupedWeights = a;
                 %[norm(vec(AaSub-Y),2)/numel(find(Y)) reg*norm(a,1)]

@@ -13,10 +13,11 @@ classdef ProjectConfigs < ProjectConfigsBase
         numRandomFeatures = 0
         
         instance = ProjectConfigs.CreateSingleton()
-
-        data = Constants.NG_DATA
+        
         %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
+        
+        data = Constants.NG_DATA
         %data = Constants.HOUSING_DATA
         %data = Constants.YEAST_BINARY_DATA
         %data = Constants.USPS_DATA
@@ -79,7 +80,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         showNewCVWeight = 1
         
         showFixReg = 0
-        showTestPerf = 1
+        showTestPerf = 0
         showCVPerf = 0
         showCVDelta = 1
         showDivergence = 0
@@ -246,8 +247,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.configsStruct.xAxisDisplay = 'Active Learning Iterations';
             c.configsStruct.axisToUse = ProjectConfigs.axisToUse;
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
-                c.configsStruct.axisToUse = [0 1 -.1 1];
-                %c.configsStruct.axisToUse = [0 1 -5 5];
+                %c.configsStruct.axisToUse = [0 1 -.1 1];
+                c.configsStruct.axisToUse = [0 1 -.5 1];
             else
                 c.configsStruct.axisToUse = [0 10 -.5 1.1];
                 %c.configsStruct.axisToUse = [0 10 -.05 .1];

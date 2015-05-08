@@ -17,6 +17,13 @@ classdef ResultsVector < double
                 m = mean(obj);
             end
         end
+        function [m] = getMedian(obj)
+            if size(obj,1) == 1
+                m = double(obj);
+            else
+                m = median(obj);
+            end
+        end
         function [v] = getVar(obj)
             v = var(obj);
         end

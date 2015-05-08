@@ -192,6 +192,10 @@ classdef LogisticRegressionMethod < Method
                 bestC = C(bestCInd);
                 bestCVAcc = accs(bestCInd) / 100;                     
             end
+            bestCVAcc
+            if bestCVAcc > 2
+                display('');
+            end
             testResults.learnerMetadata.cvAcc = bestCVAcc;
             testResults.learnerMetadata.reg = bestC;
             instanceWeights = ones(size(YLabeled));            

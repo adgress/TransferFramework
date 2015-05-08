@@ -15,15 +15,17 @@ classdef ProjectConfigs < handle
         instance = ProjectConfigs.CreateSingleton()
         
         vizIncreasingNoise = 0
-        vizWeights = 1
+        vizWeights = 0
         vizNoisyAcc = 0
-        trainLabels = [23 25]
+        trainLabels = [10 15]
         labels = [10 15 23 25 26 30]
-        
+        useSavedSmallResults = false
         CLASS_NOISE = .25
         
         numRandomFeatures = 0
         useTransfer = true
+        
+        smallResultsFiles = true
     end
     
     properties        
@@ -37,6 +39,8 @@ classdef ProjectConfigs < handle
         reg
         noise
         numOverlap
+        computeLossFunction
+        processMeasureResults
         
         numTarget
         numSource
@@ -58,6 +62,7 @@ classdef ProjectConfigs < handle
         
         makeSubDomains
         maxSourceSize
+        rerunExperiments
     end
     
     methods(Static, Access=private)
@@ -68,8 +73,10 @@ classdef ProjectConfigs < handle
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
             c.useRobustLoss=false;
-            
+            c.computeLossFunction = true;
+            c.processMeasureResults = false;
             c.useOracleNoise=false;
+            c.rerunExperiments = false;
             
             c.useDataSetWeights=false;                        
             
@@ -77,7 +84,8 @@ classdef ProjectConfigs < handle
             
             c.addTargetDomain = true;
             c.useSort=true;
-            c.sigmaScale = .2;
+            %c.sigmaScale = .2;
+            c.sigmaScale = .01;
             c.k=inf;
             c.alpha=.9;
             c.labelNoise = 0;
@@ -112,12 +120,15 @@ classdef ProjectConfigs < handle
                 c.dataSet = Constants.TOMMASI_DATA;
                 c.labelsToUse = [];
                 %c.numLabeledPerClass=[5 10 15 20 25];
-                c.numLabeledPerClass=[25];
+                c.numLabeledPerClass=[5 10 15 20 25];
                 %c.reg = [0 1e-6 1e-5 5e-5 1e-4 1e-3 5e-3 1e-2 .05 .1];
-                c.reg = .5:.5:4;
-                c.numFolds = 3; 
-                c.addTargetDomain = false;
-                c.numOverlap = 10;
+                %c.reg = 0:.5:4;
+                c.reg = 1:.5:1;
+                %c.reg = 0;
+                c.numFolds = 0; 
+                %c.numFolds = 1; 
+                c.addTargetDomain = true;
+                c.numOverlap = 30;
                 c.numTarget = 2;
                 c.numSource = 4;
                 
@@ -212,6 +223,7 @@ classdef ProjectConfigs < handle
             if pc.dataSet == Constants.TOMMASI_DATA
                 c.set('prefix','results_tommasi');
                 c.set('dataSet',{'tommasi_data'});
+                c.set('resultsDirectory','results_tommasi/tommasi_data');
             end
         end
         
@@ -294,7 +306,8 @@ classdef ProjectConfigs < handle
                         title = [title ', '];
                     end
                 end
-                d = [s '-numOverlap=60'];
+                
+                d = [s '-numOverlap=' num2str(pc.numOverlap)];
                 if ProjectConfigs.vizWeights
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
                     legend = {...                      
@@ -321,6 +334,9 @@ classdef ProjectConfigs < handle
             for fileIdx=1:length(methodResultsFileNames)
                 configs = basePlotConfigs.copy();
                 configs.set('resultFileName',methodResultsFileNames{fileIdx});
+                configs.set('lineStyle','-');
+                configs.set('fieldToPlot','testResults');
+                configs.set('methodId',num2str(fileIdx));
                 plotConfigs{end+1} = configs;
             end
         end

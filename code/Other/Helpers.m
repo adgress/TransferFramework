@@ -7,6 +7,20 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [b] = hasEqualRows(A,B)
+            b = false;
+            for i=1:size(A,1)
+                for j=1:size(B,1)
+                    ai = A(i,:);
+                    bj = B(j,:);
+                    if all(ai == bj)
+                        b = true;
+                        return;
+                    end
+                end
+            end
+        end
+        
         function [a] = makeInt8(v)
             a = int8(v);
             if isempty(v)

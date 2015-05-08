@@ -7,7 +7,7 @@ function [f, returnStruct] = visualizeResults(options,f)
     displayVals = {};
     allPlotConfigs = options.get('plotConfigs');
     numColors = length(allPlotConfigs);
-    colors = hsv(3);
+    colors = hsv(4);
     fileManager = FileManager();
     fileExists = true(length(allPlotConfigs),1);
     sizes = [];
@@ -202,8 +202,8 @@ function [means] = getMeans(results,name)
     m = size(results{1}.aggregatedResults.(name),2);
     means = zeros(numel(results),m);
     for i=1:numel(results);
-        means(i,:) = ...
-            results{i}.aggregatedResults.(name).getMean();
+        means(i,:) = results{i}.aggregatedResults.(name).getMean();
+        %means(i,:) = results{i}.aggregatedResults.(name).getMedian();
     end
 end
 

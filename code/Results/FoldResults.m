@@ -169,9 +169,11 @@ classdef FoldResults <  matlab.mixin.Copyable
             obj.dataType = Helpers.makeInt8(obj.dataType);
             
             for idx=1:length(obj.modelResults)
-                obj.modelResults(idx).dataFU = [];
-                a = obj.modelResults(idx).yPred;
-                obj.modelResults(idx).yPred = Helpers.makeInt8(a);
+                obj.modelResults(idx).dataFU = [];                
+                if isfield(obj.modelResults(idx),'yPred')
+                    a = obj.modelResults(idx).yPred;
+                    obj.modelResults(idx).yPred = Helpers.makeInt8(a);
+                end
             end
         end
     end

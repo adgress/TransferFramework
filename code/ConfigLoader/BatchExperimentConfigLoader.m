@@ -200,9 +200,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 end
                 isOverlap = targetDataCopy.stratifiedSelection(targetOverlap);
                 
-                targetDataCopy.remove(isOverlap);
+                targetDataCopy.remove(isOverlap);                
+                %targetDataCopy.Y(isOverlap) = -1;
                 
-                targetDataCopy.Y(isOverlap) = -1;
                 targetDataCopy.ID2Labels = containers.Map;
                 targetDataCopy.ID2Labels(num2str(0)) = targetLabel;
                 newSplit.targetData = targetDataCopy;
