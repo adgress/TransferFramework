@@ -20,8 +20,10 @@ classdef LLGCMainConfigs < MainConfigs
             obj.setLLGCConfigs(learnerConfigs);            
                         
             obj.configsStruct.measure=Measure();
-            obj.set('targetLabels',[10 15]);
-            obj.set('sourceLabels',[23 25 26 30]);
+            %obj.set('targetLabels',[10 15]);
+            %obj.set('sourceLabels',[23 25 26 30]);
+            obj.set('targetLabels',[]);
+            obj.set('sourceLabels',[]);
         end                                                     
         
         function [] = setLLGCWeightedConfigs(obj, learnerConfigs)

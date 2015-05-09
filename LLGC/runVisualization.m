@@ -59,6 +59,7 @@ function [] = runVisualization()
             %vizConfigs.set('showLegend',false);
         end
     end
+    %{
     set(findall(gcf,'type','text'),'FontSize',fontSize);
     legendHandle = findobj(gcf,'Type','axes','Tag','legend');
     set(legendHandle,'FontSize',legendFontSize);
@@ -88,4 +89,5 @@ function [] = runVisualization()
         saveas(f,[fileName '.fig'],'fig');
         print('-dpng',[fileName '.png']);
     end
+    %}
 end
