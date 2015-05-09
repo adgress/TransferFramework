@@ -55,7 +55,11 @@ classdef MainConfigs < Configs
         
         function [s] = getDataFileName(obj)
             s = [obj.get('dataDir') '/' '/' obj.get('dataName') '/' ...
-                obj.get('dataSet') '.mat'];
+                obj.get('dataSet')];
+            if obj.has('classNoise') && obj.get('classNoise') > 0
+                s = [s '-classNoise=' num2str(obj.get('classNoise'))];
+            end
+            s = [s '.mat'];
         end
         
         function [v] = getOutputDirectoryParams(obj)

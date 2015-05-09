@@ -18,7 +18,9 @@ classdef BatchConfigs < Configs
             switch c.dataSet
                 case Constants.TOMMASI_DATA
                     obj.set('overrideConfigs',BatchConfigs.makeTommasiOverrideConfigs());
+                case Constants.COIL20_DATA
                 otherwise
+                    
                     error('unknown data set');
             end
         end                
@@ -40,6 +42,9 @@ classdef BatchConfigs < Configs
                 c.set('targetLabels',targetLabels{idx});
                 c.set('sourceLabels',sourceLabels{idx});
                 configs{idx} = c;
+                if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
+                    break;
+                end
             end
         end
     end

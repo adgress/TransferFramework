@@ -41,7 +41,7 @@ classdef SplitConfigs < Configs
             obj.set('outputFilePrefix','Data/CV/');
         end
         
-        function [] = setTommasi(obj)
+        function [] = setTommasi(obj,classNoise)
             obj.set('XName','X');
             obj.set('YName','Y');
             %obj.set('normalizeRows','1');
@@ -53,6 +53,10 @@ classdef SplitConfigs < Configs
             obj.configsStruct.outputFilePrefix='Data/tommasi_data/';            
             obj.configsStruct.backgroundClass = 257;
             obj.configsStruct.outputFile='tommasi_split_data.mat';
+            if classNoise > 0
+                obj.set('outputFile',['tommasi_split_data-classNoise=' num2str(classNoise) '.mat']);
+            end
+            obj.set('classNoise',classNoise);
         end
         
         function [] = set20NG(obj)            

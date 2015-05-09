@@ -129,13 +129,13 @@ classdef LLGCWeightedMethod < LLGCMethod
                         hasLabel = Y_testClearedCurr > 0;
                         Msub = M_inv(hasLabel,hasLabel);        
                         Ysub = YtrainMatCurr(hasLabel,:);
-
+                        isNoisySub = distMatRBF.isNoisy(hasLabel);
                         A = Msub;
                         instanceIDsSub = instanceIDs(hasLabel);
                         if useDataSetWeights
-                            [a] = obj.solveForNodeWeights(A,Ysub,instanceIDsSub);
+                            [a] = obj.solveForNodeWeights(A,Ysub,instanceIDsSub,isNoisySub);
                         else
-                            [a] = obj.solveForNodeWeights(A,Ysub,instanceIDsSub);
+                            [a] = obj.solveForNodeWeights(A,Ysub,instanceIDsSub,isNoisySub);
                         end
                         aAll = zeros(size(M,1),1);
                         aAll(hasLabel) = a;                        
@@ -208,7 +208,8 @@ classdef LLGCWeightedMethod < LLGCMethod
                     Ysub = YtrainMat(hasLabel,:);
                     A = Msub;                
                     instanceIDsSub = instanceIDs(hasLabel);
-                    [aSub,undupedWeights] = obj.solveForNodeWeights(A,Ysub,instanceIDsSub);
+                    isNoisySub = distMatRBF.isNoisy(hasLabel);
+                    [aSub,undupedWeights] = obj.solveForNodeWeights(A,Ysub,instanceIDsSub,isNoisySub);
                     a = zeros(size(M,1),1);
                     a(hasLabel) = aSub;
                     a = repmat(a,1,max(labels));
@@ -334,7 +335,7 @@ classdef LLGCWeightedMethod < LLGCMethod
             end
         end
         
-        function [a,undupedWeights] = solveForNodeWeights(obj,A,Y,instanceIDs)
+        function [a,undupedWeights] = solveForNodeWeights(obj,A,Y,instanceIDs,isNoisy)
             numLabels = size(Y,2);          
             pc = ProjectConfigs.Create();
             A = pc.alpha*A;
@@ -467,6 +468,51 @@ classdef LLGCWeightedMethod < LLGCMethod
                 %[norm(vec(AaSub-Y),2)/numel(find(Y)) reg*norm(a,1)]
                 a = aDup;
             elseif obj.get('sort')
+                numInstances = size(Y,1);
+                numLabels = size(Y,2);
+                mask = ones(numInstances);
+                mask = mask - eye(size(mask));
+                mask = logical(mask);
+                
+                warning off;
+                
+                
+                cvx_begin quiet             
+                    variable a1(1)
+                    variable a(numInstances)                    
+                    variable AaSub(numInstances,numLabels)
+                    variable Ya(numInstances,numLabels)
+                    minimize(norm(vec(AaSub-Y),2))
+                    subject to
+                        a1 >= 0;
+                        a(:) == a1;
+                        Ya == Y.*repmat(a,1,numLabels);
+                        for idx=1:numInstances
+                            AaSub(idx,:) == A(idx,mask(idx,:))*Ya(mask(idx,:),:);
+                        end
+                cvx_end
+                
+                prior = a1*ones(numInstances,1);
+                
+                cvx_begin quiet             
+                    %variable a1(1)
+                    variable a(numInstances)                    
+                    variable AaSub(numInstances,numLabels)
+                    variable Ya(numInstances,numLabels)
+                    minimize(norm(vec(AaSub-Y),2))
+                    subject to
+                        a >= 0;
+                        norm(a - prior) <= reg
+                        Ya == Y.*repmat(a,1,numLabels);
+                        for idx=1:numInstances
+                            AaSub(idx,:) == A(idx,mask(idx,:))*Ya(mask(idx,:),:);
+                        end
+                cvx_end
+                warning on;
+                [a isNoisy]
+                a;
+                undupedWeights = a;
+                %{
                 numLabeled = size(Y,1);
                 a = ones(numLabeled,1);
                 F = A*Y;
@@ -481,6 +527,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 numNoisy = floor(percNoisy*numLabeled);
                 a(inds(1:numNoisy)) = 0;
                 undupedWeights = a;
+                %}
             else
                 error('Why are we using this?');
                 numLabeled = size(Y,1);

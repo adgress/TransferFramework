@@ -80,7 +80,7 @@ classdef LabeledData < matlab.mixin.Copyable
         end
         
         function [v] = get.isNoisy(obj)
-            v = obj.Y ~= obj.trueY;
+            v = obj.Y ~= obj.trueY & obj.Y > 0;
         end
         
         function [v] = get.numPerClass(obj)

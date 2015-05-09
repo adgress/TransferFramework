@@ -202,7 +202,7 @@ classdef DataSet < LabeledData
             labels = unique(labels);
             labels = labels(:)';
             labelMat = repmat(labels,obj.size(),1);
-            YMat = repmat(obj.Y,1,length(labels));
+            YMat = repmat(obj.trueY,1,length(labels));
             inds = logical(sum(labelMat == YMat,2));
         end
         function [] = keepFeatures(obj,featureIDsToKeep)

@@ -5,11 +5,13 @@ function [] = runBatchExperiment(multithread, dataset)
     c = ProjectConfigs.Create();
     %classNoise = [0 .15 .25 .35 .55];
     if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
-        classNoise = [0 .05 .15 .25 .35];
-        %classNoise = [.05];
+        %classNoise = [0 .05 .15 .25 .35];
+        classNoise = [.0 .15 .25];
         for i=classNoise(:)'
-            c.classNoise = i;
+            c.classNoise = i;                        
             batchConfigsObj = ProjectConfigs.BatchConfigs();    
+            batchConfigsObj.c.mainConfigs.set('classNoise',i);
+            batchConfigsObj.c.mainConfigs.c.learners.set('classNoise',i);
             obj = BatchExperimentConfigLoader(batchConfigsObj);
             if nargin < 1
                 obj.runExperiments();
