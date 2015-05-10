@@ -20,7 +20,7 @@ classdef ProjectConfigs < handle
         trainLabels = [10 15]
         labels = [10 15 23 25 26 30]
         useSavedSmallResults = false
-        CLASS_NOISE = .0
+        CLASS_NOISE = .25
         
         numRandomFeatures = 0
         useTransfer = true
@@ -110,7 +110,9 @@ classdef ProjectConfigs < handle
                 else
                     c.labelsToUse = [];
                     c.reg = 0:10:100;
-                    c.numLabeledPerClass=[5 10 20 30 40 50];
+                    c.numLabeledPerClass=[5 10 20 ];
+                    %c.numLabeledPerClass=[20 30 40 50];
+                    c.sigmaScale = .001;
                 end
                 if c.useOracleNoise
                     c.noise = c.labelNoise;
@@ -187,7 +189,7 @@ classdef ProjectConfigs < handle
             %c.setTommasi(.35);
             %c.setUSPSSmall();
             %c.setCOIL20(ProjectConfigs.labelNoise);
-            c.setCOIL20(.35);
+            c.setCOIL20(.55);
         end
         
         function [c] = VisualizationConfigs()
