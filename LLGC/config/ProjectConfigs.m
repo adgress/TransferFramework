@@ -30,7 +30,7 @@ classdef ProjectConfigs < handle
         useTransfer = true        
         smallResultsFiles = true
         
-        useOldMethod = true;
+        useOldMethod = true
     end
     
     properties    
@@ -112,15 +112,17 @@ classdef ProjectConfigs < handle
                 c.numFolds = 5; 
                 switch c.dataSet
                     case Constants.TOMMASI_DATA
-                        c.labelsToUse = [];
+                        c.labelsToUse = [10 15];
                         %c.reg = 0:10:100;
                         c.reg = [1 5 10 15 20];
                         c.numLabeledPerClass=[30 40 50];
-                    case Constants.COIL20_DATA
+                    case Constants.COIL20_DATA                        
                         c.labelsToUse = [];
                         c.reg = 0:10:100;
                         c.numLabeledPerClass=[5 10 20 ];
                         %c.numLabeledPerClass=[20 30 40 50];
+                        %c.sigma = 1;
+                        %c.sigmaScale = .01;
                         c.sigmaScale = .001;
                     case Constants.HOUSING_DATA
                         c.labelsToUse = [];
@@ -190,7 +192,8 @@ classdef ProjectConfigs < handle
             if ProjectConfigs.useOldMethod
                 c.reg = 0;
                 c.classNoise = 0:.05:.4;
-                c.numLabeledPerClass=[5 10 20 30 40 50];
+                %c.numLabeledPerClass=[5 10 20 30 40 50];
+                c.numLabeledPerClass=[10 30 40 50];
             end
         end
     end
@@ -198,7 +201,8 @@ classdef ProjectConfigs < handle
     methods(Static)
                
         function [c] = Create()
-            c = ProjectConfigs.instance;
+            %c = ProjectConfigs.instance;
+            c = ProjectConfigs.CreateSingleton();
         end
         
         function [c] = BatchConfigs()

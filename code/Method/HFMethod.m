@@ -137,7 +137,7 @@ classdef HFMethod < Method
             Y_testCleared(isTest) = -1;
             YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
             useHF = false;
-            if isKey(obj.configs,'sigma')
+            if isKey(obj.configs,'sigma') && ~isempty(obj.configs.get('sigma'))
                 sigma = obj.configs.get('sigma');
             elseif isKey(obj.configs,'sigmaScale')
                 sigma = obj.configs.get('sigmaScale')*distMat.meanDistance;

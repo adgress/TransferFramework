@@ -14,6 +14,8 @@ function [] = runExperiment(configs)
     end        
     if ~isempty(learner)
         learner.updateConfigs(configs);
+        display('Updated Configs using ProjectConfigs');
+        learner.updateConfigs(pc);
     end
     outputFile = configLoader.getOutputFileName();
     if exist(outputFile,'file') && ~pc.rerunExperiments

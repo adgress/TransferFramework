@@ -97,7 +97,8 @@ classdef LLGCWeightedMethod < LLGCMethod
             labels = [];
             if isempty(labels)
                 labels = distMat.classes;
-            end            
+            end        
+            %Wrbf(1,2:end)
             YtrainMat = Helpers.createLabelMatrix(Y_testCleared);
             %{
             dataSetIDs = unique(distMat.instanceIDs);

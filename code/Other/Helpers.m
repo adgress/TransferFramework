@@ -146,21 +146,23 @@ classdef Helpers < handle
             if nargin < 2
                 Y = X;
             end
+            pc = ProjectConfigs.Create();
+            if pc.dataSet == Constants.NG_DATA                
+                Y = Y';
+                normA = sqrt(sum(X .^ 2, 2));
+                normB = sqrt(sum(Y .^ 2, 1));
+                D = bsxfun(@rdivide, bsxfun(@rdivide, X * Y, normA), normB);
+                D(isnan(D(:))) = 0;
+                D = 1 - D;                                
+            else
+                X=X';
+                Y=Y';
+                D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y);
+                %D = real(D.^.5);
+                D = real(D);
+            end
             %tic
-            %{
-            X=X';
-            Y=Y';
-            D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 
-            %D = real(D.^.5); 
-            D = real(D);
-            %}
-            
-            Y = Y';
-            normA = sqrt(sum(X .^ 2, 2));
-            normB = sqrt(sum(Y .^ 2, 1));
-            D = bsxfun(@rdivide, bsxfun(@rdivide, X * Y, normA), normB);
-            D(isnan(D(:))) = 0;
-            D = 1 - D;
+                        
             %{
             D2 = zeros(size(X,1),size(Y,1));
             for i=1:size(X,1)

@@ -20,9 +20,12 @@ classdef Configs < matlab.mixin.Copyable
         function [] = addConfigsWithKeys(obj, other, keys)
             for idx=1:length(keys)
                 k = keys{idx};
-                if other.has(k)
-                    obj.set(k,other.get(k));
+                if isfield(other,k) || isprop(other,k)
+                    obj.set(k,other.(k));
                 end
+                if isa(other,'Configs') && other.has(k)
+                    obj.set(k,other.get(k));
+                end                
             end
         end
         
