@@ -409,7 +409,7 @@ classdef HFMethod < Method
         end
         function [] = updateConfigs(obj, newConfigs)
             %keys = {'sigma', 'sigmaScale','k','alpha'};
-            keys = {'sigmaScale','alpha'};
+            keys = {'sigmaScale','alpha','sigma'};
             obj.updateConfigsWithKeys(newConfigs,keys);
         end
         function [prefix] = getPrefix(obj)

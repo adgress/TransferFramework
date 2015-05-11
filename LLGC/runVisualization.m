@@ -43,20 +43,39 @@ function [] = runVisualization()
         end
     else                
         %for k=ProjectConfigs.k    
-        numSubplots = length(c.sigmaScale);
-        for s=c.sigmaScale
-            subplotIndex = subplotIndex + 1;
-            subplot(1,numSubplots,subplotIndex);                
-            newPlotConfigs = cell(size(plotConfigs));
-            for idx=1:length(plotConfigs)
-                p = plotConfigs{idx}.copy();
-                %p.set('resultFileName', sprintf(p.c.resultFileName,num2str(k)));
-                p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
-                newPlotConfigs{idx} = p;
+        if c.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
+            numSubplots = length(ProjectConfigs.noisesToViz);
+            for s=ProjectConfigs.noisesToViz(:)'
+                subplotIndex = subplotIndex + 1;
+                subplot(1,numSubplots,subplotIndex);
+                newPlotConfigs = cell(size(plotConfigs));
+                for idx=1:length(plotConfigs)
+                    p = plotConfigs{idx}.copy();
+                    %p.set('resultFileName', sprintf(p.c.resultFileName,num2str(k)));
+                    p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+                    newPlotConfigs{idx} = p;
+                end
+                vizConfigs.set('plotConfigs',newPlotConfigs);
+                title(['Class Noise: ' num2str(s)]);
+                [~,returnStruct] = visualizeResults(vizConfigs,f);
+                %vizConfigs.set('showLegend',false);
             end
-            vizConfigs.set('plotConfigs',newPlotConfigs);        
-            [~,returnStruct] = visualizeResults(vizConfigs,f);            
-            %vizConfigs.set('showLegend',false);
+        else
+            numSubplots = length(c.sigmaScale);
+            for s=c.sigmaScale
+                subplotIndex = subplotIndex + 1;
+                subplot(1,numSubplots,subplotIndex);                
+                newPlotConfigs = cell(size(plotConfigs));
+                for idx=1:length(plotConfigs)
+                    p = plotConfigs{idx}.copy();
+                    %p.set('resultFileName', sprintf(p.c.resultFileName,num2str(k)));
+                    p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+                    newPlotConfigs{idx} = p;
+                end
+                vizConfigs.set('plotConfigs',newPlotConfigs);        
+                [~,returnStruct] = visualizeResults(vizConfigs,f);            
+                %vizConfigs.set('showLegend',false);
+            end
         end
     end
     %{

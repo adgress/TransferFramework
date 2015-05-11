@@ -147,11 +147,31 @@ classdef Helpers < handle
                 Y = X;
             end
             %tic
+            %{
             X=X';
             Y=Y';
             D = bsxfun(@plus,dot(X,X,1)',dot(Y,Y,1))-2*(X'*Y); 
             %D = real(D.^.5); 
             D = real(D);
+            %}
+            
+            Y = Y';
+            normA = sqrt(sum(X .^ 2, 2));
+            normB = sqrt(sum(Y .^ 2, 1));
+            D = bsxfun(@rdivide, bsxfun(@rdivide, X * Y, normA), normB);
+            D(isnan(D(:))) = 0;
+            D = 1 - D;
+            %{
+            D2 = zeros(size(X,1),size(Y,1));
+            for i=1:size(X,1)
+                xi = X(i,:);
+                a = norm(xi);
+                for j=1:size(Y,1)                    
+                    yj = Y(:,j);
+                    D2(i,j) = 1 - xi*yj/(a*norm(yj));
+                end
+            end
+            %}
             %toc
             %{
             tic

@@ -19,16 +19,22 @@ classdef ProjectConfigs < handle
         vizNoisyAcc = 0
         trainLabels = [10 15]
         labels = [10 15 23 25 26 30]
+        
+        noisyTommasiLabels = [10 23]
+        
         useSavedSmallResults = false
-        CLASS_NOISE = .25
+        CLASS_NOISE = .0
         
+        noisesToViz = [0 .15 .25 0.35]
         numRandomFeatures = 0
-        useTransfer = true
-        
+        useTransfer = true        
         smallResultsFiles = true
+        
+        useOldMethod = true;
     end
     
-    properties        
+    properties    
+        sigma
         sigmaScale
         k
         alpha
@@ -94,25 +100,36 @@ classdef ProjectConfigs < handle
             c.noise = 0;
             c.dataSet = Constants.COIL20_DATA;
             %c.dataSet = Constants.TOMMASI_DATA;
+            %c.dataSet = Constants.HOUSING_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
                 c.classNoise = ProjectConfigs.CLASS_NOISE;
-                %c.noise = 0:.05:.4;
-                c.noise = 0;
+                c.noise = 0:.05:.4;
+                %c.noise = 0;
                 %c.labelsToUse = 1:20;                
                 c.labelNoise = .0;
                 c.numFolds = 5; 
-                if c.dataSet == Constants.TOMMASI_DATA
-                    c.labelsToUse = [];
-                    c.reg = 0:10:100;
-                    c.numLabeledPerClass=[10 20 30 40 50];
-                else
-                    c.labelsToUse = [];
-                    c.reg = 0:10:100;
-                    c.numLabeledPerClass=[5 10 20 ];
-                    %c.numLabeledPerClass=[20 30 40 50];
-                    c.sigmaScale = .001;
+                switch c.dataSet
+                    case Constants.TOMMASI_DATA
+                        c.labelsToUse = [];
+                        %c.reg = 0:10:100;
+                        c.reg = [1 5 10 15 20];
+                        c.numLabeledPerClass=[30 40 50];
+                    case Constants.COIL20_DATA
+                        c.labelsToUse = [];
+                        c.reg = 0:10:100;
+                        c.numLabeledPerClass=[5 10 20 ];
+                        %c.numLabeledPerClass=[20 30 40 50];
+                        c.sigmaScale = .001;
+                    case Constants.HOUSING_DATA
+                        c.labelsToUse = [];
+                        c.reg = 0:20:200;
+                        c.numLabeledPerClass=[30 40];
+                        %c.numLabeledPerClass=[20 30 40 50];
+                        c.sigmaScale = .1;
+                    otherwise
+                        error('unknown data set');
                 end
                 if c.useOracleNoise
                     c.noise = c.labelNoise;
@@ -130,27 +147,50 @@ classdef ProjectConfigs < handle
                 c.makeSubDomains = true;
                 c.addTargetDomain = true;
                 c.useDataSetWeights = true;
-                c.dataSet = Constants.TOMMASI_DATA;
-                c.labelsToUse = [];
-                %c.numLabeledPerClass=[5 10 15 20 25];
-                c.numLabeledPerClass=[5 10 15 20 25];
-                %c.reg = [0 1e-6 1e-5 5e-5 1e-4 1e-3 5e-3 1e-2 .05 .1];
-                %c.reg = 0:.5:4;
-                c.reg = 1:.5:1;
-                %c.reg = 0;
-                c.numFolds = 0; 
-                %c.numFolds = 1; 
-                c.addTargetDomain = true;
-                c.numOverlap = 30;
-                c.numTarget = 2;
-                c.numSource = 4;
                 
-                allLabels = ProjectConfigs.labels;
-                train = ProjectConfigs.trainLabels;
-                c.tommasiLabels = [train setdiff(allLabels,train)];
-                c.useDataSetWeights=true;
+                c.dataSet = Constants.TOMMASI_DATA;
+                c.dataSet = Constants.NG_DATA;
+                
+                c.labelsToUse = [];
+                c.numFolds = 0;                                                 
+                switch c.dataSet
+                    case Constants.TOMMASI_DATA
+                        %c.numLabeledPerClass=[5 10 15 20 25];
+                        c.numLabeledPerClass=[5 10 15 20 25];
+                        %c.reg = [0 1e-6 1e-5 5e-5 1e-4 1e-3 5e-3 1e-2 .05 .1];
+                        %c.reg = 0:.5:4;
+                        c.reg = 1:.5:1;
+                        c.numOverlap = 30;
+                        c.addTargetDomain = true;
+                        
+                        c.numTarget = 2;
+                        c.numSource = 4;
+
+                        allLabels = ProjectConfigs.labels;
+                        train = ProjectConfigs.trainLabels;
+                        c.tommasiLabels = [train setdiff(allLabels,train)];
+                    case Constants.NG_DATA
+                        %all features
+                        %c.sigmaScale = .01; 
+                        %c.sigmaScale = .05;
+                        c.sigma = .1;
+                        c.sigmaScale = .05; 
+                        c.addTargetDomain = false;
+                        c.makeSubDomains = false;                        
+                        %c.numLabeledPerClass=[5 10 15 20 25];
+                        c.numLabeledPerClass=[2];
+                        
+                        c.reg = 1:.5:1;
+                    otherwise
+                        error('unknown data set');
+                end                                
             else
                 error('');
+            end            
+            if ProjectConfigs.useOldMethod
+                c.reg = 0;
+                c.classNoise = 0:.05:.4;
+                c.numLabeledPerClass=[5 10 20 30 40 50];
             end
         end
     end
@@ -165,16 +205,24 @@ classdef ProjectConfigs < handle
             c = BatchConfigs();
             pc = ProjectConfigs.Create();
             c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
-            if pc.dataSet == Constants.COIL20_DATA
-                c.get('mainConfigs').setCOIL20(pc.labelNoise);
-            end
-            if pc.dataSet == Constants.TOMMASI_DATA
-                c.get('mainConfigs').setTommasiData(); 
-            end
-            if pc.dataSet == Constants.USPS_DATA
-                c.get('mainConfigs').setUSPSSmall();
+            switch pc.dataSet
+                case Constants.COIL20_DATA
+                    c.get('mainConfigs').setCOIL20(pc.labelNoise);
+                case Constants.TOMMASI_DATA
+                    c.get('mainConfigs').setTommasiData(); 
+                case Constants.USPS_DATA
+                    c.get('mainConfigs').setUSPSSmall();
+                case Constants.HOUSING_DATA
+                    c.get('mainConfigs').setHousingBinaryData();
+                case Constants.NG_DATA
+                    c.get('mainConfigs').setNGData();
+                otherwise
+                    error('unknown data set');
             end
             c.get('mainConfigs').setLLGCWeightedConfigs();
+            if pc.dataSet == Constants.NG_DATA
+                c.get('mainConfigs').get('learners').configs.set('zscore',0)
+            end
             c.configsStruct.configLoader = ExperimentConfigLoader();
             if ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
                 c.configsStruct.transferMethodClass = FuseTransfer();
@@ -189,7 +237,10 @@ classdef ProjectConfigs < handle
             %c.setTommasi(.35);
             %c.setUSPSSmall();
             %c.setCOIL20(ProjectConfigs.labelNoise);
-            c.setCOIL20(.55);
+            %c.setCOIL20(.55);
+            c.setHousingBinary();
+            noise = .45;
+            c.setClassNoise(noise);
         end
         
         function [c] = VisualizationConfigs()
@@ -286,9 +337,11 @@ classdef ProjectConfigs < handle
                             'LLGC: Uniform Weights',...                                        
                         };
                     end
+                    %{
                     for i=1:length(methodResultsFileNames)
                         methodResultsFileNames{i} = sprintf(methodResultsFileNames{i},num2str(ProjectConfigs.CLASS_NOISE));
                     end
+                    %}
                 end
                 if pc.dataSet == Constants.TOMMASI_DATA
                     for idx=1:length(methodResultsFileNames)

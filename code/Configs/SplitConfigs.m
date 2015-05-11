@@ -15,6 +15,43 @@ classdef SplitConfigs < Configs
             obj.set('normalizeRows',0);
         end
         
+        function [] = setYeastUCIBinary(obj)
+            obj.delete('maxTrainNumPerLabel');
+            
+            obj.configsStruct.inputFilePrefix='Data/pmtkdata-master/yeastUci/';
+            obj.configsStruct.inputDataSets={'yestUci_binary.mat'};
+            obj.configsStruct.dataSetAcronyms={'YeastBinary'};
+            obj.configsStruct.outputFilePrefix='Data/yeastBinary/';            
+            obj.configsStruct.outputFile='yeastBinary_split_data.mat';
+            obj.set('numToUsePerLabel',150);
+            obj.set('XName','X');
+            obj.set('YName','y');            
+        end
+        
+        function [] = setSpam(obj)
+            obj.delete('maxTrainNumPerLabel');
+            obj.configsStruct.inputFilePrefix='Data/pmtkdata-master/spamData/';
+            obj.configsStruct.inputDataSets={'spamData.mat'};
+            obj.configsStruct.dataSetAcronyms={'SPAM'};
+            obj.configsStruct.outputFilePrefix='Data/spamData/';            
+            obj.configsStruct.outputFile='spamData_split_data.mat';
+            
+            obj.set('XName',{'Xtrain','Xtest'});
+            obj.set('YName',{'ytrain','ytest'});
+        end
+        
+        function [] = setHousingBinary(obj)
+            obj.delete('maxTrainNumPerLabel');
+            obj.configsStruct.inputFilePrefix='Data/housingBinary/';
+            obj.configsStruct.inputDataSets={'housingBinary.mat'};
+            obj.configsStruct.dataSetAcronyms={'HB'};
+            obj.configsStruct.outputFilePrefix='Data/housingBinary/';            
+            obj.configsStruct.outputFile='housing_split_data.mat';
+            
+            obj.set('XName','X');
+            obj.set('YName','yBinary');
+        end
+        
         function [] = setCVSmall(obj,sourceNoise)
             if ~exist('sourceNoise','var')
                 sourceNoise = 0;
@@ -39,6 +76,21 @@ classdef SplitConfigs < Configs
             obj.set('inputDataSets',{'amazon_SURF_L10.mat','Caltech10_SURF_L10.mat','dslr_SURF_L10.mat','webcam_SURF_L10.mat'});
             obj.set('dataSetAcronyms',{'A','C','D','W'});
             obj.set('outputFilePrefix','Data/CV/');
+        end
+        
+        function [] = setClassNoise(obj,classNoise)
+            obj.set('classNoise',classNoise);
+            a = obj.get('outputFile');
+            i = strfind(a,'.mat');
+            if ~isempty(i)
+                a = a(1:i-1);
+            end
+            i = strfind(a,'-classNoise=');
+            if ~isempty(i)
+                a = a(1:i-1);
+            end
+            a = [a '-classNoise=' num2str(classNoise) '.mat'];
+            obj.set('outputFile',a);
         end
         
         function [] = setTommasi(obj,classNoise)

@@ -21,6 +21,9 @@ classdef LLGCWeightedMethod < LLGCMethod
             if ~obj.has('sort')
                 obj.set('sort',true);
             end           
+            if ~obj.has('useOldMethod')
+                obj.set('useOldMethod',ProjectConfigs.useOldMethod);
+            end
             if ~obj.has('useOracleNoise')
                 obj.set('useOracleNoise',false);
             end            
@@ -51,11 +54,30 @@ classdef LLGCWeightedMethod < LLGCMethod
             train = input.train;
             test = input.test;   
             testResults = FoldResults();   
-            makeRBF = false;
+            makeRBF = false;            
+            
+            %train.X = train.X > 0;
+            %test.X = test.X > 0;
+            
+            C = [train.X ; test.X];
+            C = C';
+            %[W, idf] = tf_idf_weight(C, 'normalize')
+            [W, idf] = tf_idf_weight(double(C));
+            W(isnan(W(:))) = 0;
+            W = W';
+            numTrain = size(train.X,1);
+            train.X = W(1:numTrain,:);
+            test.X = W(numTrain+1:end,:);
+            %[~,sortedInds] = sort(idf,'descend');
+            %k = 1:100;
+            %k = sortedInds(1:50);
+            %train.X = train.X(:,k);
+            %test.X = test.X(:,k);
+            
             %{
             numTrain = size(train.X,1);
-            numComp = 100;
-            [~,a] = princomp([train.X ; test.X]);
+            numComp = 10;
+            [~,a] = princomp(full([train.X ; test.X]));
             train.X = a(1:numTrain,1:numComp);
             test.X = a(numTrain+1:end,1:numComp);
             %}
@@ -252,7 +274,7 @@ classdef LLGCWeightedMethod < LLGCMethod
             end            
             YtrainMat_oracle = YtrainMat;
             if useDataSetWeights
-                if pc.addTargetDomain
+                if pc.addTargetDomain || pc.dataSet == Constants.NG_DATA
                     YtrainMat_oracle(instanceIDs > 1,:) = 0;
                 else
                     YtrainMat_oracle(instanceIDs > 0,:) = 0;
@@ -468,66 +490,68 @@ classdef LLGCWeightedMethod < LLGCMethod
                 %[norm(vec(AaSub-Y),2)/numel(find(Y)) reg*norm(a,1)]
                 a = aDup;
             elseif obj.get('sort')
-                numInstances = size(Y,1);
-                numLabels = size(Y,2);
-                mask = ones(numInstances);
-                mask = mask - eye(size(mask));
-                mask = logical(mask);
-                
-                warning off;
-                
-                
-                cvx_begin quiet             
-                    variable a1(1)
-                    variable a(numInstances)                    
-                    variable AaSub(numInstances,numLabels)
-                    variable Ya(numInstances,numLabels)
-                    minimize(norm(vec(AaSub-Y),2))
-                    subject to
-                        a1 >= 0;
-                        a(:) == a1;
-                        Ya == Y.*repmat(a,1,numLabels);
-                        for idx=1:numInstances
-                            AaSub(idx,:) == A(idx,mask(idx,:))*Ya(mask(idx,:),:);
-                        end
-                cvx_end
-                
-                prior = a1*ones(numInstances,1);
-                
-                cvx_begin quiet             
-                    %variable a1(1)
-                    variable a(numInstances)                    
-                    variable AaSub(numInstances,numLabels)
-                    variable Ya(numInstances,numLabels)
-                    minimize(norm(vec(AaSub-Y),2))
-                    subject to
-                        a >= 0;
-                        norm(a - prior) <= reg
-                        Ya == Y.*repmat(a,1,numLabels);
-                        for idx=1:numInstances
-                            AaSub(idx,:) == A(idx,mask(idx,:))*Ya(mask(idx,:),:);
-                        end
-                cvx_end
-                warning on;
-                [a isNoisy]
-                a;
-                undupedWeights = a;
-                %{
-                numLabeled = size(Y,1);
-                a = ones(numLabeled,1);
-                F = A*Y;
-                v = zeros(numLabeled,1);                
-                for i=1:length(v)
-                    v(i) = norm(Y(i,:) - F(i,:),1);
-                end
-                [sortedV,inds] = sort(v,'descend');
-                if obj.get('useOracleNoise')
-                    percNoisy = pc.classNoise;
-                end
-                numNoisy = floor(percNoisy*numLabeled);
-                a(inds(1:numNoisy)) = 0;
-                undupedWeights = a;
-                %}
+                if obj.get('useOldMethod')
+                    numLabeled = size(Y,1);
+                    a = ones(numLabeled,1);
+                    F = A*Y;
+                    v = zeros(numLabeled,1);                
+                    for i=1:length(v)
+                        v(i) = norm(Y(i,:) - F(i,:),1);
+                    end
+                    [sortedV,inds] = sort(v,'descend');
+                    if obj.get('useOracleNoise')
+                        percNoisy = pc.classNoise;
+                    end
+                    numNoisy = floor(percNoisy*numLabeled);
+                    a(inds(1:numNoisy)) = 0;
+                    undupedWeights = a;
+                else
+                    numInstances = size(Y,1);
+                    numLabels = size(Y,2);
+                    mask = ones(numInstances);
+                    mask = mask - eye(size(mask));
+                    mask = logical(mask);
+
+                    warning off;
+
+
+                    cvx_begin quiet             
+                        variable a1(1)
+                        variable a(numInstances)                    
+                        variable AaSub(numInstances,numLabels)
+                        variable Ya(numInstances,numLabels)
+                        minimize(norm(vec(AaSub-Y),2))
+                        subject to
+                            a1 >= 0;
+                            a(:) == a1;
+                            Ya == Y.*repmat(a,1,numLabels);
+                            for idx=1:numInstances
+                                AaSub(idx,:) == A(idx,mask(idx,:))*Ya(mask(idx,:),:);
+                            end
+                    cvx_end
+
+                    prior = a1*ones(numInstances,1);
+
+                    cvx_begin quiet             
+                        %variable a1(1)
+                        variable a(numInstances)                    
+                        variable AaSub(numInstances,numLabels)
+                        variable Ya(numInstances,numLabels)
+                        minimize(norm(vec(AaSub-Y),2))
+                        subject to
+                            a >= 0;
+                            %norm(a - prior) <= reg
+                            a <= reg
+                            Ya == Y.*repmat(a,1,numLabels);
+                            for idx=1:numInstances
+                                AaSub(idx,:) == A(idx,mask(idx,:))*Ya(mask(idx,:),:);
+                            end
+                    cvx_end
+                    warning on;
+                    [a isNoisy]
+                    a;
+                    undupedWeights = a;
+                end                                    
             else
                 error('Why are we using this?');
                 numLabeled = size(Y,1);
@@ -560,7 +584,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 end
                 if obj.has('justTargetNoSource') && obj.get('justTargetNoSource')
                     nameParams{end+1} = 'justTargetNoSource';
-                end
+                end                
             else
                 if obj.get('sort')
                     %nameParams{end+1} = 'sort';
@@ -571,13 +595,16 @@ classdef LLGCWeightedMethod < LLGCMethod
                 if obj.has('classNoise')
                     nameParams{end+1} = 'classNoise';
                 end
+                if obj.has('useOldMethod') && obj.get('useOldMethod')
+                    nameParams{end+1} = 'useOldMethod';
+                end
             end
             if obj.get('unweighted')
                 nameParams{end+1} = 'unweighted';
             end
             if obj.get('oracle')
                 nameParams{end+1} = 'oracle';                
-            end
+            end            
         end
         
         function [prefix] = getPrefix(obj)

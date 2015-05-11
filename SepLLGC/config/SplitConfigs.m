@@ -16,42 +16,7 @@ classdef SplitConfigs < Configs
             obj.setUSPS();
         end
         
-        function [] = setYeastUCIBinary(obj)
-            obj.delete('maxTrainNumPerLabel');
-            
-            obj.configsStruct.inputFilePrefix='Data/pmtkdata-master/yeastUci/';
-            obj.configsStruct.inputDataSets={'yestUci_binary.mat'};
-            obj.configsStruct.dataSetAcronyms={'YeastBinary'};
-            obj.configsStruct.outputFilePrefix='Data/yeastBinary/';            
-            obj.configsStruct.outputFile='yeastBinary_split_data.mat';
-            obj.set('numToUsePerLabel',150);
-            obj.set('XName','X');
-            obj.set('YName','y');            
-        end
         
-        function [] = setSpam(obj)
-            obj.delete('maxTrainNumPerLabel');
-            obj.configsStruct.inputFilePrefix='../Data/pmtkdata-master/spamData/';
-            obj.configsStruct.inputDataSets={'spamData.mat'};
-            obj.configsStruct.dataSetAcronyms={'SPAM'};
-            obj.configsStruct.outputFilePrefix='Data/spamData/';            
-            obj.configsStruct.outputFile='spamData_split_data.mat';
-            
-            obj.set('XName',{'Xtrain','Xtest'});
-            obj.set('YName',{'ytrain','ytest'});
-        end
-        
-        function [] = setHousingBinary(obj)
-            obj.delete('maxTrainNumPerLabel');
-            obj.configsStruct.inputFilePrefix='/Data/housing/';
-            obj.configsStruct.inputDataSets={'housingBinary.mat'};
-            obj.configsStruct.dataSetAcronyms={'HB'};
-            obj.configsStruct.outputFilePrefix='Data/housingBinary/';            
-            obj.configsStruct.outputFile='housing_split_data.mat';
-            
-            obj.set('XName','X');
-            obj.set('YName','yBinary');
-        end
         
         function [] = setTommasi(obj)
             obj.set('XName','X');

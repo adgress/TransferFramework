@@ -19,6 +19,7 @@ classdef LabeledData < matlab.mixin.Copyable
         classes
         isNoisy
         numPerClass
+        percLabeledNoisy
     end
     
     methods
@@ -89,6 +90,10 @@ classdef LabeledData < matlab.mixin.Copyable
                 v(i) = length(find(obj.Y == i));
             end
             v = v';
+        end
+        
+        function [v] = get.percLabeledNoisy(obj)
+            v = mean(obj.isNoisy(obj.isLabeled()));
         end
         
         function [n] = size(obj)

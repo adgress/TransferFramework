@@ -88,6 +88,10 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         dataAndSplits.sourceDataSets = dataAndSplits.sourceDataSets(shouldUseSource);
                         dataAndSplits.sourceNames = dataAndSplits.sourceNames(shouldUseSource);
                         dataSetName = [[dataAndSplits.sourceNames{:}] '2' targetName];                        
+                        for idx=1:length(dataAndSplits.sourceDataSets)
+                            ids = idx*ones(size(dataAndSplits.sourceDataSets{idx}.Y));
+                            dataAndSplits.sourceDataSets{idx}.instanceIDs = ids;
+                        end
                     else
                         %dataSetName = dataAndSplits.allData.name;                        
                         dataSetName = '';
@@ -127,7 +131,8 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         newSplit.targetData = targetDataCopy;
                         if isfield(dataAndSplits, 'sourceDataSets')
                             newSplit.sourceData = Helpers.MapCellArray(@copy,dataAndSplits.sourceDataSets);
-                            if mainConfigsCopy.has('sourceLabels')
+                            if mainConfigsCopy.has('sourceLabels') && ...
+                                    ~isempty(mainConfigsCopy.get('sourceLabels'))
                                 error('TODO');
                             end
                         end
