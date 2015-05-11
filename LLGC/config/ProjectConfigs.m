@@ -30,7 +30,7 @@ classdef ProjectConfigs < handle
         useTransfer = true        
         smallResultsFiles = true
         
-        useOldMethod = true
+        useOldMethod = false
     end
     
     properties    
@@ -105,8 +105,8 @@ classdef ProjectConfigs < handle
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
                 c.classNoise = ProjectConfigs.CLASS_NOISE;
-                c.noise = 0:.05:.4;
-                %c.noise = 0;
+                %c.noise = 0:.05:.4;
+                c.noise = 0;
                 %c.labelsToUse = 1:20;                
                 c.labelNoise = .0;
                 c.numFolds = 5; 
@@ -119,7 +119,7 @@ classdef ProjectConfigs < handle
                     case Constants.COIL20_DATA                        
                         c.labelsToUse = [];
                         c.reg = 0:10:100;
-                        c.numLabeledPerClass=[5 10 20 ];
+                        c.numLabeledPerClass=[5 10 20 30 40 50];
                         %c.numLabeledPerClass=[20 30 40 50];
                         %c.sigma = 1;
                         %c.sigmaScale = .01;
@@ -191,9 +191,10 @@ classdef ProjectConfigs < handle
             end            
             if ProjectConfigs.useOldMethod
                 c.reg = 0;
+                c.noise = 0:.05:.4;
                 c.classNoise = 0:.05:.4;
                 %c.numLabeledPerClass=[5 10 20 30 40 50];
-                c.numLabeledPerClass=[10 30 40 50];
+                c.numLabeledPerClass=[10 20 30 40 50];
             end
         end
     end
@@ -335,10 +336,12 @@ classdef ProjectConfigs < handle
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-useOldMethod=1.mat';
                         legend = {...
                             'LLGC: Oracle Weights',...
                             'LLGC: Learn Weights',...
                             'LLGC: Uniform Weights',...                                        
+                            'LLGC: IJCAI Weights',...
                         };
                     end
                     %{
