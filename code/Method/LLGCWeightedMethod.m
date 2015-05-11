@@ -59,15 +59,17 @@ classdef LLGCWeightedMethod < LLGCMethod
             %train.X = train.X > 0;
             %test.X = test.X > 0;
             
-            C = [train.X ; test.X];
-            C = C';
-            %[W, idf] = tf_idf_weight(C, 'normalize')
-            [W, idf] = tf_idf_weight(double(C));
-            W(isnan(W(:))) = 0;
-            W = W';
-            numTrain = size(train.X,1);
-            train.X = W(1:numTrain,:);
-            test.X = W(numTrain+1:end,:);
+            if pc.dataSet == Constants.NG_DATA
+                C = [train.X ; test.X];
+                C = C';
+                %[W, idf] = tf_idf_weight(C, 'normalize')
+                [W, idf] = tf_idf_weight(double(C));
+                W(isnan(W(:))) = 0;
+                W = W';
+                numTrain = size(train.X,1);
+                train.X = W(1:numTrain,:);
+                test.X = W(numTrain+1:end,:);
+            end
             %[~,sortedInds] = sort(idf,'descend');
             %k = 1:100;
             %k = sortedInds(1:50);
