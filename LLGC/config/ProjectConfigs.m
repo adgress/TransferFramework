@@ -124,8 +124,7 @@ classdef ProjectConfigs < handle
                         %c.reg = [1 10:10:100];
                         %c.reg = [40:10:100];
                         c.reg = [0:.1:1];
-                        c.numLabeledPerClass=[5 10 20 30 40 50];
-                        c.numLabeledPerClass=[10 30 40 50];
+                        c.numLabeledPerClass=[5 10 20 30];                        
                         %c.sigma = 1;
                         %c.sigmaScale = .01;
                         c.sigmaScale = .001;
