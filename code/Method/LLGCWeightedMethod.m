@@ -36,6 +36,9 @@ classdef LLGCWeightedMethod < LLGCMethod
             if ~obj.has('robustLoss')
                 obj.set('robustLoss',false);
             end
+            if ~obj.has('newOpt')
+                obj.set('newOpt',1);
+            end
         end
         
         function [testResults,savedData] = ...
@@ -100,15 +103,17 @@ classdef LLGCWeightedMethod < LLGCMethod
             end        
             %Wrbf(1,2:end)
             YtrainMat = Helpers.createLabelMatrix(Y_testCleared);
-            %{
-            dataSetIDs = unique(distMat.instanceIDs);
-            for i=1:length(dataSetIDs)
-                d = dataSetIDs(i);
-                I = distMat.instanceIDs == d & Y_testCleared > 0;
-                n = sum(I);
-                YtrainMat(I,:) = YtrainMat(I,:) / n;
+            
+            scaleY = true;
+            if scaleY && obj.get('dataSetWeights')
+                dataSetIDs = unique(distMat.instanceIDs);
+                for i=1:length(dataSetIDs)
+                    d = dataSetIDs(i);
+                    I = distMat.instanceIDs == d & Y_testCleared > 0;
+                    n = sum(I);
+                    YtrainMat(I,:) = YtrainMat(I,:) / n;
+                end
             end
-            %}
             M = obj.makeM(Wrbf);  
             M_inv = inv(M);
             distMatRBF = DistanceMatrix(M,Y_testCleared,distMat.type,distMat.trueY,distMat.instanceIDs);            
@@ -277,7 +282,7 @@ classdef LLGCWeightedMethod < LLGCMethod
             end            
             YtrainMat_oracle = YtrainMat;
             if useDataSetWeights
-                if pc.addTargetDomain || pc.dataSet == Constants.NG_DATA
+                if pc.addTargetDomain
                     YtrainMat_oracle(instanceIDs > 1,:) = 0;
                 else
                     YtrainMat_oracle(instanceIDs > 0,:) = 0;
@@ -361,6 +366,7 @@ classdef LLGCWeightedMethod < LLGCMethod
         end
         
         function [a,undupedWeights] = solveForNodeWeights(obj,A,Y,instanceIDs,isNoisy)
+            newOpt = obj.get('newOpt');
             numLabels = size(Y,2);          
             pc = ProjectConfigs.Create();
             A = pc.alpha*A;
@@ -378,15 +384,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 numUniqueLabels = length(uniqueLabels);
                 warning off
                 
-                useLOO = true;
-                %{
-                for idx=1:length(dataSets)
-                    d = dataSets(idx);
-                    I = instanceIDs == d;
-                    n = sum(I);
-                    Y(I,:) = 10*Y(I,:) ./ n;
-                end
-                %}
+                useLOO = true;                
                 if useLOO
                     assert(numUniqueLabels == 2);
                     y1 = uniqueLabels(1);
@@ -431,7 +429,6 @@ classdef LLGCWeightedMethod < LLGCMethod
                     for idx=1:numTarget
                         AaSub(idx,:) = A(targetInds(idx),mask(targetInds(idx),:))*Y(mask(targetInds(idx),:),:);
                     end
-                    %sparse(AaSub
                     Ytarget(Ytarget > 0) = 1;
                     cvx_begin quiet
                         variable a(numDataSets)
@@ -439,7 +436,11 @@ classdef LLGCWeightedMethod < LLGCMethod
                         variable AaSub(numTarget,numLabels)
                         variable Aa(numInstances,numLabels)          
                         variable Ya(numInstances,numLabels)
-                        minimize(norm(vec(AaSub-Ytarget),2))
+                        if newOpt
+                            minimize(norm(vec(AaSub-Ytarget),1))
+                        else
+                            minimize(norm(vec(AaSub-Ytarget),2))
+                        end
                         subject to             
                             %norm(a(2:end),1) <= reg
                             %norm(a,1) <= 50*reg
@@ -449,9 +450,17 @@ classdef LLGCWeightedMethod < LLGCMethod
                             a >= 0
                             %a(1) == 1
                             %a(2:end) == 0
+                            if newOpt
+                                a(1) == 1
+                                a <= 1
+                                norm(a(2:end),1) <= reg                                
+                            else
+                                a(1) == reg
+                                norm(a(2:end),1) <= reg
+                            end
                             aDup == a(instanceIDs+dataSetOffset)
                             Ya == Y.*repmat(aDup,1,numLabels)                            
-                            
+
                             for idx=1:numTarget                                
                                 AaSub(idx,:) == A(targetInds(idx),mask(targetInds(idx),:))*Ya(mask(targetInds(idx),:),:);
                                 %AaSub(idx,:) == A(targetInds(idx),:)*Ya(:,:);
@@ -465,8 +474,12 @@ classdef LLGCWeightedMethod < LLGCMethod
                             %}
                     cvx_end                     
                     %a(1) = max(a);
-                    aDup = a(instanceIDs+dataSetOffset);
-                    a
+                    if newOpt && a(1) ~= 1
+                        display('Setting a(1) = 1');
+                        a(1) = 1;
+                    end
+                    aDup = a(instanceIDs+dataSetOffset);                    
+                    a                    
                     a;
                 else
                     cvx_begin quiet
@@ -517,7 +530,7 @@ classdef LLGCWeightedMethod < LLGCMethod
 
                     warning off;
 
-
+                    %{
                     cvx_begin quiet             
                         variable a1(1)
                         variable a(numInstances)                    
@@ -534,17 +547,26 @@ classdef LLGCWeightedMethod < LLGCMethod
                     cvx_end
 
                     prior = a1*ones(numInstances,1);
-
+                    %}
+                    prior = 1;
                     cvx_begin quiet             
                         %variable a1(1)
-                        variable a(numInstances)                    
+                        variable a(numInstances)        
                         variable AaSub(numInstances,numLabels)
                         variable Ya(numInstances,numLabels)
-                        minimize(norm(vec(AaSub-Y),2))
+                        if newOpt
+                            minimize(norm(vec(AaSub-Y),1))
+                        else
+                            minimize(norm(vec(AaSub-Y),2))
+                        end
                         subject to
-                            a >= 0;
-                            %norm(a - prior) <= reg
-                            a <= reg
+                            a >= 0                            
+                            if newOpt
+                                norm(a - prior,1) <= reg*prior*length(a)
+                                a <= prior
+                            else
+                                a <= reg                                
+                            end
                             Ya == Y.*repmat(a,1,numLabels);
                             for idx=1:numInstances
                                 AaSub(idx,:) == A(idx,mask(idx,:))*Ya(mask(idx,:),:);
@@ -552,6 +574,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                     cvx_end
                     warning on;
                     [a isNoisy]
+                    %b
                     a;
                     undupedWeights = a;
                 end                                    
@@ -607,7 +630,10 @@ classdef LLGCWeightedMethod < LLGCMethod
             end
             if obj.get('oracle')
                 nameParams{end+1} = 'oracle';                
-            end            
+            end    
+            if obj.has('newOpt') && obj.get('newOpt')
+                nameParams{end+1} = 'newOpt';
+            end
         end
         
         function [prefix] = getPrefix(obj)

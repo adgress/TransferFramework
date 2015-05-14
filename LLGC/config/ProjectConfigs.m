@@ -17,7 +17,7 @@ classdef ProjectConfigs < handle
         vizIncreasingNoise = 0
         vizWeights = 0
         vizNoisyAcc = 0
-        trainLabels = [10 15]
+        trainLabels = [10 23]
         labels = [10 15 23 25 26 30]
         
         noisyTommasiLabels = [10 23]
@@ -31,6 +31,8 @@ classdef ProjectConfigs < handle
         smallResultsFiles = true
         
         useOldMethod = false
+        %ngResultsDirectory = 'ST22CR1'
+        ngResultsDirectory = 'ST2ST32CR1'
     end
     
     properties    
@@ -101,6 +103,7 @@ classdef ProjectConfigs < handle
             c.dataSet = Constants.COIL20_DATA;
             %c.dataSet = Constants.TOMMASI_DATA;
             %c.dataSet = Constants.HOUSING_DATA;
+            %c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
@@ -118,9 +121,11 @@ classdef ProjectConfigs < handle
                         c.numLabeledPerClass=[30 40 50];
                     case Constants.COIL20_DATA                        
                         c.labelsToUse = [];
-                        c.reg = 0:10:100;
+                        %c.reg = [1 10:10:100];
+                        %c.reg = [40:10:100];
+                        c.reg = [0:.1:1];
                         c.numLabeledPerClass=[5 10 20 30 40 50];
-                        %c.numLabeledPerClass=[20 30 40 50];
+                        c.numLabeledPerClass=[10 30 40 50];
                         %c.sigma = 1;
                         %c.sigmaScale = .01;
                         c.sigmaScale = .001;
@@ -148,20 +153,16 @@ classdef ProjectConfigs < handle
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
                 c.makeSubDomains = true;
                 c.addTargetDomain = true;
-                c.useDataSetWeights = true;
-                
-                c.dataSet = Constants.TOMMASI_DATA;
-                c.dataSet = Constants.NG_DATA;
+                c.useDataSetWeights = true;                
                 
                 c.labelsToUse = [];
-                c.numFolds = 0;                                                 
+                c.numFolds = 5;
+                %c.reg = [1 10 100 1000 10000];
+                c.reg = [0:1:2];
                 switch c.dataSet
                     case Constants.TOMMASI_DATA
                         %c.numLabeledPerClass=[5 10 15 20 25];
-                        c.numLabeledPerClass=[5 10 15 20 25];
-                        %c.reg = [0 1e-6 1e-5 5e-5 1e-4 1e-3 5e-3 1e-2 .05 .1];
-                        %c.reg = 0:.5:4;
-                        c.reg = 1:.5:1;
+                        c.numLabeledPerClass=[5 10 15 20];                                                
                         c.numOverlap = 30;
                         c.addTargetDomain = true;
                         
@@ -180,9 +181,7 @@ classdef ProjectConfigs < handle
                         c.addTargetDomain = false;
                         c.makeSubDomains = false;                        
                         %c.numLabeledPerClass=[5 10 15 20 25];
-                        c.numLabeledPerClass=[2];
-                        
-                        c.reg = 1:.5:1;
+                        c.numLabeledPerClass=[5 10 20 30 40];
                     otherwise
                         error('unknown data set');
                 end                                
@@ -288,7 +287,6 @@ classdef ProjectConfigs < handle
                     c.set('dataSet',{'USPS-small'});
                     error('');
                 case Constants.COIL20_DATA
-                    c.set('dataSet',{'COIL20'});
                     c.set('prefix','results');
                     c.set('dataSet',{'COIL20'});
                     c.set('resultsDirectory','results/COIL20/COIL20');
@@ -296,6 +294,12 @@ classdef ProjectConfigs < handle
                     c.set('prefix','results_tommasi');
                     c.set('dataSet',{'tommasi_data'});
                     c.set('resultsDirectory','results_tommasi/tommasi_data');
+                case Constants.NG_DATA
+                    c.set('prefix','results_ng');
+                    c.set('dataSet',{'20NG'});
+                    s = 'results_ng/20news-bydate/splitData/';
+                    s = [s ProjectConfigs.ngResultsDirectory];
+                    c.set('resultsDirectory',s);
                 otherwise
                     error('unknown data set');
             end
@@ -371,29 +375,32 @@ classdef ProjectConfigs < handle
                 %end
                 %end            
             elseif ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
-                labels = ProjectConfigs.labels;
-                targetLabels = ProjectConfigs.trainLabels;
-                sourceLabels = setdiff(labels,targetLabels);
-                
-                
-                s = [num2str(sourceLabels) '-to-' num2str(targetLabels)];
-                %title = s;
-                title = 'Target Classes: ';
-                classNames = containers.Map;
-                classNames('10') = 'Beer Mug';
-                classNames('15') = 'Bonsai';
-                classNames('23') = 'Bulldozer';
-                classNames('25') = 'Cactus';
-                classNames('26') = 'Cake';
-                classNames('30') = 'Canoe';
-                for i=1:length(targetLabels)
-                    title = [title classNames(num2str(targetLabels(i)))];
-                    if i ~= length(targetLabels)
-                        title = [title ', '];
+                s = '';
+                d = '';
+                if pc.dataSet == Constants.TOMMASI_DATA
+                    labels = ProjectConfigs.labels;
+                    targetLabels = ProjectConfigs.trainLabels;
+                    sourceLabels = setdiff(labels,targetLabels);
+
+
+                    s = [s num2str(sourceLabels) '-to-' num2str(targetLabels)];
+                    %title = s;
+                    title = 'Target Classes: ';
+                    classNames = containers.Map;
+                    classNames('10') = 'Beer Mug';
+                    classNames('15') = 'Bonsai';
+                    classNames('23') = 'Bulldozer';
+                    classNames('25') = 'Cactus';
+                    classNames('26') = 'Cake';
+                    classNames('30') = 'Canoe';
+                    for i=1:length(targetLabels)
+                        title = [title classNames(num2str(targetLabels(i)))];
+                        if i ~= length(targetLabels)
+                            title = [title ', '];
+                        end
                     end
-                end
-                
-                d = [s '-numOverlap=' num2str(pc.numOverlap)];
+                    d = [s '-numOverlap=' num2str(pc.numOverlap)];
+                end                
                 if ProjectConfigs.vizWeights
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
                     legend = {...                      
@@ -405,11 +412,13 @@ classdef ProjectConfigs < handle
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
                     %methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTargetNoSource=1.mat'];
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-newOpt=1.mat'];
                     legend = {...
                         'LLGC: Oracle Weights',...
                         'LLGC: Learn Weights',...
                         'LLGC: Just Target',...                        
                         'LLGC: Uniform Weights',...                                        
+                        'LLGC: New Opt',...
                     };
                     %'LLGC: Just Target No Source',...
                 end

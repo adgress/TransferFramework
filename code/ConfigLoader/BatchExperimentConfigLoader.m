@@ -31,6 +31,9 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             end
             paramsToVary{end+1} = 'overrideConfigs';
             allParamsToVary{end+1} = obj.get('overrideConfigs');
+            isParamEmpty = cellfun(@isempty,allParamsToVary);            
+            paramsToVary = paramsToVary(~isParamEmpty);
+            allParamsToVary = allParamsToVary(~isParamEmpty);
             allParams = Helpers.MakeCrossProduct(allParamsToVary{:});
             if isempty(allParams)
                 allParams{1} = [];
@@ -255,6 +258,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         YNew(sourceDataCopy.Y == sourceLabel(labelIdx)) = targetLabel(labelIdx);
                     end
                     sourceDataCopy.Y = YNew;
+                    sourceDataCopy.trueY = YNew;
                     sourceDataCopy.instanceIDs(:) = labelProductIdx;
                     sourceDataCopy.ID2Labels = containers.Map();
                     sourceDataCopy.ID2Labels(num2str(labelProductIdx)) = sourceLabel;
