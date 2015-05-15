@@ -61,7 +61,7 @@ function [] = runVisualization()
                 %vizConfigs.set('showLegend',false);
             end
         else
-            numSubplots = length(c.sigmaScale);
+            numSubplots = length(c.sigmaScale);            
             for s=c.sigmaScale
                 subplotIndex = subplotIndex + 1;
                 subplot(1,numSubplots,subplotIndex);                
@@ -78,7 +78,7 @@ function [] = runVisualization()
             end
         end
     end
-    %{
+    
     set(findall(gcf,'type','text'),'FontSize',fontSize);
     legendHandle = findobj(gcf,'Type','axes','Tag','legend');
     set(legendHandle,'FontSize',legendFontSize);
@@ -87,6 +87,7 @@ function [] = runVisualization()
     if ~ProjectConfigs.vizWeights
         set(lines,'LineWidth',lineWidth);
     end
+    %{
     fileName = 'LLGC/figures/';
     if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
         t = vizConfigs.get('title');

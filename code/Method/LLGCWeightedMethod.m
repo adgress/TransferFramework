@@ -37,7 +37,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 obj.set('robustLoss',false);
             end
             if ~obj.has('newOpt')
-                obj.set('newOpt',1);
+                obj.set('newOpt',ProjectConfigs.useNewOpt);
             end
         end
         

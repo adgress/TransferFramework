@@ -142,8 +142,8 @@ function [newResults] = getResultsWithSize(results,size)
     newResults = {};
     for i=1:length(results)
         r = results{i};
-        error('TODO: what if size is a vector?');
-        if r.experiment.numLabeledPerClass == size
+        %error('TODO: what if size is a vector?');
+        if any(r.experiment.numLabeledPerClass == size)
             newResults{end+1} = r;
         end
     end

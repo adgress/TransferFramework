@@ -10,17 +10,17 @@ classdef ProjectConfigs < handle
         HYPERPARAMETER_EXPERIMENTS=2
         WEIGHTED_TRANSFER=3
         
-        experimentSetting = 1
+        experimentSetting = 3
         
         instance = ProjectConfigs.CreateSingleton()
         
         vizIncreasingNoise = 0
         vizWeights = 0
         vizNoisyAcc = 0
-        trainLabels = [10 23]
+        trainLabels = [23 25]
         labels = [10 15 23 25 26 30]
         
-        noisyTommasiLabels = [10 23]
+        noisyTommasiLabels = [10 15]
         
         useSavedSmallResults = false
         CLASS_NOISE = .0
@@ -31,8 +31,10 @@ classdef ProjectConfigs < handle
         smallResultsFiles = true
         
         useOldMethod = false
+        useNewOpt = 0
+        
         %ngResultsDirectory = 'ST22CR1'
-        ngResultsDirectory = 'ST2ST32CR1'
+        ngResultsDirectory = 'ST2ST32CR4'
     end
     
     properties    
@@ -71,7 +73,7 @@ classdef ProjectConfigs < handle
         makeSubDomains
         maxSourceSize
         rerunExperiments
-        classNoise
+        classNoise                
     end
     
     methods(Static, Access=private)
@@ -100,8 +102,8 @@ classdef ProjectConfigs < handle
             c.numFolds = 3;
             c.reg = 0;
             c.noise = 0;
-            c.dataSet = Constants.COIL20_DATA;
-            %c.dataSet = Constants.TOMMASI_DATA;
+            %c.dataSet = Constants.COIL20_DATA;
+            c.dataSet = Constants.TOMMASI_DATA;
             %c.dataSet = Constants.HOUSING_DATA;
             %c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
@@ -156,8 +158,12 @@ classdef ProjectConfigs < handle
                 
                 c.labelsToUse = [];
                 c.numFolds = 5;
-                %c.reg = [1 10 100 1000 10000];
-                c.reg = [0:1:2];
+                
+                if ProjectConfigs.useNewOpt
+                    c.reg = 0:1:2;
+                else
+                    c.reg = [1 10 100 1000 10000];    
+                end
                 switch c.dataSet
                     case Constants.TOMMASI_DATA
                         %c.numLabeledPerClass=[5 10 15 20 25];
@@ -302,6 +308,10 @@ classdef ProjectConfigs < handle
                 otherwise
                     error('unknown data set');
             end
+            if pc.dataSet == Constants.TOMMASI_DATA && ...
+                    ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+                c.set('sizeToUse',5:5:20);
+            end
         end
         
         function [plotConfigs,legend,title] = makePlotConfigs()  
@@ -309,7 +319,7 @@ classdef ProjectConfigs < handle
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};
             pc = ProjectConfigs.Create();
-            legend = [];
+            legend = {};
             title = [];
             
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
@@ -337,15 +347,13 @@ classdef ProjectConfigs < handle
                         };
                     else
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
+                        legend{end+1} = 'LLGC: Oracle Weights';
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                        legend{end+1} = 'LLGC: Learn Weights';
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
+                        legend{end+1} = 'LLGC: Uniform Weights';
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-useOldMethod=1.mat';
-                        legend = {...
-                            'LLGC: Oracle Weights',...
-                            'LLGC: Learn Weights',...
-                            'LLGC: Uniform Weights',...                                        
-                            'LLGC: IJCAI Weights',...
-                        };
+                        legend{end1+1} = 'LLGC: IJCAI Weights';                                                                
                     end
                     %{
                     for i=1:length(methodResultsFileNames)
@@ -407,19 +415,20 @@ classdef ProjectConfigs < handle
                     };
                 else
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1.mat'];                    
+                    legend{end+1} = 'LLGC: Oracle Weights';
+                    %{
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
-                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
-                    %methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTargetNoSource=1.mat'];
-                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
+                    legend{end+1} = 'LLGC: Learn Weights';
+                    %}
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-newOpt=1.mat'];
-                    legend = {...
-                        'LLGC: Oracle Weights',...
-                        'LLGC: Learn Weights',...
-                        'LLGC: Just Target',...                        
-                        'LLGC: Uniform Weights',...                                        
-                        'LLGC: New Opt',...
-                    };
-                    %'LLGC: Just Target No Source',...
+                    %legend{end+1} = 'LLGC: New Opt';
+                    legend{end+1} = 'LLGC: Learn Weights';
+                    if pc.dataSet == Constants.TOMMASI_DATA
+                        methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
+                        legend{end+1} = 'LLGC: Just Target';
+                    end
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
+                    legend{end+1} = 'LLGC: Uniform Weights';                    
                 end
             else
                 error('TODO');
