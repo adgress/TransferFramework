@@ -23,6 +23,15 @@ classdef EntropyActiveMethod < ActiveMethod
             scores = [];
             fuTrain = results.trainFU;
             unlabeledInds = find(input.train.Y < 0);
+            if size(fuTrain,2) == 1 
+                %error('2nd dimension  == 1');
+                scores =  1 ./ abs(fuTrain(unlabeledInds));
+                return;
+            end
+            if any(abs(sum(fuTrain,2) - 1) >= 1e-8)
+                error('Not a probability distribution');               
+            end
+            
             for i=unlabeledInds'
                 assert(length(i) == 1);
                 scores(end+1) = obj.entropy(fuTrain(i,:));

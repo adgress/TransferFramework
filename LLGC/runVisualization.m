@@ -2,8 +2,9 @@ function [] = runVisualization()
     setPaths;
     close all    
     vizConfigs = ProjectConfigs.VisualizationConfigs();
-    width = 600;
-    height = 500;
+    width = 1000;
+    height = 300;
+    vizConfigs.set('axisToUse',[0 1 .5 1]);
     if ProjectConfigs.vizWeights
         width = 1700;
         height = 450;
@@ -23,6 +24,17 @@ function [] = runVisualization()
     else
         title(a{1});
     end
+    
+    justFirstLegend = false;
+    justFirstYLabel = false;    
+    paperSettings = true; 
+    textAxes = gca;
+    set(textAxes,'Position',[0 0 1 1],'Visible','off');
+    if paperSettings
+        justFirstLegend = true;
+        justFirstYLabel = true;        
+    end
+    
     c = ProjectConfigs.Create();
     if c.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER && ...
             ProjectConfigs.vizWeights
@@ -43,6 +55,43 @@ function [] = runVisualization()
         end
     else                
         %for k=ProjectConfigs.k    
+        itrArray = c.sigmaScale;
+        noisyExp = c.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT;
+        
+        if noisyExp
+            itrArray = ProjectConfigs.noisesToViz;
+        end
+        
+        figureHandles = tight_subplot(1,length(itrArray),.05,.15,.05);
+        for s=itrArray(:)'
+            subplotIndex = subplotIndex + 1;
+            currAxes = figureHandles(subplotIndex);
+            axes(currAxes);
+            set(currAxes,'XTickLabelMode','auto');
+            set(currAxes,'YTickLabelMode','auto');
+            newPlotConfigs = cell(size(plotConfigs));
+            for idx=1:length(plotConfigs)
+                p = plotConfigs{idx}.copy();                
+                if noisyExp
+                    p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+                else
+                    p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+                end
+                newPlotConfigs{idx} = p;
+            end
+            vizConfigs.set('plotConfigs',newPlotConfigs);
+            if noisyExp
+                title(['Noise: ' num2str(s)]);
+            else
+                title(['TODO: Title']);
+            end
+            if subplotIndex > 1
+                vizConfigs.set('showYAxisLabel', ~justFirstYLabel);
+                vizConfigs.set('showLegend', ~justFirstLegend);
+            end
+            [~,returnStruct] = visualizeResults(vizConfigs,currAxes);
+        end
+        %{
         if c.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
             numSubplots = length(ProjectConfigs.noisesToViz);
             for s=ProjectConfigs.noisesToViz(:)'
@@ -77,8 +126,9 @@ function [] = runVisualization()
                 %vizConfigs.set('showLegend',false);
             end
         end
+        %}
     end
-    
+    %{
     set(findall(gcf,'type','text'),'FontSize',fontSize);
     legendHandle = findobj(gcf,'Type','axes','Tag','legend');
     set(legendHandle,'FontSize',legendFontSize);
@@ -87,6 +137,7 @@ function [] = runVisualization()
     if ~ProjectConfigs.vizWeights
         set(lines,'LineWidth',lineWidth);
     end
+    %}
     %{
     fileName = 'LLGC/figures/';
     if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT

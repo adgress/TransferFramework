@@ -143,7 +143,8 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         %newSplit.targetType = split.split(split.permutation);
                         newSplit.targetType = split.split;                     
                         if ~isempty(labelsToUse)
-                            if obj.get('mainConfigs').c.classNoise > 0
+                            m = obj.get('mainConfigs');
+                            if mainConfigsCopy.has('classNoise') && mainConfigsCopy.get('classNoise') > 0
                                 assert(length(labelsToUse) == 2);
                                 display('Fixing noisy labels');
                                 y1Inds = targetDataCopy.isNoisy & targetDataCopy.trueY == labelsToUse(1);                                

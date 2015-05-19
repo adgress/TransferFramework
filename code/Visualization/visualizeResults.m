@@ -83,7 +83,8 @@ function [f, returnStruct] = visualizeResults(options,f)
     if index == 1
         leg = {};
     end
-    if options.c.showLegend && ~isempty(leg) && ~options.c.showTable && any(fileExists)
+    if options.c.showLegend && ~isempty(leg) && ~options.c.showTable && any(fileExists) ...
+            && options.get('showPlots')
         legend(leg(fileExists),'Location','southeast');
     end
     if options.c.showTable
@@ -93,11 +94,16 @@ function [f, returnStruct] = visualizeResults(options,f)
             leg = options.c.tableColumns;
         end
         set(options.c.table,'Data',tableData,'ColumnName',leg,'RowName',options.c.dataSet);
-    else
+    elseif options.get('showPlots')
         if options.has('axisToUse')
             axisToUse = options.c.axisToUse;    
             a = axis;
-            a(3:4) = axisToUse(3:4);
+            if ~options.get('autoAdjustXAxis')
+                a(1:2) = axisToUse(1:2);
+            end
+            if ~options.get('autoAdjustYAxis')
+                a(3:4) = axisToUse(3:4);
+            end            
             axis(a);
         end
         xAxisLabel = '';
@@ -165,7 +171,7 @@ function [displayVal] = plotResults(results,sizes,field,colors,lineStyle,options
     %[high,low] = getVariances(results,field,options);
     means = getMeans(results,field);
     %if ~options.c.vizMeasureCorrelation
-    if true
+    if ~options.c.showTable && options.get('showPlots')
         if length(means) == length(sizes)
             errorbar(sizes,means,vars,'color',colors,'LineStyle',lineStyle);    
         else            
@@ -173,7 +179,8 @@ function [displayVal] = plotResults(results,sizes,field,colors,lineStyle,options
                 a = ksr(1:length(means),means,2);
                 plot(a.x,a.f,'color',colors);
             else
-                errorbar(1:length(means),means,vars,'color',colors,'LineStyle',lineStyle);
+                
+                errorbar(0:length(means)-1,means,vars,'color',colors,'LineStyle',lineStyle);
                 %errorbar(1:length(means),means,low,high,'color',colors);    
             end
         end

@@ -1,58 +1,176 @@
 function [] = runVisualization()
     setPaths;
     close all    
-    vizConfigs = ProjectConfigs.VisualizationConfigs();
-    width = 1800;
-    height = 500;
-
-    f = figure('position',[100 100 width height]);
-              
-    a = vizConfigs.get('dataSet');
-    if vizConfigs.has('title')
-        title(vizConfigs.get('title'));
-    else
-        title(a{1});
+    if ProjectConfigs.data ~= Constants.ALL_DATA
+        vizConfigs = ProjectConfigs.VisualizationConfigs();    
     end
-    switch ProjectConfigs.data
-        case Constants.CV_DATA
-            domainsToViz = ProjectConfigs.cvDomainsToViz;
-        case Constants.TOMMASI_DATA
-            domainsToViz = ProjectConfigs.tommasiDomainsToViz;
-        case Constants.NG_DATA
-            domainsToViz = ProjectConfigs.ngDomainsToViz;            
-        case Constants.HOUSING_DATA
-        case Constants.YEAST_BINARY_DATA
-        case Constants.USPS_DATA
-        otherwise
-            error('unknown data set');
+    if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE_TRANSFER
+        error('do we want this?');
+        switch ProjectConfigs.data
+            case Constants.CV_DATA
+                domainsToViz = ProjectConfigs.cvDomainsToViz;
+            case Constants.TOMMASI_DATA
+                domainsToViz = ProjectConfigs.tommasiDomainsToViz;
+            case Constants.NG_DATA
+                domainsToViz = ProjectConfigs.ngDomainsToViz;            
+            case Constants.HOUSING_DATA
+            case Constants.YEAST_BINARY_DATA
+            case Constants.USPS_DATA
+            otherwise
+                error('unknown data set');
+        end
     end
     if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
         domainsToViz = {};
+        ngDomains = {'CR1','CR2','CR3','CR4'};
+        tommasiDomains = {'10  15','10  23','23  25'};
+        uspsDomains = {'3  8','1  7'};
+        configIndex = 1;
+        dataSets = ProjectConfigs.data;
         switch ProjectConfigs.data
             case Constants.NG_DATA
-                domainsToViz = {'CR1','CR2','CR3','CR4'};
+                domainsToViz = ngDomains;
             case Constants.TOMMASI_DATA
-                domainsToViz = {'10  15','10  23','23  25'};
+                domainsToViz = tommasiDomains;
             case Constants.HOUSING_DATA                
             case Constants.YEAST_BINARY_DATA
             case Constants.USPS_DATA
-                domainsToViz = {'3  8','1  7'};
-                
+                domainsToViz = uspsDomains;
+            case Constants.ALL_DATA
+                vizNG = ProjectConfigs.VisualizationConfigs(Constants.NG_DATA);                
+                vizUSPS = ProjectConfigs.VisualizationConfigs(Constants.USPS_DATA);
+                vizHousing = ProjectConfigs.VisualizationConfigs(Constants.HOUSING_DATA);
+                vizYeast = ProjectConfigs.VisualizationConfigs(Constants.YEAST_BINARY_DATA);
+                domainsToViz = {ngDomains{:} ; uspsDomains{:},[],[]};
+                vizConfigs = {vizNG,vizUSPS,vizHousing,vizYeast};
+                configIndex = [1 1 1 1 ; 2 2 3 4];
+                dataSets = [Constants.NG_DATA Constants.USPS_DATA ...
+                    Constants.HOUSING_DATA Constants.YEAST_BINARY_DATA];
+                dataSetNames = {'20NG','USPS','Housing','Yeast'};
             otherwise
                 error('unknown data set');
         end
         
-    end
-    [d] = ProjectConfigs.getResultsDirectory();
-    if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz
-        for i=1:length(domainsToViz)
-            subplot(1,length(domainsToViz),i);
-            newResultsDir = [d '/' domainsToViz{i} '/'];
-            vizConfigs.set('resultsDirectory',newResultsDir);
-            title(domainsToViz{i});
-            [~,returnStruct] = visualizeResults(vizConfigs,f);
-        end
-    else
-        [~,returnStruct] = visualizeResults(vizConfigs,f);            
     end    
+    if ~iscell(vizConfigs)
+        vizConfigs = {vizConfigs};
+    end
+    width = 1800;
+    height = 500;
+    usePaperSettings = ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE;
+    if usePaperSettings
+        width = 600;
+        height = 400;
+        for idx=1:length(vizConfigs)
+            currConfigs = vizConfigs{idx};
+            currConfigs.set('showLegend',false);
+            currConfigs.set('axisToUse',[-1 21 0 1]);
+            currConfigs.set('autoAdjustXAxis',false);
+            currConfigs.set('autoAdjustYAxis',false);
+            currConfigs.set('showXAxisLabel',false);
+        end
+    end    
+    if ProjectConfigs.createTable
+        width = 1000;
+        height = 500;
+    end
+    f = figure('position',[500 500 width height]);
+    if ProjectConfigs.createTable
+        set(gca,'Visible','off');
+        [numRows,numCols] = size(domainsToViz);
+        correctField = 'preTransferValTest';
+        colNames = {};
+        rowNames = {'L2 Regularized Logistic Regression',...
+            'L2 Regularized SVM', 'Naive Bayes'};
+        learnerFileNames = {'LogReg','SVML2','NaiveBayes'};
+        idxToUse = 21;
+        precision = 2;
+        resultStructs = cell(numRows,numCols);
+        data = cell(length(learnerFileNames),numel(domainsToViz));
+        for idx=1:length(learnerFileNames)
+            dataSetIdx = 1;
+            for row=1:numRows
+                for col=1:numCols                
+                    index = configIndex(1,1);
+                    if ~isscalar(configIndex)
+                        index = configIndex(row,col);
+                    end
+                    currDomainToViz = domainsToViz{row,col};
+                    currVizConfigs = vizConfigs{index};
+                    [plotConfigs,~,~] = ProjectConfigs.makePlotConfigs(learnerFileNames{idx});
+                    currVizConfigs.set('plotConfigs',plotConfigs);
+                    %plotConfigs = currVizConfigs.get('plotConfigs');                
+                    assert(length(plotConfigs) == 1);               
+                    field = plotConfigs{1}.get('fieldToPlot');
+                    assert(isequal(correctField,field));
+                    if ~isempty(currDomainToViz)
+                        [d] = ProjectConfigs.getResultsDirectory(dataSets(index));
+                        newResultsDir = [d '/' domainsToViz{row,col} '/'];
+                    end
+                    currVizConfigs.set('resultsDirectory',newResultsDir);
+                    name = dataSetNames{index};
+                    if ~isempty(currDomainToViz)
+                        name = [name ': ' currDomainToViz];
+                    end
+                    if idx==1
+                        colNames{end+1} = name;
+                    end
+                    [~,resultStructs{row,col}] = visualizeResults(currVizConfigs,f);                
+                    m = resultStructs{row,col}.displayVals{1}.means(idxToUse);
+                    v = resultStructs{row,col}.displayVals{1}.vars(idxToUse);
+                    s = [num2str(m,precision) ' ' setstr(177) ' ' num2str(v,precision)];
+                    data{idx,dataSetIdx} = s;
+                    dataSetIdx = dataSetIdx + 1;
+                end
+            end
+        end
+        table = uitable(f,'ColumnName',colNames,'RowName',rowNames,...
+            'data', data);
+        extent = get(table,'Extent');
+        set(table,'Position',extent);
+        set(f,'Position',[500 500 extent(3) extent(4)]);
+    else        
+        [numRows,numCols] = size(domainsToViz);
+        figureHandles = tight_subplot(numRows,numCols,.1,.1,.1);
+        if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz
+            figIdx = 1;
+            for row = 1:size(domainsToViz,1)
+                for col=1:size(domainsToViz,2)
+                    %subplot(1,length(domainsToViz),i);
+                    f = figureHandles(figIdx);
+                    axes(f);
+                    set(f,'XTickLabelMode','auto');
+                    set(f,'YTickLabelMode','auto');
+                    index = configIndex(1,1);
+                    if ~isscalar(configIndex)
+                        index = configIndex(row,col);
+                    end
+                    currDomainToViz = domainsToViz{row,col};
+                    currVizConfigs = vizConfigs{index};     
+                    %Only show & axis label for first subplot       
+                    currVizConfigs.set('showYAxisLabel',col == 1);
+                    if ~isempty(currDomainToViz)
+                        [d] = ProjectConfigs.getResultsDirectory(dataSets(index));
+                        newResultsDir = [d '/' domainsToViz{row,col} '/'];
+                    end
+                    currVizConfigs.set('resultsDirectory',newResultsDir);
+                    name = dataSetNames{index};
+                    if ~isempty(currDomainToViz)
+                        name = [name ': ' currDomainToViz];                    
+                    end
+                    title(name);
+                    [~,returnStruct] = visualizeResults(currVizConfigs,f);
+
+                    figIdx = figIdx + 1;
+                end
+            end
+            parent = get(f,'parent');
+            a = axes('Position',[0 0 1 1],'Visible','off');
+            text(.5,.03,'Active Learning Iterations','HorizontalAlignment','center');
+            learner = 'Naive Bayes';
+            text(.5,.98,learner,'HorizontalAlignment','center');
+        else
+            [~,returnStruct] = visualizeResults(vizConfigs,f);            
+        end   
+    end
 end

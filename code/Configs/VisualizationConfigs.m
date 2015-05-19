@@ -14,13 +14,16 @@ classdef VisualizationConfigs < Configs
             obj.configsStruct.axisToUse = [0 10 0 1.1];
             obj.configsStruct.showLegend = true;
             obj.configsStruct.showTable = false;
+            obj.configsStruct.showPlots = true;
             obj.configsStruct.tableColumns = {'Relative Transfer Acc','Our Measure','Our Measure Just Targets'};                                              
             obj.configsStruct.sizeField = 'numLabeledPerClass';
             obj.configsStruct.xAxisField = 'numLabeledPerClass';
             obj.configsStruct.xAxisDisplay = 'Target Labels Per Class';
             obj.configsStruct.yAxisDisplay = 'Accuracy';
             obj.configsStruct.showXAxisLabel = true;
-            obj.configsStruct.showYAxisLabel = true;                        
+            obj.configsStruct.showYAxisLabel = true;  
+            obj.set('autoAdjustXAxis',true);
+            obj.set('autoAdjustYAxis',false);
             
             obj.configsStruct.resultQueries = {};
             obj.configsStruct.measure = Measure(Configs());

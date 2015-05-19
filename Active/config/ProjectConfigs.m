@@ -17,16 +17,25 @@ classdef ProjectConfigs < ProjectConfigsBase
         %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
         
-        data = Constants.NG_DATA
+        %learningMethod = 'LogReg'
+        %learningMethod = 'SVML2'
+        learningMethod = 'NaiveBayes'
+        
+        createTable = 1;
+        
+        %data = Constants.NG_DATA
         %data = Constants.HOUSING_DATA
         %data = Constants.YEAST_BINARY_DATA
         %data = Constants.USPS_DATA
+        data = Constants.ALL_DATA        
         useTransfer = false;
         
         resampleTarget = true
         %kNumLabeledPerClass = 2        
         logRegNumFeatures = inf
         useL1LogReg = false
+        useSVM = false
+        useNB = 1
         
         axisToUse = [0 10 -.5 1.1]
         %axisToUse = [0 10 -.05 .1]
@@ -47,8 +56,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         showTransferMeasurePerfDiff = 0
         showPreTransferMeasurePerfDiff = 0
         
-        showWeightedPrecisionTransferLoss = 1
-        showCVBias = 1
+        showWeightedPrecisionTransferLoss = 0
+        showCVBias = 0
          %{
         activeIterations = 10;
         labelsPerIteration = 5;
@@ -75,14 +84,14 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         
         showRegular = 1
-        showWeighted1 = 1      
+        showWeighted1 = 0
         showWeighted2 = 0
-        showNewCVWeight = 1
+        showNewCVWeight = 0
         
         showFixReg = 0
-        showTestPerf = 0
+        showTestPerf = 1
         showCVPerf = 0
-        showCVDelta = 1
+        showCVDelta = 0
         showDivergence = 0
         
         vizTargetLabels = [10 15]
@@ -160,6 +169,9 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.dataSet = ProjectConfigs.data;
 
             c.numLabeledPerClass=ProjectConfigs.kNumLabeledPerClass;
+            if ProjectConfigs.useNB && c.numLabeledPerClass == 2
+                c.numLabeledPerClass = 3;
+            end
             c.numTarget = 2;
             c.numSource = 2;
             
@@ -213,9 +225,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 case Constants.YEAST_BINARY_DATA
                     c.get('mainConfigs').setYeastBinaryData();    
                 case Constants.USPS_DATA
-                    c.get('mainConfigs').setUSPS();
-                    %c.get('mainConfigs').set('labelsToUse',[1 7]);
-                    c.get('mainConfigs').set('labelsToUse',[3 8]);
+                    c.get('mainConfigs').setUSPS();                    
                 otherwise
                     error('Unknown data set');
             end                        
@@ -230,7 +240,10 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.setUSPS();
         end
         
-        function [c] = VisualizationConfigs()            
+        function [c] = VisualizationConfigs(dataSet)    
+            if ~exist('dataSet','var')
+                dataSet = ProjectConfigs.data;
+            end
             c = VisualizationConfigs();                                                       
             c.configsStruct.confidenceInterval = VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
             %c.configsStruct.confidenceInterval = VisualizationConfigs.CONF_INTERVAL_STD;
@@ -243,7 +256,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             if ~isempty('title')
                 c.set('title',title);
             end            
-            
+            c.configsStruct.yAxisDisplay = 'Absolute Error';
             c.configsStruct.xAxisDisplay = 'Active Learning Iterations';
             c.configsStruct.axisToUse = ProjectConfigs.axisToUse;
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
@@ -253,11 +266,14 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.configsStruct.axisToUse = [0 10 -.5 1.1];
                 %c.configsStruct.axisToUse = [0 10 -.05 .1];
             end
+            if ProjectConfigs.createTable
+                c.set('showPlots',false);
+            end
             pc = ProjectConfigs.Create();
             
-            [d] = ProjectConfigs.getResultsDirectory();
+            [d] = ProjectConfigs.getResultsDirectory(dataSet);
             transferDir = '';
-            switch ProjectConfigs.data
+            switch dataSet
                 case Constants.TOMMASI_DATA
                     c.set('prefix','results_tommasi');
                     c.set('dataSet',{'tommasi_data'});
@@ -270,7 +286,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.set('prefix','');
                     c.set('dataSet',{'CV-small'});
                     transferDir = 'A2C';
-                case Constants.NG_DATA                    
+                case Constants.NG_DATA
                     c.set('prefix','results_ng');
                     c.set('dataSet',{'CR2CR3CR42CR1'});
                     transferDir = 'CR42CR1';
@@ -287,6 +303,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                 case Constants.USPS_DATA
                     c.set('prefix','');
                     c.set('dataSet',{''});
+                case Constants.ALL_DATA
+                    
+                    
                 otherwise
                     error('Unknown data set');
             end            
@@ -294,9 +313,12 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.set('resultsDirectory','results_tommasi/tommasi_data/25  23-to-10  15');
         end
         
-        function [d] = getResultsDirectory()
+        function [d] = getResultsDirectory(dataSet)
             pc = ProjectConfigs.Create();
-            switch pc.data
+            if ~exist('dataSet','var')
+                dataSet = pc.data;
+            end            
+            switch dataSet
                 case Constants.TOMMASI_DATA
                     d = 'results_tommasi/tommasi_data/';
                 case Constants.CV_DATA
@@ -318,7 +340,10 @@ classdef ProjectConfigs < ProjectConfigsBase
             end
         end
         
-        function [plotConfigs,legend,title] = makePlotConfigs()  
+        function [plotConfigs,legend,title] = makePlotConfigs(learnerName)  
+            if ~exist('learnerName','var')
+                learnerName = ProjectConfigs.learningMethod;
+            end
             basePlotConfigs = Configs();
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};           
@@ -333,32 +358,35 @@ classdef ProjectConfigs < ProjectConfigsBase
             fileSuffixLegend = {};
             newCVWeight = [];
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE                               
+                method = learnerName;
                 s = ProjectConfigs.activeMethodScale;
                 if ProjectConfigs.showRegular
-                    fileSuffixes{end+1} = '_LogReg';
+                    fileSuffixes{end+1} = ['_' method];
                     fileSuffixLegend{end+1} = '';
                     newCVWeight(end+1) = false;
-                end
+                end                
                 if ProjectConfigs.showWeighted1
-                    fileSuffixes{end+1} = '_valWeights=1_LogReg';
+                    t = '_valWeights=1';
                     if s ~= 1
-                        fileSuffixes{end} = ['_valWeights=1_scale=' num2str(s) '_LogReg'];
+                        t = ['_valWeights=1_scale=' num2str(s)];
                     end
+                    fileSuffixes{end+1} = [t '_' method];
                     fileSuffixLegend{end+1} = 'Our Method';
                     newCVWeight(end+1) = true;
                 end
                 if ProjectConfigs.showWeighted2
-                    fileSuffixes{end+1} = '_valWeights=2_LogReg';
+                    t = '_valWeights=2';
                     if s ~= 1
-                        fileSuffixes{end} = ['_valWeights=2_scale=' num2str(s) '_LogReg'];
+                        t = ['_valWeights=2_scale=' num2str(s)];
                     end
+                    fileSuffixes{end+1} = [t '_' method];
                     fileSuffixLegend{end+1} = 'Our Method No CV Weighting';
                     newCVWeight(end+1) = false;
                 end
                 if ProjectConfigs.showNewCVWeight
-                    fileSuffixes{end+1} = '_valWeights=1_LogReg-cvWeight=1';
+                    fileSuffixes{end+1} = ['_valWeights=1_' method '-cvWeight=1'];
                     if s ~= 1
-                        fileSuffixes{end} = ['_valWeights=1_scale=' num2str(s) '_LogReg-cvWeight=1'];
+                        fileSuffixes{end} = ['_valWeights=1_scale=' num2str(s) '_' method '-cvWeight=1'];
                     end
                     fileSuffixLegend{end+1} = 'Standord CV Weighting';
                     %{

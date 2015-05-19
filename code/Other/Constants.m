@@ -15,6 +15,9 @@ classdef Constants < handle
         HOUSING_DATA = 6
         YEAST_BINARY_DATA = 7
         
+        %Used for plotting multiple data sets
+        ALL_DATA = 100
+        
         NO_TYPE = 0;
         TARGET_TRAIN = 1;
         TARGET_TEST = 2;

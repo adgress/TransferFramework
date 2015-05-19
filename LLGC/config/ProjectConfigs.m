@@ -10,7 +10,7 @@ classdef ProjectConfigs < handle
         HYPERPARAMETER_EXPERIMENTS=2
         WEIGHTED_TRANSFER=3
         
-        experimentSetting = 3
+        experimentSetting = 1
         
         instance = ProjectConfigs.CreateSingleton()
         
@@ -22,7 +22,7 @@ classdef ProjectConfigs < handle
         
         noisyTommasiLabels = [10 15]
         
-        useSavedSmallResults = false
+        useSavedSmallResults = true
         CLASS_NOISE = .0
         
         noisesToViz = [0 .15 .25 0.35]
@@ -80,7 +80,7 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=false;                        
+            c.useUnweighted=true;                        
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
             c.useRobustLoss=false;
@@ -102,8 +102,8 @@ classdef ProjectConfigs < handle
             c.numFolds = 3;
             c.reg = 0;
             c.noise = 0;
-            %c.dataSet = Constants.COIL20_DATA;
-            c.dataSet = Constants.TOMMASI_DATA;
+            c.dataSet = Constants.COIL20_DATA;
+            %c.dataSet = Constants.TOMMASI_DATA;
             %c.dataSet = Constants.HOUSING_DATA;
             %c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
@@ -347,13 +347,21 @@ classdef ProjectConfigs < handle
                         };
                     else
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
-                        legend{end+1} = 'LLGC: Oracle Weights';
+                        legend{end+1} = 'Oracle Weights';
+                        %{
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
-                        legend{end+1} = 'LLGC: Learn Weights';
+                        legend{end+1} = 'Learn Weights';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-newOpt=1.mat';
+                        legend{end+1} = 'Learn Weights New Opt=1';
+                        %}
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-newOpt=1.mat';
+                        legend{end+1} = 'Learn Weights';
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-unweighted=1.mat';
-                        legend{end+1} = 'LLGC: Uniform Weights';
+                        legend{end+1} = 'Uniform Weights';
+                        %{
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-useOldMethod=1.mat';
-                        legend{end1+1} = 'LLGC: IJCAI Weights';                                                                
+                        legend{end+1} = 'LLGC: IJCAI Weights';                                                                
+                        %}
                     end
                     %{
                     for i=1:length(methodResultsFileNames)

@@ -33,6 +33,8 @@ classdef BatchConfigs < Configs
                         overrideConfigs = {};
                     case Constants.USPS_DATA
                         overrideConfigs = {};
+                        %obj.get('mainConfigs').set('labelsToUse',[1 7]);
+                        obj.get('mainConfigs').set('labelsToUse',[3 8]);
                     otherwise
                         error('Unknown data set');
                 end

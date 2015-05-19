@@ -27,6 +27,10 @@ classdef ActiveMethod < Saveable
                         
             if obj.get('valWeights')
                 remainingScores = unlabeledScores;
+                if sum(remainingScores) <= 1e-14
+                    display('sum(remainingScores) <= 1e-14.  Making weights uniform');
+                    remainingScores(:) = 1;
+                end
                 v = obj.get('valWeights');
                 remainingScores = remainingScores .^ obj.get('scale');
                 o = ones(size(remainingScores))/length(remainingScores);

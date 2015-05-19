@@ -7,6 +7,17 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [I] = hasZeroInClassVariance(X,Y)
+            classes = unique(Y);
+            I = false(1,size(X,2));
+            for idx=1:length(classes)
+                c = classes(idx);
+                isClass = Y == c;
+                Xc = X(isClass,:);
+                v = var(Xc);
+                I = I | v <= 1e-8;
+            end
+        end
         function [b] = hasEqualRows(A,B)
             b = false;
             for i=1:size(A,1)
