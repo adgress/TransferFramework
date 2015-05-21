@@ -253,7 +253,9 @@ classdef LLGCWeightedMethod < LLGCMethod
             isTest = distMat.isTargetTest() & distMat.Y > 0;
             if ~useOracle && ~useUnweighted && ~useJustTarget && ~useJustTargetNoSource ...
                     && ~useRobustLoss
-                F = M\(YtrainMat.*a);
+                YWeighted = YtrainMat.*a;
+                YWeighted = obj.normalizeMass(YWeighted);
+                F = M\(YWeighted);
                 [~,Ypred] = max(F,[],2);                                
                 testResults.yPred = Ypred;                        
                 testResults.dataFU = sparse(F);                            
@@ -290,6 +292,7 @@ classdef LLGCWeightedMethod < LLGCMethod
             else
                 YtrainMat_oracle(distMat.isNoisy,:) = 0;
             end
+            YtrainMat_oracle = obj.normalizeMass(YtrainMat_oracle);
             Foracle = M\YtrainMat_oracle;
             [~,YpredOracle] = max(Foracle,[],2);
             accJustOracle = sum(YpredOracle(isTest) == distMat.trueY(isTest))/sum(isTest);
@@ -329,6 +332,17 @@ classdef LLGCWeightedMethod < LLGCMethod
                 display(['Source Acc: ' num2str(accSource)])
             end
         end                
+        
+        function [Y] = normalizeMass(obj,Y)
+            mass = [];
+            for idx=1:size(Y,2)
+                mass(idx) = sum(Y(:,idx));
+                if mass(idx) == 0
+                    mass(idx) = 1;
+                end
+                Y(:,idx) = Y(:,idx) / mass(idx);
+            end            
+        end
         
         function [M, L] = makeM(obj,W)
             pc = ProjectConfigs.Create();
