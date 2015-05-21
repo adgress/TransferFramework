@@ -7,6 +7,21 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [v] = sampleDifferentInDomain(Y,domain)
+            v = zeros(size(Y));
+            for idx=1:length(Y)
+                I = domain ~= Y(idx);
+                v(idx) = randsample(domain(I),1);
+            end
+        end
+        
+        function [I] = inDomain(v,domain)
+            I = false(size(v));
+            for idx=1:length(domain)
+                I = I | v == domain(idx);
+            end
+        end
+        
         function [I] = hasZeroInClassVariance(X,Y)
             classes = unique(Y);
             I = false(1,size(X,2));

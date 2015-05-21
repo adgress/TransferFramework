@@ -37,7 +37,8 @@ classdef BatchConfigs < Configs
                     ProjectConfigs.NOISY_EXPERIMENT
                 configs = {};
                 c = Configs();
-                c.set('targetLabels',ProjectConfigs.noisyTommasiLabels);
+                c.set('labelsToUse',ProjectConfigs.noisyTommasiLabels);
+                c.set('targetLabels',[]);
                 c.set('sourceLabels',[]);
                 configs{1} = c;
             else

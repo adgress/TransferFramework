@@ -126,6 +126,7 @@ classdef SplitConfigs < Configs
             obj.configsStruct.dataSetAcronyms=...
                 {'CR1','CR2','CR3','CR4','ST1','ST2','ST3','ST4'};
             obj.configsStruct.outputFilePrefix='Data/20news-bydate/splitData/';
+            obj.configsStruct.outputFile='';
             obj.set('minInstancesPerFeature',100);
         end
         

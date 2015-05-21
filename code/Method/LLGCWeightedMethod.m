@@ -261,7 +261,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 display(['LLGCMethod Acc: ' num2str(acc)]);
                 testResults.instanceWeights = a(:,1);
                 testResults.learnerStats.reg = obj.get('reg');
-                testResults.learnerStats.reg = obj.get('noise');
+                %testResults.learnerStats.reg = obj.get('noise');
                 if useDataSetWeights
                     testResults.learnerStats.dataSetWeights = undupedWeights;
                     testResults.ID2Labels = train.ID2Labels;
@@ -631,7 +631,8 @@ classdef LLGCWeightedMethod < LLGCMethod
             if obj.get('oracle')
                 nameParams{end+1} = 'oracle';                
             end    
-            if obj.has('newOpt') && obj.get('newOpt')
+            if obj.has('newOpt') && obj.get('newOpt') && ...
+                    ~(obj.get('unweighted') || obj.get('oracle'))
                 nameParams{end+1} = 'newOpt';
             end
         end

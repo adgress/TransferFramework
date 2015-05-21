@@ -11,13 +11,14 @@ classdef ProjectConfigs < handle
         WEIGHTED_TRANSFER=3
         
         experimentSetting = 1
+        useTransfer = ProjectConfigs.experimentSetting == 3
         
         instance = ProjectConfigs.CreateSingleton()
         
         vizIncreasingNoise = 0
         vizWeights = 0
         vizNoisyAcc = 0
-        trainLabels = [23 25]
+        trainLabels = [10 15 ]
         labels = [10 15 23 25 26 30]
         
         noisyTommasiLabels = [10 15]
@@ -26,15 +27,15 @@ classdef ProjectConfigs < handle
         CLASS_NOISE = .0
         
         noisesToViz = [0 .15 .25 0.35]
-        numRandomFeatures = 0
-        useTransfer = true        
+        numRandomFeatures = 0        
         smallResultsFiles = true
         
         useOldMethod = false
-        useNewOpt = 0
+        useNewOpt = 1
         
         %ngResultsDirectory = 'ST22CR1'
-        ngResultsDirectory = 'ST2ST32CR4'
+        %ngResultsDirectory = 'ST2ST32CR4'
+        ngResultsDirectory = 'CR1'
     end
     
     properties    
@@ -80,7 +81,7 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=true;                        
+            c.useUnweighted=false;                        
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
             c.useRobustLoss=false;
@@ -102,33 +103,30 @@ classdef ProjectConfigs < handle
             c.numFolds = 3;
             c.reg = 0;
             c.noise = 0;
-            c.dataSet = Constants.COIL20_DATA;
+            %c.dataSet = Constants.COIL20_DATA;
             %c.dataSet = Constants.TOMMASI_DATA;
             %c.dataSet = Constants.HOUSING_DATA;
-            %c.dataSet = Constants.NG_DATA;
+            c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
+                
                 c.classNoise = ProjectConfigs.CLASS_NOISE;
                 %c.noise = 0:.05:.4;
                 c.noise = 0;
                 %c.labelsToUse = 1:20;                
                 c.labelNoise = .0;
                 c.numFolds = 5; 
+                c.reg = 0:.1:.6;
+                %c.reg = .6;
                 switch c.dataSet
                     case Constants.TOMMASI_DATA
-                        c.labelsToUse = [10 15];
-                        %c.reg = 0:10:100;
-                        c.reg = [1 5 10 15 20];
-                        c.numLabeledPerClass=[30 40 50];
+                        %c.labelsToUse = [10 15];
+                        c.numLabeledPerClass=[10 20 30 40 50];
                     case Constants.COIL20_DATA                        
-                        c.labelsToUse = [];
-                        %c.reg = [1 10:10:100];
-                        %c.reg = [40:10:100];
-                        c.reg = [0:.1:1];
-                        c.numLabeledPerClass=[5 10 20 30];                        
-                        %c.sigma = 1;
-                        %c.sigmaScale = .01;
+                        c.labelsToUse = [];                        
+                        %c.labelsToUse = [1 2];
+                        c.numLabeledPerClass=[5 10 20 30];
                         c.sigmaScale = .001;
                     case Constants.HOUSING_DATA
                         c.labelsToUse = [];
@@ -136,6 +134,14 @@ classdef ProjectConfigs < handle
                         c.numLabeledPerClass=[30 40];
                         %c.numLabeledPerClass=[20 30 40 50];
                         c.sigmaScale = .1;
+                    case Constants.NG_DATA                        
+                        c.sigma = .1;
+                        %c.sigma = 2;
+                        c.sigmaScale = .05; 
+                        c.addTargetDomain = false;
+                        c.makeSubDomains = false;                        
+                        %c.numLabeledPerClass=[5 10 15 20 25];
+                        c.numLabeledPerClass=[10 20 30 40 50];
                     otherwise
                         error('unknown data set');
                 end
@@ -247,12 +253,16 @@ classdef ProjectConfigs < handle
             %c.setUSPSSmall();
             %c.setCOIL20(ProjectConfigs.labelNoise);
             %c.setCOIL20(.55);
-            c.setHousingBinary();
-            noise = .45;
+            c.set20NG();
+            %c.setHousingBinary();
+            noise = .25;
             c.setClassNoise(noise);
         end
         
-        function [c] = VisualizationConfigs()
+        function [c] = VisualizationConfigs(targetLabels)
+            if ~exist('targetLabels','var')
+                targetLabels = ProjectConfigs.trainLabels;
+            end
             c = VisualizationConfigs();                                           
             c.configsStruct.showPostTransferMeasures = false;
             c.configsStruct.showPreTransferMeasures = false;
@@ -272,7 +282,7 @@ classdef ProjectConfigs < handle
             c.configsStruct.vizWeights = ProjectConfigs.vizWeights;
             c.configsStruct.vizNoisyAcc = ProjectConfigs.vizNoisyAcc;
             [c.configsStruct.plotConfigs,legend,title] = ...
-                ProjectConfigs.makePlotConfigs();
+                ProjectConfigs.makePlotConfigs(targetLabels);
             if ~isempty(legend)
                 c.set('legend',legend);
             end
@@ -314,16 +324,18 @@ classdef ProjectConfigs < handle
             end
         end
         
-        function [plotConfigs,legend,title] = makePlotConfigs()  
+        function [plotConfigs,legend,title] = makePlotConfigs(targetLabels)  
+            if ~exist('targetLabels','var')
+                targetLabels = ProjectConfigs.trainLabels;
+            end
             basePlotConfigs = Configs();
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};
             pc = ProjectConfigs.Create();
             legend = {};
             title = [];
-            
+            fields = {};
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT
-                trainLabels = ProjectConfigs.trainLabels;
                 if ProjectConfigs.vizIncreasingNoise
                      title = 'Accuracy with Label Noise';
                      methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=0-unweighted=1.mat';
@@ -341,10 +353,12 @@ classdef ProjectConfigs < handle
                     title = ['Class Noise: ' num2str(ProjectConfigs.CLASS_NOISE)];
                     if ProjectConfigs.vizNoisyAcc
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
                         legend = {...
                             'Noise Precision',...
                             'Predicted Noise Level',...
                         };
+                        fields = {}
                     else
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
                         legend{end+1} = 'Oracle Weights';
@@ -371,7 +385,7 @@ classdef ProjectConfigs < handle
                 end
                 if pc.dataSet == Constants.TOMMASI_DATA
                     for idx=1:length(methodResultsFileNames)
-                        methodResultsFileNames{idx} = ['/' num2str(trainLabels) '/' ...
+                        methodResultsFileNames{idx} = ['/' num2str(targetLabels) '/' ...
                             methodResultsFileNames{idx}];
                     end
                 end
@@ -393,8 +407,7 @@ classdef ProjectConfigs < handle
                 s = '';
                 d = '';
                 if pc.dataSet == Constants.TOMMASI_DATA
-                    labels = ProjectConfigs.labels;
-                    targetLabels = ProjectConfigs.trainLabels;
+                    labels = ProjectConfigs.labels;                    
                     sourceLabels = setdiff(labels,targetLabels);
 
 
@@ -423,20 +436,20 @@ classdef ProjectConfigs < handle
                     };
                 else
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1.mat'];                    
-                    legend{end+1} = 'LLGC: Oracle Weights';
+                    legend{end+1} = 'Oracle Weights';
                     %{
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
                     legend{end+1} = 'LLGC: Learn Weights';
                     %}
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-newOpt=1.mat'];
                     %legend{end+1} = 'LLGC: New Opt';
-                    legend{end+1} = 'LLGC: Learn Weights';
+                    legend{end+1} = 'Learn Weights';
                     if pc.dataSet == Constants.TOMMASI_DATA
                         methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
-                        legend{end+1} = 'LLGC: Just Target';
+                        legend{end+1} = 'Just Target';
                     end
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
-                    legend{end+1} = 'LLGC: Uniform Weights';                    
+                    legend{end+1} = 'Uniform Weights';                    
                 end
             else
                 error('TODO');

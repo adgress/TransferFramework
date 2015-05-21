@@ -4,7 +4,18 @@ function [] = runVisualization()
     vizConfigs = ProjectConfigs.VisualizationConfigs();
     width = 1000;
     height = 300;
-    vizConfigs.set('axisToUse',[0 1 .5 1]);
+    c = ProjectConfigs.Create();
+    noisyExp = c.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT;
+    dataSet = c.dataSet;
+    if noisyExp
+        vizConfigs.set('axisToUse',[0 1 .5 1]);
+    else
+        if dataSet == Constants.NG_DATA
+            vizConfigs.set('axisToUse',[0 45 .2 1]);
+        else
+            vizConfigs.set('axisToUse',[0 25 0 1]);
+        end
+    end
     if ProjectConfigs.vizWeights
         width = 1700;
         height = 450;
@@ -27,15 +38,17 @@ function [] = runVisualization()
     
     justFirstLegend = false;
     justFirstYLabel = false;    
-    paperSettings = true; 
+    paperSettings = false; 
     textAxes = gca;
     set(textAxes,'Position',[0 0 1 1],'Visible','off');
     if paperSettings
         justFirstLegend = true;
-        justFirstYLabel = true;        
+        justFirstYLabel = true;      
+        if ~noisyExp
+            vizConfigs.set('autoAdjustXAxis',false);
+        end
     end
-    
-    c = ProjectConfigs.Create();
+        
     if c.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER && ...
             ProjectConfigs.vizWeights
         sizes = 5:5:25;
@@ -55,35 +68,58 @@ function [] = runVisualization()
         end
     else                
         %for k=ProjectConfigs.k    
-        itrArray = c.sigmaScale;
-        noisyExp = c.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT;
+        itrArray = c.sigmaScale;        
         
         if noisyExp
             itrArray = ProjectConfigs.noisesToViz;
+        else
+            if dataSet == Constants.NG_DATA
+                itrArray = {'ST2ST32CR1','ST2ST32CR2','ST2ST32CR3','ST2ST32CR4'};
+                titles = {'CR1','CR2','CR3','CR4'};            
+            elseif dataSet == Constants.TOMMASI_DATA
+                itrArray = {[10 15], [10 23], [23 25]};                
+                titles = {};
+            end
         end
         
         figureHandles = tight_subplot(1,length(itrArray),.05,.15,.05);
-        for s=itrArray(:)'
-            subplotIndex = subplotIndex + 1;
+        %for s=itrArray(:)'
+        for subplotIndex=1:length(itrArray);
+            %subplotIndex = subplotIndex + 1;
             currAxes = figureHandles(subplotIndex);
             axes(currAxes);
             set(currAxes,'XTickLabelMode','auto');
             set(currAxes,'YTickLabelMode','auto');
-            newPlotConfigs = cell(size(plotConfigs));
-            for idx=1:length(plotConfigs)
-                p = plotConfigs{idx}.copy();                
-                if noisyExp
-                    p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
-                else
-                    p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+            if noisyExp
+                newPlotConfigs = cell(size(plotConfigs));
+                for idx=1:length(plotConfigs)
+                    p = plotConfigs{idx}.copy();                
+                    if noisyExp
+                        s = itrArray(subplotIndex);
+                        p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+                    else
+                        %p.set('resultFileName', sprintf(p.c.resultFileName,num2str(s)));
+                    end
+                    newPlotConfigs{idx} = p;
                 end
-                newPlotConfigs{idx} = p;
+                vizConfigs.set('plotConfigs',newPlotConfigs);            
             end
-            vizConfigs.set('plotConfigs',newPlotConfigs);
+            if ~noisyExp && dataSet == Constants.TOMMASI_DATA
+                newVizConfigs = ProjectConfigs.VisualizationConfigs(itrArray{subplotIndex}); 
+                vizConfigs.set('title',newVizConfigs.get('title'));
+                vizConfigs.set('resultsDirectory',newVizConfigs.get('resultsDirectory'));
+                vizConfigs.set('plotConfigs',newVizConfigs.get('plotConfigs'));
+                titles{subplotIndex} = newVizConfigs.get('title');
+            end            
             if noisyExp
                 title(['Noise: ' num2str(s)]);
             else
-                title(['TODO: Title']);
+                if dataSet == Constants.NG_DATA
+                    s = itrArray{subplotIndex};
+                    newDir = ['results_ng/20news-bydate/splitData/' s ];
+                    vizConfigs.set('resultsDirectory',newDir);
+                end
+                title(titles{subplotIndex});
             end
             if subplotIndex > 1
                 vizConfigs.set('showYAxisLabel', ~justFirstYLabel);

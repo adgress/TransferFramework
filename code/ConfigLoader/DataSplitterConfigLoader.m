@@ -64,11 +64,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
             if isempty(allData.instanceIDs)
                 allData.instanceIDs = 1:length(allData.Y);
                 allData.instanceIDs = allData.instanceIDs';
-            end
-            if obj.has('classNoise')
-                classNoise = obj.get('classNoise');        
-                allData.addRandomClassNoise(classNoise);                
-            end
+            end            
             if obj.has('maxTrainNumPerLabel')
                 numClasses = max(allData.Y);
                 [allData] = allData.stratifiedSampleNumPerClass(obj.get('maxTrainNumPerLabel'));
@@ -78,6 +74,10 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         break;
                     end
                 end                
+            end
+            if obj.has('classNoise')
+                classNoise = obj.get('classNoise');        
+                allData.addRandomClassNoise(classNoise);                
             end
             for i=1:obj.numSplits
                 if isa(allData,'SimilarityDataSet')

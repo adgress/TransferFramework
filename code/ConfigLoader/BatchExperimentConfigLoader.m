@@ -144,13 +144,22 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         newSplit.targetType = split.split;                     
                         if ~isempty(labelsToUse)
                             m = obj.get('mainConfigs');
-                            if mainConfigsCopy.has('classNoise') && mainConfigsCopy.get('classNoise') > 0
-                                assert(length(labelsToUse) == 2);
+                            if mainConfigsCopy.has('classNoise') && mainConfigsCopy.get('classNoise') > 0                                
                                 display('Fixing noisy labels');
-                                y1Inds = targetDataCopy.isNoisy & targetDataCopy.trueY == labelsToUse(1);                                
+                                toUse = Helpers.inDomain(targetDataCopy.trueY,labelsToUse);
+                                I = Helpers.inDomain(targetDataCopy.Y,labelsToUse);
+                                newY = Helpers.sampleDifferentInDomain(...
+                                    targetDataCopy.trueY(~I & toUse),labelsToUse);
+                                targetDataCopy.Y(~I & toUse) = newY;
+                                %assert(isequal(labelsToUse(:),targetDataCopy.classes(:)));
+                                %{
+                                
+                                assert(length(labelsToUse) == 2);
+                                y1Inds = targetDataCopy.isNoisy & targetDataCopy.trueY == labelsToUse(1);
                                 y2Inds = targetDataCopy.isNoisy & targetDataCopy.trueY == labelsToUse(2);
                                 targetDataCopy.Y(y1Inds) = labelsToUse(2);
                                 targetDataCopy.Y(y2Inds) = labelsToUse(1);
+                                %}
                             end
                             targetIndsToUse = targetDataCopy.hasLabel(labelsToUse);
                             newSplit.targetData.keep(targetIndsToUse);

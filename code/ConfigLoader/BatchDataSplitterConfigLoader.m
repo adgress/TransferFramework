@@ -32,7 +32,12 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                     end
                     configCopy.set('targetName',dataSetAcronyms{i});
                     configCopy.set('sourceFiles', sourceFiles);
-                    configCopy.set('outputFile',[sourceAcronym '2' dataSetAcronyms{i} '.mat']);
+                    s = [sourceAcronym '2' dataSetAcronyms{i}];
+                    if obj.get('classNoise') > 0
+                        s = [s '-classNoise=' num2str(obj.get('classNoise'))];
+                    end
+                    s = [s '.mat'];
+                    configCopy.set('outputFile',s);
                     configCopy.set('sourceNames', sourceNames);
                     o = DataSplitterConfigLoader(configCopy);
                     o.splitData();
