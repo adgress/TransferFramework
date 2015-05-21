@@ -17,7 +17,7 @@ classdef ProjectConfigs < handle
         
         vizIncreasingNoise = 0
         vizWeights = 0
-        vizNoisyAcc = 0
+        vizNoisyAcc = 1
         trainLabels = [10 15 ]
         labels = [10 15 23 25 26 30]
         
@@ -136,7 +136,7 @@ classdef ProjectConfigs < handle
                         c.sigmaScale = .1;
                     case Constants.NG_DATA                        
                         c.sigma = .1;
-                        %c.sigma = 2;
+                        c.sigma = 1;
                         c.sigmaScale = .05; 
                         c.addTargetDomain = false;
                         c.makeSubDomains = false;                        
@@ -352,13 +352,13 @@ classdef ProjectConfigs < handle
 
                     title = ['Class Noise: ' num2str(ProjectConfigs.CLASS_NOISE)];
                     if ProjectConfigs.vizNoisyAcc
-                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
-                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-newOpt=1.mat';
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-newOpt=1.mat';
                         legend = {...
                             'Noise Precision',...
                             'Predicted Noise Level',...
                         };
-                        fields = {}
+                        fields = {'isNoisyAcc','reg'};
                     else
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
                         legend{end+1} = 'Oracle Weights';
@@ -459,7 +459,11 @@ classdef ProjectConfigs < handle
                 configs = basePlotConfigs.copy();
                 configs.set('resultFileName',methodResultsFileNames{fileIdx});
                 configs.set('lineStyle','-');
-                configs.set('fieldToPlot','testResults');
+                if ~isempty(fields)
+                    configs.set('fieldToPlot',fields{fileIdx});
+                else
+                    configs.set('fieldToPlot','testResults');
+                end
                 configs.set('methodId',num2str(fileIdx));
                 plotConfigs{end+1} = configs;
             end
