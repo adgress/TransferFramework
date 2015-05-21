@@ -170,7 +170,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                         aAll = zeros(size(M,1),1);
                         aAll(hasLabel) = a;                        
                         aAll = repmat(aAll,1,max(labels));
-                        Ypred = Helpers.normRows(M\(YtrainMatCurr.*aAll));
+                        Ypred = Helpers.normRows(M\(obj.normalizeMass(YtrainMatCurr).*aAll));
                         [~,Y1] = max(Ypred,[],2);
                         Y1soft = sum(Ypred.*YtrainMat,2);
                         YpredNorm = Helpers.normRows(M\YtrainMatCurr);
