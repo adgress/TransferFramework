@@ -17,11 +17,11 @@ classdef ProjectConfigs < handle
         
         vizIncreasingNoise = 0
         vizWeights = 0
-        vizNoisyAcc = 1
+        vizNoisyAcc = 0
         trainLabels = [10 15 ]
         labels = [10 15 23 25 26 30]
         
-        noisyTommasiLabels = [10 15]
+        noisyTommasiLabels = [10 15 23 25]
         
         useSavedSmallResults = true
         CLASS_NOISE = .0
@@ -121,7 +121,6 @@ classdef ProjectConfigs < handle
                 %c.reg = .6;
                 switch c.dataSet
                     case Constants.TOMMASI_DATA
-                        %c.labelsToUse = [10 15];
                         c.numLabeledPerClass=[10 20 30 40 50];
                     case Constants.COIL20_DATA                        
                         c.labelsToUse = [];                        
