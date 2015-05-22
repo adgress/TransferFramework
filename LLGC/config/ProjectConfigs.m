@@ -81,7 +81,7 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=1;                        
+            c.useUnweighted=false;                        
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
             c.useRobustLoss=false;
