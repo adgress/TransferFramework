@@ -17,7 +17,7 @@ classdef ProjectConfigs < handle
         
         vizIncreasingNoise = 0
         vizWeights = 0
-        vizNoisyAcc = 1
+        vizNoisyAcc = 0
         trainLabels = [10 15 ]
         labels = [10 15 23 25 26 30]
         
@@ -136,7 +136,7 @@ classdef ProjectConfigs < handle
                         c.sigmaScale = .1;
                     case Constants.NG_DATA                        
                         c.sigma = .1;
-                        c.sigma = 1;
+                        %c.sigma = 1;
                         c.sigmaScale = .05; 
                         c.addTargetDomain = false;
                         c.makeSubDomains = false;                        
