@@ -18,10 +18,10 @@ classdef ProjectConfigs < handle
         vizIncreasingNoise = 0
         vizWeights = 0
         vizNoisyAcc = 0
-        trainLabels = [10 15 ]
+        trainLabels = [10 15]
         labels = [10 15 23 25 26 30]
         
-        noisyTommasiLabels = [10 15 23 25]
+        noisyTommasiLabels = ProjectConfigs.trainLabels
         
         useSavedSmallResults = true
         CLASS_NOISE = .0
@@ -81,7 +81,7 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=false;                        
+            c.useUnweighted=1;                        
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
             c.useRobustLoss=false;
@@ -104,9 +104,9 @@ classdef ProjectConfigs < handle
             c.reg = 0;
             c.noise = 0;
             %c.dataSet = Constants.COIL20_DATA;
-            c.dataSet = Constants.TOMMASI_DATA;
+            %c.dataSet = Constants.TOMMASI_DATA;
             %c.dataSet = Constants.HOUSING_DATA;
-            %c.dataSet = Constants.NG_DATA;
+            c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
@@ -124,7 +124,7 @@ classdef ProjectConfigs < handle
                         c.numLabeledPerClass=[10 20 30 40 50];
                     case Constants.COIL20_DATA                        
                         c.labelsToUse = [];                        
-                        %c.labelsToUse = [1 2];
+                        c.labelsToUse = [1 2];
                         c.numLabeledPerClass=[5 10 20 30];
                         c.sigmaScale = .001;
                     case Constants.HOUSING_DATA
@@ -140,7 +140,8 @@ classdef ProjectConfigs < handle
                         c.addTargetDomain = false;
                         c.makeSubDomains = false;                        
                         %c.numLabeledPerClass=[5 10 15 20 25];
-                        c.numLabeledPerClass=[10 20 30 40 50];
+                        %c.numLabeledPerClass=[10 20 30 40 50];
+                        c.numLabeledPerClass=[20 40 60 80 100 120 140];
                     otherwise
                         error('unknown data set');
                 end
