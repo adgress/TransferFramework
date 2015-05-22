@@ -11,7 +11,11 @@ classdef Helpers < handle
             v = zeros(size(Y));
             for idx=1:length(Y)
                 I = domain ~= Y(idx);
-                v(idx) = randsample(domain(I),1);
+                if sum(I) == 1
+                    v(idx) = domain(I);
+                else
+                    v(idx) = randsample(domain(I),1);
+                end
             end
         end
         
