@@ -23,7 +23,7 @@ classdef LogisticRegressionMethod < Method
                 obj.set('trainAllReg',1);
             end
             if ~obj.has('cvWeight')
-                obj.set('cvWeight',1);
+                obj.set('cvWeight',0);
             end
             if ~obj.has('LOOCV')
                 obj.set('LOOCV',0);
@@ -45,7 +45,7 @@ classdef LogisticRegressionMethod < Method
             test = input.test;   
             trainX = trainData.X;
             testX = test.X;
-            if ProjectConfigs.data == Constants.NG_DATA
+            if ProjectConfigs.data == Constants.NG_DATA && ProjectConfigs.useNB
                 trainX = double(trainData.X > 0);
                 testX = double(test.X > 0);
             end
@@ -111,10 +111,10 @@ classdef LogisticRegressionMethod < Method
             NBOptions = {};
             transform = NormalizeTransform();
             if ProjectConfigs.data == Constants.NG_DATA
-                %transform = TransformBase();
+                transform = TransformBase();
                 %NBOptions = {'Distribution','mvmn'};            
             end
-            
+            %transform = TransformBase();
             instanceWeights = ones(size(YLabeledCurr));
             if ProjectConfigs.resampleTarget
                 numSource = sum(labeledType == Constants.SOURCE);

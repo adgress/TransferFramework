@@ -26,7 +26,7 @@ classdef ProjectConfigs < handle
         useSavedSmallResults = true
         CLASS_NOISE = .0
         
-        noisesToViz = [0 .15 .25 0.35]
+        noisesToViz = [0 .05 .1 .15 .25 0.35]
         numRandomFeatures = 0        
         smallResultsFiles = true
         
@@ -81,7 +81,7 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=false;                        
+            c.useUnweighted=1;                        
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
             c.useRobustLoss=false;
@@ -255,7 +255,7 @@ classdef ProjectConfigs < handle
             %c.setCOIL20(.55);
             c.set20NG();
             %c.setHousingBinary();
-            noise = .25;
+            noise = .1;
             c.setClassNoise(noise);
         end
         

@@ -177,7 +177,8 @@ classdef Helpers < handle
                 Y = X;
             end
             pc = ProjectConfigs.Create();
-            if pc.dataSet == Constants.NG_DATA                
+            if pc.dataSet == Constants.NG_DATA     
+                display('Making Cosine matrix instead');
                 Y = Y';
                 normA = sqrt(sum(X .^ 2, 2));
                 normB = sqrt(sum(Y .^ 2, 1));

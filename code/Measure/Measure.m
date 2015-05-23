@@ -72,7 +72,7 @@ classdef Measure < Saveable
                     transferDifference = ...
                         valTest - preTransferValTest;                
                     measureResults.learnerStats.transferDifference = transferDifference;
-                end
+                end                
                 measureResults.learnerStats.divergence = divergence;
                 if hasPreTransfer
                     measureResults.learnerStats.preTransferValTrain = preTransferValTrain; 
@@ -82,6 +82,21 @@ classdef Measure < Saveable
                     measureResults.learnerStats.regDiffs = abs(log10(bestRegs)-log10(regs));
                     measureResults.learnerStats.cvPerfDiff = abs(preTransferValTest-cvAcc);
                     measureResults.learnerStats.cvPerfDelta = cvAcc-preTransferValTest;
+                    measureResults.learnerStats.cvAcc = cvAcc;
+                    
+                    desiredPerf = ProjectConfigs.desiredPerf;
+                    measureResults.learnerStats.terminatedPerf = zeros(size(desiredPerf));
+                    measureResults.learnerStats.numIterations = zeros(size(desiredPerf));
+                    for idx=1:length(desiredPerf)
+                        hasDesiredPerf = cvAcc >= desiredPerf(idx);
+                        minIdx = find(hasDesiredPerf,1,'first');
+                        if isempty(minIdx)
+                            minIdx = length(cvAcc);
+                        end
+                        measureResults.learnerStats.terminatedPerf(idx) = preTransferValTest(minIdx);
+                        measureResults.learnerStats.numIterations(idx) = minIdx -1;
+                    end
+                    
                 end                
                 if ~isempty(preTransferMeasures)
                     measureResults.learnerStats.preTransferMeasures = preTransferMeasures;

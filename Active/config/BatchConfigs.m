@@ -63,8 +63,7 @@ classdef BatchConfigs < Configs
                 %}
                 
                 activeMethods={
-                    RandomActiveMethod(activeConfigs),...                    
-                    EntropyActiveMethod(activeConfigs),...
+                    RandomActiveMethod(activeConfigs)                 
                 };
                 activeMethods = {};
                 %activeMethods{end+1} = EntropyActiveMethod(activeConfigs);

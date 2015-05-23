@@ -16,18 +16,19 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         %data = Constants.TOMMASI_DATA
         %data = Constants.CV_DATA
-        
-        %learningMethod = 'LogReg'
+        desiredPerf = [.6 .7 .8 .9 .95 .98 1.0]
+        learningMethod = 'LogReg'
         %learningMethod = 'SVML2'
-        learningMethod = 'NaiveBayes'
+        %learningMethod = 'NaiveBayes'
         
-        createTable = 1;
+        createTable = 0
+        plotTerminationCriterion=0
         
-        %data = Constants.NG_DATA
+        data = Constants.NG_DATA
         %data = Constants.HOUSING_DATA
         %data = Constants.YEAST_BINARY_DATA
         %data = Constants.USPS_DATA
-        data = Constants.ALL_DATA        
+        %data = Constants.ALL_DATA        
         useTransfer = false;
         
         resampleTarget = true
@@ -35,14 +36,14 @@ classdef ProjectConfigs < ProjectConfigsBase
         logRegNumFeatures = inf
         useL1LogReg = false
         useSVM = false
-        useNB = 1
+        useNB = false
         
         axisToUse = [0 10 -.5 1.1]
         %axisToUse = [0 10 -.05 .1]
         %axisToUse = [0 10 -.5 .2]
         useOverrideConfigs = 1        
         
-        useSavedSmallResults = 1
+        useSavedSmallResults = 0
         smallResultsFiles = 1
         useKSR = 0
         
@@ -69,8 +70,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         %}
         
         kNumLabeledPerClass = 2
+        %kNumLabeledPerClass = 50
         activeIterations = 20;
-        labelsPerIteration = 5;
+        labelsPerIteration = 5
         
         %labelsPerIteration = 4;
         
@@ -83,13 +85,14 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeMethodScale = 1
         
         
-        showRegular = 1
-        showWeighted1 = 0
-        showWeighted2 = 0
-        showNewCVWeight = 0
+        showRegular = 1 %Regular sample, no CV weights
+        showWeighted1 = 0 %Our method
+        showWeighted2 = 0 %Our method no CV weights
+        showNewCVWeight = 0 %Traditional importance weighting
         
         showFixReg = 0
         showTestPerf = 1
+        showCV = 1
         showCVPerf = 0
         showCVDelta = 0
         showDivergence = 0
@@ -415,6 +418,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                     plotFields{end+1} = 'preTransferValTest';
                     legendSuffixes{end+1} = 'Performance';
                 end
+                if ProjectConfigs.showCV
+                    plotFields{end+1} = 'cvAcc';
+                    legendSuffixes{end+1} = 'CV Prediction';
+                end
                 if ProjectConfigs.showCVPerf
                     plotFields{end+1} = 'cvPerfDiff';
                     legendSuffixes{end+1} = 'CV Accuracy';
@@ -426,6 +433,12 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if ProjectConfigs.showDivergence
                     plotFields{end+1} = 'divergence';
                     legendSuffixes{end+1} = 'Divergence';
+                end
+                if ProjectConfigs.plotTerminationCriterion
+                    plotFields{end+1} = 'terminatedPerf';
+                    legendSuffixes{end+1} = 'Terminated Accuracy';
+                    plotFields{end+1} = 'numIterations';
+                    legendSuffixes{end+1} = 'Number of Iterations';
                 end
                 %{
                 plotFields{end+1} = 'bestRegs';
@@ -497,7 +510,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if ProjectConfigs.showCVBias
                     plotFields{end+1} = 'cvPerfDiff';
                     legendSuffixes{end+1} = 'CV Accuracy';
-                end
+                end                
             end
             if l > 0 && a > 0
                 for suffixIdx=1:length(fileSuffixes)

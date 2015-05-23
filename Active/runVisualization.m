@@ -1,6 +1,6 @@
 function [] = runVisualization()
     setPaths;
-    close all    
+    %close all    
     if ProjectConfigs.data ~= Constants.ALL_DATA
         vizConfigs = ProjectConfigs.VisualizationConfigs();    
     end
@@ -75,18 +75,34 @@ function [] = runVisualization()
         height = 500;
     end
     f = figure('position',[500 500 width height]);
+    plotTermination = ProjectConfigs.plotTerminationCriterion;
     if ProjectConfigs.createTable
         set(gca,'Visible','off');
         [numRows,numCols] = size(domainsToViz);
-        correctField = 'preTransferValTest';
-        colNames = {};
-        rowNames = {'L2 Regularized Logistic Regression',...
-            'L2 Regularized SVM', 'Naive Bayes'};
-        learnerFileNames = {'LogReg','SVML2','NaiveBayes'};
-        idxToUse = 21;
+        if plotTermination
+            colNames = {};
+            rowNames = {};
+            desiredPerf = ProjectConfigs.desiredPerf;
+            for idx=1:length(desiredPerf)
+                colNames{idx} = num2str(desiredPerf(idx));
+            end
+            correctFields = {'terminatedPerf','numIterations'};
+            learnerFileNames = {'LogReg'};
+            learnerNames = {'Logistic Regression'};
+            data = cell(numel(domainsToViz)*length(learnerFileNames),...
+                length(desiredPerf));
+            rowIdx = 1;
+        else
+            correctFields = {'preTransferValTest'};
+            colNames = {};
+            rowNames = {'L2 Regularized Logistic Regression',...
+                'L2 Regularized SVM', 'Naive Bayes'};
+            idxToUse = 21;
+            learnerFileNames = {'LogReg','SVML2','NaiveBayes'};
+            data = cell(length(learnerFileNames),numel(domainsToViz));
+        end                                
         precision = 2;
-        resultStructs = cell(numRows,numCols);
-        data = cell(length(learnerFileNames),numel(domainsToViz));
+        resultStructs = cell(numRows,numCols);        
         for idx=1:length(learnerFileNames)
             dataSetIdx = 1;
             for row=1:numRows
@@ -100,9 +116,11 @@ function [] = runVisualization()
                     [plotConfigs,~,~] = ProjectConfigs.makePlotConfigs(learnerFileNames{idx});
                     currVizConfigs.set('plotConfigs',plotConfigs);
                     %plotConfigs = currVizConfigs.get('plotConfigs');                
-                    assert(length(plotConfigs) == 1);               
-                    field = plotConfigs{1}.get('fieldToPlot');
-                    assert(isequal(correctField,field));
+                    assert(length(plotConfigs) == length(correctFields));                                   
+                    for fieldIdx=1:length(plotConfigs)
+                        field = plotConfigs{fieldIdx}.get('fieldToPlot');
+                        assert(isequal(correctFields{fieldIdx},field));
+                    end
                     if ~isempty(currDomainToViz)
                         [d] = ProjectConfigs.getResultsDirectory(dataSets(index));
                         newResultsDir = [d '/' domainsToViz{row,col} '/'];
@@ -112,15 +130,31 @@ function [] = runVisualization()
                     if ~isempty(currDomainToViz)
                         name = [name ': ' currDomainToViz];
                     end
-                    if idx==1
-                        colNames{end+1} = name;
-                    end
+                    
                     [~,resultStructs{row,col}] = visualizeResults(currVizConfigs,f);                
-                    m = resultStructs{row,col}.displayVals{1}.means(idxToUse);
-                    v = resultStructs{row,col}.displayVals{1}.vars(idxToUse);
-                    s = [num2str(m,precision) ' ' setstr(177) ' ' num2str(v,precision)];
-                    data{idx,dataSetIdx} = s;
-                    dataSetIdx = dataSetIdx + 1;
+                    
+                    if plotTermination
+                        d = resultStructs{row,col}.displayVals;
+                        rowNames{end+1} = [learnerNames{idx} ' ' name];
+                        for perfIdx = 1:length(desiredPerf)
+                            m1 = d{1}.means(perfIdx);
+                            v1 = d{1}.vars(perfIdx);                            
+                            m2 = d{2}.means(perfIdx);
+                            v2 = d{2}.vars(perfIdx);
+                            s = [num2str(m1,precision) ' : ' num2str(m2,precision)];
+                            data{rowIdx,perfIdx} = s;
+                        end
+                        rowIdx = rowIdx + 1;
+                    else
+                        if idx==1
+                            colNames{end+1} = name;
+                        end
+                        m = resultStructs{row,col}.displayVals{1}.means(idxToUse);
+                        v = resultStructs{row,col}.displayVals{1}.vars(idxToUse);
+                        s = [num2str(m,precision) ' ' setstr(177) ' ' num2str(v,precision)];
+                        data{idx,dataSetIdx} = s;
+                        dataSetIdx = dataSetIdx + 1;
+                    end
                 end
             end
         end
@@ -167,7 +201,8 @@ function [] = runVisualization()
             parent = get(f,'parent');
             a = axes('Position',[0 0 1 1],'Visible','off');
             text(.5,.03,'Active Learning Iterations','HorizontalAlignment','center');
-            learner = 'Naive Bayes';
+            %learner = 'Naive Bayes';
+            learner = 'LogReg';
             text(.5,.98,learner,'HorizontalAlignment','center');
         else
             [~,returnStruct] = visualizeResults(vizConfigs,f);            
