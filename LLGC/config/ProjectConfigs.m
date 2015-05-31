@@ -10,13 +10,13 @@ classdef ProjectConfigs < handle
         HYPERPARAMETER_EXPERIMENTS=2
         WEIGHTED_TRANSFER=3
         
-        experimentSetting = 1
+        experimentSetting = 3
         useTransfer = ProjectConfigs.experimentSetting == 3
         
         instance = ProjectConfigs.CreateSingleton()
         
         vizIncreasingNoise = 0
-        vizWeights = 0
+        vizWeights = 1
         vizNoisyAcc = 0
         trainLabels = [10 15]
         labels = [10 15 23 25 26 30]
@@ -26,7 +26,8 @@ classdef ProjectConfigs < handle
         useSavedSmallResults = true
         CLASS_NOISE = .0
         
-        noisesToViz = [0 .05 .1 .15 .25 0.35]
+        noisesToViz = [.05 .1 .15 .25 0.35]
+        %noisesToViz = [.15 .25 0.35]
         numRandomFeatures = 0        
         smallResultsFiles = true
         
@@ -34,8 +35,8 @@ classdef ProjectConfigs < handle
         useNewOpt = 1
         
         %ngResultsDirectory = 'ST22CR1'
-        %ngResultsDirectory = 'ST2ST32CR4'
-        ngResultsDirectory = 'CR1'
+        ngResultsDirectory = 'ST2ST32CR4'
+        %ngResultsDirectory = 'CR1'
     end
     
     properties    
@@ -81,7 +82,7 @@ classdef ProjectConfigs < handle
         function [c] = CreateSingleton()
             c = ProjectConfigs();
             c.useOracle=false;
-            c.useUnweighted=1;                        
+            c.useUnweighted=false;                        
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
             c.useRobustLoss=false;
@@ -274,10 +275,13 @@ classdef ProjectConfigs < handle
             
             if ProjectConfigs.vizWeights
                 c.configsStruct.xAxisField = 'dataSetWeights';
-                c.configsStruct.xAxisDisplay = 'Data Set Weights';
-                c.configsStruct.sizeToUse = 10;
+                c.configsStruct.xAxisDisplay = 'Data Set';
+                c.configsStruct.sizeToUse = 40;
                 c.configsStruct.confidenceInterval = ...
                     VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
+                c.set('vizBarChartForField',true);
+                %c.set('normalizeField',true);
+                c.set('yAxisDisplay','Weight');
             end
             c.configsStruct.vizWeights = ProjectConfigs.vizWeights;
             c.configsStruct.vizNoisyAcc = ProjectConfigs.vizNoisyAcc;
@@ -319,7 +323,8 @@ classdef ProjectConfigs < handle
                     error('unknown data set');
             end
             if pc.dataSet == Constants.TOMMASI_DATA && ...
-                    ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+                    ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER ... 
+                    && ~ProjectConfigs.vizWeights
                 c.set('sizeToUse',5:5:20);
             end
         end
@@ -352,13 +357,14 @@ classdef ProjectConfigs < handle
 
                     title = ['Class Noise: ' num2str(ProjectConfigs.CLASS_NOISE)];
                     if ProjectConfigs.vizNoisyAcc
+                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-newOpt=1.mat';                                                
+                        legend{end+1} = 'Noise Precision';
+                        fields{end+1} = 'isNoisyAcc';
+                        %{
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-newOpt=1.mat';
-                        methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-newOpt=1.mat';
-                        legend = {...
-                            'Noise Precision',...
-                            'Predicted Noise Level',...
-                        };
-                        fields = {'isNoisyAcc','reg'};
+                        legend{end+1} = 'Predicted Noise Level';                        
+                        fields{end+1} = 'reg';
+                        %}
                     else
                         methodResultsFileNames{end+1} = 'LLGC-Weighted-classNoise=%s-oracle=1.mat';
                         legend{end+1} = 'Oracle Weights';
@@ -430,10 +436,11 @@ classdef ProjectConfigs < handle
                     d = [s '-numOverlap=' num2str(pc.numOverlap)];
                 end                
                 if ProjectConfigs.vizWeights
-                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1.mat'];
+                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-newOpt=1.mat'];
                     legend = {...                      
                         'LLGC: Learn Weights',...
                     };
+                    fields = {'dataSetWeights'};
                 else
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1.mat'];                    
                     legend{end+1} = 'Oracle Weights';

@@ -87,6 +87,8 @@ classdef Measure < Saveable
                     desiredPerf = ProjectConfigs.desiredPerf;
                     measureResults.learnerStats.terminatedPerf = zeros(size(desiredPerf));
                     measureResults.learnerStats.numIterations = zeros(size(desiredPerf));
+                    measureResults.learnerStats.terminatedPerfError = zeros(size(desiredPerf));
+                    %{
                     for idx=1:length(desiredPerf)
                         hasDesiredPerf = cvAcc >= desiredPerf(idx);
                         minIdx = find(hasDesiredPerf,1,'first');
@@ -95,8 +97,31 @@ classdef Measure < Saveable
                         end
                         measureResults.learnerStats.terminatedPerf(idx) = preTransferValTest(minIdx);
                         measureResults.learnerStats.numIterations(idx) = minIdx -1;
+                        measureResults.learnerStats.terminatedPerfError(idx) ...
+                            = abs(preTransferValTest(minIdx) - cvAcc(minIdx));
                     end
-                    
+                    %}
+                    iterationDelta = ProjectConfigs.iterationDelta;
+                    for idx=1:length(iterationDelta)
+                        %delta = cvAcc(2:end) - cvAcc(1:end-1);
+                        %meetsDelta = delta <= cvDelta(idx);
+                        %minIdx = find(meetsDelta,1,'first');
+                        %minIdx = findsubmat(meetsDelta, true(1,3));
+                        isDec = Helpers.isDecreasing(cvAcc,iterationDelta(idx));
+                        minIdx = find(isDec,1,'first');
+                        if isempty(minIdx)
+                            minIdx = length(cvAcc)-iterationDelta(idx);
+                        else
+                            minIdx = minIdx(1);
+                        end
+                        minIdx = minIdx + iterationDelta(idx);
+                        measureResults.learnerStats.terminatedPerf(idx) = preTransferValTest(minIdx);
+                        measureResults.learnerStats.numIterations(idx) = minIdx -1;
+                        measureResults.learnerStats.terminatedPerfCVDelta(idx) ...
+                            = preTransferValTest(minIdx);
+                        measureResults.learnerStats.terminatedPerfError(idx) ...
+                            = abs(preTransferValTest(minIdx) - cvAcc(minIdx));
+                    end
                 end                
                 if ~isempty(preTransferMeasures)
                     measureResults.learnerStats.preTransferMeasures = preTransferMeasures;
@@ -141,6 +166,9 @@ classdef Measure < Saveable
                 if ~isempty(split.isNoisy)
                     isNoisyWeight = split.instanceWeights(split.isNoisy);
                     isNoisyAcc = mean(1-isNoisyWeight);
+                    if isnan(isNoisyAcc)
+                        isNoisyAcc = 0;
+                    end
                     measureResults.learnerStats.isNoisyAcc = isNoisyAcc;
                 end
                 valTrain = sum(split.trainPredicted==split.trainActual)/...

@@ -42,6 +42,10 @@ classdef ActiveMethod < Saveable
                 scoreIndsToChoose = zeros(labelsPerIteration,1);
                 chosenScores = zeros(labelsPerIteration,1);
                 for i=1:labelsPerIteration
+                    if sum(remainingScores) <= 1e-14
+                        display('sum(remainingScores) <= 1e-14.  Making weights uniform');
+                        remainingScores(:) = 1;
+                    end
                     remainingScores = remainingScores ./ sum(remainingScores);
                     %[remainingScores, remainingInds] = sort(remainingScores,'ascend');
                     r = rand();
@@ -50,6 +54,7 @@ classdef ActiveMethod < Saveable
                     assert(~isempty(I));
                     bestInd = min(I);
                     scoreIndsToChoose(i) = remainingInds(bestInd);                    
+                    assert(remainingScores(bestInd) > 0);
                     chosenScores(i) = ...
                         length(remainingScores)*remainingScores(bestInd);
                     pdfVals = remainingScores(bestInd);

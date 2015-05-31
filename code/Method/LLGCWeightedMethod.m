@@ -254,6 +254,9 @@ classdef LLGCWeightedMethod < LLGCMethod
             if ~useOracle && ~useUnweighted && ~useJustTarget && ~useJustTargetNoSource ...
                     && ~useRobustLoss
                 YWeighted = YtrainMat.*a;
+                if any(a(:)) > 1.1
+                    display('');
+                end
                 YWeighted = obj.normalizeMass(YWeighted);
                 F = M\(YWeighted);
                 [~,Ypred] = max(F,[],2);                                
@@ -456,14 +459,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                             minimize(norm(vec(AaSub-Ytarget),2))
                         end
                         subject to             
-                            %norm(a(2:end),1) <= reg
-                            %norm(a,1) <= 50*reg
-                            %norm(a,1) <= 100
-                            %norm(a,2) <= 30
-                            %a(1) == 0
                             a >= 0
-                            %a(1) == 1
-                            %a(2:end) == 0
                             if newOpt
                                 a(1) == 1
                                 a <= 1
@@ -488,7 +484,8 @@ classdef LLGCWeightedMethod < LLGCMethod
                             %}
                     cvx_end                     
                     %a(1) = max(a);
-                    if newOpt && a(1) ~= 1
+                    %if newOpt && a(1) ~= 1
+                    if newOpt && abs(a(1) - 1) > 1e-1
                         display('Setting a(1) = 1');
                         a(1) = 1;
                     end

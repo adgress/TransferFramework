@@ -6,9 +6,12 @@ classdef BatchConfigs < Configs
     end
     
     methods
-        function [obj] = BatchConfigs()
-            obj = obj@Configs();
+        function [obj] = BatchConfigs(dataSet)
             pc = ProjectConfigs.Create();
+            if ~exist('dataSet','var')
+                dataSet = pc.dataSet;
+            end
+            obj = obj@Configs();            
             obj.configsStruct.paramsToVary = {};
             %{
             obj.configsStruct.paramsToVary={'sigmaScale','k','alpha'};
@@ -16,11 +19,11 @@ classdef BatchConfigs < Configs
             obj.configsStruct.k = num2cell(pc.k);
             obj.configsStruct.alpha = num2cell(pc.alpha);
             %}
-            obj.configsStruct.mainConfigs=ActiveMainConfigs();              
+            obj.configsStruct.mainConfigs=ActiveMainConfigs(dataSet);              
             
             overrideConfigs = {Configs()};
             if ProjectConfigs.useOverrideConfigs
-                switch pc.dataSet
+                switch dataSet
                     case Constants.CV_DATA
                         overrideConfigs = BatchConfigs.makeCVOverrideConfigs();
                     case Constants.TOMMASI_DATA
@@ -32,9 +35,9 @@ classdef BatchConfigs < Configs
                     case Constants.YEAST_BINARY_DATA
                         overrideConfigs = {};
                     case Constants.USPS_DATA
-                        overrideConfigs = {};
+                        overrideConfigs = BatchConfigs.makeUSPSOverrideConfigs();
                         %obj.get('mainConfigs').set('labelsToUse',[1 7]);
-                        obj.get('mainConfigs').set('labelsToUse',[3 8]);
+                        %obj.get('mainConfigs').set('labelsToUse',[3 8]);
                     otherwise
                         error('Unknown data set');
                 end
@@ -66,9 +69,11 @@ classdef BatchConfigs < Configs
                     RandomActiveMethod(activeConfigs)                 
                 };
                 activeMethods = {};
+                %activeMethods{end+1} = EntropyActiveMethod(activeConfigs);                
                 %activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
-                activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
+                activeMethods{end+1} = QBCActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',1);
+                
                 %{
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end}.set('valWeights',2);                
@@ -112,6 +117,17 @@ classdef BatchConfigs < Configs
                 c = Configs();
                 c.set('dataSet',dataSet{idx});
                 c.set('sourceDataSetToUse',sourceDataSetToUse{idx});
+                configs{end+1} = c;
+            end
+        end
+        
+        function [configs] = makeUSPSOverrideConfigs()
+            configs = {};
+            
+            labelsToUse = {[1 7], [3 8]};
+            for idx=1:length(labelsToUse)
+                c = Configs();
+                c.set('labelsToUse',labelsToUse{idx});
                 configs{end+1} = c;
             end
         end

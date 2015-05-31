@@ -2,23 +2,33 @@ function [] = runVisualization()
     setPaths;
     close all    
     vizConfigs = ProjectConfigs.VisualizationConfigs();
-    width = 1000;
+    width = 1000;    
     height = 300;
+    margins = [.05 .15 .05];
+    if length(ProjectConfigs.noisesToViz) > 4
+        width = 1300;
+        margins(1) = margins(1) .* .6;
+    end
     c = ProjectConfigs.Create();
     noisyExp = c.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT;
     dataSet = c.dataSet;
     if noisyExp
-        vizConfigs.set('axisToUse',[0 1 .5 1]);
+        vizConfigs.set('axisToUse',[0 1 .5 1]);        
+        if dataSet == Constants.NG_DATA && ProjectConfigs.vizNoisyAcc
+            vizConfigs.set('axisToUse',[0 1 0 1]);
+        end
     else
-        if dataSet == Constants.NG_DATA
+        if ProjectConfigs.vizWeights
+            vizConfigs.set('axisToUse',[0 1 0 1]);
+        elseif dataSet == Constants.NG_DATA
             vizConfigs.set('axisToUse',[0 45 .2 1]);
         else
             vizConfigs.set('axisToUse',[0 25 0 1]);
         end
     end
     if ProjectConfigs.vizWeights
-        width = 1700;
-        height = 450;
+        width = 1200;
+        height = 250;
         vizConfigs.set('showLegend',false);        
     end
     legendLocation = 'southeast';
@@ -38,34 +48,55 @@ function [] = runVisualization()
     
     justFirstLegend = false;
     justFirstYLabel = false;    
-    paperSettings = false; 
+    paperSettings = true; 
     textAxes = gca;
     set(textAxes,'Position',[0 0 1 1],'Visible','off');
     if paperSettings
         justFirstLegend = true;
         justFirstYLabel = true;      
-        if ~noisyExp
+        if ~noisyExp && ~ProjectConfigs.vizWeights
             vizConfigs.set('autoAdjustXAxis',false);
         end
     end
         
     if c.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER && ...
-            ProjectConfigs.vizWeights
-        sizes = 5:5:25;
+            ProjectConfigs.vizWeights        
         vizConfigs.set('plotConfigs',plotConfigs);        
+        if dataSet == Constants.NG_DATA
+            XTickLabels = {'Target','S1','S2'};
+            sizes = [5 10 20 30 40];
+        elseif dataSet == Constants.TOMMASI_DATA
+            XTickLabels = {'T','IS' ,'S1','S2',...
+                'S3','S4','S5','S6','S7'};
+            sizes = [5 10 15 20];
+        end
+        figureHandles = tight_subplot(1,length(sizes),margins(1),...
+            margins(2),margins(3));
         for i=1:length(sizes)
             vizConfigs.set('showXAxisLabel',false);
             vizConfigs.set('showYAxisLabel',false);
             if i == 1
                 vizConfigs.set('showYAxisLabel',true);
             end
+            %{
             if i == 3
                 vizConfigs.set('showXAxisLabel',true);
             end
-            subplot(1,length(sizes),i);
+            %}
+            %subplot(1,length(sizes),i);
+            currAxes = figureHandles(i);
+            axes(currAxes);
+            %set(currAxes,'XTickLabelMode','auto');
+            %set(currAxes,'XTickLabelMode','manual');
+            title([num2str(sizes(i)) ' Target Labels Per Class']);
+            set(currAxes,'XTick', 1:length(XTickLabels));
+            set(currAxes,'XTickLabel', XTickLabels);
+            set(currAxes,'YTickLabelMode','auto');
             vizConfigs.set('sizeToUse',sizes(i));
             [~,~] = visualizeResults(vizConfigs,f);  
         end
+        axes(textAxes);
+        text(.5,.05,vizConfigs.get('xAxisDisplay'),'HorizontalAlignment','center');
     else                
         %for k=ProjectConfigs.k    
         itrArray = c.sigmaScale;        
@@ -82,7 +113,8 @@ function [] = runVisualization()
             end
         end
         
-        figureHandles = tight_subplot(1,length(itrArray),.05,.15,.05);
+        figureHandles = tight_subplot(1,length(itrArray),margins(1),...
+            margins(2),margins(3));
         %for s=itrArray(:)'
         for subplotIndex=1:length(itrArray);
             %subplotIndex = subplotIndex + 1;

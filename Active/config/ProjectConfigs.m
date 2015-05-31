@@ -11,31 +11,37 @@ classdef ProjectConfigs < ProjectConfigsBase
         experimentSetting = 1
         
         numRandomFeatures = 0
+                
         
-        instance = ProjectConfigs.CreateSingleton()
-        
-        %data = Constants.TOMMASI_DATA
-        %data = Constants.CV_DATA
         desiredPerf = [.6 .7 .8 .9 .95 .98 1.0]
+        cvDelta = [.1 .05 .01 .001 .0001]
+        iterationDelta = [1 3 5 7 20];
         learningMethod = 'LogReg'
         %learningMethod = 'SVML2'
         %learningMethod = 'NaiveBayes'
         
-        createTable = 0
-        plotTerminationCriterion=0
+        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
+        %activeMethodsToPlot = {'Random','Entropy'}
+        %activeMethodsToPlot = {'Entropy'}
+        activeMethodsToPlot = {'QBC'}
         
-        data = Constants.NG_DATA
+        createTable = 1
+        plotTerminationCriterion=0
+        plotTerminationCriterionError=1
+        plotTerminationCriterionDelta=0
+        
+        %data = Constants.NG_DATA
         %data = Constants.HOUSING_DATA
         %data = Constants.YEAST_BINARY_DATA
         %data = Constants.USPS_DATA
-        %data = Constants.ALL_DATA        
+        data = Constants.ALL_DATA        
         useTransfer = false;
         
         resampleTarget = true
         %kNumLabeledPerClass = 2        
         logRegNumFeatures = inf
         useL1LogReg = false
-        useSVM = false
+        useSVM = 1
         useNB = false
         
         axisToUse = [0 10 -.5 1.1]
@@ -43,7 +49,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         %axisToUse = [0 10 -.5 .2]
         useOverrideConfigs = 1        
         
-        useSavedSmallResults = 0
+        useSavedSmallResults = 1
         smallResultsFiles = 1
         useKSR = 0
         
@@ -75,25 +81,21 @@ classdef ProjectConfigs < ProjectConfigsBase
         labelsPerIteration = 5
         
         %labelsPerIteration = 4;
-        
-        
-        %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
-        %activeMethodsToPlot = {'Random','Entropy'}
-        activeMethodsToPlot = {'Entropy'}
+                        
         useDomainsToViz = 1
         fixReg = 0
         activeMethodScale = 1
         
         
-        showRegular = 1 %Regular sample, no CV weights
-        showWeighted1 = 0 %Our method
+        showRegular = 0 %Regular sample, no CV weights
+        showWeighted1 = 1 %Our method
         showWeighted2 = 0 %Our method no CV weights
         showNewCVWeight = 0 %Traditional importance weighting
         
         showFixReg = 0
-        showTestPerf = 1
-        showCV = 1
-        showCVPerf = 0
+        showTestPerf = 0
+        showCV = 0
+        showCVPerf = 1
         showCVDelta = 0
         showDivergence = 0
         
@@ -202,20 +204,26 @@ classdef ProjectConfigs < ProjectConfigsBase
     
     methods(Static)
                
-        function [c] = Create()
-            c = ProjectConfigs.instance;
+        function [c] = Create(recreate)
+            persistent instance;
+            if isempty(instance) || (exist('recreate','var') && recreate)
+                instance = ProjectConfigs.CreateSingleton();
+            end
+            c = instance;
         end
         
-        function [c] = BatchConfigs()
-            c = BatchConfigs();
-            pc = ProjectConfigs.Create();
+        function [c] = BatchConfigs(dataSet)
+            if ~exist('dataSet','var')
+                dataSet = ProjectConfigs.dataSet;
+            end
+            c = BatchConfigs(dataSet);
             %c.get('mainConfigs').configsStruct.labelsToUse = pc.labelsToUse;
             c.configsStruct.configLoader=ActiveExperimentConfigLoader();
             c.set('transferMethodClass', FuseTransfer());        
             if ~ProjectConfigs.useTransfer
                 c.set('transferMethodClass', []);
             end
-            switch pc.dataSet
+            switch dataSet
                 case Constants.CV_DATA
                     c.get('mainConfigs').setCVData(); 
                 case Constants.TOMMASI_DATA
@@ -236,7 +244,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         end
         
         function [c] = SplitConfigs()
-            pc = ProjectConfigs.Create();
+            %pc = ProjectConfigs.Create();
             c = SplitConfigs();            
             %c.setTommasi();
             %c.set20NG();
@@ -435,8 +443,26 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legendSuffixes{end+1} = 'Divergence';
                 end
                 if ProjectConfigs.plotTerminationCriterion
+                    plotFields = {};
+                    legendSuffixes = {};
                     plotFields{end+1} = 'terminatedPerf';
                     legendSuffixes{end+1} = 'Terminated Accuracy';
+                    plotFields{end+1} = 'numIterations';
+                    legendSuffixes{end+1} = 'Number of Iterations';
+                end
+                if ProjectConfigs.plotTerminationCriterionError
+                    plotFields = {};
+                    legendSuffixes = {};
+                    plotFields{end+1} = 'terminatedPerfError';
+                    legendSuffixes{end+1} = 'Termination Error';
+                    plotFields{end+1} = 'numIterations';
+                    legendSuffixes{end+1} = 'Number of Iterations';
+                end
+                if ProjectConfigs.plotTerminationCriterionDelta
+                    plotFields = {};
+                    legendSuffixes = {};
+                    plotFields{end+1} = 'terminatedPerfCVDelta';
+                    legendSuffixes{end+1} = 'terminatedPerfCVDelta';
                     plotFields{end+1} = 'numIterations';
                     legendSuffixes{end+1} = 'Number of Iterations';
                 end

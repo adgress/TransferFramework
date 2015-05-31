@@ -27,6 +27,8 @@ function [] = runVisualization()
         uspsDomains = {'3  8','1  7'};
         configIndex = 1;
         dataSets = ProjectConfigs.data;
+        numRows = 4;
+        numCols = 2;
         switch ProjectConfigs.data
             case Constants.NG_DATA
                 domainsToViz = ngDomains;
@@ -41,9 +43,11 @@ function [] = runVisualization()
                 vizUSPS = ProjectConfigs.VisualizationConfigs(Constants.USPS_DATA);
                 vizHousing = ProjectConfigs.VisualizationConfigs(Constants.HOUSING_DATA);
                 vizYeast = ProjectConfigs.VisualizationConfigs(Constants.YEAST_BINARY_DATA);
-                domainsToViz = {ngDomains{:} ; uspsDomains{:},[],[]};
+                domainsToViz = {ngDomains{:} , uspsDomains{:},[],[]};
                 vizConfigs = {vizNG,vizUSPS,vizHousing,vizYeast};
-                configIndex = [1 1 1 1 ; 2 2 3 4];
+                configIndex = [1 1 1 1 2 2 3 4];
+                domainsToViz = reshape(domainsToViz,numRows,numCols);
+                configIndex = reshape(configIndex,numRows,numCols);
                 dataSets = [Constants.NG_DATA Constants.USPS_DATA ...
                     Constants.HOUSING_DATA Constants.YEAST_BINARY_DATA];
                 dataSetNames = {'20NG','USPS','Housing','Yeast'};
@@ -59,23 +63,34 @@ function [] = runVisualization()
     height = 500;
     usePaperSettings = ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE;
     if usePaperSettings
+        %For 2 x 4 plots
+        %{
         width = 600;
         height = 400;
+        %}
+        width = 400;
+        height = 600;
         for idx=1:length(vizConfigs)
             currConfigs = vizConfigs{idx};
             currConfigs.set('showLegend',false);
-            currConfigs.set('axisToUse',[-1 21 0 1]);
+            %currConfigs.set('showLegend',idx == 1);
+            currConfigs.set('axisToUse',[-1 21 0 1.1]);
             currConfigs.set('autoAdjustXAxis',false);
             currConfigs.set('autoAdjustYAxis',false);
             currConfigs.set('showXAxisLabel',false);
         end
+        rowNameWidth = 190;
+        showNumIterations = false;
+        cellWidth = 50;
     end    
     if ProjectConfigs.createTable
         width = 1000;
         height = 500;
     end
-    f = figure('position',[500 500 width height]);
+    f = figure('position',[500 200 width height]);
     plotTermination = ProjectConfigs.plotTerminationCriterion;
+    plotTerminationError = ProjectConfigs.plotTerminationCriterionError;
+    plotTerminationCriterionDelta = ProjectConfigs.plotTerminationCriterionDelta;
     if ProjectConfigs.createTable
         set(gca,'Visible','off');
         [numRows,numCols] = size(domainsToViz);
@@ -88,7 +103,35 @@ function [] = runVisualization()
             end
             correctFields = {'terminatedPerf','numIterations'};
             learnerFileNames = {'LogReg'};
+            %learnerFileNames = {'SVML2'};
+            %learnerFileNames = {'NaiveBayes'};
             learnerNames = {'Logistic Regression'};
+            data = cell(numel(domainsToViz)*length(learnerFileNames),...
+                length(desiredPerf));
+            rowIdx = 1;
+        elseif plotTerminationError || plotTerminationCriterionDelta
+            colNames = {};
+            rowNames = {};
+            
+            if plotTerminationError
+                %desiredPerf = ProjectConfigs.desiredPerf;
+                desiredPerf = ProjectConfigs.iterationDelta;
+                correctFields = {'terminatedPerfError','numIterations'};
+            else
+                desiredPerf = ProjectConfigs.iterationDelta;
+                correctFields = {'terminatedPerfCVDelta','numIterations'};
+            end
+            for idx=1:length(desiredPerf)
+                colNames{idx} = num2str(desiredPerf(idx));
+            end            
+            learnerFileNames = {};
+            learnerNames = {};
+            learnerFileNames{end+1} = 'LogReg';
+            learnerNames{end+1} = 'Logistic Regression';
+            learnerFileNames{end+1} = 'SVML2';
+            learnerNames{end+1} = 'SVM';
+            learnerFileNames{end+1} = 'NaiveBayes';
+            learnerNames{end+1} = 'Naive Bayes';
             data = cell(numel(domainsToViz)*length(learnerFileNames),...
                 length(desiredPerf));
             rowIdx = 1;
@@ -133,7 +176,7 @@ function [] = runVisualization()
                     
                     [~,resultStructs{row,col}] = visualizeResults(currVizConfigs,f);                
                     
-                    if plotTermination
+                    if plotTermination || plotTerminationError || plotTerminationCriterionDelta
                         d = resultStructs{row,col}.displayVals;
                         rowNames{end+1} = [learnerNames{idx} ' ' name];
                         for perfIdx = 1:length(desiredPerf)
@@ -141,7 +184,11 @@ function [] = runVisualization()
                             v1 = d{1}.vars(perfIdx);                            
                             m2 = d{2}.means(perfIdx);
                             v2 = d{2}.vars(perfIdx);
-                            s = [num2str(m1,precision) ' : ' num2str(m2,precision)];
+                            if showNumIterations
+                                s = [num2str(m1,precision) ' : ' num2str(m2,precision)];
+                            else
+                                s = num2str(m1,precision);
+                            end
                             data{rowIdx,perfIdx} = s;
                         end
                         rowIdx = rowIdx + 1;
@@ -150,7 +197,7 @@ function [] = runVisualization()
                             colNames{end+1} = name;
                         end
                         m = resultStructs{row,col}.displayVals{1}.means(idxToUse);
-                        v = resultStructs{row,col}.displayVals{1}.vars(idxToUse);
+                        v = resultStructs{row,col}.displayVals{1}.vars(idxToUse);                        
                         s = [num2str(m,precision) ' ' setstr(177) ' ' num2str(v,precision)];
                         data{idx,dataSetIdx} = s;
                         dataSetIdx = dataSetIdx + 1;
@@ -159,13 +206,24 @@ function [] = runVisualization()
             end
         end
         table = uitable(f,'ColumnName',colNames,'RowName',rowNames,...
-            'data', data);
+            'data', data);        
+        
+        widths = {};
+        for idx=1:length(colNames)
+            widths{end+1} = cellWidth;
+        end
+        set(table,'ColumnWidth',widths);
+        settablewidth(table,rowNameWidth)
         extent = get(table,'Extent');
+        
         set(table,'Position',extent);
+        centertabletext(table);
         set(f,'Position',[500 500 extent(3) extent(4)]);
     else        
         [numRows,numCols] = size(domainsToViz);
-        figureHandles = tight_subplot(numRows,numCols,.1,.1,.1);
+        %for 2 x 4 plot
+        %figureHandles = tight_subplot(numRows,numCols,.1,.1,.1);
+        figureHandles = tight_subplot(numRows,numCols,.1,.08,.12);
         if ~isempty(domainsToViz) && ProjectConfigs.useDomainsToViz
             figIdx = 1;
             for row = 1:size(domainsToViz,1)

@@ -10,7 +10,10 @@ classdef ActiveMainConfigs < MainConfigs
     
     
     methods
-        function [obj] = ActiveMainConfigs()
+        function [obj] = ActiveMainConfigs(dataSet)
+            if ~exist('dataSet','var')
+                dataSet = ProjectConfigs.data;
+            end
             obj = obj@MainConfigs();        
             useSeparableDistanceMatrix = true;
             obj.setTommasiData();
@@ -48,7 +51,7 @@ classdef ActiveMainConfigs < MainConfigs
             obj.configsStruct.labelsPerIteration = ProjectConfigs.labelsPerIteration;
             %obj.configsStruct.labelsToUse = pc.labelsToUse;            
             
-            switch pc.data
+            switch dataSet
                 case Constants.CV_DATA
                 case Constants.TOMMASI_DATA
                     if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE_TRANSFER

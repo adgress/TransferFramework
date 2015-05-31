@@ -156,10 +156,28 @@ function [newResults] = getResultsWithSize(results,size)
 end
 
 function [displayVal] = plotField(results,field,color,lineStyle,options)
-    error('Color? Linestyle?');
+    display('plotField: Color? Linestyle?');
     assert(length(results) == 1);
+    if options.get('normalizeField',false)
+        for resIdx=1:length(results)
+            r = results{resIdx}.aggregatedResults;
+            for idx=1:size(r.(field),1)
+                a = r.(field)(idx,:);
+                r.(field)(idx,:) = a ./ a(1);                
+            end
+            results{resIdx}.aggregatedResults = r;
+        end
+    end
     vars = getVariances(results,field,options);
     means = getMeans(results,field);    
+    Im = isnan(means(:));
+    Iv = isnan(vars(:));
+    if any(Im) || any(Iv)
+        warning('nan in results - zeroing out');
+        means(Im) = 0;
+        vars(Iv) = 0;
+    end
+    
     %errorbar(1:length(means),means,vars,'color',color);    
     %bar(1:length(means),means,vars,'color',color);    
     barwitherr(vars,means,'r');    
@@ -171,6 +189,13 @@ function [displayVal] = plotResults(results,sizes,field,colors,lineStyle,options
     %[high,low] = getVariances(results,field,options);
     means = getMeans(results,field);
     %if ~options.c.vizMeasureCorrelation
+    Im = isnan(means(:));
+    Iv = isnan(vars(:));
+    if any(Im) | any(Iv)
+        warning('nan in results - zeroing out');
+        means(Im) = 0;
+        vars(Iv) = 0;
+    end
     if ~options.c.showTable && options.get('showPlots')
         if length(means) == length(sizes)
             errorbar(sizes,means,vars,'color',colors,'LineStyle',lineStyle);    

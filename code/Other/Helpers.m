@@ -7,6 +7,18 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [I] = isDecreasing(v,k,delta)
+            if ~exist('delta','var')
+                delta = 0;
+            end
+            I = false(size(v));
+            for idx=1:length(v)-k
+                c = v(idx);
+                rest = v(idx+1:idx+k);
+                I(idx) = all(rest <= c + delta);
+            end
+        end
+        
         function [v] = sampleDifferentInDomain(Y,domain)
             v = zeros(size(Y));
             for idx=1:length(Y)
