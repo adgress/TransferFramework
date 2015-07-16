@@ -26,7 +26,7 @@ function [] = runVisualization()
         tommasiDomains = {'10  15','10  23','23  25'};
         uspsDomains = {'3  8','1  7'};
         configIndex = 1;
-        dataSets = ProjectConfigs.data;
+        dataSets = ProjectConfigs.data;        
         numRows = 4;
         numCols = 2;
         switch ProjectConfigs.data
@@ -46,8 +46,10 @@ function [] = runVisualization()
                 domainsToViz = {ngDomains{:} , uspsDomains{:},[],[]};
                 vizConfigs = {vizNG,vizUSPS,vizHousing,vizYeast};
                 configIndex = [1 1 1 1 2 2 3 4];
-                domainsToViz = reshape(domainsToViz,numRows,numCols);
-                configIndex = reshape(configIndex,numRows,numCols);
+                if ~ProjectConfigs.createTable
+                    domainsToViz = reshape(domainsToViz,numRows,numCols);
+                    configIndex = reshape(configIndex,numRows,numCols);
+                end
                 dataSets = [Constants.NG_DATA Constants.USPS_DATA ...
                     Constants.HOUSING_DATA Constants.YEAST_BINARY_DATA];
                 dataSetNames = {'20NG','USPS','Housing','Yeast'};
@@ -130,8 +132,10 @@ function [] = runVisualization()
             learnerNames{end+1} = 'Logistic Regression';
             learnerFileNames{end+1} = 'SVML2';
             learnerNames{end+1} = 'SVM';
-            learnerFileNames{end+1} = 'NaiveBayes';
-            learnerNames{end+1} = 'Naive Bayes';
+            if ~isequal('QBC',ProjectConfigs.activeMethodsToPlot{1})
+                learnerFileNames{end+1} = 'NaiveBayes';
+                learnerNames{end+1} = 'Naive Bayes';
+            end
             data = cell(numel(domainsToViz)*length(learnerFileNames),...
                 length(desiredPerf));
             rowIdx = 1;
@@ -143,7 +147,10 @@ function [] = runVisualization()
             idxToUse = 21;
             learnerFileNames = {'LogReg','SVML2','NaiveBayes'};
             data = cell(length(learnerFileNames),numel(domainsToViz));
-        end                                
+        end   
+        if length(vizConfigs{1}.get('plotConfigs')) == 2*length(correctFields)
+            correctFields = {correctFields{:},correctFields{:}};
+        end
         precision = 2;
         resultStructs = cell(numRows,numCols);        
         for idx=1:length(learnerFileNames)
@@ -184,6 +191,12 @@ function [] = runVisualization()
                             v1 = d{1}.vars(perfIdx);                            
                             m2 = d{2}.means(perfIdx);
                             v2 = d{2}.vars(perfIdx);
+                            if length(d) > 2
+                                m1 = m1 - d{3}.means(perfIdx);
+                                m2 = m2 - d{4}.means(perfIdx);
+                            end
+                            m1 = roundn_custom(m1,.001);
+                            m2 = roundn_custom(m2,.001);
                             if showNumIterations
                                 s = [num2str(m1,precision) ' : ' num2str(m2,precision)];
                             else
@@ -260,7 +273,7 @@ function [] = runVisualization()
             a = axes('Position',[0 0 1 1],'Visible','off');
             text(.5,.03,'Active Learning Iterations','HorizontalAlignment','center');
             %learner = 'Naive Bayes';
-            learner = 'LogReg';
+            learner = ProjectConfigs.learningMethod;
             text(.5,.98,learner,'HorizontalAlignment','center');
         else
             [~,returnStruct] = visualizeResults(vizConfigs,f);            

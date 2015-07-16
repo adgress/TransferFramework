@@ -22,13 +22,13 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         %activeMethodsToPlot = {'Random','Entropy','TargetEntropy','SumEntropy'}
         %activeMethodsToPlot = {'Random','Entropy'}
-        %activeMethodsToPlot = {'Entropy'}
-        activeMethodsToPlot = {'QBC'}
+        activeMethodsToPlot = {'Entropy'}
+        %activeMethodsToPlot = {'QBC'}
         
         createTable = 1
         plotTerminationCriterion=0
-        plotTerminationCriterionError=1
-        plotTerminationCriterionDelta=0
+        plotTerminationCriterionError=0
+        plotTerminationCriterionDelta=1
         
         %data = Constants.NG_DATA
         %data = Constants.HOUSING_DATA
@@ -41,7 +41,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         %kNumLabeledPerClass = 2        
         logRegNumFeatures = inf
         useL1LogReg = false
-        useSVM = 1
+        useSVM = false
         useNB = false
         
         axisToUse = [0 10 -.5 1.1]
@@ -87,7 +87,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         activeMethodScale = 1
         
         
-        showRegular = 0 %Regular sample, no CV weights
+        showRegular = 1 %Regular sample, no CV weights
         showWeighted1 = 1 %Our method
         showWeighted2 = 0 %Our method no CV weights
         showNewCVWeight = 0 %Traditional importance weighting
@@ -370,12 +370,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             newCVWeight = [];
             if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE                               
                 method = learnerName;
-                s = ProjectConfigs.activeMethodScale;
-                if ProjectConfigs.showRegular
-                    fileSuffixes{end+1} = ['_' method];
-                    fileSuffixLegend{end+1} = '';
-                    newCVWeight(end+1) = false;
-                end                
+                s = ProjectConfigs.activeMethodScale;                
                 if ProjectConfigs.showWeighted1
                     t = '_valWeights=1';
                     if s ~= 1
@@ -385,6 +380,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                     fileSuffixLegend{end+1} = 'Our Method';
                     newCVWeight(end+1) = true;
                 end
+                if ProjectConfigs.showRegular
+                    fileSuffixes{end+1} = ['_' method];
+                    fileSuffixLegend{end+1} = '';
+                    newCVWeight(end+1) = false;
+                end                                                
                 if ProjectConfigs.showWeighted2
                     t = '_valWeights=2';
                     if s ~= 1

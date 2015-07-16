@@ -72,7 +72,7 @@ classdef BatchConfigs < Configs
                 %activeMethods{end+1} = EntropyActiveMethod(activeConfigs);                
                 %activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
                 activeMethods{end+1} = QBCActiveMethod(activeConfigs);
-                activeMethods{end}.set('valWeights',1);
+                activeMethods{end}.set('valWeights',2);
                 
                 %{
                 activeMethods{end+1} = EntropyActiveMethod(activeConfigs);
