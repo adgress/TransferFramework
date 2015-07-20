@@ -8,6 +8,10 @@ classdef DataSet < LabeledData
         data
         dataFile
         X
+        W
+        WIDs
+        WNames
+        YNames
         featureNames
         featureIDs
     end    
@@ -52,21 +56,36 @@ classdef DataSet < LabeledData
             end
             obj.ID2Labels = containers.Map;
             assert(length(obj.type) == length(obj.Y));
-            assert(size(obj.X,1) == size(obj.Y,1));
+            %assert(size(obj.X,1) == size(obj.Y,1));
             obj.addEmptyFields();
+            obj.W = [];
         end                
         
-        function [train,test,validation] = splitDataSet(obj,split)            
-            XSplit = DataSet.splitMatrix(obj.X,split);
+        function [train,test,validation] = splitDataSet(obj,split,dim)
+            if ~exist('dim','var')
+                dim = 1;
+            end
+            allDataSets = cell(3,1);
+            XSplit = {[],[],[]};
+            WSplit = {{},{},{}};
+            if isempty(obj.X)
+                for idx=1:length(allDataSets);                   
+                    WSplit{idx} = Helpers.selectW(obj.W,split==idx,dim);
+                end
+            else
+                assert(isempty(obj.W));
+                XSplit = DataSet.splitMatrix(obj.X,split);
+            end
+            
             YSplit = DataSet.splitMatrix(obj.Y,split);
             trueYSplit = DataSet.splitMatrix(obj.trueY,split);
-            instanceIDsSplit = DataSet.splitMatrix(obj.instanceIDs,split);
-            allDataSets = cell(3,1);
+            instanceIDsSplit = DataSet.splitMatrix(obj.instanceIDs,split);            
             for i=1:numel(allDataSets)
                 type = DataSet.NoType(length(YSplit{i}));               
                 allDataSets{i} = DataSet('','','',XSplit{i},YSplit{i},...
                     type,trueYSplit{i},instanceIDsSplit{i});
                 allDataSets{i}.ID2Labels = obj.ID2Labels;
+                allDataSets{i}.W = WSplit{i};
             end
             train = allDataSets{1};
             test = allDataSets{2};
@@ -187,9 +206,38 @@ classdef DataSet < LabeledData
             %}
             d = DataSet.CreateNewDataSet(obj,isType);
         end
-        function [] = applyPermutation(obj,permutation)
-            assert(length(permutation) == length(obj.type));
-            obj.X = obj.X(permutation,:);
+        function [] = permuteW(obj,permutation,dim)
+            i = 0;
+            p = zeros(size(obj.W,dim),1);
+                
+            for idx=1:length(permutation)
+                I = obj.WIDs{dim} == permutation(idx);
+                range = i+1:i+sum(I);
+                p(range) = find(I);
+                i = i+sum(I);
+            end
+            for idx=1:length(obj.W)
+                switch dim
+                    case 1
+                        obj.W{idx} = obj.W{idx}(p,:);
+                    case 2
+                        obj.W{idx} = obj.W{idx}(:,p);
+                    otherwise
+                        error('');
+                end
+            end
+        end
+        function [] = applyPermutation(obj,permutation,dim)
+            if ~exist('dim','var')
+                dim = 1;
+            end            
+            if isempty(obj.X)
+                obj.permuteW(permutation,dim);              
+            else
+                assert(length(permutation) == length(obj.type));
+                assert(isempty(obj.W));
+                obj.X = obj.X(permutation,:);
+            end
             obj.Y = obj.Y(permutation);
             obj.type = obj.type(permutation);
             obj.trueY = obj.trueY(permutation);
@@ -297,7 +345,18 @@ classdef DataSet < LabeledData
             newData.name = data.name;            
         end
         function [data] = MakeDataFromStruct(dataStruct)
-            data = DataSet('','','',dataStruct.X,dataStruct.Y);
+            X = [];
+            if isfield(dataStruct,'X')
+                X = dataStruct.X;
+            end
+            data = DataSet('','','',X,dataStruct.Y);            
+            data.YNames = dataStruct.YNames;
+            if isfield(dataStruct,'W')
+                data.W = dataStruct.W;
+                data.WNames = dataStruct.WNames;
+                data.WIDs = dataStruct.WIDs;
+                %data.instanceIDs = [];
+            end
             if isfield(dataStruct,'directories')
                 data.featureNames = dataStruct.directories;
             end

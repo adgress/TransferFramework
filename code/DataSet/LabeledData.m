@@ -171,20 +171,33 @@ classdef LabeledData < matlab.mixin.Copyable
             obj.addRandomClassNoise(classNoise,obj.isTargetTrain());
         end
         
-        function [split] = generateSplitArray(obj,percTrain,percTest,configs)
+        function [split] = generateSplitArray(obj,percTrain,percTest,configs,dim)
+            if ~exist('dim','var')
+                dim = 1;
+            end
             percValidate = 1 - percTrain - percTest;
             if ~exist('configs','var')
                 split = DataSet.generateSplit([percTrain percTest percValidate],...
-                    obj.Y);            
+                    obj.Y,dim);            
             else
+                IDs = 1:length(obj.Y);
+                if isempty(obj.X)
+                    IDs = obj.WIDs{dim};
+                end
                 split = DataSet.generateSplit([percTrain percTest percValidate],...
-                    obj.Y,configs);            
+                    obj.Y,configs,dim,IDs);            
             end
         end
     end
 
     methods(Static)  
-        function [split] = generateSplit(percentageArray,Y,configs)
+        function [split] = generateSplit(percentageArray,Y,configs,dim,IDs)
+            if ~exist('IDs','var')
+                IDs = 1:length(Y);
+            end
+            if ~exist('dim','var')
+                dim = 1;
+            end
             maxTrainNumPerLabel = inf;
             if exist('configs','var') && isKey(configs,'maxTrainNumPerLabel')
                 maxTrainNumPerLabel = configs.get('maxTrainNumPerLabel');
@@ -194,8 +207,8 @@ classdef LabeledData < matlab.mixin.Copyable
             dataSize = size(Y,1);
             split = zeros(dataSize,1);
             uniqueY = unique(Y(Y > 0));
-            for i=1:length(uniqueY)                
-                thisClass = find(Y == uniqueY(i));
+            for i=1:length(uniqueY)                        
+                thisClass = find(Y == uniqueY(i));                
                 numThisClass = numel(thisClass);
                 assert(numThisClass >= length(unique(percentageArray)));
                 perm = randperm(numThisClass);

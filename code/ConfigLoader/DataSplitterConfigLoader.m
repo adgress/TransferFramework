@@ -88,14 +88,21 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         allData.splitDataAtInd(percentTrain,percentTest,splitIndex);
                 elseif isa(allData,'DataSet')
                     allSplits{i} = struct();
-                    allSplits{i}.permutation = randperm(length(allData.Y))';
-                    
-                    allDataCopy = allData.copy();                    
-                    allDataCopy.applyPermutation(allSplits{i}.permutation);
+                    allDataCopy = allData.copy();
+                    if isempty(allData.X)
+                        dimToSplit = 2;
+                        %n = size(allData.W,dimToSplit);                        
+                        n = length(unique(allData.WIDs{dimToSplit}));
+                    else
+                        dimToSplit = 1;
+                        n = length(allData.Y);
+                    end
+                    allSplits{i}.permutation = randperm(n)';
+                    allDataCopy.applyPermutation(allSplits{i}.permutation,dimToSplit);
                     [split] = ...
-                        allDataCopy.generateSplitArray(percentTrain,percentTest,obj.configs);                    
-                    allSplits{i}.split = split;                    
-                    [train,test,~] = allDataCopy.splitDataSet(split);
+                        allDataCopy.generateSplitArray(percentTrain,percentTest,obj.configs,dimToSplit);
+                    allSplits{i}.split = split;
+                    [train,test,~] = allDataCopy.splitDataSet(split,dimToSplit);
                     assert(train.numClasses == allDataCopy.numClasses);
                     assert(test.numClasses == allDataCopy.numClasses);
                 else
@@ -162,6 +169,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
             obj.dataAndSplits.configs = obj.configs;                        
         end
         function [] = saveSplit(obj)
+            if obj.get('includeDataStruct',false)
+                obj.dataAndSplits.data = obj.get('originalData');
+            end
             c = getProjectConstants();
             outputFile = [obj.get('outputFilePrefix') '/' obj.get('outputFile')];
             Helpers.MakeDirectoryForFile(outputFile);

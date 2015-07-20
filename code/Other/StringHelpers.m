@@ -6,10 +6,30 @@ classdef StringHelpers
     end
     
     methods(Static)
-        function [split] = split_string(string,delim)
+        function [split] = split_string(string,delim,removeDuplicates)
+            if ~exist('removeDuplicates','var')
+                removeDuplicates = true;
+            end
             split = {};
-            while numel(string) > 0
-                [split{end+1}, string] = strtok(string,delim);
+            
+            %This is to fix tab issues - I'm not sure if this is correct
+            %for all input though
+            delim = sprintf(delim);
+            if removeDuplicates
+                while numel(string) > 0
+                    [split{end+1}, string] = strtok(string,delim);
+                end
+            else
+                idx = strfind(string,delim);                    
+                if isempty(idx)
+                    split{end+1} = string;
+                else
+                    idx = [0 idx];
+                    for i=1:length(idx)-1
+                        split{i} = string(idx(i)+1:idx(i+1)-1);
+                    end
+                    split{end+1} = string(idx(end)+1:end);
+                end
             end
         end 
         

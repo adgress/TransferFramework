@@ -15,6 +15,18 @@ classdef SplitConfigs < Configs
             obj.set('normalizeRows',0);
         end
         
+        function [] = setITS(obj)
+            obj.delete('maxTrainNumPerLabel');
+            obj.configsStruct.inputFilePrefix='Data/ITS/';
+            obj.configsStruct.inputDataSets={'DS1.mat'};
+            obj.configsStruct.dataSetAcronyms={'DS1'};
+            obj.configsStruct.outputFilePrefix='Data/ITS/';
+            obj.configsStruct.outputFile='DS1_split_data.mat';
+            obj.delete('XName');
+            obj.set('WName','W');
+            obj.set('YName','Y');
+            obj.set('includeDataStruct',true);
+        end
         function [] = setYeastUCIBinary(obj)
             obj.delete('maxTrainNumPerLabel');
             

@@ -7,6 +7,45 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [s] = mapField(s,func)
+            f = fields(s);
+            for idx=1:length(f)
+                ff = f{idx};
+                s.(ff) = func(s.(ff));
+            end
+        end
+        
+        function [Ws] = selectW(W,I,dim)
+            if ~iscell(W)
+                W = {W};
+            end
+            Ws = {};
+            for idx=1:length(W)
+                if dim == 1
+                    Ws{idx} = W{idx}(I==idx,:);
+                elseif dim == 2
+                    Ws{idx} = W{idx}(:,I==idx);
+                else
+                    error('');
+                end
+            end
+        end
+        function [v] = getField(s,field,default)
+            if ~exist('default','var')
+                default = [];
+            end
+            if isfield(s,field)
+                v = s.(field);
+            else
+                v = default;
+            end
+        end
+        function [v] = replaceNanInf(v,val)
+            if ~exist('val','var');
+                val = 0;                
+            end
+            v(isnan(v) | isinf(v)) = val;
+        end
         function [I] = isDecreasing(v,k,delta)
             if ~exist('delta','var')
                 delta = 0;

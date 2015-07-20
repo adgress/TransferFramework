@@ -70,25 +70,36 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                 newData.featureIDs = featureIDs;
                 newData.directories = directories;
                 
-                XName = configs.get('XName');
+                
                 YName = configs.get('YName');
-                if iscell(XName)                    
-                    X = [];
-                    Y = [];
-                    for nameIdx=1:length(XName)
-                        error('TODO');
-                    end
-                else
-                    X = data.(XName);
-                    Y = data.(YName);
+                if configs.has('XName')
+                    XName = configs.get('XName');
+                    if iscell(XName)                    
+                        X = [];
+                        Y = [];
+                        for nameIdx=1:length(XName)
+                            error('TODO');
+                        end
+                    end                                
+                    X = data.(XName);                    
+                    newData.X = X;
                 end
-                newData.X = X;
+                if configs.has('WName')
+                    WName = configs.get('WName');
+                    W = data.(WName);
+                    newData.W = W;
+                end
+                Y = data.(YName);                
                 newData.Y = Y;
+                newData.WNames = Helpers.getField(data,'WNames');
+                newData.YNames = Helpers.getField(data,'YNames');
+                newData.WIDs = Helpers.getField(data,'WIDs');
                 %TODO: Why did we need this?
                 %allFields = fields(data);
                 %data = data.(allFields{1});
                 configCopy = configs.copy();
                 configCopy.set('data',newData);
+                configCopy.set('originalData',newData);
                 o = DataSplitterConfigLoader(configCopy);
                 o.splitData();
                 o.saveSplit();
