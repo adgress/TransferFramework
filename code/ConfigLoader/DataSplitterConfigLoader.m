@@ -28,6 +28,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 if normalizeRows
                     allData.X = Helpers.NormalizeRows(allData.X);
                 end  
+                allData.Wdim = dataStruct.Wdim;
             else
                 inputFile = obj.get('inputFile');
                 if isequal(dataSetType,'SimilarityDataSet')
@@ -51,11 +52,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     if normalizeRows
                         allData.X = Helpers.NormalizeRows(allData.X);
                     end                                
-                end                  
+                end   
+                error('Set Wdim?');
             end         
-            if isempty(allData.X)
-                allData.Wdim = 1;
-            end            
             allData.name = obj.get('targetName','');
             if obj.has('numToUsePerLabel')
                 n = obj.get('numToUsePerLabel');
@@ -92,17 +91,15 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 elseif isa(allData,'DataSet')
                     allSplits{i} = struct();
                     allDataCopy = allData.copy();
-                    if isempty(allData.X)
-                        n = length(unique(allData.WIDs{allData.Wdim}));
-                        dimToSplit = allData.Wdim;
-                    else
-                        n = length(allData.Y);
-                        dimToSplit = 1;
+
+                    n = allData.numInstances;
+                    if ~isempty(allData.W)
+                        warning('Not using WIDs!!!  Is this okay?');
                     end
                     allSplits{i}.permutation = randperm(n)';                    
                     allDataCopy.applyPermutation(allSplits{i}.permutation);
                     [split] = ...
-                        allDataCopy.generateSplitArray(percentTrain,percentTest,obj.configs,dimToSplit);
+                        allDataCopy.generateSplitArray(percentTrain,percentTest,obj.configs);
                     allSplits{i}.split = split;
                     [train,test,~] = allDataCopy.splitDataSet(split);
                     assert(train.numClasses == allDataCopy.numClasses);

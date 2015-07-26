@@ -15,6 +15,9 @@ classdef Helpers < handle
                 c = {};
                 return;
             end
+            if isempty(dim)
+                dim = 1;
+            end
             switch dim
                 case 1
                     if length(c1) == 1
@@ -35,18 +38,23 @@ classdef Helpers < handle
             end
         end
         function [W] = combineW(W1,W2,dim)
+            warning('Not using WIDs.  Is this okay?');
             W1 = Helpers.makeCell(W1);
             W2 = Helpers.makeCell(W2);
             assert(length(W1) == length(W2));
             W = cell(length(W1),1);
             for idx=1:length(W)
-                switch dim
-                    case 1
-                        W{idx} = [W1{idx} ; W2{idx}];
-                    case 2
-                        W{idx} = [W1{idx} W2{idx}];
-                    otherwise
-                        error('');
+                if isempty(dim)
+                    W{idx} = [W1{idx} ; W2{idx}];
+                else
+                    switch dim
+                        case 1
+                            W{idx} = [W1{idx} ; W2{idx}];
+                        case 2
+                            W{idx} = [W1{idx} W2{idx}];
+                        otherwise
+                            error('');
+                    end
                 end
             end
         end
@@ -62,6 +70,9 @@ classdef Helpers < handle
         function [cSub] = selectFromCells(c,I,dim,allowEmpty)
             if ~exist('allowEmpty')
                 allowEmpty = false;
+            end
+            if isempty(dim)
+                dim = 1;
             end
             if allowEmpty && isempty(c);
                 cSub = {};
@@ -90,12 +101,16 @@ classdef Helpers < handle
             end
             Ws = {};
             for idx=1:length(W)
-                if dim == 1
+                if isempty(dim)
                     Ws{idx} = W{idx}(I,:);
-                elseif dim == 2
-                    Ws{idx} = W{idx}(:,I);
                 else
-                    error('');
+                    if dim == 1
+                        Ws{idx} = W{idx}(I,:);
+                    elseif dim == 2
+                        Ws{idx} = W{idx}(:,I);
+                    else
+                        error('');
+                    end
                 end
             end
         end

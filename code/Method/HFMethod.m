@@ -50,16 +50,19 @@ classdef HFMethod < Method
                 I2 = combined.isTargetTrain();
                 perm = [find(I1 & I2) ; find(~I1 & I2) ; find(~I2)];                
                 combined.applyPermutation(perm);
-                if obj.configs.has('combineGraphFunc')
-                    f = obj.configs.get('combineGraphFunc');
+                f = obj.configs.get('combineGraphFunc',[]);
+                if ~isempty(f)                    
                     combined = f(combined);
+                    W = combined.W;
+                else
+                    assert(length(combined.W) == 1);
+                    W = combined.W{1};
                 end
                 
                 Y = combined.Y;
                 type = combined.type;
                 trueY = combined.trueY;
-                instanceIDs = combined.instanceIDs;                                
-                W = combined.W;
+                instanceIDs = combined.instanceIDs;                                                
                 WIDs = combined.WIDs;
                 WNames = combined.WNames;
                 labelSets = combined.labelSets;
@@ -426,8 +429,8 @@ classdef HFMethod < Method
             testResults.labelSets = distMat.labelSets;
             %testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
             if ~isempty(YTest)
-                if obj.has('evaluatePerfFunc')
-                    f = obj.get('evaluatePerfFunc');
+                f = obj.get('evaluatePerfFunc',[]);
+                if ~isempty(f)                    
                     [val,yPred,yActual] = f(distMat,fu,savedData.predicted);
                 else
                     val = sum(predicted == YTest)/...

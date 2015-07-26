@@ -94,6 +94,7 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                 newData.WNames = Helpers.getField(data,'WNames');
                 newData.YNames = Helpers.getField(data,'YNames');
                 newData.WIDs = Helpers.getField(data,'WIDs');
+                newData.Wdim = Helpers.getField(data,'Wdim');
                 %TODO: Why did we need this?
                 %allFields = fields(data);
                 %data = data.(allFields{1});

@@ -16,8 +16,10 @@ classdef ITSMethod < Method
             test = input.test;
             
             combined = DataSet.Combine(train,test);
-            f = obj.configs.get('combineGraphFunc');
-            combined = f(combined);
+            f = obj.configs.get('combineGraphFunc',[]);
+            if ~isempty(f)
+                combined = f(combined);
+            end
             distMat = DistanceMatrix(combined.W,combined.Y,combined.type,...
                 combined.trueY,combined.instanceIDs);
             distMat.WNames = combined.WNames;

@@ -14,15 +14,16 @@ classdef ITSMainConfigs < MainConfigs
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
                         
             obj.configsStruct.learners=[];
-            learnerConfigs.set('combineGraphFunc',@combineGraphs);
-            learnerConfigs.set('evaluatePerfFunc',@evaluateITSPerf);
-            learnerConfigs.set('alpha',.001);
+            learnerConfigs.set('combineGraphFunc',pc.combineGraphFunc);
+            learnerConfigs.set('evaluatePerfFunc',pc.evaluatePerfFunc);
+            learnerConfigs.set('alpha',pc.alpha);
+            learnerConfigs.set('sigma',pc.sigma);
             obj.setLLGCConfigs(learnerConfigs);
             %obj.setITSRandom(learnerConfigs);
             %obj.setITSMethod(learnerConfigs);
             %obj.setITSConstant(learnerConfigs);
                         
-            obj.configsStruct.measure=ITSMeasure();
+            obj.configsStruct.measure=c.measure;
             obj.configsStruct.configLoader=ExperimentConfigLoader();
         end    
         function [] = setITSData(obj,dataSet)

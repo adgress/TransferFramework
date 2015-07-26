@@ -35,6 +35,7 @@ function [] = makeStudentData()
     data.Y = Y + 1;
     data.W = {correlationW};
     data.WIDs = {(1:numStudents)'};
+    data.Wdim = [];
     fileName = [fileName '-student.mat'];
     save(fileName,'data');
 end

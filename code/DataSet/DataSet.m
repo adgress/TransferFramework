@@ -16,7 +16,7 @@ classdef DataSet < LabeledData
         Wdim        
     end    
     properties(Dependent)
-
+        numInstances
     end
     
     methods
@@ -65,7 +65,17 @@ classdef DataSet < LabeledData
             obj.W = [];
             obj.Wdim = -1;
         end                
-        
+        function [n] = get.numInstances(obj)
+            if isempty(obj.W)
+                n = size(Y,1);
+            else
+                if isempty(obj.Wdim)
+                    n = size(obj.W{1},1);
+                else
+                    n = size(obj.W{1},obj.Wdim);
+                end
+            end
+        end
         function [train,test,validation] = splitDataSet(obj,split,dim)
             if ~exist('dim','var')
                 dim = obj.Wdim;
@@ -244,44 +254,31 @@ classdef DataSet < LabeledData
         end
         function [] = permuteW(obj,permutation,dim)
             p = {};
-            switch dim
-                case 1
-                    p = {permutation, 1:size(obj.W{1},2)};
-                case 2
-                    p = {1:size(obj.W{1},1), permutation};
-                otherwise
-                    error('');
+            if ~isempty(dim)            
+                switch dim
+                    case 1
+                        p = {permutation, 1:size(obj.W{1},2)};
+                    case 2
+                        p = {1:size(obj.W{1},1), permutation};
+                    otherwise
+                        error('');
+                end
+                for idx=1:length(obj.W)
+                    obj.W{idx} = obj.W{idx}(p{:});                
+                end
+            else
+                for idx=1:length(obj.W)
+                    obj.W{idx} = obj.W{idx}(permutation,permutation);
+                end
+                p = {permutation};
             end
-            for idx=1:length(obj.W)
-                obj.W{idx} = obj.W{idx}(p{:});                
-            end
+            
             for idx=1:length(obj.WIDs)
                 obj.WIDs{idx} = obj.WIDs{idx}(p{idx});
                 if ~isempty(obj.WNames)
                     obj.WNames{idx} = obj.WNames{idx}(p{idx});
                 end
-            end
-            %{
-            i = 0;
-            p = zeros(size(obj.W,dim),1);
-                
-            for idx=1:length(permutation)
-                I = obj.WIDs{dim} == permutation(idx);
-                range = i+1:i+sum(I);
-                p(range) = find(I);
-                i = i+sum(I);
-            end
-            for idx=1:length(obj.W)
-                switch dim
-                    case 1
-                        obj.W{idx} = obj.W{idx}(p,:);
-                    case 2
-                        obj.W{idx} = obj.W{idx}(:,p);
-                    otherwise
-                        error('');
-                end
-            end
-            %}
+            end    
         end
         function [] = applyPermutation(obj,permutation,dim)
             if ~exist('dim','var')
@@ -356,7 +353,8 @@ classdef DataSet < LabeledData
             f = varargin{1}.copy();
             f.addEmptyFields();
             for i=2:length(varargin)
-                assert(f.Wdim == varargin{i}.Wdim);                
+                assert((isempty(f.Wdim) && isempty(f.Wdim)) || ...
+                    f.Wdim == varargin{i}.Wdim);                
                 m2 = varargin{i}.ID2Labels;
                 varargin{i}.addEmptyFields();
                 if ~isempty(m2) && ~isempty(f.ID2Labels)
