@@ -2,7 +2,8 @@ function [  ] = loadData()
 %LOADDATA Summary of this function goes here
 %   Detailed explanation goes here
 
-useDS1 = 1;
+useDS1 = 0;
+normalize = 0;
 
 studentName = 4;
 studResType = 9;
@@ -17,8 +18,9 @@ isLastAttempt = 20;
 outcome = 21;
 kcStart = 31;
 
-baseSize = 300000;
+%baseSize = 300000;
 fileData = struct();
+%{
 fileData.studentNames = cell(baseSize,1);
 fileData.problemNames = cell(baseSize,1);
 fileData.stepNames = cell(baseSize,1);
@@ -28,7 +30,7 @@ fileData.outcomes = cell(baseSize,1);
 fileData.kcArrays = cell(baseSize,1);
 fileData.kcs = cell(baseSize,1);
 fileData.kcCats = cell(baseSize,1);
-
+%}
 studResTypeValues = {'ATTEMPT', 'HINT_REQUEST'};
 tutResTypeValues = {'RESULT','HINT_MSG'};
 if useDS1
@@ -42,10 +44,18 @@ if useDS1
 else
     dataSetName = 'DS2';
     kcLast = 48;
+    
     %Default
-    kcDefault = 31;
+    %kcDefault = 31;
+    
+    %Reduce Step Name
+    kcDefault = 35;
 end
 fileName = ['ITS/' dataSetName '.txt'];
+dataSetName = [dataSetName '-' num2str(kcDefault)];
+if ~normalize
+    dataSetName = [dataSetName '-nonNorm'];
+end
 %{
 for idx=kcStart:2:kcLast
     kcArrays{end+1} = {};
@@ -53,6 +63,30 @@ end
 %}
 file = fopen(fileName,'r+');
 
+s = fgetl(file);
+a = StringHelpers.split_string(s,'\t',false);
+
+format = '';
+for idx=1:length(a)
+    if idx == 1
+        format = '%s';
+        continue;
+    end
+    %format = [format sprintf('\t') '%c'];
+    format = [format ' %s'];
+end
+
+%file2 = fopen(fileName,'r+');
+a = textscan(file,format,'Delimiter',sprintf('\t'));
+fileData.studentNames = a{studentName};
+fileData.problemNames = a{problemName};
+fileData.stepNames = a{stepName};
+fileData.studResTypes = a{studResType};
+fileData.studResSubtypes = a{studResSubtype};
+fileData.outcomes = a{outcome};
+fileData.kcs = a{kcDefault};
+fileData.kcCats = a{kcDefault+1};
+%{
 numLines = 0;
 while true
     s = fgetl(file);
@@ -89,9 +123,10 @@ while true
         %}
     end    
 end
-
-numEntries = numLines - 1;
-fileData = truncateFields(fileData,numEntries);
+%}
+fclose(file);
+%numEntries = numLines - 1;
+%fileData = truncateFields(fileData,numEntries);
 
 ordData = struct();
 uniqueOrdData = struct();
@@ -145,9 +180,13 @@ data.kcCatOrd = ordData.kcCatOrd;
 data.outcomeOrd = ordData.outcomeOrd;
 data.studentResOrd = ordData.studentResOrd;
 
-Wmastered = WCorrect ./ (WCorrect-WIncorrect);
-WnotMastered = 1 - Wmastered;
-
+if normalize
+    Wmastered = WCorrect ./ (WCorrect+WIncorrect);
+    WnotMastered = 1 - Wmastered;
+else
+    Wmastered = WCorrect;
+    WnotMastered = WIncorrect;
+end
 Wmastered = Helpers.replaceNanInf(Wmastered);
 WnotMastered = Helpers.replaceNanInf(WnotMastered);
 Wmastered(isnan(Wmastered)) = 0;
@@ -168,15 +207,17 @@ for stepIdx=1:numSteps
     stepY(stepIdx) = Y(1);    
 end
 
-WIDs = {[1:numStudents]',[1:numSteps]'};
+WIDs = {[1:numSteps]',[1:numStudents]'};
 %W = [Wmastered WnotMastered];
-data.W = {Wmastered, WnotMastered};
+data.W = {Wmastered', WnotMastered'};
 data.Y = stepY;
 data.WIDs = WIDs;
 a = getlabels(ordData.studentOrd)';
 b = getlabels(ordData.stepOrd)';
-data.WNames = {a,b};
-data.YNames = [getlabels(ordData.kcOrd)' ; getlabels(ordData.kcOrd)'];
+data.WNames = {b,a};
+data.YNames = getlabels(ordData.kcOrd)';
+data.WCorrect = data.WCorrect';
+data.WInCorrect = data.WInCorrect';
 save(['Data/ITS/' dataSetName '.mat'], 'data');
 end
 

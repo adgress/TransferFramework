@@ -1,0 +1,4 @@
+*.txt
+results*/*.mat
+results*/*/*.mat
+results*/*/*/*.mat

@@ -52,6 +52,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         allData.X = Helpers.NormalizeRows(allData.X);
                     end                                
                 end                  
+            end         
+            if isempty(allData.X)
+                allData.Wdim = 1;
             end            
             allData.name = obj.get('targetName','');
             if obj.has('numToUsePerLabel')
@@ -90,19 +93,18 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     allSplits{i} = struct();
                     allDataCopy = allData.copy();
                     if isempty(allData.X)
-                        dimToSplit = 2;
-                        %n = size(allData.W,dimToSplit);                        
-                        n = length(unique(allData.WIDs{dimToSplit}));
+                        n = length(unique(allData.WIDs{allData.Wdim}));
+                        dimToSplit = allData.Wdim;
                     else
-                        dimToSplit = 1;
                         n = length(allData.Y);
+                        dimToSplit = 1;
                     end
-                    allSplits{i}.permutation = randperm(n)';
-                    allDataCopy.applyPermutation(allSplits{i}.permutation,dimToSplit);
+                    allSplits{i}.permutation = randperm(n)';                    
+                    allDataCopy.applyPermutation(allSplits{i}.permutation);
                     [split] = ...
                         allDataCopy.generateSplitArray(percentTrain,percentTest,obj.configs,dimToSplit);
                     allSplits{i}.split = split;
-                    [train,test,~] = allDataCopy.splitDataSet(split,dimToSplit);
+                    [train,test,~] = allDataCopy.splitDataSet(split);
                     assert(train.numClasses == allDataCopy.numClasses);
                     assert(test.numClasses == allDataCopy.numClasses);
                 else

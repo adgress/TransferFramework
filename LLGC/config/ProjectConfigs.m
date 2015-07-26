@@ -264,14 +264,7 @@ classdef ProjectConfigs < handle
             if ~exist('targetLabels','var')
                 targetLabels = ProjectConfigs.trainLabels;
             end
-            c = VisualizationConfigs();                                           
-            c.configsStruct.showPostTransferMeasures = false;
-            c.configsStruct.showPreTransferMeasures = false;
-            c.configsStruct.showRelativePerformance = false;
-            c.configsStruct.showRelativeMeasures = false;
-            c.configsStruct.showSoftMeasures = false;
-            c.configsStruct.showHardMeasures = false;
-            c.configsStruct.showLLGCMeasure = false;
+            c = VisualizationConfigs();                                                       
             
             if ProjectConfigs.vizWeights
                 c.configsStruct.xAxisField = 'dataSetWeights';

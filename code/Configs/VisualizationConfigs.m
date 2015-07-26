@@ -27,6 +27,14 @@ classdef VisualizationConfigs < Configs
             
             obj.configsStruct.resultQueries = {};
             obj.configsStruct.measure = Measure(Configs());
+            
+            c.configsStruct.showPostTransferMeasures = false;
+            c.configsStruct.showPreTransferMeasures = false;
+            c.configsStruct.showRelativePerformance = false;
+            c.configsStruct.showRelativeMeasures = false;
+            c.configsStruct.showSoftMeasures = false;
+            c.configsStruct.showHardMeasures = false;
+            c.configsStruct.showLLGCMeasure = false;
         end        
         
         function [] = setTommasi(obj)

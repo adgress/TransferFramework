@@ -23,22 +23,49 @@ classdef HFMethod < Method
                 test = DataSet();
                 test.X = zeros(0,size(train.X,2));
             end
-            Y = [train.Y(trainLabeled) ; ...
-                train.Y(~trainLabeled) ; ...
+            WNames = [];
+            WIDs = [];
+            Y = [train.Y(trainLabeled,:) ; ...
+                train.Y(~trainLabeled,:) ; ...
                 test.Y];
             type = [train.type(trainLabeled);...
                 train.type(~trainLabeled);...
                 test.type];                                
-            trueY = [train.trueY(trainLabeled) ; ...
-                train.trueY(~trainLabeled) ; ...
+            trueY = [train.trueY(trainLabeled,:) ; ...
+                train.trueY(~trainLabeled,:) ; ...
                 test.trueY];
             instanceIDs = [train.instanceIDs(trainLabeled) ; ...
                 train.instanceIDs(~trainLabeled) ; ...
                 test.instanceIDs];
+            objectType = [];
+            labelSets = train.labelSets;
+            YNames = train.YNames;
             if obj.has('sigmaScale')
                 sigmaScale = obj.get('sigmaScale');
             end
-            if exist('savedData','var') && isfield(savedData,'W')
+            if ~isempty(train.W)
+                assert(isempty(train.X));      
+                combined = DataSet.Combine(train,test);
+                I1 = combined.isLabeled;
+                I2 = combined.isTargetTrain();
+                perm = [find(I1 & I2) ; find(~I1 & I2) ; find(~I2)];                
+                combined.applyPermutation(perm);
+                if obj.configs.has('combineGraphFunc')
+                    f = obj.configs.get('combineGraphFunc');
+                    combined = f(combined);
+                end
+                
+                Y = combined.Y;
+                type = combined.type;
+                trueY = combined.trueY;
+                instanceIDs = combined.instanceIDs;                                
+                W = combined.W;
+                WIDs = combined.WIDs;
+                WNames = combined.WNames;
+                labelSets = combined.labelSets;
+                objectType = combined.objectType;
+                YNames = combined.YNames;
+            elseif exist('savedData','var') && isfield(savedData,'W')
                 W = savedData.W;
             else
                 XLabeled = train.X(trainLabeled,:);
@@ -105,6 +132,14 @@ classdef HFMethod < Method
                 end
             end
             distMat = DistanceMatrix(W,Y,type,trueY,instanceIDs);
+            distMat.WNames = WNames;
+            distMat.WIDs = WIDs;
+            distMat.labelSets = labelSets;
+            if isempty(objectType)
+                assert(isempty(train.objectType));
+            end
+            distMat.objectType = objectType;
+            distMat.YNames = YNames;
         end
         
         function [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat)
@@ -194,6 +229,8 @@ classdef HFMethod < Method
             [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat);
             if makeRBF
                 Wrbf = distMat.W;
+                isZero = Wrbf(:) == 0;
+                %Wrbf(isZero) = exp(-Wrbf(isZero)/.2);
             end
             useAlt = obj.get('useAlt');
             alpha = obj.get('alpha');
@@ -202,7 +239,8 @@ classdef HFMethod < Method
             isLabeled = distMat.isLabeledTarget() & distMat.isTargetTrain();
             labeledInds = find(isLabeled);
             Ytrain = distMat.Y(isLabeled);
-            computeCVAcc = true;
+            %computeCVAcc = true;
+            computeCVAcc = false;
             if length(alpha) > 1 || computeCVAcc
                 folds = {};
                 for foldIdx=1:numFolds
@@ -301,9 +339,13 @@ classdef HFMethod < Method
             end
             
             savedData.alpha = alpha;
-            savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
-            savedData.cvAcc = max(alphaScores);              
-            savedData.predicted = LLGC.getPrediction(fu,classes,YtrainMat);;
+            %savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
+            savedData.cvAcc = max(alphaScores);          
+            if ~exist('classes','var')
+                classes = distMat.classes;
+            end
+            labelSets = distMat.labelSets;
+            savedData.predicted = LLGC.getPrediction(fu,classes,YtrainMat,labelSets);
             fu(isnan(fu(:))) = 0;
             assert(isempty(find(isnan(fu))));
             assert(~isnan(savedData.cvAcc));
@@ -377,14 +419,22 @@ classdef HFMethod < Method
             isYTest = distMat.Y > 0 & distMat.type == Constants.TARGET_TEST;
             
             %test instances should be last
-            assert(issorted(isYTest));
+            %assert(issorted(distMat.type == Constants.TARGET_TEST));
             YTest = distMat.Y(isYTest);
-            predicted = predicted(isYTest);
+            predicted = predicted(isYTest,:);
             testResults.dataFU = sparse(fu);
+            testResults.labelSets = distMat.labelSets;
             %testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
             if ~isempty(YTest)
-                val = sum(predicted == YTest)/...
-                        length(YTest);
+                if obj.has('evaluatePerfFunc')
+                    f = obj.get('evaluatePerfFunc');
+                    [val,yPred,yActual] = f(distMat,fu,savedData.predicted);
+                else
+                    val = sum(predicted == YTest)/...
+                            length(YTest);
+                    yPred = [train.Y; predicted];
+                    yActual = [train.Y; YTest];
+                end
                 assert(~isnan(val));
                 if ~obj.configs.get('quiet')
                     if useHF
@@ -394,11 +444,11 @@ classdef HFMethod < Method
                     end
                 end            
             end
-            testResults.yPred = [train.Y; predicted];
-            testResults.yActual = [train.Y; YTest];
+            testResults.yPred = yPred;
+            testResults.yActual = yActual;
             testResults.learnerMetadata.sigma = sigma;
             testResults.learnerMetadata.cvAcc = savedData.cvAcc;
-            testResults.learnerStats.featureSmoothness = savedData.featureSmoothness;            
+            %testResults.learnerStats.featureSmoothness = savedData.featureSmoothness;            
         end
         
         function [testResults,savedData] = ...

@@ -25,6 +25,7 @@ classdef FoldResults <  matlab.mixin.Copyable
         learnerStats
         
         modelResults
+        labelSets
     end
     properties(Dependent)
         trainType

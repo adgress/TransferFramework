@@ -11,6 +11,12 @@ classdef Method < Saveable
         function n = getDisplayName(obj)
             n = obj.getPrefix();
         end
+        function [d] = getDirectory(obj)
+            error('Do we save based on method?');
+        end
+        function [nameParams] = getNameParams(obj)
+            nameParams = {};
+        end
     end
     methods(Abstract)
         [testResults,savedData] = ...

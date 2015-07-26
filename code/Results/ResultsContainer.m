@@ -35,7 +35,8 @@ classdef ResultsContainer < handle
             end
         end
         function [] = saveResults(obj,filename)
-            if ProjectConfigs.smallResultsFiles
+            pc = ProjectConfigs.Create();
+            if pc.smallResultsFiles
                 for idx=1:length(obj.allResults)
                     for splitIdx=1:length(obj.allResults{idx})
                         r = obj.allResults{idx}.splitResults{splitIdx};

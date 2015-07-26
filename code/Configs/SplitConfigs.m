@@ -15,13 +15,16 @@ classdef SplitConfigs < Configs
             obj.set('normalizeRows',0);
         end
         
-        function [] = setITS(obj)
+        function [] = setITS(obj,dataSet)
+            if ~exist('dataSet','var')
+                dataSet = 'DS1';
+            end
             obj.delete('maxTrainNumPerLabel');
             obj.configsStruct.inputFilePrefix='Data/ITS/';
-            obj.configsStruct.inputDataSets={'DS1.mat'};
-            obj.configsStruct.dataSetAcronyms={'DS1'};
+            obj.configsStruct.inputDataSets={[dataSet '.mat']};
+            obj.configsStruct.dataSetAcronyms={dataSet};
             obj.configsStruct.outputFilePrefix='Data/ITS/';
-            obj.configsStruct.outputFile='DS1_split_data.mat';
+            obj.configsStruct.outputFile=[dataSet '_split_data.mat'];
             obj.delete('XName');
             obj.set('WName','W');
             obj.set('YName','Y');

@@ -7,11 +7,80 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [c] = combineCellArrays(c1,c2,dim,allowEmpty)
+            if ~exist('allowEmpty','var')
+                allowEmpty = false;
+            end
+            if allowEmpty && isempty(c1) && isempty(c2)
+                c = {};
+                return;
+            end
+            switch dim
+                case 1
+                    if length(c1) == 1
+                        c = {[c1{1} ; c2{1}]};
+                    else
+                        c = {[c1{1} ; c2{1}], c1{2}};
+                    end
+                case 2
+                    c = {c1{1}, [c1{2} ; c2{2}] };
+                otherwise
+                    error('');
+            end
+        end
+        function [c] = makeCell(a)
+            c = a;
+            if ~iscell(a)
+                c = {a};
+            end
+        end
+        function [W] = combineW(W1,W2,dim)
+            W1 = Helpers.makeCell(W1);
+            W2 = Helpers.makeCell(W2);
+            assert(length(W1) == length(W2));
+            W = cell(length(W1),1);
+            for idx=1:length(W)
+                switch dim
+                    case 1
+                        W{idx} = [W1{idx} ; W2{idx}];
+                    case 2
+                        W{idx} = [W1{idx} W2{idx}];
+                    otherwise
+                        error('');
+                end
+            end
+        end
+        
         function [s] = mapField(s,func)
             f = fields(s);
             for idx=1:length(f)
                 ff = f{idx};
                 s.(ff) = func(s.(ff));
+            end
+        end
+        
+        function [cSub] = selectFromCells(c,I,dim,allowEmpty)
+            if ~exist('allowEmpty')
+                allowEmpty = false;
+            end
+            if allowEmpty && isempty(c);
+                cSub = {};
+                return;
+            end
+            cLength = length(c);
+            assert(cLength <= 2);            
+            assert(cLength >= dim);
+            switch dim
+                case 1
+                    if cLength == 2
+                        cSub = {c{1}(I),c{2}};
+                    else
+                        cSub = {c{1}(I)};
+                    end
+                case 2
+                    cSub = {c{1},c{2}(I)};
+                otherwise
+                    error('');
             end
         end
         
@@ -22,9 +91,9 @@ classdef Helpers < handle
             Ws = {};
             for idx=1:length(W)
                 if dim == 1
-                    Ws{idx} = W{idx}(I==idx,:);
+                    Ws{idx} = W{idx}(I,:);
                 elseif dim == 2
-                    Ws{idx} = W{idx}(:,I==idx);
+                    Ws{idx} = W{idx}(:,I);
                 else
                     error('');
                 end
@@ -89,6 +158,7 @@ classdef Helpers < handle
             end
         end
         function [b] = hasEqualRows(A,B)
+            error('Is this correct?');
             b = false;
             for i=1:size(A,1)
                 for j=1:size(B,1)
@@ -107,7 +177,9 @@ classdef Helpers < handle
             if isempty(v)
                 return;
             end
-            assert(all(v==a));
+            if ~all(all(v==a))
+                a = v;
+            end
         end
         
         function [yBinary] = MakeLabelsBinary(y)

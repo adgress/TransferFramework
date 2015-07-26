@@ -10,15 +10,19 @@ classdef DataSet < LabeledData
         X
         W
         WIDs
-        WNames
-        YNames
+        WNames        
         featureNames
         featureIDs
+        Wdim        
     end    
+    properties(Dependent)
+
+    end
     
     methods
-        function obj = DataSet(dataFile,XName,YName,X,Y,type,trueY,instanceIDs)
+        function obj = DataSet(dataFile,XName,YName,X,Y,type,trueY,instanceIDs)            
             obj.dataFile = '';
+            obj.objectType = [];
             if ~exist('X','var')
                 X = [];
             end
@@ -59,18 +63,28 @@ classdef DataSet < LabeledData
             %assert(size(obj.X,1) == size(obj.Y,1));
             obj.addEmptyFields();
             obj.W = [];
+            obj.Wdim = -1;
         end                
         
         function [train,test,validation] = splitDataSet(obj,split,dim)
             if ~exist('dim','var')
-                dim = 1;
+                dim = obj.Wdim;
             end
             allDataSets = cell(3,1);
             XSplit = {[],[],[]};
             WSplit = {{},{},{}};
+            WIDSplit = cell(3,1);
+            WNameSplit = cell(3,1);
             if isempty(obj.X)
                 for idx=1:length(allDataSets);                   
-                    WSplit{idx} = Helpers.selectW(obj.W,split==idx,dim);
+                    I = split==idx;
+                    WSplit{idx} = Helpers.selectW(obj.W,I,dim);
+                    if ~isempty(obj.WIDs)
+                        WIDSplit{idx} = Helpers.selectFromCells(obj.WIDs,I,dim);
+                    end
+                    if ~isempty(obj.WNames)
+                        WNameSplit{idx} = Helpers.selectFromCells(obj.WNames,I,dim);
+                    end                    
                 end
             else
                 assert(isempty(obj.W));
@@ -81,11 +95,22 @@ classdef DataSet < LabeledData
             trueYSplit = DataSet.splitMatrix(obj.trueY,split);
             instanceIDsSplit = DataSet.splitMatrix(obj.instanceIDs,split);            
             for i=1:numel(allDataSets)
-                type = DataSet.NoType(length(YSplit{i}));               
+                type = DataSet.NoType(length(YSplit{i}));   
+                %{
                 allDataSets{i} = DataSet('','','',XSplit{i},YSplit{i},...
                     type,trueYSplit{i},instanceIDsSplit{i});
                 allDataSets{i}.ID2Labels = obj.ID2Labels;
                 allDataSets{i}.W = WSplit{i};
+                %}
+                allDataSets{i} = obj.copy();
+                allDataSets{i}.X = XSplit{i};
+                allDataSets{i}.Y = YSplit{i};
+                allDataSets{i}.type = type;
+                allDataSets{i}.trueY = trueYSplit{i};
+                allDataSets{i}.instanceIDs = instanceIDsSplit{i};
+                allDataSets{i}.W = WSplit{i};      
+                allDataSets{i}.WIDs = WIDSplit{i};      
+                allDataSets{i}.WNames = WNameSplit{i};
             end
             train = allDataSets{1};
             test = allDataSets{2};
@@ -108,7 +133,7 @@ classdef DataSet < LabeledData
             end
             [selectedItems] = obj.stratifiedSelection(numItems,classesToKeep);
             sampledDataSet = DataSet.CreateNewDataSet(obj);
-            sampledDataSet.Y(~selectedItems) = -1;
+            sampledDataSet.Y(~selectedItems,:) = -1;
             if sum(sampledDataSet.Y > 0) ~= numItems
                 warning('Sample size is weird'); 
             end
@@ -133,14 +158,17 @@ classdef DataSet < LabeledData
             %assert(sum(selectedItems) == itemsPerClass*length(obj.classes()));
         end
         
-        function [selectedItems] = stratifiedSelection(obj,numItems,classesToKeep)
+        function [selectedItems] = stratifiedSelection(obj,numItems,classesToKeep,yIdx)
             if ~exist('classesToKeep','var')
                 classesToKeep = [];
             end
+            if ~exist('yIdx','var')
+                yIdx = 1;
+            end
             itemsPerClass = ceil(numItems/obj.numClasses);
-            selectedItems = false(size(obj.X,1),1);
+            selectedItems = false(size(obj.Y,1),1);
             for i=obj.classes()'               
-                XWithClass = find(obj.Y==i);                
+                XWithClass = find(obj.Y(:,yIdx)==i);     
                 itemsToUse = size(XWithClass,1);                
                 if isempty(intersect(classesToKeep,i))
                     itemsToUse = min(itemsPerClass, itemsToUse);
@@ -178,14 +206,22 @@ classdef DataSet < LabeledData
                 logArray(shouldRemove) = true;
                 shouldRemove = logArray;
             end
-            obj.X = obj.X(~shouldRemove,:);
-            obj.Y = obj.Y(~shouldRemove);
+            if ~isempty(obj.X)
+                obj.X = obj.X(~shouldRemove,:);
+                assert(isempty(obj.W));
+            else
+                obj.W = Helpers.selectW(obj.W,~shouldRemove,obj.Wdim);
+                obj.WIDs = Helpers.selectFromCells(obj.WIDs,~shouldRemove,obj.Wdim);
+                obj.WNames = Helpers.selectFromCells(obj.WNames,~shouldRemove,obj.Wdim,true);
+            end
+            obj.Y = obj.Y(~shouldRemove,:);
             obj.type = obj.type(~shouldRemove);
             obj.trueY = obj.trueY(~shouldRemove);
             obj.instanceIDs = obj.instanceIDs(~shouldRemove);
             if ~isempty(obj.isValidation)
                 obj.isValidation = obj.isValidation(~shouldRemove);
             end
+                        
         end
         
         function [d] = getSourceData(obj)
@@ -207,6 +243,25 @@ classdef DataSet < LabeledData
             d = DataSet.CreateNewDataSet(obj,isType);
         end
         function [] = permuteW(obj,permutation,dim)
+            p = {};
+            switch dim
+                case 1
+                    p = {permutation, 1:size(obj.W{1},2)};
+                case 2
+                    p = {1:size(obj.W{1},1), permutation};
+                otherwise
+                    error('');
+            end
+            for idx=1:length(obj.W)
+                obj.W{idx} = obj.W{idx}(p{:});                
+            end
+            for idx=1:length(obj.WIDs)
+                obj.WIDs{idx} = obj.WIDs{idx}(p{idx});
+                if ~isempty(obj.WNames)
+                    obj.WNames{idx} = obj.WNames{idx}(p{idx});
+                end
+            end
+            %{
             i = 0;
             p = zeros(size(obj.W,dim),1);
                 
@@ -226,10 +281,11 @@ classdef DataSet < LabeledData
                         error('');
                 end
             end
+            %}
         end
         function [] = applyPermutation(obj,permutation,dim)
             if ~exist('dim','var')
-                dim = 1;
+                dim = obj.Wdim;
             end            
             if isempty(obj.X)
                 obj.permuteW(permutation,dim);              
@@ -238,9 +294,9 @@ classdef DataSet < LabeledData
                 assert(isempty(obj.W));
                 obj.X = obj.X(permutation,:);
             end
-            obj.Y = obj.Y(permutation);
+            obj.Y = obj.Y(permutation,:);
             obj.type = obj.type(permutation);
-            obj.trueY = obj.trueY(permutation);
+            obj.trueY = obj.trueY(permutation,:);
             obj.instanceIDs = obj.instanceIDs(permutation);
             if isempty(obj.isValidation)                
                 obj.isValidation = false(size(obj.X,1),1);
@@ -277,6 +333,11 @@ classdef DataSet < LabeledData
                 obj.isValidation = false(size(obj.X,1),1);
             end
         end
+        %{
+        function [I] = get.isLabeled(obj)
+            I = obj.Y > 0;
+        end
+        %}
     end
     
     methods(Static)
@@ -295,6 +356,7 @@ classdef DataSet < LabeledData
             f = varargin{1}.copy();
             f.addEmptyFields();
             for i=2:length(varargin)
+                assert(f.Wdim == varargin{i}.Wdim);                
                 m2 = varargin{i}.ID2Labels;
                 varargin{i}.addEmptyFields();
                 if ~isempty(m2) && ~isempty(f.ID2Labels)
@@ -308,6 +370,14 @@ classdef DataSet < LabeledData
                 f.instanceIDs = [f.instanceIDs ; varargin{i}.instanceIDs];
                 f.ID2Labels = vertcat(f.ID2Labels,m2);
                 f.isValidation = [f.isValidation; varargin{i}.isValidation] ;
+                if ~isempty(f.W)
+                    di = varargin{i};
+                    f.W = Helpers.combineW(f.W,di.W,f.Wdim);
+                    f.WIDs = Helpers.combineCellArrays(f.WIDs,di.WIDs,f.Wdim);
+                    f.WNames = Helpers.combineCellArrays(f.WNames,di.WNames,f.Wdim,true);
+                else
+                    assert(isempty(di.W));
+                end
             end
         end        
     end
@@ -337,12 +407,12 @@ classdef DataSet < LabeledData
             if ~exist('inds','var')
                 inds = 1:data.size();
             end
+            %{
             newData = DataSet('','','',data.X(inds,:),data.Y(inds),...
                 data.type(inds,:),data.trueY(inds),data.instanceIDs(inds));
-            newData.ID2Labels = data.ID2Labels;
-            newData.featureNames = data.featureNames;
-            newData.featureIDs = data.featureIDs;
-            newData.name = data.name;            
+            %}
+            newData = data.copy();
+            newData.keep(inds);         
         end
         function [data] = MakeDataFromStruct(dataStruct)
             X = [];

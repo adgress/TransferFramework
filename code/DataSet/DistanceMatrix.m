@@ -11,6 +11,8 @@ classdef DistanceMatrix < LabeledData
     
     properties
         W
+        WNames
+        WIDs
     end
     
     methods

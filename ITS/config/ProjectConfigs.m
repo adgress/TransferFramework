@@ -3,7 +3,7 @@ classdef ProjectConfigs < ProjectConfigsBase
     %   Detailed explanation goes here
     
     properties
-
+        dataSetToUse
     end
     
     methods(Static, Access=private)
@@ -17,11 +17,13 @@ classdef ProjectConfigs < ProjectConfigsBase
         function [c] = Create()
             %c = ProjectConfigs.instance;
             c = ProjectConfigs.CreateSingleton();
+            c.dataSetToUse = 'DS1-69-student';
+            c.labelsToKeep = 1;
         end
         function [c] = SplitConfigs()
             pc = ProjectConfigs.Create();
             c = SplitConfigs();
-            c.setITS();
+            c.setITS(pc.dataSetToUse);            
         end
     end
     methods(Access = private)

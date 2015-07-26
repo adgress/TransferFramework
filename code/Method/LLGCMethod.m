@@ -37,10 +37,7 @@ classdef LLGCMethod < HFMethod
             if obj.has('useAlt') && obj.get('useAlt')
                 nameParams{end+1} = 'useAlt';
             end
-        end
-        function [d] = getDirectory(obj)
-            error('Do we save based on method?');
-        end
+        end        
     end
     
 end

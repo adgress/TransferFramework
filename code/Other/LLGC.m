@@ -135,6 +135,11 @@ classdef LLGC < handle
         function [invM] = makeInvM(W,alpha)
             W(logical(speye(size(W)))) = 0;
             Disq = diag(sum(W).^-.5);
+            I = isinf(Disq);
+            if sum(I(:)) > 0
+                display('Disconnected nodes - zeroing out infs');
+                Disq(I) = 0;
+            end
             WN = Disq*W*Disq;
             I = eye(size(WN,1));
             %invM = (1-alpha)*inv((1+alpha)*I-WN);
@@ -164,7 +169,10 @@ classdef LLGC < handle
             f(fl(:,2) == 1) = -1;
         end
         
-        function [p] = getPrediction(fu,classes,fl)            
+        function [p] = getPrediction(fu,classes,fl,labelSets)
+            if isempty(labelSets)
+                labelSets = ones(size(fl,2),1);
+            end
             if ~exist('classes','var')
                 classes = 1:size(fu,2);
                 if length(classes) == 1 && ~LLGC.normRows
@@ -172,29 +180,32 @@ classdef LLGC < handle
                 end
             end
             numF = size(fu,2);
-            assert(numF == 1 || numF == length(classes));
-            if LLGC.normRows
-                if LLGC.useCMN
-                    if mod(sum(fl(:)),10) ~= 0
-                        display('');
+            p = zeros(size(fl,1),max(labelSets));
+            assert(numF == 1 || numF == length(classes));            
+            for labelIdx=1:max(labelSets)
+                currLabels = find(labelSets == labelIdx);
+                fuCurr = fu(:,currLabels);
+                if LLGC.normRows
+                    if LLGC.useCMN
+                        %with laplace smoothing                    
+                        q = sum(fuCurr)+1;
+                        fuCurr = fuCurr .*repmat(q./sum(fuCurr),size(fuCurr,1),1);
+                        %fu = fu ./ repmat(q,size(fu,1),1);
+                        fuCurr = Helpers.normRows(fuCurr);
+                    end                
+                    [~,origPred] = max(fuCurr,[],2);
+                    p(:,labelIdx) = origPred;
+                    for classIdx=1:length(currLabels)
+                        p(origPred == classIdx,labelIdx) = currLabels(classIdx);
                     end
-                    %with laplace smoothing                    
-                    q = sum(fl)+1;
-                    fu = fu .*repmat(q./sum(fu),size(fu,1),1);
-                    %fu = fu ./ repmat(q,size(fu,1),1);
-                    fu = Helpers.normRows(fu);
-                end                
-                [~,origPred] = max(fu,[],2);
-                p = origPred;
-                for classIdx=1:length(classes)
-                    p(origPred == classIdx) = classes(classIdx);
+                else
+                    error('Fix this?');
+                    assert(~LLGC.useCMN);
+                    assert(length(classes) == 2);
+                    p = zeros(size(fuCurr,1),1);
+                    p(fuCurr >= 0) = classes(1);
+                    p(fuCurr < 0) = classes(2);
                 end
-            else
-                assert(~LLGC.useCMN);
-                assert(length(classes) == 2);
-                p = zeros(size(fu,1),1);
-                p(fu >= 0) = classes(1);
-                p(fu < 0) = classes(2);
             end
         end
         

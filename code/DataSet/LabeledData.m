@@ -12,6 +12,12 @@ classdef LabeledData < matlab.mixin.Copyable
         
         %Map of Data Set IDs to original label data
         ID2Labels
+        
+        %For multilabel data
+        labelSets
+        
+        objectType
+        YNames
     end
     
     properties(Dependent)
@@ -20,6 +26,9 @@ classdef LabeledData < matlab.mixin.Copyable
         isNoisy
         numPerClass
         percLabeledNoisy
+        numLabels
+        isMultilabel
+        isLabeled
     end
     
     methods
@@ -28,10 +37,27 @@ classdef LabeledData < matlab.mixin.Copyable
             obj.type = [];
             obj.isValidation = [];
             obj.name = '';
+            obj.objectType = [];
+            obj.YNames = [];
+            obj.labelSets = [];
         end
-        
+        function [] = removeLabels(obj,shouldRemove)
+            if ~islogical(shouldRemove)
+                I = false(size(obj.Y,2),1);
+                I(shouldRemove) = true;
+                shouldRemove = I;
+            end
+            obj.keepLabels(~shouldRemove);
+        end
+        function [] = keepLabels(obj,shouldKeep)
+            obj.Y = obj.Y(:,shouldKeep);
+            obj.trueY = obj.trueY(:,shouldKeep);
+            if size(obj.Y,2) == 0
+                warning('All labels removed!');
+            end
+        end
         function [] = clearLabels(obj, shouldClearLabels)
-            obj.Y(shouldClearLabels) = -1;
+            obj.Y(shouldClearLabels,:) = -1;
         end
         
         function [] = swapSourceAndTarget(obj)
@@ -68,20 +94,30 @@ classdef LabeledData < matlab.mixin.Copyable
             I = obj.isSource() & obj.isLabeled();
         end
         
-        function [I] = isLabeled(obj)
-            I = obj.Y > 0;
+        function [I] = get.isLabeled(obj,yIdx)
+            if ~exist('yIdx','var')
+                yIdx = 1;
+            end
+            I = obj.Y(:,yIdx) > 0;
+        end
+        
+        function [b] = get.isMultilabel(obj)
+            b = size(obj.Y,2) > 1;
         end
         
         function [n] = get.numClasses(obj)
             n = length(obj.classes());
         end
         
-        function [v] = get.classes(obj)
-            v = unique(obj.Y(obj.isLabeled));
+        function [v] = get.classes(obj,yIdx)
+            if ~exist('yIdx','var')
+                yIdx = 1;
+            end
+            v = unique(obj.Y(obj.isLabeled(),yIdx));
         end
         
         function [v] = get.isNoisy(obj)
-            v = obj.Y ~= obj.trueY & obj.Y > 0;
+            v = obj.Y ~= obj.trueY & obj.isLabeled();
         end
         
         function [v] = get.numPerClass(obj)
@@ -96,8 +132,15 @@ classdef LabeledData < matlab.mixin.Copyable
             v = mean(obj.isNoisy(obj.isLabeled()));
         end
         
+        function [v] = get.numLabels(obj)
+            v = 1;
+            if ~isempty(obj.labelSets)
+                v = length(unique(obj.labelSets));
+            end
+        end
+        
         function [n] = size(obj)
-            n = length(obj.Y);
+            n = size(obj.Y,1);
         end
         
         function [n] = numSource(obj)
@@ -134,7 +177,7 @@ classdef LabeledData < matlab.mixin.Copyable
             obj.type = DataSet.SourceType(obj.size());
         end
         function [] = removeTestLabels(obj)
-            obj.Y(obj.type == Constants.TARGET_TEST) = -1;
+            obj.Y(obj.type == Constants.TARGET_TEST,:) = -1;
         end 
         function [inds] = isClass(obj,class)
             inds = false(length(obj.Y),1);
@@ -143,12 +186,13 @@ classdef LabeledData < matlab.mixin.Copyable
             end
         end
         function [] = labelData(obj,inds)
-            obj.Y(inds) = obj.trueY(inds);
+            obj.Y(inds,:) = obj.trueY(inds,:);
         end
         function [] = addRandomClassNoise(obj,classNoise,inds)
             if ~exist('inds','var')
                 inds = ones(size(obj.Y));
             end
+            assert(size(obj.Y,2) == 1);
             originalY = obj.Y;
             allClasses = obj.classes;
             for currClass=allClasses'
@@ -181,7 +225,7 @@ classdef LabeledData < matlab.mixin.Copyable
                     obj.Y,dim);            
             else
                 IDs = 1:length(obj.Y);
-                if isempty(obj.X)
+                if isempty(obj.X) && ~isempty(obj.WIDs)
                     IDs = obj.WIDs{dim};
                 end
                 split = DataSet.generateSplit([percTrain percTest percValidate],...
@@ -207,8 +251,15 @@ classdef LabeledData < matlab.mixin.Copyable
             dataSize = size(Y,1);
             split = zeros(dataSize,1);
             uniqueY = unique(Y(Y > 0));
-            for i=1:length(uniqueY)                        
-                thisClass = find(Y == uniqueY(i));                
+            isMultilabel = size(Y,2) > 1;
+            if isMultilabel
+                uniqueY = 1;
+            end
+            for i=1:length(uniqueY)
+                thisClass = find(Y == uniqueY(i));   
+                if isMultilabel
+                    thisClass = 1:dataSize;
+                end
                 numThisClass = numel(thisClass);
                 assert(numThisClass >= length(unique(percentageArray)));
                 perm = randperm(numThisClass);
@@ -235,7 +286,8 @@ classdef LabeledData < matlab.mixin.Copyable
                 end
                 assert(sum(split(thisClassRandomized) == 1) == numToPick(1));
             end
-            splitIsLabeled = split(Y > 0);
+            isLabeled = sum(Y > 0,2) > 0;
+            splitIsLabeled = split(isLabeled > 0);
             assert(sum(splitIsLabeled==0) == 0);
         end
         

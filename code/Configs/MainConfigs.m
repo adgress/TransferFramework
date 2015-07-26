@@ -24,6 +24,7 @@ classdef MainConfigs < Configs
             obj.configsStruct.learners=[];
             obj.configsStruct.dataDir='Data';
             obj.set('includeDataNameInResultsDirectory',true);
+            obj.set('multithread',false);
         end        
         
         function [t,s] = GetTargetSourceLabels(obj)
@@ -164,14 +165,12 @@ classdef MainConfigs < Configs
             obj.set('dataName','housingBinary');
             obj.set('resultsDir','results_housing');
             obj.set('dataSet','housing_split_data');            
-            obj.delete('labelsToUse');
         end     
         
         function [] = setYeastBinaryData(obj)
             obj.set('dataName','yeastBinary');
             obj.set('resultsDir','results_yeast');
             obj.set('dataSet','yeastBinary_split_data');            
-            obj.delete('labelsToUse');
         end
         
         function [] = setLLGCConfigs(obj, learnerConfigs)

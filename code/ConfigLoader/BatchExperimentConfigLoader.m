@@ -9,8 +9,14 @@ classdef BatchExperimentConfigLoader < ConfigLoader
         function obj = BatchExperimentConfigLoader(configsObj)          
             if ~exist('configs','var')
                 configs = Configs();
-            end
+            end            
             obj = obj@ConfigLoader(configsObj);
+            if ~obj.has('configLoader')
+                obj.set('configLoader',ExperimentConfigLoader());
+            end
+            if ~obj.has('paramsToVary')
+                obj.set('paramsToVary',{});
+            end
         end
         function [] = runExperiments(obj,multithread)
             pc = ProjectConfigs.Create();
@@ -24,7 +30,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             end
             
             allParamsToVary = {};
-            numRandomFeatures = ProjectConfigs.numRandomFeatures;
+            numRandomFeatures = pc.numRandomFeatures;
             paramsToVary = obj.get('paramsToVary');
             for paramIdx=1:length(paramsToVary)
                 allParamsToVary{end+1} = obj.get(paramsToVary{paramIdx});
@@ -100,6 +106,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         dataSetName = '';
                         if ~strcmp(dataAndSplits.allData.name,'USPS')
                             dataSetName = dataAndSplits.allData.name;
+                            if isempty(dataSetName)
+                                acronyms = dataAndSplits.configs.get('dataSetAcronyms');
+                                assert(length(acronyms) == 1);
+                                dataSetName = acronyms{1};
+                            end
                         end
                         l = mainConfigsCopy.get('labelsToUse',[]);
                         if ~isempty(l)
@@ -143,6 +154,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         %newSplit.targetType = split.split(split.permutation);
                         newSplit.targetType = split.split;                     
                         if ~isempty(labelsToUse)
+                            assert(size(targetDataCopy.Y,2) == 1);
                             m = obj.get('mainConfigs');
                             if mainConfigsCopy.has('classNoise') && mainConfigsCopy.get('classNoise') > 0                                
                                 display('Fixing noisy labels');
@@ -173,7 +185,13 @@ classdef BatchExperimentConfigLoader < ConfigLoader
 
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
                     end
-                end                    
+                end
+                labelsToKeep = pc.labelsToKeep;
+                if ~isempty(labelsToKeep)
+                    for idx=1:length(dataAndSplitsCopy.allSplits)
+                        dataAndSplitsCopy.allSplits{idx}.targetData.keepLabels(labelsToKeep);
+                    end
+                end
                 mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
 
                 runExperiment(mainConfigsCopy);
