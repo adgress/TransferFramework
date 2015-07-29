@@ -17,10 +17,20 @@ classdef Method < Saveable
         function [nameParams] = getNameParams(obj)
             nameParams = {};
         end
+        function [] = setParams(obj,params)
+            for idx=1:length(params)
+                k = params(idx).key;
+                v = params(idx).value;
+                obj.set(k,v);
+            end
+        end
     end
     methods(Abstract)
         [testResults,savedData] = ...
             trainAndTest(obj,input,savedData)   
+        
+        [testResults,savedData] = runMethod(obj,input,savedData)
+        
     end        
 end
 

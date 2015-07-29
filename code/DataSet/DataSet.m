@@ -85,14 +85,28 @@ classdef DataSet < LabeledData
             WSplit = {{},{},{}};
             WIDSplit = cell(3,1);
             WNameSplit = cell(3,1);
+            YSplit = {};            
+            trueYSplit = {};
+            instanceIDsSplit = {};
+            typeSplit = {};
             if isempty(obj.X)
                 assert(max(split) == 2);
-                isTest = split == 2;
-                p = [find(~isTest) ; find(isTest)];
-                obj.applyPermutation(p);
-                split = split(p);
+                %isTest = split == 2;
+                %p = [find(~isTest) ; find(isTest)];
+                %obj.applyPermutation(p);
+                %split = split(p);
+                type = obj.type;
+                type(split == 1) = Constants.TARGET_TRAIN;
+                type(split == 2) = Constants.TARGET_TEST;
                 for idx=1:length(allDataSets);                   
-                    I = split==idx;
+                    I = split==idx;                    
+                    %This is important if there's extra unlabeled data we
+                    %want to use for training
+                    %{
+                    if idx == 1
+                        I = I | split == 0;
+                    end
+                    
                     WSplit{idx} = Helpers.selectW(obj.W,I,dim);
                     if ~isempty(obj.WIDs)
                         WIDSplit{idx} = Helpers.selectFromCells(obj.WIDs,I,dim);
@@ -100,15 +114,28 @@ classdef DataSet < LabeledData
                     if ~isempty(obj.WNames)
                         WNameSplit{idx} = Helpers.selectFromCells(obj.WNames,I,dim);
                     end                    
+                    %}
+                    
+                    %A lot of things are easier if we just don't split W
+                    WSplit{idx} = obj.W;
+                    WIDSplit{idx} = obj.WIDs;
+                    WNameSplit{idx} = obj.WNames;
+                    typeSplit{idx} = type;
+                    YSplit{idx} = obj.Y;
+                    trueYSplit{idx} = obj.trueY;
+                    instanceIDsSplit{idx} = obj.instanceIDs;
                 end
             else
                 assert(isempty(obj.W));
                 XSplit = DataSet.splitMatrix(obj.X,split);
+                YSplit = DataSet.splitMatrix(obj.Y,split);
+                trueYSplit = DataSet.splitMatrix(obj.trueY,split);
+                instanceIDsSplit = DataSet.splitMatrix(obj.instanceIDs,split);            
+                typeSplit = DataSet.splitMatrix(obj.type,split);
+                error('Update typeSplit!');
             end
             
-            YSplit = DataSet.splitMatrix(obj.Y,split);
-            trueYSplit = DataSet.splitMatrix(obj.trueY,split);
-            instanceIDsSplit = DataSet.splitMatrix(obj.instanceIDs,split);            
+            
             for i=1:numel(allDataSets)
                 type = DataSet.NoType(length(YSplit{i}));   
                 %{
@@ -120,7 +147,7 @@ classdef DataSet < LabeledData
                 allDataSets{i} = obj.copy();
                 allDataSets{i}.X = XSplit{i};
                 allDataSets{i}.Y = YSplit{i};
-                allDataSets{i}.type = type;
+                allDataSets{i}.type = typeSplit{i};
                 allDataSets{i}.trueY = trueYSplit{i};
                 allDataSets{i}.instanceIDs = instanceIDsSplit{i};
                 allDataSets{i}.W = WSplit{i};      
@@ -143,13 +170,17 @@ classdef DataSet < LabeledData
         end
         
         function [sampledDataSet] = stratifiedSampleByLabels(obj,numItems,classesToKeep)
+            keepTestLabels = true;
             if ~exist('classesToKeep','var')
                 classesToKeep = [];
             end
             [selectedItems] = obj.stratifiedSelection(numItems,classesToKeep);
             sampledDataSet = DataSet.CreateNewDataSet(obj);
+            if keepTestLabels
+                selectedItems = selectedItems | obj.isTargetTest();
+            end
             sampledDataSet.Y(~selectedItems,:) = -1;
-            if sum(sampledDataSet.Y > 0) ~= numItems
+            if sum(sampledDataSet.Y(sampledDataSet.isTargetTrain) > 0) ~= numItems
                 warning('Sample size is weird'); 
             end
         end
@@ -174,6 +205,7 @@ classdef DataSet < LabeledData
         end
         
         function [selectedItems] = stratifiedSelection(obj,numItems,classesToKeep,yIdx)
+            keepAllTest = true;
             if ~exist('classesToKeep','var')
                 classesToKeep = [];
             end
@@ -183,7 +215,11 @@ classdef DataSet < LabeledData
             itemsPerClass = ceil(numItems/obj.numClasses);
             selectedItems = false(size(obj.Y,1),1);
             for i=obj.classes()'               
-                XWithClass = find(obj.Y(:,yIdx)==i);     
+                if keepAllTest
+                    XWithClass = find(obj.Y(:,yIdx)==i & obj.isLabeledTargetTrain());     
+                else
+                    XWithClass = find(obj.Y(:,yIdx)==i);     
+                end
                 itemsToUse = size(XWithClass,1);                
                 if isempty(intersect(classesToKeep,i))
                     itemsToUse = min(itemsPerClass, itemsToUse);
@@ -373,14 +409,15 @@ classdef DataSet < LabeledData
                 f.instanceIDs = [f.instanceIDs ; varargin{i}.instanceIDs];
                 f.ID2Labels = vertcat(f.ID2Labels,m2);
                 f.isValidation = [f.isValidation; varargin{i}.isValidation] ;
+                %Things become a lot easier if we assume W isn't split
+                %{
                 if ~isempty(f.W)
                     di = varargin{i};
                     f.W = Helpers.combineW(f.W,di.W,f.Wdim);
                     f.WIDs = Helpers.combineCellArrays(f.WIDs,di.WIDs,f.Wdim);
                     f.WNames = Helpers.combineCellArrays(f.WNames,di.WNames,f.Wdim,true);
-                else
-                    assert(isempty(di.W));
                 end
+                %}
             end
         end        
     end

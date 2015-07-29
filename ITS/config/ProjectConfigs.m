@@ -10,6 +10,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         sigma
         useStudentData
         measure
+        llgcCVParams
     end
     
     methods(Static, Access=private)
@@ -30,7 +31,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.dataSetName = 'DS1-69-student';
                 c.labelsToKeep = 1;
                 %c.numLabeledPerClass = 2:2:10;
-                c.numLabeledPerClass = 10;
+                c.numLabeledPerClass = [5 10 15];
                 c.measure = Measure();
             else
                 c.dataSetName = 'DS2-35';                
@@ -39,7 +40,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.numLabeledPerClass = 3;
                 c.measure = ITSMeasure();
             end
-            
+            c.llgcCVParams = struct('key',{'alpha','sigma'});
+            c.llgcCVParams(1).values = num2cell(10.^(-3:3));
+            c.llgcCVParams(2).values = num2cell([.01 .1 1 10]);
             c.alpha = 1;
             %c.sigma = .2;            
             c.sigma = 1;

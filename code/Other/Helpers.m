@@ -7,6 +7,31 @@ classdef Helpers < handle
     
     methods(Static)   
         
+        function [v] = selectFromCellofCells(c,I)
+            v = cell(size(c));
+            assert(length(c) == length(I));
+            for idx=1:length(c)
+                v{idx} = c{idx}{I(idx)};
+            end
+        end
+        
+        function [v] = combvec(varargin)
+            v = {[]};
+            appendAll = @(c,x) [c ; x];
+            for vecIdx=1:length(varargin)
+                newV = {};
+                o = ones(size(v));
+                nextVals = varargin{vecIdx};
+                for valIdx=1:length(nextVals)
+                    newVal = nextVals(valIdx);
+                    input = num2cell(o*newVal);
+                    newV = [newV ...
+                        cellfun(appendAll,v,input,'UniformOutput',false)];
+                end
+                v = newV;
+            end
+        end
+        
         function [c] = combineCellArrays(c1,c2,dim,allowEmpty)
             if ~exist('allowEmpty','var')
                 allowEmpty = false;

@@ -19,6 +19,7 @@ classdef ITSMainConfigs < MainConfigs
             learnerConfigs.set('alpha',pc.alpha);
             learnerConfigs.set('sigma',pc.sigma);
             learnerConfigs.delete('sigmaScale');
+            learnerConfigs.set('cvParameters',pc.llgcCVParams);
             obj.setLLGCConfigs(learnerConfigs);
             %obj.setNW(learnerConfigs);
             

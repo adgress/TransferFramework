@@ -82,8 +82,8 @@ classdef ExperimentConfigLoader < ConfigLoader
                 runExperiment(obj,experimentIndex,splitIndex)            
             [learner,experiment] = obj.setExperimentConfigs(experimentIndex);
             [train,test,validate,featType] = obj.getSplit(splitIndex);
-            train.setTargetTrain();
-            test.setTargetTest();
+            %train.setTargetTrain();
+            %test.setTargetTest();
             if isfield(experiment,'trainSize')
                 percTrain = experiment.trainSize;
                 numTrain = ceil(percTrain*size(train.X,1)); 

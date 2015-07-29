@@ -52,7 +52,9 @@ classdef HFMethod < Method
             end
             if ~isempty(train.W)
                 assert(isempty(train.X));      
-                combined = DataSet.Combine(train,test);
+                %combined = DataSet.Combine(train,test);                
+                combined = train;
+                %combined.W = train.W;
                 I1 = combined.isLabeled;
                 I2 = combined.isTargetTrain();
                 perm = [find(I1 & I2) ; find(~I1 & I2) ; find(~I2)];                
@@ -371,8 +373,7 @@ classdef HFMethod < Method
             assert(~isnan(savedData.cvAcc));
         end
         
-        function [testResults,savedData] = ...
-                trainAndTestGraphMethod(obj,input,savedData)
+        function [testResults,savedData] = runMethod(obj,input,savedData)
             train = input.train;
             test = input.test;   
             %learner = input.configs.learner;
@@ -404,7 +405,6 @@ classdef HFMethod < Method
             %test instances should be last
             %assert(issorted(distMat.type == Constants.TARGET_TEST));
             YTest = distMat.Y(isYTest);
-            predicted = predicted(isYTest,:);
             testResults.dataFU = sparse(fu);
             testResults.labelSets = distMat.labelSets;
             testResults.dataType = distMat.type;
@@ -414,20 +414,34 @@ classdef HFMethod < Method
                 if ~isempty(f)                    
                     [val,yPred,yActual] = f(distMat,fu,savedData.predicted);
                 else
-                    val = sum(predicted == YTest)/...
+                    val = sum(predicted(isYTest) == YTest)/...
                             length(YTest);
-                    yPred = [train.Y; predicted];
-                    yActual = [train.Y; YTest];
+                    yPred = train.Y;
+                    yActual = savedData.predicted;
                 end
                 assert(~isnan(val));
-                if ~obj.configs.get('quiet')
-                    display([ obj.getPrefix() ' Acc: ' num2str(val)]);
-                end            
+                         
             end
             testResults.yPred = yPred;
             testResults.yActual = yActual;
             testResults.learnerMetadata.sigma = sigma;
             testResults.learnerMetadata.cvAcc = savedData.cvAcc;
+            savedData.val = val;
+        end
+        
+        function [testResults,savedData] = ...
+                trainAndTestGraphMethod(obj,input,savedData)
+            cv = CrossValidation();
+            cv.trainData = input.train.copy();
+            cv.parameters = obj.get('cvParameters');
+            cv.methodObj = obj;
+            
+            [bestParams,acc] = cv.runCV();
+            obj.setParams(bestParams);
+            [testResults,savedData] = obj.runMethod(input);
+            if ~obj.configs.get('quiet')
+                display([ obj.getPrefix() ' Acc: ' num2str(savedData.val)]);
+            end
             %testResults.learnerStats.featureSmoothness = savedData.featureSmoothness;            
         end
         
