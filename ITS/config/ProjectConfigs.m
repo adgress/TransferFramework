@@ -29,18 +29,20 @@ classdef ProjectConfigs < ProjectConfigsBase
             if c.useStudentData
                 c.dataSetName = 'DS1-69-student';
                 c.labelsToKeep = 1;
-                c.numLabeledPerClass = 2:2:10;
+                %c.numLabeledPerClass = 2:2:10;
+                c.numLabeledPerClass = 10;
                 c.measure = Measure();
             else
-                c.dataSetName = [];                
+                c.dataSetName = 'DS2-35';                
                 c.combineGraphFunc = @combineGraphs;
                 c.evaluatePerfFunc = @evaluateITSPerf;
-                c.numLabeledPerClass = 1:3;
+                c.numLabeledPerClass = 3;
                 c.measure = ITSMeasure();
             end
             
-            c.alpha = .001;
-            c.sigma = .2;            
+            c.alpha = 1;
+            %c.sigma = .2;            
+            c.sigma = 1;
             
         end
         function [c] = BatchConfigs()            

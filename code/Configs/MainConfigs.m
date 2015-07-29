@@ -172,7 +172,14 @@ classdef MainConfigs < Configs
             obj.set('resultsDir','results_yeast');
             obj.set('dataSet','yeastBinary_split_data');            
         end
-        
+        function [] = setNW(obj,learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.configLoader=ExperimentConfigLoader();
+            nwObj = NWMethod(learnerConfigs);
+            obj.configsStruct.learners=nwObj;
+        end
         function [] = setLLGCConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();

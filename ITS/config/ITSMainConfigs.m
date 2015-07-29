@@ -18,7 +18,10 @@ classdef ITSMainConfigs < MainConfigs
             learnerConfigs.set('evaluatePerfFunc',pc.evaluatePerfFunc);
             learnerConfigs.set('alpha',pc.alpha);
             learnerConfigs.set('sigma',pc.sigma);
+            learnerConfigs.delete('sigmaScale');
             obj.setLLGCConfigs(learnerConfigs);
+            %obj.setNW(learnerConfigs);
+            
             %obj.setITSRandom(learnerConfigs);
             %obj.setITSMethod(learnerConfigs);
             %obj.setITSConstant(learnerConfigs);

@@ -86,6 +86,11 @@ classdef DataSet < LabeledData
             WIDSplit = cell(3,1);
             WNameSplit = cell(3,1);
             if isempty(obj.X)
+                assert(max(split) == 2);
+                isTest = split == 2;
+                p = [find(~isTest) ; find(isTest)];
+                obj.applyPermutation(p);
+                split = split(p);
                 for idx=1:length(allDataSets);                   
                     I = split==idx;
                     WSplit{idx} = Helpers.selectW(obj.W,I,dim);

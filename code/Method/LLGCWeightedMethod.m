@@ -44,7 +44,6 @@ classdef LLGCWeightedMethod < LLGCMethod
         function [testResults,savedData] = ...
                 trainAndTest(obj,input,savedData)
             pc = ProjectConfigs.Create();
-            useHF = false;
             %{
             if exist('savedData','var')
                 [testResults,savedData] = ...
@@ -91,7 +90,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 error('Possible bug - is this taking advantage of source data?');
             else                
                 %[distMat] = obj.createDistanceMatrix(train,test,useHF,learner.configs);
-                [distMat] = obj.createDistanceMatrix(train,test,useHF,obj.configs,makeRBF);
+                [distMat] = obj.createDistanceMatrix(train,test,obj.configs,makeRBF);
                 testResults.dataType = distMat.type;
             end
             [Wrbf,~,sigma,Y_testCleared,instanceIDs] = obj.makeLLGCMatrices(distMat);

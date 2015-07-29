@@ -11,17 +11,17 @@ classdef LLGCMethod < HFMethod
             if ~obj.has('useAlt')
                 obj.set('useAlt',0);
             end
+            obj.method = HFMethod.LLGC;
         end
         
         function [testResults,savedData] = ...
                 trainAndTest(obj,input,savedData)
-            useHF = false;
             if exist('savedData','var')
                 [testResults,savedData] = ...
-                    obj.trainAndTestGraphMethod(input,useHF,savedData);
+                    obj.trainAndTestGraphMethod(input,savedData);
             else
                 [testResults] = ...
-                    obj.trainAndTestGraphMethod(input,useHF);
+                    obj.trainAndTestGraphMethod(input);
             end
         end                        
         

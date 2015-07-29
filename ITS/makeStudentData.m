@@ -2,7 +2,7 @@ function [] = makeStudentData()
     fileName = 'Data/ITS/DS1-69';
     data = load(fileName);
     data = data.data;
-    
+    labelToUse = 1;
     W = data.W{1};
     numStudents = size(W,2);
     labels = unique(data.Y);
@@ -18,22 +18,27 @@ function [] = makeStudentData()
         binaryY(binaryY >= m) = 1;
         Y(:,yIdx) = binaryY;
     end
-    correlationW = zeros(numStudents);
+    distW = zeros(numStudents);
+    usesSkill = data.Y == labelToUse;
+    usesSkill(:) = 1;
     for i=1:numStudents
         for j=1:numStudents
             if i == j
-                correlationW(i,j) = 1;
+                distW(i,j) = 0;
                 continue;
             end
-            si = W(:,i);
-            sj = W(:,j);
-            correlationW(i,j) = norm(si-sj)/(norm(si)*norm(sj));
+            si = W(usesSkill,i);
+            sj = W(usesSkill,j);
+            distW(i,j) = norm(si-sj)/(norm(si)*norm(sj));
         end
     end
-    correlationW = abs(correlationW);
+    distW(isinf(distW)) = 0;
+    distW(isnan(distW)) = 0;
+    distW = abs(distW);
     data = struct();
     data.Y = Y + 1;
-    data.W = {correlationW};
+    data.Y = data.Y(:,labelToUse);
+    data.W = {distW};
     data.WIDs = {(1:numStudents)'};
     data.Wdim = [];
     fileName = [fileName '-student.mat'];

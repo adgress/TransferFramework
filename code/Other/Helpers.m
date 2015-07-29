@@ -38,7 +38,7 @@ classdef Helpers < handle
             end
         end
         function [W] = combineW(W1,W2,dim)
-            warning('Not using WIDs.  Is this okay?');
+            display('Not using WIDs.  Is this okay?');
             W1 = Helpers.makeCell(W1);
             W2 = Helpers.makeCell(W2);
             assert(length(W1) == length(W2));
