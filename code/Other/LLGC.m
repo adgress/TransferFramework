@@ -137,7 +137,7 @@ classdef LLGC < handle
             Disq = diag(sum(W).^-.5);
             I = isinf(Disq);
             if sum(I(:)) > 0
-                display('Disconnected nodes - zeroing out infs');
+                %display('Disconnected nodes - zeroing out infs');
                 Disq(I) = 0;
             end
             WN = Disq*W*Disq;

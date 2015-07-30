@@ -6,11 +6,9 @@ classdef ITSMainConfigs < MainConfigs
         function [obj] = ITSMainConfigs()
             pc = ProjectConfigs.Create();
             obj = obj@MainConfigs();            
-            obj.setITSData(pc.dataSetName);
+            obj.setITSData(pc.dataSetName);           
             
-            c = ProjectConfigs.Create();
-            
-            obj.configsStruct.numLabeledPerClass=c.numLabeledPerClass;
+            obj.configsStruct.numLabeledPerClass=pc.numLabeledPerClass;
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
                         
             obj.configsStruct.learners=[];
@@ -19,17 +17,37 @@ classdef ITSMainConfigs < MainConfigs
             learnerConfigs.set('alpha',pc.alpha);
             learnerConfigs.set('sigma',pc.sigma);
             learnerConfigs.delete('sigmaScale');
-            learnerConfigs.set('cvParameters',pc.llgcCVParams);
-            obj.setLLGCConfigs(learnerConfigs);
-            %obj.setNW(learnerConfigs);
+            learnerConfigs.set('measure',pc.measure);
+            useLLGC = 1;
             
-            %obj.setITSRandom(learnerConfigs);
-            %obj.setITSMethod(learnerConfigs);
-            %obj.setITSConstant(learnerConfigs);
-                        
-            obj.configsStruct.measure=c.measure;
+            if pc.useStudentData
+                if useLLGC
+                    learnerConfigs.set('cvParameters',pc.llgcCVParams);
+                    obj.setLLGCConfigs(learnerConfigs);
+                else
+                    learnerConfigs.set('cvParameters',pc.nwCVParams);
+                    obj.setNW(learnerConfigs);                
+                end                
+            else               
+                if useLLGC
+                    learnerConfigs.set('makeRBF',false);
+                    learnerConfigs.set('cvParameters',pc.llgcCVParams(1));
+                    %learnerConfigs.set('makeRBF',true);
+                    %learnerConfigs.set('cvParameters',pc.llgcCVParams);
+                    obj.setLLGCConfigs(learnerConfigs);
+                else
+                    %obj.setITSRandom(learnerConfigs);                
+                    %obj.setITSConstant(learnerConfigs);
+                    
+                    learnerConfigs.set('cvParameters',[]);
+                    obj.setITSMethod(learnerConfigs);
+                end
+            end
+            obj.configsStruct.measure=pc.measure;
+            
             obj.configsStruct.configLoader=ExperimentConfigLoader();
         end    
+        
         function [] = setITSData(obj,dataSet)
             if ~exist('dataSet','var')
                 dataSet = 'DS1';

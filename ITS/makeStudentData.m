@@ -29,7 +29,8 @@ function [] = makeStudentData()
             end
             si = W(usesSkill,i);
             sj = W(usesSkill,j);
-            distW(i,j) = norm(si-sj)/(norm(si)*norm(sj));
+            %distW(i,j) = norm(si-sj)/(norm(si)*norm(sj));
+            distW(i,j) = norm(si-sj);
         end
     end
     distW(isinf(distW)) = 0;

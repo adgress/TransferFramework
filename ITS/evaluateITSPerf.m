@@ -35,9 +35,9 @@ function [val,predictedSkills,actualSkills] = evaluateITSPerf(distMat,fu,predict
     diff = predictedSkills - actualSkills;
     percMore = mean(mean(diff > 0));
     meanOverestimate = mean(diff(diff > 0));
-    display(['Perc Error overestimate:' num2str(percMore*meanOverestimate/normalizedError)]);
+    %display(['Perc Error overestimate:' num2str(percMore*meanOverestimate/normalizedError)]);
     if percMore*meanOverestimate/normalizedError > 1
-        error('');
+        %error('');
     end
     %predictedSkills = zeros(size(W,1),numLabelSets);
     %actualSkills = predictedSkills;    

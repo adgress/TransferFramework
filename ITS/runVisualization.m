@@ -6,7 +6,7 @@ function [] = runVisualization()
     height = 600;    
                 
     f = figure('position',[100 100 width height]);                                  
-        
+    title(vizConfigs.get('title'));
     visualizeResults(vizConfigs,f);
         
 end

@@ -21,10 +21,13 @@ classdef ProjectConfigsBase < handle
         
         smallResultsFiles
         labelsToKeep
+        
+        useSavedSmallResults
     end
     
     methods
         function [obj] = ProjectConfigsBase()
+            obj.useSavedSmallResults = false;
             obj.numLabeledPerClass = -1;
             obj.numTarget = 2;
             obj.numSource = 2;

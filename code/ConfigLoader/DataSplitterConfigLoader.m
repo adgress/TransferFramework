@@ -94,7 +94,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
 
                     n = allData.numInstances;
                     if ~isempty(allData.W)
-                        warning('Not using WIDs!!!  Is this okay?');
+                        %warning('Not using WIDs!!!  Is this okay?');
                     end
                     allSplits{i}.permutation = randperm(n)';                    
                     allDataCopy.applyPermutation(allSplits{i}.permutation);

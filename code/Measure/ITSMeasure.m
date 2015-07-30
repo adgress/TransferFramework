@@ -13,6 +13,8 @@ classdef ITSMeasure < Measure
             error = abs(split.yPred - double(split.yActual));
             normalizedError = mean(error(:));
             measureResults.learnerStats.valTest = 1 - normalizedError;
+            measureResults.learnerStats.testResults = 1 - normalizedError;
+            measureResults.learnerStats.trainResults = -1;
         end
     end
     

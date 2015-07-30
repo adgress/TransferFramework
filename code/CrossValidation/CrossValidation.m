@@ -41,12 +41,14 @@ classdef CrossValidation < handle
             paramResults = cell(size(paramPowerSet));
             processedResults = cell(size(paramPowerSet));
             accs = zeros(size(paramPowerSet));
+            trainAccs = accs;
             for paramIdx=1:length(paramPowerSet)
                 splitResults = cell(size(obj.splits));
                 processedSplitResults = cell(size(obj.splits));
                 params = paramPowerSet{paramIdx};
                 obj.methodObj.setParams(params);
                 acc = 0;
+                trainAcc = 0;
                 for splitIdx=1:length(obj.splits)
                     input = struct();
                     s = obj.splits{splitIdx};
@@ -63,17 +65,24 @@ classdef CrossValidation < handle
                     processedSplitResults{splitIdx} = ...
                         obj.measure.evaluate(splitResults{splitIdx});
                     acc = acc + processedSplitResults{splitIdx}.learnerStats.testResults;
+                    trainAcc = acc + processedSplitResults{splitIdx}.learnerStats.trainResults;
                 end
                 accs(paramIdx) = acc/length(obj.splits);
+                trainAccs(paramIdx) = trainAcc/length(obj.splits);
                 paramResults{paramIdx} = splitResults;
             end
             [~,bestInd] = max(accs);
             bestParams = paramPowerSet{bestInd};
             bestAcc = accs(bestInd);
+            bestAcc
         end
         
         % {a, {a1,a2,...,an}}
         function [retVal] = makeParamPowerSet(obj,params)
+            if isempty(params)
+                retVal = {};
+                return;
+            end
             keys = {params.key};
             values = {params.values};
             inds = cell(length(params),1);

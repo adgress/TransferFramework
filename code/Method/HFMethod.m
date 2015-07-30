@@ -53,7 +53,7 @@ classdef HFMethod < Method
             if ~isempty(train.W)
                 assert(isempty(train.X));      
                 %combined = DataSet.Combine(train,test);                
-                combined = train;
+                combined = train.copy();
                 %combined.W = train.W;
                 I1 = combined.isLabeled;
                 I2 = combined.isTargetTrain();
@@ -68,7 +68,7 @@ classdef HFMethod < Method
                     W = combined.W{1};
                 end
                 
-                if makeRBF
+                if makeRBF && obj.get('makeRBF',true);
                     sigma = obj.get('sigma');
                     W = Helpers.distance2RBF(W,sigma);
                 end
@@ -409,15 +409,17 @@ classdef HFMethod < Method
             testResults.labelSets = distMat.labelSets;
             testResults.dataType = distMat.type;
             %testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
+            assert(~isempty(YTest));
             if ~isempty(YTest)
                 f = obj.get('evaluatePerfFunc',[]);
                 if ~isempty(f)                    
                     [val,yPred,yActual] = f(distMat,fu,savedData.predicted);
                 else
-                    val = sum(predicted(isYTest) == YTest)/...
+                    yTestPred = predicted(isYTest);
+                    val = sum(yTestPred == YTest)/...
                             length(YTest);
-                    yPred = train.Y;
-                    yActual = savedData.predicted;
+                    yPred = predicted;
+                    yActual = distMat.Y;
                 end
                 assert(~isnan(val));
                          
@@ -435,6 +437,7 @@ classdef HFMethod < Method
             cv.trainData = input.train.copy();
             cv.parameters = obj.get('cvParameters');
             cv.methodObj = obj;
+            cv.measure = obj.get('measure');
             
             [bestParams,acc] = cv.runCV();
             obj.setParams(bestParams);

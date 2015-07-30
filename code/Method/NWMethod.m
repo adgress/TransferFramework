@@ -25,7 +25,10 @@ classdef NWMethod < HFMethod
                 conf = sum(Wsub);
                 fu(:,labelIdx) = conf';
             end
+            Izero = sum(fu,2) == 0;
+            fu(Izero,:) = rand([sum(Izero) 2]);
             fu = Helpers.NormalizeRows(fu);
+            
             [~,savedData.predicted] = max(fu,[],2);
             savedData.cvAcc = [];
             sigma = [];

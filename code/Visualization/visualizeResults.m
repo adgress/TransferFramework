@@ -2,6 +2,7 @@ function [f, returnStruct] = visualizeResults(options,f)
     if nargin < 1
         f = figure;
     end
+    pc = ProjectConfigs.Create();
     hold on;
     index = 1;   
     displayVals = {};
@@ -34,7 +35,7 @@ function [f, returnStruct] = visualizeResults(options,f)
             lineStyle = plotConfigs.get('lineStyle');
         end
         smallFileName = getSmallFile(fileName);
-        if exist(smallFileName,'file') && ProjectConfigs.useSavedSmallResults
+        if exist(smallFileName,'file') && pc.useSavedSmallResults
             load(smallFileName);
         else
             %allResults = fileManager.load(fileName);
