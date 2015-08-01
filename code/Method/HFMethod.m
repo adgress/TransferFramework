@@ -58,7 +58,7 @@ classdef HFMethod < Method
                 I1 = combined.isLabeled;
                 I2 = combined.isTargetTrain();
                 perm = [find(I1 & I2) ; find(~I1 & I2) ; find(~I2)];                
-                combined.applyPermutation(perm);
+                %combined.applyPermutation(perm);
                 f = obj.configs.get('combineGraphFunc',[]);
                 if ~isempty(f)                    
                     combined = f(combined);
@@ -83,7 +83,9 @@ classdef HFMethod < Method
                 YNames = combined.YNames;
             elseif exist('savedData','var') && isfield(savedData,'W')
                 W = savedData.W;
+                error('Data ordering issue with caching?');
             else
+                error('Data ordering issue with caching?');
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];                  
@@ -191,7 +193,7 @@ classdef HFMethod < Method
             Y_testCleared = distMat.Y;
             Y_testCleared(isTest) = -1;
             YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
-            if ~makeRBF
+            if makeRBF
                 if isKey(obj.configs,'sigma') && ~isempty(obj.configs.get('sigma'))
                     sigma = obj.configs.get('sigma');
                 elseif isKey(obj.configs,'sigmaScale')
@@ -248,12 +250,15 @@ classdef HFMethod < Method
         
         function [fu,savedData,sigma] = runLLGC(obj,distMat,makeRBF,savedData)
 
+            distMat.W = Helpers.SimilarityToDistance(distMat.W);
             [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);
+            %{
             if makeRBF
                 Wrbf = distMat.W;
                 isZero = Wrbf(:) == 0;
                 %Wrbf(isZero) = exp(-Wrbf(isZero)/.2);
             end
+            %}
             useAlt = obj.get('useAlt');
             alpha = obj.get('alpha');
             alphaScores = zeros(size(alpha));
@@ -295,6 +300,7 @@ classdef HFMethod < Method
                         YtrainMatCurr = Helpers.createLabelMatrix(YtrainCurr);
                         
                         if exist('savedData','var') && isfield(savedData,'invM')
+                            error('What if we want to use LS?');
                             if useAlt
                                 [fu] = LLGC.llgc_inv_alt(Wrbf, YtrainMatCurr, currAlpha, savedData.invM);
                             else
@@ -304,6 +310,7 @@ classdef HFMethod < Method
                             %[fu(:,2) fu2(:,2)]
                         else
                             if useAlt
+                                error('use LS?');
                                 [fu,savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMatCurr, currAlpha);                            
                             else
                                 [fu] = LLGC.llgc_LS(Wrbf, YtrainMatCurr, currAlpha);                            
@@ -356,8 +363,15 @@ classdef HFMethod < Method
             if useAlt
                 [fu, savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMat, alpha);
             else
-                savedData.invM = LLGC.makeInvM(Wrbf,alpha);            
-                [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
+                if obj.get('useInv')
+                    if ~exist('savedData','var') || ...
+                            ~isfield(savedData,'invM')
+                        savedData.invM = LLGC.makeInvM(Wrbf,alpha);            
+                    end
+                    [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
+                else
+                    [fu] = LLGC.llgc_LS(Wrbf, YtrainMat, alpha);
+                end
             end
             
             savedData.alpha = alpha;
@@ -378,7 +392,7 @@ classdef HFMethod < Method
             test = input.test;   
             %learner = input.configs.learner;
             testResults = FoldResults();   
-            makeRBF = true;
+            makeRBF = obj.get('makeRBF');
             if ~exist('savedData','var')
                 savedData = struct();
             end

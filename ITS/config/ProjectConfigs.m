@@ -12,6 +12,11 @@ classdef ProjectConfigs < ProjectConfigsBase
         measure
         llgcCVParams
         nwCVParams
+        useDS1
+        useLLGC
+        QQEdgesExperiment
+        makeRBF
+        labelsToUse
     end
     
     methods(Static, Access=private)
@@ -23,26 +28,37 @@ classdef ProjectConfigs < ProjectConfigsBase
     methods(Static)
 
         function [c] = Create()
-            %c = ProjectConfigs.instance;
+            %c = ProjectConfigs.instance;            
             c = ProjectConfigs.CreateSingleton();
+            
+            c.makeRBF = true;            
             c.dataSet = Constants.ITS_DATA;
             c.useStudentData = false;
-            
+            c.useDS1 = 0;
+            c.useLLGC = 1;
+            c.QQEdgesExperiment = 0;
+            c.labelsToUse = [];
             if c.useStudentData
                 c.dataSetName = 'DS1-69-student';
                 c.labelsToKeep = 1;
                 %c.numLabeledPerClass = 2:2:10;
                 c.numLabeledPerClass = [5 10 15];
-                c.measure = Measure();
+                c.measure = Measure();                
             else
-                %c.dataSetName = 'DS2-35';
-                %c.numLabeledPerClass = [3:5];
-                c.dataSetName = 'DS1-69';
-                c.numLabeledPerClass = [2:3];
+                if c.useDS1
+                    c.dataSetName = 'DS1-69';
+                    c.numLabeledPerClass = 2:3;                    
+                else
+                    c.dataSetName = 'DS2-35';
+                    c.numLabeledPerClass = 2:5;                                        
+                end
                 c.combineGraphFunc = @combineGraphs;
                 c.evaluatePerfFunc = @evaluateITSPerf;
                 
                 c.measure = ITSMeasure();
+            end
+            if c.QQEdgesExperiment
+                c.numLabeledPerClass = max(c.numLabeledPerClass);
             end
             c.llgcCVParams = struct('key',{'alpha','sigma'});
             c.llgcCVParams(1).values = num2cell(10.^(-3:3));
@@ -94,10 +110,18 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.set('resultsDirectory','results_DS1-69-student/DS1-69-student');
             else
                 c.set('measure',ITSMeasure());
-                c.set('prefix','results_DS1-69');
-                c.set('dataSet',{'DS1-69'});
-                c.set('resultsDirectory','results_DS1-69/DS1');
+                if pc.useDS1                
+                    c.set('prefix','results_DS1-69');
+                    c.set('dataSet',{'DS1-69'});
+                    c.set('resultsDirectory','results_DS1-69/DS1');
+                else
+                    c.set('prefix','results_DS2-35');
+                    c.set('dataSet',{'DS2-35'});
+                    c.set('resultsDirectory',['results_DS2-35/DS2-35']);
+                end
             end
+            r = c.get('resultsDirectory');
+            c.set('resultsDirectory',[r '/' num2str(pc.labelsToUse) '/']);
         end
         
         function [plotConfigs,legend,title] = makePlotConfigs(targetLabels)  
@@ -117,12 +141,16 @@ classdef ProjectConfigs < ProjectConfigsBase
                     'NW',...
                     };
             else
-                title = 'Bipartite Student-Question Graph';
+                title = ['Bipartite Student-Question Graph: ' pc.dataSetName];
                 methodResultsFileNames{end+1} = 'LLGC.mat';
                 methodResultsFileNames{end+1} = 'ITSMethod.mat';
+                methodResultsFileNames{end+1} = 'ITSRandom.mat';
+                methodResultsFileNames{end+1} = 'ITSConstant.mat';
                 legend = {...
                     'LLGC', ...
                     'NW',...
+                    'Random',...
+                    'Constant',...
                     };
             end
             

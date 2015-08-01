@@ -24,6 +24,10 @@ function [d] = combineGraphs(d)
     d.objectType(size1/2+1:size1) = Constants.STEP_INCORRECT;
     d.objectType(size1+1:end) = Constants.STUDENT;
     
+    
+    %Making the min class 1 fixes issues in other parts of the code
+    d.Y(d.Y > 0) = d.Y(d.Y > 0) - min(d.Y(d.Y > 0)) + 1;
+    
     Y1 = d.Y;
     Y2 = d.Y;
     numClasses = d.numClasses;

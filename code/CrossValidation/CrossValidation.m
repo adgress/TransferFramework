@@ -49,6 +49,7 @@ classdef CrossValidation < handle
                 obj.methodObj.setParams(params);
                 acc = 0;
                 trainAcc = 0;
+                savedData = struct();
                 for splitIdx=1:length(obj.splits)
                     input = struct();
                     s = obj.splits{splitIdx};
@@ -61,7 +62,7 @@ classdef CrossValidation < handle
                     input.train = train;
                     input.test = test;
                     [splitResults{splitIdx},savedData] = ...
-                        obj.methodObj.runMethod(input);
+                        obj.methodObj.runMethod(input,savedData);
                     processedSplitResults{splitIdx} = ...
                         obj.measure.evaluate(splitResults{splitIdx});
                     acc = acc + processedSplitResults{splitIdx}.learnerStats.testResults;

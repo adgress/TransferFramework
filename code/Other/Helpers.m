@@ -334,6 +334,11 @@ classdef Helpers < handle
             %}
         end
         
+        function [D] = SimilarityToDistance(W)
+            W = W ./ max(abs(W(:)));
+            D = 1-W;
+        end
+        
         %NOTE: Computes squared distances
         function [D] = CreateDistanceMatrix(X,Y)
             if nargin < 2

@@ -46,8 +46,11 @@ classdef ExperimentConfigLoader < ConfigLoader
                 numPerClass = ceil(numTrain/numClasses);
                 numTrain = numPerClass*numClasses;
             end 
-            assert(numTrain == numPerClass*test.numClasses);
-            assert(test.numClasses > 1);
+            assert(numTrain == numPerClass*test.numClasses);            
+            if test.numClasses == 1
+                warning('Only a single class!');
+            end
+            
         end  
         
         function [] = setDataSet(obj,dataSet)

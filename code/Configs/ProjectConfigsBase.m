@@ -26,7 +26,8 @@ classdef ProjectConfigsBase < handle
     end
     
     methods
-        function [obj] = ProjectConfigsBase()
+        function [obj] = ProjectConfigsBase()            
+            
             obj.useSavedSmallResults = false;
             obj.numLabeledPerClass = -1;
             obj.numTarget = 2;

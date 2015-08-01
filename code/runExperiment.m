@@ -63,14 +63,14 @@ function [] = runExperiment(configs)
                 if exist(t,'file')
                     display('Found Temp results - loading...');
                     splitResults{splitIdx} = loadTempResults(t);
-                    if ProjectConfigs.smallResultsFiles
+                    if pc.smallResultsFiles
                         splitResults{splitIdx}.shrink()
                     end
                     continue;
                 end
                 [splitResults{splitIdx}] = ...
                     configLoader.runExperiment(expIdx,splitIdx);
-                if ProjectConfigs.smallResultsFiles
+                if pc.smallResultsFiles
                     display('Shrinking Results File');
                     splitResults{splitIdx}.shrink()
                 end

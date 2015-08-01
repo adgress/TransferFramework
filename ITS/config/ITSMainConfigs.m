@@ -5,7 +5,9 @@ classdef ITSMainConfigs < MainConfigs
     methods
         function [obj] = ITSMainConfigs()
             pc = ProjectConfigs.Create();
-            obj = obj@MainConfigs();            
+            obj = obj@MainConfigs();         
+            obj.set('labelsToUse',pc.labelsToUse);
+            
             obj.setITSData(pc.dataSetName);           
             
             obj.configsStruct.numLabeledPerClass=pc.numLabeledPerClass;
@@ -18,29 +20,36 @@ classdef ITSMainConfigs < MainConfigs
             learnerConfigs.set('sigma',pc.sigma);
             learnerConfigs.delete('sigmaScale');
             learnerConfigs.set('measure',pc.measure);
-            useLLGC = 1;
+            learnerConfigs.set('useInv',true);
             
             if pc.useStudentData
-                if useLLGC
-                    learnerConfigs.set('cvParameters',pc.llgcCVParams);
+                if pc.useLLGC
+                    learnerConfigs.set('cvParameters',pc.llgcCVParams);                    
                     obj.setLLGCConfigs(learnerConfigs);
+                    learnerConfigs.set('makeRBF',true);
                 else
                     learnerConfigs.set('cvParameters',pc.nwCVParams);
-                    obj.setNW(learnerConfigs);                
+                    obj.setNW(learnerConfigs);         
+                    learnerConfigs.set('makeRBF',true);
                 end                
             else               
-                if useLLGC
-                    learnerConfigs.set('makeRBF',false);
-                    learnerConfigs.set('cvParameters',pc.llgcCVParams(1));
-                    %learnerConfigs.set('makeRBF',true);
-                    %learnerConfigs.set('cvParameters',pc.llgcCVParams);
+                if pc.useLLGC
+                    if pc.makeRBF
+                        learnerConfigs.set('convertToSim',true);
+                        learnerConfigs.set('makeRBF',true);
+                        learnerConfigs.set('cvParameters',pc.llgcCVParams);
+                    else                                                
+                        learnerConfigs.set('makeRBF',false);
+                        learnerConfigs.set('cvParameters',pc.llgcCVParams(1));
+                    end                    
                     obj.setLLGCConfigs(learnerConfigs);
-                else
-                    %obj.setITSRandom(learnerConfigs);                
-                    %obj.setITSConstant(learnerConfigs);
-                    
-                    learnerConfigs.set('cvParameters',[]);
+                else                                        
+                    learnerConfigs.set('cvParameters',pc.nwCVParams);
+                    learnerConfigs.set('convertToSim',true);
+                    learnerConfigs.set('makeRBF',true);
                     obj.setITSMethod(learnerConfigs);
+                    %obj.setITSRandom(learnerConfigs);
+                    %obj.setITSConstant(learnerConfigs);
                 end
             end
             obj.configsStruct.measure=pc.measure;
@@ -49,11 +58,15 @@ classdef ITSMainConfigs < MainConfigs
         end    
         
         function [] = setITSData(obj,dataSet)
+            pc = ProjectConfigs.Create();
             if ~exist('dataSet','var')
                 dataSet = 'DS1';
             end
             obj.set('dataName','ITS');
             obj.set('resultsDir',['results_' dataSet]);
+            if pc.QQEdgesExperiment
+                obj.set('resultsDir',['results_' dataSet '-QQEdges']);
+            end
             obj.set('dataSet',[dataSet '_split_data']);
         end
         function [] = setITSMethod(obj, learnerConfigs)

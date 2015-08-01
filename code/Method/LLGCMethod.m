@@ -11,6 +11,9 @@ classdef LLGCMethod < HFMethod
             if ~obj.has('useAlt')
                 obj.set('useAlt',0);
             end
+            if ~obj.has('useInv')
+                obj.set('useInv',1);
+            end
             obj.method = HFMethod.LLGC;
         end
         
