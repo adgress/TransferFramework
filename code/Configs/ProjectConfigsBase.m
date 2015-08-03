@@ -21,13 +21,14 @@ classdef ProjectConfigsBase < handle
         
         smallResultsFiles
         labelsToKeep
+        remapLabels
         
         useSavedSmallResults
     end
     
     methods
         function [obj] = ProjectConfigsBase()            
-            
+            obj.remapLabels = false;
             obj.useSavedSmallResults = false;
             obj.numLabeledPerClass = -1;
             obj.numTarget = 2;

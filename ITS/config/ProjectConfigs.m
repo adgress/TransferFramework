@@ -35,7 +35,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.makeRBF = true;            
             c.dataSet = Constants.ITS_DATA;
             c.useStudentData = false;
-            c.useDS1 = 1;
+            c.useDS1 = 0;
             c.useLLGC = 1;
             c.QQEdgesExperiment = 0;
             c.QQEdges = 1;
@@ -52,7 +52,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.numLabeledPerClass = 2:3;                    
                 else
                     c.dataSetName = 'DS2-35';
-                    c.numLabeledPerClass = 2:5;                                        
+                    c.numLabeledPerClass = 2:5;  
+                    useCommonSkills = 1;
+                    if useCommonSkills
+                        c.numLabeledPerClass = [10:10:50];
+                        c.labelsToUse = [4 5 6 13];
+                        c.remapLabels = true;
+                    end
                 end
                 c.combineGraphFunc = @combineGraphs;
                 c.evaluatePerfFunc = @evaluateITSPerf;
@@ -63,7 +69,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.llgcCVParams(1).values = num2cell(10.^(-3:3));
             %c.llgcCVParams(2).values = num2cell([.01 .1 1 10]);
             %c.llgcCVParams(1).values = num2cell(10.^(2));
-            c.llgcCVParams(2).values = num2cell(5.^(-4:4));
+            c.llgcCVParams(2).values = num2cell(5.^(-2:2));
             %c.llgcCVParams(2).values = num2cell([.001]);            
             
             c.nwCVParams = struct('key','sigma');

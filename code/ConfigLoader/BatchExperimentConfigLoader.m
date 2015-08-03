@@ -181,8 +181,15 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             newSplit.targetData.keep(targetIndsToUse);
                             newSplit.targetType(~targetIndsToUse) = [];   
                             I = false(size(targetDataCopy.trueY));
-                            for l=labelsToUse(:)'
-                                I = I | targetDataCopy.trueY == l;
+                            %for l=labelsToUse(:)'
+                            for labelIdx=1:length(labelsToUse)
+                                l = labelsToUse(labelIdx);
+                                J = targetDataCopy.trueY == l;
+                                I = I | J;
+                                if pc.remapLabels
+                                    targetDataCopy.Y(J) = labelIdx;
+                                    targetDataCopy.trueY(J) = labelIdx;
+                                end
                             end
                             assert(all(I));
                         end
