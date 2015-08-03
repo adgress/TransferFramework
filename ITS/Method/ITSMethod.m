@@ -38,6 +38,10 @@ classdef ITSMethod < Method
             distMat = DistanceMatrix(combined.W,combined.Y,combined.type,...
                 combined.trueY,combined.instanceIDs);
             origW = distMat.W;
+            
+            distMat.W = Helpers.SimilarityToDistance(distMat.W);
+            distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
+            
             %distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
 
             distMat.WNames = combined.WNames;

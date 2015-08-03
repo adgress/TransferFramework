@@ -18,6 +18,8 @@ classdef LabeledData < matlab.mixin.Copyable
         
         objectType
         YNames
+        
+        instancesToInfer
     end
     
     properties(Dependent)

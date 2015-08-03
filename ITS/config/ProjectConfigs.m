@@ -15,6 +15,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         useDS1
         useLLGC
         QQEdgesExperiment
+        QQEdges
         makeRBF
         labelsToUse
     end
@@ -37,6 +38,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.useDS1 = 0;
             c.useLLGC = 1;
             c.QQEdgesExperiment = 0;
+            c.QQEdges = 1;
             c.labelsToUse = [];
             if c.useStudentData
                 c.dataSetName = 'DS1-69-student';
@@ -57,12 +59,12 @@ classdef ProjectConfigs < ProjectConfigsBase
                 
                 c.measure = ITSMeasure();
             end
-            if c.QQEdgesExperiment
-                c.numLabeledPerClass = max(c.numLabeledPerClass);
-            end
             c.llgcCVParams = struct('key',{'alpha','sigma'});
             c.llgcCVParams(1).values = num2cell(10.^(-3:3));
             c.llgcCVParams(2).values = num2cell([.01 .1 1 10]);
+            %c.llgcCVParams(1).values = num2cell(10.^(2));
+            c.llgcCVParams(2).values = num2cell(5.^(-4:4));
+            %c.llgcCVParams(2).values = num2cell([.001]);            
             
             c.nwCVParams = struct('key','sigma');
             c.nwCVParams(1).values = num2cell(2.^(-6:6));
@@ -113,11 +115,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if pc.useDS1                
                     c.set('prefix','results_DS1-69');
                     c.set('dataSet',{'DS1-69'});
-                    c.set('resultsDirectory','results_DS1-69/DS1');
+                    c.set('resultsDirectory','results_DS1-69/');
                 else
                     c.set('prefix','results_DS2-35');
                     c.set('dataSet',{'DS2-35'});
-                    c.set('resultsDirectory',['results_DS2-35/DS2-35']);
+                    c.set('resultsDirectory',['results_DS2-35/']);
                 end
             end
             r = c.get('resultsDirectory');
@@ -129,6 +131,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             basePlotConfigs = Configs();
             basePlotConfigs.set('baselineFile',''); 
             methodResultsFileNames = {};
+            legend = {};
             pc = ProjectConfigs.Create();
 
             title = '';
@@ -142,16 +145,16 @@ classdef ProjectConfigs < ProjectConfigsBase
                     };
             else
                 title = ['Bipartite Student-Question Graph: ' pc.dataSetName];
-                methodResultsFileNames{end+1} = 'LLGC.mat';
+                
                 methodResultsFileNames{end+1} = 'ITSMethod.mat';
-                methodResultsFileNames{end+1} = 'ITSRandom.mat';
-                methodResultsFileNames{end+1} = 'ITSConstant.mat';
-                legend = {...
-                    'LLGC', ...
-                    'NW',...
-                    'Random',...
-                    'Constant',...
-                    };
+                methodResultsFileNames{end+1} = 'LLGC-QQedges=1.mat';
+                methodResultsFileNames{end+1} = 'LLGC-QQedges=0.mat';
+                methodResultsFileNames{end+1} = 'LLGC.mat';
+                
+                legend{end+1} = 'NW';
+                legend{end+1} = 'LLGC with all QQ edges';
+                legend{end+1} = 'LLGC with no QQ edges';
+                legend{end+1} = 'LLGC';
             end
             
             

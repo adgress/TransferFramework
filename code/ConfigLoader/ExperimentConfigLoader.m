@@ -319,7 +319,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             obj.allExperiments = ConfigLoader.StaticCreateAllExperiments(paramKeys,...
                 keys,obj.configs);
         end
-        function [outputFileName] = getOutputFileName(obj)
+        function [outputPrefix] = getOutputFilePrefix(obj)
             outputDir = obj.configs.resultsDirectory;
             warning off;
             outputDirParams = obj.configs.getOutputDirectoryParams();
@@ -330,8 +330,12 @@ classdef ExperimentConfigLoader < ConfigLoader
             warning on;
             
             outputFileParams = obj.configs.getOutputFileNameParams();            
-            outputFile = obj.configs.stringifyFields(outputFileParams, '_');            
-            outputFileName = [outputDir outputFile '.mat'];
+            outputPrefix = obj.configs.stringifyFields(outputFileParams, '_'); 
+            outputPrefix = [outputDir '/' outputPrefix];
+        end
+        function [outputFileName] = getOutputFileName(obj)
+            [outputPrefix] = obj.getOutputFilePrefix();
+            outputFileName = [outputPrefix '.mat'];
             Helpers.MakeDirectoryForFile(outputFileName);
         end
         function [outputFileName] = appendToName(obj,fileName,s,prependHyphen)

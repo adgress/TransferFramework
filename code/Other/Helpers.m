@@ -335,8 +335,11 @@ classdef Helpers < handle
         end
         
         function [D] = SimilarityToDistance(W)
-            W = W ./ max(abs(W(:)));
+            a = max(abs(W(:)));
+            W = W ./ a;
             D = 1-W;
+            %D = 1 ./ W;
+            %D(isinf(D) | isnan(D)) = 100;
         end
         
         %NOTE: Computes squared distances

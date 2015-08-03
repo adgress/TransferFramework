@@ -47,6 +47,7 @@ classdef HFMethod < Method
             objectType = [];
             labelSets = train.labelSets;
             YNames = train.YNames;
+            instancesToInfer = [];
             if obj.has('sigmaScale')
                 sigmaScale = obj.get('sigmaScale');
             end
@@ -68,10 +69,15 @@ classdef HFMethod < Method
                     W = combined.W{1};
                 end
                 
-                if makeRBF && obj.get('makeRBF',true);
+                
+                %if makeRBF && obj.get('makeRBF',true);
+                %{
                     sigma = obj.get('sigma');
+                    W2 = W;
                     W = Helpers.distance2RBF(W,sigma);
-                end
+                %}
+                %end
+                
                 Y = combined.Y;
                 type = combined.type;
                 trueY = combined.trueY;
@@ -81,6 +87,7 @@ classdef HFMethod < Method
                 labelSets = combined.labelSets;
                 objectType = combined.objectType;
                 YNames = combined.YNames;
+                instancesToInfer = combined.instancesToInfer;
             elseif exist('savedData','var') && isfield(savedData,'W')
                 W = savedData.W;
                 error('Data ordering issue with caching?');
@@ -108,6 +115,7 @@ classdef HFMethod < Method
                 elseif obj.has('useSeparableDistanceMatrix') && ...
                         obj.get('useSeparableDistanceMatrix')
                     error('');
+                    error('Don''t make RBF here?');
                     assert(makeRBF);
                     W = zeros(size(Xall,1));
                     for featureIdx=1:size(Xall,2)
@@ -125,6 +133,7 @@ classdef HFMethod < Method
                     end
                     %W = exp(W);
                 else
+                    error('Don''t make RBF here?');
                     if exist('V','var')
                         WDist = Helpers.CreateDistanceMatrixMahabolis(Xall,V);
                     else
@@ -161,6 +170,7 @@ classdef HFMethod < Method
             end
             distMat.objectType = objectType;
             distMat.YNames = YNames;
+            distMat.instancesToInfer = instancesToInfer;
         end
         
         function [fu, fu_CMN,sigma] = runHarmonicFunction(obj,distMat)
@@ -205,6 +215,7 @@ classdef HFMethod < Method
                         obj.configs.get('useMeanSigma'),obj.method == HFMethod.HFGF);
                 end
                 Wrbf = Helpers.distance2RBF(distMat.W,sigma);
+                a = distMat.W(1:90,1:90);
             else 
                 Wrbf = distMat.W;
                 sigma = [];
@@ -249,16 +260,31 @@ classdef HFMethod < Method
         end
         
         function [fu,savedData,sigma] = runLLGC(obj,distMat,makeRBF,savedData)
-
-            distMat.W = Helpers.SimilarityToDistance(distMat.W);
-            [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);
-            %{
+            distMatCopy = distMat.copy();
+            sigma = obj.get('sigma');
+            W2_ = Helpers.distance2RBF(distMat.W,sigma);
+            W3 = Helpers.SimilarityToDistance(W2_);
+            W4 = Helpers.distance2RBF(W3,sigma);
+            
+            isZero = distMat.W(:) == 0;
+            W2 = distMat.W;
+            distMat.W = Helpers.SimilarityToDistance(distMat.W);            
+            
+            
+            [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);            
+            
+            %Wrbf(isZero) = 0;
+            %Wrbf = W4;
+            
+            
+            %isStep = distMat.objectType ~= 1;
+            %Wrbf(isStep,isStep) = 0;
             if makeRBF
-                Wrbf = distMat.W;
-                isZero = Wrbf(:) == 0;
+                %Wrbf = distMat.W;
+                %isZero = Wrbf(:) == 0;
                 %Wrbf(isZero) = exp(-Wrbf(isZero)/.2);
             end
-            %}
+            
             useAlt = obj.get('useAlt');
             alpha = obj.get('alpha');
             alphaScores = zeros(size(alpha));
@@ -359,7 +385,7 @@ classdef HFMethod < Method
                     savedData = [];
                 end
             end
-            %}
+            %}         
             if useAlt
                 [fu, savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMat, alpha);
             else
@@ -370,10 +396,14 @@ classdef HFMethod < Method
                     end
                     [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
                 else
-                    [fu] = LLGC.llgc_LS(Wrbf, YtrainMat, alpha);
+                    if obj.get('inferSubset')
+                        assert(~isempty(distMat.instancesToInfer));
+                        [fu] = LLGC.llgc_LS(Wrbf, YtrainMat, alpha,distMat.instancesToInfer);
+                    else
+                        [fu] = LLGC.llgc_LS(Wrbf, YtrainMat, alpha);
+                    end
                 end
             end
-            
             savedData.alpha = alpha;
             %savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
             savedData.cvAcc = max(alphaScores);          
@@ -400,8 +430,9 @@ classdef HFMethod < Method
                 distMat = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
             else                
-                [distMat,savedData] = createDistanceMatrix(obj,train,test,obj.configs,makeRBF,savedData);
+                [distMat,savedData] = createDistanceMatrix(obj,train,test,obj.configs,~makeRBF,savedData);
             end
+            distMatOrig = distMat.copy();
             switch obj.method
                 case HFMethod.HFGF
                     error('Is distMat a distanceMatrix or Wrbf?');
@@ -418,22 +449,22 @@ classdef HFMethod < Method
             
             %test instances should be last
             %assert(issorted(distMat.type == Constants.TARGET_TEST));
-            YTest = distMat.Y(isYTest);
+            YTest = distMatOrig.Y(isYTest);
             testResults.dataFU = sparse(fu);
-            testResults.labelSets = distMat.labelSets;
-            testResults.dataType = distMat.type;
+            testResults.labelSets = distMatOrig.labelSets;
+            testResults.dataType = distMatOrig.type;
             %testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
             assert(~isempty(YTest));
             if ~isempty(YTest)
                 f = obj.get('evaluatePerfFunc',[]);
                 if ~isempty(f)                    
-                    [val,yPred,yActual] = f(distMat,fu,savedData.predicted);
+                    [val,yPred,yActual] = f(distMatOrig,fu,savedData.predicted);
                 else
                     yTestPred = predicted(isYTest);
                     val = sum(yTestPred == YTest)/...
                             length(YTest);
                     yPred = predicted;
-                    yActual = distMat.Y;
+                    yActual = distMatOrig.Y;
                 end
                 assert(~isnan(val));
                          

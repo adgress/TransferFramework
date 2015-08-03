@@ -13,7 +13,8 @@ classdef DataSet < LabeledData
         WNames        
         featureNames
         featureIDs
-        Wdim        
+        Wdim               
+        W11
     end    
     properties(Dependent)
         numInstances

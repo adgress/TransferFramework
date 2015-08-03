@@ -12,7 +12,7 @@ classdef DistanceMatrix < LabeledData
     properties
         W
         WNames
-        WIDs
+        WIDs        
     end
     
     methods

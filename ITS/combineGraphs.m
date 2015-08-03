@@ -1,7 +1,11 @@
 function [d] = combineGraphs(d)
     assert(d.Wdim == 1);
-    W12 = Helpers.combineW(d.W{1},d.W{2},d.Wdim){1};
+    W12 = Helpers.combineW(d.W{1},d.W{2},d.Wdim){1};    
     W11 = zeros(size(W12,1));
+    if ~isempty(d.W11)
+        Z = zeros(size(d.W11));
+        W11 = [d.W11 Z ; Z d.W11];
+    end
     W22 = zeros(size(W12,2));
     W = [ W11 W12 ; W12' W22];
     [size1,size2] = size(W12);
@@ -38,4 +42,6 @@ function [d] = combineGraphs(d)
     d.Y = Y;
     d.instanceIDs = [d.instanceIDs ; d.instanceIDs ; -1*ones(size2,1)];           
     d.labelSets = [(1:numClasses)' ; (1:numClasses)'];
+    d.instancesToInfer = false(size(W,1),1);
+    d.instancesToInfer(size(W11,1)+1:end) = true;
 end

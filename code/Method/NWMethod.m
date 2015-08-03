@@ -12,7 +12,8 @@ classdef NWMethod < HFMethod
         end
         function [fu,savedData,sigma] = runNW(obj,distMat,makeRBF,savedData)
             assert(makeRBF);
-            
+            %distMat.W = Helpers.SimilarityToDistance(distMat.W);
+            distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
             I = distMat.isLabeledTargetTrain();
             fu = zeros(length(I),distMat.numClasses);
             Wlabeled = distMat.W(I,:);
@@ -31,7 +32,7 @@ classdef NWMethod < HFMethod
             
             [~,savedData.predicted] = max(fu,[],2);
             savedData.cvAcc = [];
-            sigma = [];
+            sigma = obj.get('sigma');
         end
         function [s] = getPrefix(obj)
             s = 'NW';

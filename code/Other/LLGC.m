@@ -1,12 +1,14 @@
 classdef LLGC < handle    
     properties(Constant)
-        normRows = 1
+        normRows = true
         useCMN = 1
+        makeSignedLap = 1
     end
     methods(Static)
                         
         function [fu,invM] = llgc_inv_alt(W,fl,alpha,invM)
             %W(logical(speye(size(W)))) = 0;
+            error('Signed Lap?');
             if ~exist('invM','var')
                 D = diag(sum(W,2));
                 L = D-W;
@@ -24,6 +26,7 @@ classdef LLGC < handle
         end
         
         function [fu,invM] = llgc_LS_alt(W,fl,alpha)
+            error('Signed Lap?');
             %W(logical(speye(size(W)))) = 0;
             D = diag(sum(W,2));
             L = D-W;
@@ -81,14 +84,17 @@ classdef LLGC < handle
         end
 
         function [WN] = make_WN(W)
+            error('Signed Lap?');
             Disq = diag(sum(W).^-.5);
             WN = Disq*W*Disq;
         end
         function [L] = make_L_unnormalized(W)
+            error('Signed Lap?');
             L = diag(sum(W)) - W;
         end
         
         function [L] = make_L(W)
+            error('Signed Lap?');
             W(logical(speye(size(W)))) = 0;
 
             Disq = diag(sum(W).^-.5);
@@ -115,6 +121,7 @@ classdef LLGC < handle
         end
         
         function [fu,invM] = llgc_chol(W,fl)
+            error('Signed Lap?');
             error('Need to set alpha');
         tic
             alpha = .5;   
@@ -132,21 +139,31 @@ classdef LLGC < handle
             %display('llgc: Normalizing fu');
         end
         
-        function [invM] = makeInvM(W,alpha)
+        function [invM] = makeInvM(W,alpha)            
             W(logical(speye(size(W)))) = 0;
-            Disq = diag(sum(W).^-.5);
+            Wd = W;
+            if LLGC.makeSignedLap
+                Wd = abs(Wd);
+            end
+            Disq = diag(sum(Wd).^-.5);
             I = isinf(Disq);
             if sum(I(:)) > 0
                 %display('Disconnected nodes - zeroing out infs');
                 Disq(I) = 0;
             end
             WN = Disq*W*Disq;
+            if sum(sum(WN ~= WN')) > 0
+                assert(sum(sum(abs(WN - WN') > 1e-9)) == 0);
+                %display('Symmetricizing WN');                
+                WN = .5*(WN + WN');                
+            end            
             I = eye(size(WN,1));
             %invM = (1-alpha)*inv((1+alpha)*I-WN);
             invM = alpha*inv((1+alpha)*I-WN);
         end
         
         function [invM] = makeInvM_unbiased(W,alpha,Y)
+            error('Signed Lap?');
             W(logical(speye(size(W)))) = 0;
             Disq = diag(sum(W).^-.5);
             WN = Disq*W*Disq;
@@ -209,28 +226,47 @@ classdef LLGC < handle
             end
         end
         
-        function [fu] = llgc_LS(W,fl,alpha)
+        function [fu] = llgc_LS(W,fl,alpha,instancesToInfer)
         %tic
-            %alpha = .5;   
+            %alpha = .5;               
             W(logical(speye(size(W)))) = 0;   
+            Wd = W;
+            if LLGC.makeSignedLap
+                Wd = abs(W);
+            end
             %Disq = spdiags(sum(W).^-.5);
             n = size(W,1);
-            D = spdiags(sum(W,2),0,n,n);
+            D = spdiags(sum(Wd,2),0,n,n);
             
             %TODO: Do we want this?
             D = D + 1e-6*sparse(eye(size(D)));
             
             Disq = inv(D).^.5;
             WN = Disq*W*Disq;
+            WN = .5*(WN + WN');
             I = speye(size(WN,1));
             M = ((1+alpha)*I-WN);
             %fu = M\((1-alpha)*fl);
-            
-            if ~LLGC.normRows && size(fl,2) > 1
-                fl = LLGC.labelMatrix2vector(fl);
+            if ~exist('instancesToInfer','var')
+                if ~LLGC.normRows && size(fl,2) > 1
+                    fl = LLGC.labelMatrix2vector(fl);
+                end
+                fu = M\(alpha*fl);
+            else
+                error('confirm this works correctly');
+                assert(LLGC.normRows);
+                assert(size(fl,2) > 1);
+                fu = M(:,instancesToInfer)\(alpha*fl);
+                %{
+                fu2 = M\(alpha*fl);
+                fu2 = fu2(instancesToInfer,:);
+                error = abs(fu - fu2);
+                max(error)
+                %}
+                a = zeros(size(fl));
+                a(instancesToInfer,:) = fu;
+                fu = a;
             end
-            fu = M\(alpha*fl);
-            
             if LLGC.normRows
                 fu = Helpers.normRows(fu);
             end

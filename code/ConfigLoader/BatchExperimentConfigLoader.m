@@ -12,7 +12,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             end            
             obj = obj@ConfigLoader(configsObj);
             if ~obj.has('configLoader')
-                obj.set('configLoader',ExperimentConfigLoader());
+                obj.set('configLoader',obj.configs.c.mainConfigs.c.configLoader);
+                if isempty(obj.get('configLoader'))
+                    display('No cofigLoader - making ExperimentConfigLoader');
+                    obj.set('configLoader',ExperimentConfigLoader());
+                end
             end
             if ~obj.has('paramsToVary')
                 obj.set('paramsToVary',{});

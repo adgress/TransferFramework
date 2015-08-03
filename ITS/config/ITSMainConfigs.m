@@ -20,7 +20,8 @@ classdef ITSMainConfigs < MainConfigs
             learnerConfigs.set('sigma',pc.sigma);
             learnerConfigs.delete('sigmaScale');
             learnerConfigs.set('measure',pc.measure);
-            learnerConfigs.set('useInv',true);
+            learnerConfigs.set('useInv',1);
+            learnerConfigs.set('inferSubset',0);
             
             if pc.useStudentData
                 if pc.useLLGC
@@ -53,8 +54,11 @@ classdef ITSMainConfigs < MainConfigs
                 end
             end
             obj.configsStruct.measure=pc.measure;
-            
-            obj.configsStruct.configLoader=ExperimentConfigLoader();
+            if pc.QQEdgesExperiment
+                obj.configsStruct.configLoader=QQEdgeExperimentConfigLoader();
+            else
+                obj.configsStruct.configLoader=ExperimentConfigLoader();
+            end
         end    
         
         function [] = setITSData(obj,dataSet)
@@ -64,9 +68,11 @@ classdef ITSMainConfigs < MainConfigs
             end
             obj.set('dataName','ITS');
             obj.set('resultsDir',['results_' dataSet]);
+            %{
             if pc.QQEdgesExperiment
-                obj.set('resultsDir',['results_' dataSet '-QQEdges']);
+                obj.set('resultsDir',['results_' dataSet '-QQEdges=' num2str(pc.QQEdges)]);
             end
+            %}
             obj.set('dataSet',[dataSet '_split_data']);
         end
         function [] = setITSMethod(obj, learnerConfigs)
