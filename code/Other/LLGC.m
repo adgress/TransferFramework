@@ -55,16 +55,8 @@ classdef LLGC < handle
         end
         
         function [fu,invM] = llgc_inv(W,fl,alpha,invM)
-            %alpha = .5;       
-            W(logical(speye(size(W)))) = 0;
-
             if ~exist('invM','var')
-                %{
-                Disq = diag(sum(W).^-.5);
-                WN = Disq*W*Disq;
-                I = eye(size(WN,1));
-                invM = (1-alpha)*inv((1+alpha)*I - WN);               
-                %}
+                W(logical(speye(size(W)))) = 0;
                 invM = LLGC.makeInvM(W,alpha);
             end
             if ~LLGC.normRows && size(fl,2) > 1
@@ -253,7 +245,7 @@ classdef LLGC < handle
                 end
                 fu = M\(alpha*fl);
             else
-                error('confirm this works correctly');
+                %error('confirm this works correctly');
                 assert(LLGC.normRows);
                 assert(size(fl,2) > 1);
                 fu = M(:,instancesToInfer)\(alpha*fl);

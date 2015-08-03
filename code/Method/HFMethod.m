@@ -58,7 +58,7 @@ classdef HFMethod < Method
                 %combined.W = train.W;
                 I1 = combined.isLabeled;
                 I2 = combined.isTargetTrain();
-                perm = [find(I1 & I2) ; find(~I1 & I2) ; find(~I2)];                
+                %perm = [find(I1 & I2) ; find(~I1 & I2) ; find(~I2)];                
                 %combined.applyPermutation(perm);
                 f = obj.configs.get('combineGraphFunc',[]);
                 if ~isempty(f)                    
@@ -259,139 +259,27 @@ classdef HFMethod < Method
             assert(isempty(find(isnan(fu))));
         end
         
-        function [fu,savedData,sigma] = runLLGC(obj,distMat,makeRBF,savedData)
-            distMatCopy = distMat.copy();
-            sigma = obj.get('sigma');
-            W2_ = Helpers.distance2RBF(distMat.W,sigma);
-            W3 = Helpers.SimilarityToDistance(W2_);
-            W4 = Helpers.distance2RBF(W3,sigma);
-            
-            isZero = distMat.W(:) == 0;
-            W2 = distMat.W;
-            distMat.W = Helpers.SimilarityToDistance(distMat.W);            
-            
-            
-            [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);            
-            
-            %Wrbf(isZero) = 0;
-            %Wrbf = W4;
-            
-            
-            %isStep = distMat.objectType ~= 1;
-            %Wrbf(isStep,isStep) = 0;
-            if makeRBF
-                %Wrbf = distMat.W;
-                %isZero = Wrbf(:) == 0;
-                %Wrbf(isZero) = exp(-Wrbf(isZero)/.2);
+        function [fu,savedData,sigma] = runLLGC(obj,distMat,makeRBF,savedData)            
+            hasInvM = exist('savedData','var') && isfield(savedData,'invM');
+            if obj.get('useInv') && hasInvM
+                isTest = distMat.type == Constants.TARGET_TEST;
+                Y_testCleared = distMat.Y;
+                Y_testCleared(isTest) = -1;
+                YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
+                sigma = obj.get('sigma');
+            else
+                distMat.W = Helpers.SimilarityToDistance(distMat.W);                                    
+                [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);            
             end
-            
             useAlt = obj.get('useAlt');
             alpha = obj.get('alpha');
             alphaScores = zeros(size(alpha));
-            numFolds = 10;
-            isLabeled = distMat.isLabeledTarget() & distMat.isTargetTrain();
-            labeledInds = find(isLabeled);
-            Ytrain = distMat.Y(isLabeled);
-            %computeCVAcc = true;
-            computeCVAcc = false;
-            if length(alpha) > 1 || computeCVAcc
-                folds = {};
-                for foldIdx=1:numFolds
-                    folds{foldIdx} = DataSet.generateSplit([.8 .2],Ytrain) == 1;
-                end       
-                savedData = [];
-                %WN = LLGC.make_WN(Wrbf);
-                %[V,D,U] = svd(WN);            
-                %{
-                L = LLGC.make_L(Wrbf);
-                [V,D,U] = svd(L);
-                %Code from https://www.mathworks.com/matlabcentral/newsreader/view_thread/312556
-                d=diag(V'*L*V);
-                D=D*spdiags(sign(d.*diag(D)),0,size(V,2),size(V,2));
-                %L_recon = U*D*U';
-                
-                I = eye(size(L));
-                %}
-                for alphaIdx=1:length(alpha)
-                    currAlpha = alpha(alphaIdx);                    
-                    %invM = currAlpha*U*inv(D + currAlpha*I)*U';
-                    for foldIdx=1:numFolds                        
-                        isTrain = folds{foldIdx};
-                        isTest = ~isTrain;
-                        %isTrainInds = labeledInds(isTrain);
-                        testInds = labeledInds(~isTrain);
-                        YtrainCurr = distMat.Y;
-                        YtrainCurr(testInds) = -1;
-                        YtrainCurr(~isLabeled) = -1;
-                        YtrainMatCurr = Helpers.createLabelMatrix(YtrainCurr);
-                        
-                        if exist('savedData','var') && isfield(savedData,'invM')
-                            error('What if we want to use LS?');
-                            if useAlt
-                                [fu] = LLGC.llgc_inv_alt(Wrbf, YtrainMatCurr, currAlpha, savedData.invM);
-                            else
-                                [fu] = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, savedData.invM);
-                            end
-                            %fu2 = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, invM2);
-                            %[fu(:,2) fu2(:,2)]
-                        else
-                            if useAlt
-                                error('use LS?');
-                                [fu,savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMatCurr, currAlpha);                            
-                            else
-                                [fu] = LLGC.llgc_LS(Wrbf, YtrainMatCurr, currAlpha);                            
-                                if exist('savedData','var')
-                                    savedData.invM = LLGC.makeInvM(Wrbf,currAlpha);
-                                else
-                                    savedData = [];
-                                end
-                            end
-                        end
-                        
-                        
-                        %fu = LLGC.llgc_inv(Wrbf, YtrainMatCurr, currAlpha, invM);
-                        fuTest = fu(testInds,:);
-                        if size(fuTest,2) > 1
-                            fuTest = Helpers.RemoveNullColumns(fuTest);
-                        end
-                        %[~,yPred] = max(fuTest,[],2);                        
-                        fuTest(isnan(fuTest(:))) = 0;
-                        classes = distMat.classes;
-                        if size(fuTest,2) > length(classes)
-                            classes = 1:max(distMat.classes);
-                        end
-                        yPred = LLGC.getPrediction(fuTest,classes,YtrainMatCurr);
-                        yActual = Ytrain(isTest);
-                        accVec = yPred == yActual;
-                        alphaScores(alphaIdx) = alphaScores(alphaIdx) + mean(accVec);                        
-                    end
-                    %norm(savedData.invM - invM2)                    
-                    %norm(invM2 - invM)/norm(invM)
-                    if exist('savedData','var') && isfield(savedData,'invM')
-                        savedData = rmfield(savedData,'invM');
-                    end
-                end
-                alphaScores = alphaScores ./ numFolds;
-                alpha = alpha(argmax(alphaScores));
-            end
-            %{
-            if exist('savedData','var') && isfield(savedData,'invM')
-                [fu] = LLGC.llgc_inv(Wrbf, YtrainMat, alpha, savedData.invM);
-            else
-                [fu] = LLGC.llgc_LS(Wrbf, YtrainMat, alpha);
-                if exist('savedData','var')
-                    savedData.invM = LLGC.makeInvM(Wrbf,alpha);
-                else
-                    savedData = [];
-                end
-            end
-            %}         
+ 
             if useAlt
                 [fu, savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMat, alpha);
             else
                 if obj.get('useInv')
-                    if ~exist('savedData','var') || ...
-                            ~isfield(savedData,'invM')
+                    if ~hasInvM
                         savedData.invM = LLGC.makeInvM(Wrbf,alpha);            
                     end
                     [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
@@ -429,7 +317,7 @@ classdef HFMethod < Method
             if isfield(input,'distanceMatrix')
                 distMat = input.distanceMatrix;
                 error('Possible bug - is this taking advantage of source data?');
-            else                
+            else               
                 [distMat,savedData] = createDistanceMatrix(obj,train,test,obj.configs,~makeRBF,savedData);
             end
             distMatOrig = distMat.copy();
@@ -483,8 +371,9 @@ classdef HFMethod < Method
             cv.parameters = obj.get('cvParameters');
             cv.methodObj = obj;
             cv.measure = obj.get('measure');
-            
+            tic
             [bestParams,acc] = cv.runCV();
+            toc
             obj.setParams(bestParams);
             [testResults,savedData] = obj.runMethod(input);
             if ~obj.configs.get('quiet')
