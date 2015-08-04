@@ -39,10 +39,8 @@ classdef ITSMethod < Method
                 combined.trueY,combined.instanceIDs);
             origW = distMat.W;
             
-            distMat.W = Helpers.SimilarityToDistance(distMat.W);
-            distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
-            
-            %distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
+            %distMat.W = Helpers.SimilarityToDistance(distMat.W);
+            %distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));            
 
             distMat.WNames = combined.WNames;
             distMat.WIDs = combined.WIDs;
@@ -70,8 +68,12 @@ classdef ITSMethod < Method
                     studentSkills(:,labelIdx) = mean(WwithLabel,2);
                     %studentSkills(:,labelIdx) = a ./ (a + m);
                 end
+                
                 studentSkills(isnan(studentSkills)) = .5;
                 studentSkills(isinf(studentSkills)) = .5;
+                I = sum(studentSkills,2) == 0;
+                studentSkills(I,:) = .5;
+                %studentSkills = Helpers.NormalizeRows(studentSkills);
                 YTest = distMat.Y(isTestCorrect);
                 predictedSkills(:) = 0;
                 for testIdx=1:size(predictedSkills,2)

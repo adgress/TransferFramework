@@ -55,8 +55,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.numLabeledPerClass = 2:5;  
                     useCommonSkills = 1;
                     if useCommonSkills
-                        c.numLabeledPerClass = [10:10:50];
-                        c.labelsToUse = [4 5 6 13];
+                        c.numLabeledPerClass = [2 5 10:10:20];
+                        %c.labelsToUse = [4 5 6 13];
+                        c.labelsToUse = [4 5];
                         c.remapLabels = true;
                     end
                 end
@@ -72,8 +73,9 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.llgcCVParams(2).values = num2cell(5.^(-2:2));
             %c.llgcCVParams(2).values = num2cell([.001]);            
             
-            c.nwCVParams = struct('key','sigma');
-            c.nwCVParams(1).values = num2cell(2.^(-6:6));
+            c.nwCVParams = [];
+            %c.nwCVParams = struct('key','sigma');
+            %c.nwCVParams(1).values = num2cell(2.^(-6:6));
             %c.nwCVParams(1).values = num2cell(.2);
             c.alpha = [];
             %c.sigma = .2;            
@@ -125,7 +127,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 else
                     c.set('prefix','results_DS2-35');
                     c.set('dataSet',{'DS2-35'});
-                    c.set('resultsDirectory',['results_DS2-35/']);
+                    c.set('resultsDirectory',['results_DS2-35/']);                    
                 end
             end
             r = c.get('resultsDirectory');
