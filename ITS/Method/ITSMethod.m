@@ -51,11 +51,16 @@ classdef ITSMethod < Method
             isStudent = distMat.objectType == Constants.STUDENT;
             isTestCorrect = distMat.objectType == Constants.STEP_CORRECT & ...
                 distMat.isTargetTest;
+            isTestIncorrect = distMat.objectType == Constants.STEP_INCORRECT & ...
+                distMat.isTargetTest;
             isTrainCorrect = distMat.objectType == Constants.STEP_CORRECT & ...
                 distMat.isTargetTrain & distMat.isLabeled;
+            isTrainIncorrect = distMat.objectType == Constants.STEP_INCORRECT & ...
+                distMat.isTargetTrain & distMat.isLabeled;
             WStudCorrectTrain = distMat.W(isStudent,isTrainCorrect);            
+            WStudIncorrectTrain = distMat.W(isStudent,isTrainIncorrect);            
             WStudCorrect = origW(isStudent,isTestCorrect);
-                                    
+            WStudIncorrect = origW(isStudent,isTestIncorrect);
             predictedSkills = obj.getPrediction(size(WStudCorrect,1),...
                 size(WStudCorrect,2));
             if isequal(class(obj),'ITSMethod')
@@ -63,9 +68,15 @@ classdef ITSMethod < Method
                 numLabels = length(unique(distMat.labelSets));
                 studentSkills = zeros(sum(isStudent),numLabels);
                 YTrain = distMat.Y(isTrainCorrect); 
+                isTrainLabeled = WStudCorrectTrain + WStudIncorrectTrain > 0;
                 for labelIdx=1:numLabels
                     WwithLabel = WStudCorrectTrain(:,YTrain == labelIdx);
-                    studentSkills(:,labelIdx) = mean(WwithLabel,2);
+                    idxWithLabel = YTrain == labelIdx;
+                    for studIdx=1:size(WwithLabel,1)
+                        a = WwithLabel(studIdx,isTrainLabeled(studIdx,idxWithLabel));
+                        studentSkills(studIdx,labelIdx) = mean(a);
+                    end
+                    %studentSkills(:,labelIdx) = mean(WwithLabel,2);
                     %studentSkills(:,labelIdx) = a ./ (a + m);
                 end
                 
@@ -83,9 +94,7 @@ classdef ITSMethod < Method
             end
             actualSkills = WStudCorrect;
             
-            testResults.labelSets = distMat.labelSets;
-            testResults.yPred = predictedSkills;
-            testResults.yActual = actualSkills;
+            testResults.labelSets = distMat.labelSets;            
             %{
             testResults.dataType = distMat.type;
             testResults.dataFU = sparse(fu);
@@ -93,9 +102,14 @@ classdef ITSMethod < Method
             testResults.yPred = yPred;
             testResults.yActual = yActual;
             %}
+            isLabeled = WStudCorrect + WStudIncorrect > 0;
+            isLabeled = isLabeled(:);
             error = abs(predictedSkills - actualSkills);
-            normalizedError = sum(error(:)) / numel(actualSkills);
+            normalizedError = sum(error(isLabeled)) / sum(isLabeled);
             val = 1 - normalizedError;
+            
+            testResults.yPred = predictedSkills(isLabeled);
+            testResults.yActual = actualSkills(isLabeled);
             
             testResults.learnerMetadata.cvAcc = [];
             savedData.val = val;

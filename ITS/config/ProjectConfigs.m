@@ -55,7 +55,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.numLabeledPerClass = 2:5;  
                     useCommonSkills = 1;
                     if useCommonSkills
-                        c.numLabeledPerClass = [2 5 10:10:20];
+                        %c.numLabeledPerClass = [20];
+                        c.numLabeledPerClass = [2 5 10 20];
                         %c.labelsToUse = [4 5 6 13];
                         c.labelsToUse = [4 5];
                         c.remapLabels = true;
@@ -67,12 +68,14 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.measure = ITSMeasure();
             end
             c.llgcCVParams = struct('key',{'alpha','sigma'});
-            c.llgcCVParams(1).values = num2cell(10.^(-3:3));
-            %c.llgcCVParams(2).values = num2cell([.01 .1 1 10]);
-            %c.llgcCVParams(1).values = num2cell(10.^(2));
-            c.llgcCVParams(2).values = num2cell(5.^(-2:2));
-            %c.llgcCVParams(2).values = num2cell([.001]);            
             
+            c.llgcCVParams(1).values = num2cell(10.^(-4:4));            
+            c.llgcCVParams(2).values = num2cell(5.^(-4:4));
+            
+            %{
+            c.llgcCVParams(1).values = num2cell(10.^(5));
+            c.llgcCVParams(2).values = num2cell([.1]);            
+            %}
             c.nwCVParams = [];
             %c.nwCVParams = struct('key','sigma');
             %c.nwCVParams(1).values = num2cell(2.^(-6:6));

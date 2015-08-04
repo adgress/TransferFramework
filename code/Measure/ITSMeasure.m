@@ -6,12 +6,12 @@ classdef ITSMeasure < Measure
     end
     
     methods
-        function [measureResults] = evaluate(obj,split)
+        function [measureResults] = evaluate(obj,split)           
             measureResults = struct();
             measureResults.learnerStats = split.learnerStats;
             %measureResults.valTrain = -1;
-            error = abs(split.yPred - double(split.yActual));
-            normalizedError = mean(error(:));
+            err = abs(split.yPred - double(split.yActual));
+            normalizedError = mean(err(:));
             measureResults.learnerStats.valTest = 1 - normalizedError;
             measureResults.learnerStats.testResults = 1 - normalizedError;
             measureResults.learnerStats.trainResults = -1;

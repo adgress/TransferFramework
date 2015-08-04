@@ -268,12 +268,15 @@ classdef HFMethod < Method
                 YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
                 sigma = obj.get('sigma');
             else
+                isZero = distMat.W(:) == 0;
+                a = distMat.W;
                 distMat.W = Helpers.SimilarityToDistance(distMat.W);                                    
                 [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);            
+                %Wrbf = distMat.W;
+                Wrbf(isZero) = 0;
             end
             useAlt = obj.get('useAlt');
             alpha = obj.get('alpha');
-            alphaScores = zeros(size(alpha));
  
             if useAlt
                 [fu, savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMat, alpha);
@@ -292,17 +295,17 @@ classdef HFMethod < Method
                     end
                 end
             end
+            I = sum(fu,2) == 0;
+            fu(I,:) = .5;
             savedData.alpha = alpha;
-            %savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);
-            savedData.cvAcc = max(alphaScores);          
+            %savedData.featureSmoothness = LLGC.smoothness(Wrbf,distMat.trueY);         
             if ~exist('classes','var')
                 classes = distMat.classes;
             end
             labelSets = distMat.labelSets;
             savedData.predicted = LLGC.getPrediction(fu,classes,YtrainMat,labelSets);
-            fu(isnan(fu(:))) = 0;
+            fu(isnan(fu(:))) = .5;
             assert(isempty(find(isnan(fu))));
-            assert(~isnan(savedData.cvAcc));
         end
         
         function [testResults,savedData] = runMethod(obj,input,savedData)
@@ -360,7 +363,6 @@ classdef HFMethod < Method
             testResults.yPred = yPred;
             testResults.yActual = yActual;
             testResults.learnerMetadata.sigma = sigma;
-            testResults.learnerMetadata.cvAcc = savedData.cvAcc;
             savedData.val = val;
         end
         
