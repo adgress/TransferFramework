@@ -35,11 +35,12 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.makeRBF = true;            
             c.dataSet = Constants.ITS_DATA;
             c.useStudentData = false;
-            c.useDS1 = 0;
+            c.useDS1 = 1;
             c.useLLGC = 1;
-            c.QQEdgesExperiment = 0;
+            c.QQEdgesExperiment = 1;
             c.QQEdges = 1;
             c.labelsToUse = [];
+            useCommonSkills = 1;
             if c.useStudentData
                 c.dataSetName = 'DS1-69-student';
                 c.labelsToKeep = 1;
@@ -49,11 +50,15 @@ classdef ProjectConfigs < ProjectConfigsBase
             else
                 if c.useDS1
                     c.dataSetName = 'DS1-69';
-                    c.numLabeledPerClass = 2:3;                    
+                    c.numLabeledPerClass = 2:3;   
+                    if useCommonSkills
+                        c.labelsToUse = [5 6];
+                        c.remapLabels = true;
+                        c.numLabeledPerClass = 2:2:10;
+                    end
                 else
                     c.dataSetName = 'DS2-35';
-                    c.numLabeledPerClass = 2:5;  
-                    useCommonSkills = 1;
+                    c.numLabeledPerClass = 2:5;                      
                     if useCommonSkills
                         %c.numLabeledPerClass = [20];
                         c.numLabeledPerClass = [2 5 10 20];
@@ -76,9 +81,9 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.llgcCVParams(1).values = num2cell(10.^(5));
             c.llgcCVParams(2).values = num2cell([.1]);            
             %}
-            c.nwCVParams = [];
-            %c.nwCVParams = struct('key','sigma');
-            %c.nwCVParams(1).values = num2cell(2.^(-6:6));
+            %c.nwCVParams = [];
+            c.nwCVParams = struct('key','sigma');
+            c.nwCVParams(1).values = num2cell(2.^(-6:6));
             %c.nwCVParams(1).values = num2cell(.2);
             c.alpha = [];
             %c.sigma = .2;            

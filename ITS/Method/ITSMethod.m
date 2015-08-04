@@ -39,8 +39,8 @@ classdef ITSMethod < Method
                 combined.trueY,combined.instanceIDs);
             origW = distMat.W;
             
-            %distMat.W = Helpers.SimilarityToDistance(distMat.W);
-            %distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));            
+            distMat.W = Helpers.SimilarityToDistance(distMat.W);
+            distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));            
 
             distMat.WNames = combined.WNames;
             distMat.WIDs = combined.WIDs;
@@ -71,6 +71,9 @@ classdef ITSMethod < Method
                 isTrainLabeled = WStudCorrectTrain + WStudIncorrectTrain > 0;
                 for labelIdx=1:numLabels
                     WwithLabel = WStudCorrectTrain(:,YTrain == labelIdx);
+                    WwithLabelInc = WStudIncorrectTrain(:,YTrain == labelIdx);
+                    WwithLabel = WwithLabel ./ (WwithLabel + WwithLabelInc);
+                    WwithLabel(isnan(WwithLabel(:))) = 0;
                     idxWithLabel = YTrain == labelIdx;
                     for studIdx=1:size(WwithLabel,1)
                         a = WwithLabel(studIdx,isTrainLabeled(studIdx,idxWithLabel));
