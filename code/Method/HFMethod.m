@@ -215,7 +215,6 @@ classdef HFMethod < Method
                         obj.configs.get('useMeanSigma'),obj.method == HFMethod.HFGF);
                 end
                 Wrbf = Helpers.distance2RBF(distMat.W,sigma);
-                a = distMat.W(1:90,1:90);
             else 
                 Wrbf = distMat.W;
                 sigma = [];

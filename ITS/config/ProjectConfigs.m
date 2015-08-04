@@ -35,12 +35,13 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.makeRBF = true;            
             c.dataSet = Constants.ITS_DATA;
             c.useStudentData = false;
-            c.useDS1 = 1;
+            c.useDS1 = 0;
             c.useLLGC = 1;
-            c.QQEdgesExperiment = 1;
+            c.QQEdgesExperiment = 0;
             c.QQEdges = 1;
             c.labelsToUse = [];
             useCommonSkills = 1;
+            singleSkill = 1;
             if c.useStudentData
                 c.dataSetName = 'DS1-69-student';
                 c.labelsToKeep = 1;
@@ -56,6 +57,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.remapLabels = true;
                         c.numLabeledPerClass = 2:2:10;
                     end
+                    if singleSkill
+                        c.labelsToUse = 5;
+                    end
                 else
                     c.dataSetName = 'DS2-35';
                     c.numLabeledPerClass = 2:5;                      
@@ -65,6 +69,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                         %c.labelsToUse = [4 5 6 13];
                         c.labelsToUse = [4 5];
                         c.remapLabels = true;
+                    end
+                    if singleSkill
+                        c.labelsToUse = 5;
                     end
                 end
                 c.combineGraphFunc = @combineGraphs;
