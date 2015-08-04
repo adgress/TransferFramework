@@ -48,9 +48,14 @@ classdef ITSMainConfigs < MainConfigs
                     learnerConfigs.set('cvParameters',pc.nwCVParams);
                     learnerConfigs.set('convertToSim',true);
                     learnerConfigs.set('makeRBF',true);
+                                        
                     obj.setITSMethod(learnerConfigs);
                     %obj.setITSRandom(learnerConfigs);
-                    %obj.setITSConstant(learnerConfigs);
+                    %{
+                    learnerConfigs.set('sigma',1);
+                    learnerConfigs.set('cvParameters',[]);
+                    obj.setITSConstant(learnerConfigs);
+                    %}
                 end
             end
             obj.configsStruct.measure=pc.measure;

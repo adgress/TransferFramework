@@ -71,7 +71,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.remapLabels = true;
                     end
                     if singleSkill
-                        c.labelsToUse = 5;
+                        %c.labelsToUse = 5;
+                        c.labelsToUse = 4;
                     end
                 end
                 c.combineGraphFunc = @combineGraphs;
@@ -168,16 +169,23 @@ classdef ProjectConfigs < ProjectConfigsBase
                     };
             else
                 title = ['Bipartite Student-Question Graph: ' pc.dataSetName];
+                if ~isempty(pc.labelsToUse) 
+                    title = [title  ', skills: ' num2str(pc.labelsToUse)];
+                else
+                    title = [title  ', All Skills' ];
+                end
                 
-                methodResultsFileNames{end+1} = 'ITSMethod.mat';
-                methodResultsFileNames{end+1} = 'LLGC-QQedges=1.mat';
-                methodResultsFileNames{end+1} = 'LLGC-QQedges=0.mat';
                 methodResultsFileNames{end+1} = 'LLGC.mat';
+                methodResultsFileNames{end+1} = 'ITSMethod.mat';
+                methodResultsFileNames{end+1} = 'ITSConstant.mat';
+                methodResultsFileNames{end+1} = 'LLGC-QQedges=1.mat';
+                %methodResultsFileNames{end+1} = 'LLGC-QQedges=0.mat';
                 
-                legend{end+1} = 'NW';
-                legend{end+1} = 'LLGC with all QQ edges';
-                legend{end+1} = 'LLGC with no QQ edges';
                 legend{end+1} = 'LLGC';
+                legend{end+1} = 'NW';
+                legend{end+1} = 'Always predict constant';
+                legend{end+1} = 'LLGC with all QQ edges';
+                %legend{end+1} = 'LLGC with no QQ edges';                
             end
             
             

@@ -15,6 +15,9 @@ classdef ITSMeasure < Measure
             measureResults.learnerStats.valTest = 1 - normalizedError;
             measureResults.learnerStats.testResults = 1 - normalizedError;
             measureResults.learnerStats.trainResults = -1;
+            if measureResults.learnerStats.valTest > .7
+                %display('');
+            end
         end
     end
     
