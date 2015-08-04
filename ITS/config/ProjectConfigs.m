@@ -31,7 +31,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         function [c] = Create()
             %c = ProjectConfigs.instance;            
             c = ProjectConfigs.CreateSingleton();
-            
+            c.smallResultsFiles = false;
             c.makeRBF = true;            
             c.dataSet = Constants.ITS_DATA;
             c.useStudentData = false;
