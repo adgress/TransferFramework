@@ -16,6 +16,10 @@ function [val,predictedSkills,actualSkills] = evaluateITSPerf(distMat,fu,predict
     testStepInds = find(isTestCorrect);
     studentSkills = zeros(length(studentInds),numLabelSets);
     studentStepSkills = zeros(size(WStudCorrect));
+    
+    correctStudentSkills = -ones(size(studentSkills));
+    
+    isLabeled = (WStudCorrect + WStudIncorrect) > 0;
     for labelIdx=1:numLabelSets
         currLabels = distMat.classes(labelSets == labelIdx);
         studentFU = fu(isStudent,currLabels);
@@ -23,12 +27,19 @@ function [val,predictedSkills,actualSkills] = evaluateITSPerf(distMat,fu,predict
         studentFU(I,:) = .5;
         studentFU = Helpers.NormalizeRows(studentFU);
         studentSkills(:,labelIdx) = studentFU(:,1);        
+        for studIdx=1:size(studentFU,1)
+            w = WStudCorrect(studIdx,isLabeled(studIdx,:));
+            if isempty(w)
+                continue;
+            end
+            correctStudentSkills(studIdx,labelIdx) = mean(w);
+        end
     end
     for stepIdx=1:length(testStepInds)
         currSkill = testCorrectSkills(stepIdx);
         studentStepSkills(:,stepIdx) = studentSkills(:,currSkill);
     end
-    isLabeled = (WStudCorrect + WStudIncorrect) > 0;
+    
     isLabeled = isLabeled(:);
     error = abs(studentStepSkills - WStudCorrect);
     %normalizedError = sum(error(:)) / numel(studentStepSkills);

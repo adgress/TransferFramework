@@ -51,11 +51,11 @@ classdef ITSMainConfigs < MainConfigs
                                         
                     obj.setITSMethod(learnerConfigs);
                     %obj.setITSRandom(learnerConfigs);
-                    %{
+                    
                     learnerConfigs.set('sigma',1);
                     learnerConfigs.set('cvParameters',[]);
                     obj.setITSConstant(learnerConfigs);
-                    %}
+                    
                 end
             end
             obj.configsStruct.measure=pc.measure;

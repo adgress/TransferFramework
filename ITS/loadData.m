@@ -3,36 +3,24 @@ function [  ] = loadData()
 %   Detailed explanation goes here
 
 useDS1 = 0;
-normalize = 0;
+useDS3 = 0;
+useDS4 = 0;
+usePRG = 1;
+normalize = 1;
+
 
 studentName = 4;
 studResType = 9;
-studResSubtype = 10;
-tutResType = 11;
-tutResSubtype = 12;
-levelDomainType = 13;
-levelNumber = 14;
 problemName = 15;
 stepName = 18;
-isLastAttempt = 20;
 outcome = 21;
-kcStart = 31;
 
-%baseSize = 300000;
+
 fileData = struct();
-%{
-fileData.studentNames = cell(baseSize,1);
-fileData.problemNames = cell(baseSize,1);
-fileData.stepNames = cell(baseSize,1);
-fileData.studResTypes = cell(baseSize,1);
-fileData.studResSubtypes = cell(baseSize,1);
-fileData.outcomes = cell(baseSize,1);
-fileData.kcArrays = cell(baseSize,1);
-fileData.kcs = cell(baseSize,1);
-fileData.kcCats = cell(baseSize,1);
-%}
+
 studResTypeValues = {'ATTEMPT', 'HINT_REQUEST'};
 tutResTypeValues = {'RESULT','HINT_MSG'};
+splitChar = sprintf('\t');
 if useDS1
     dataSetName = 'DS1';       
     kcLast = 100;    
@@ -41,7 +29,41 @@ if useDS1
     
     %LFASearchModel0 (7 KCs)
     kcDefault = 69;
+elseif useDS3
+    dataSetName = 'DS3';
+    
+    problemName = 14;
+    stepName = 17;
+    outcome = 19;
+    
+    %MCAS39-State_WPI-Simple
+    kcDefault = 39;            
+elseif useDS4
+    error('Are the indices correct?');
+    dataSetName = 'DSFrac';
+    
+    %DefaultFewer_corrected
+    kcDefault = 35;
+elseif usePRG    
+    dataSetName = 'Prgusap1';
+    splitChar = sprintf(',');
+    kcDefault = [];
+    %966
+    
+    %A3
+    litPrefixes = {'C3','D3','E3','M3','N3','P3'};  
+    %A6
+    numPrefixes = {'D6','E6','M6','P6'};
+    %UX
+    pronPrefixes = {'U0','U1','U2'};
+    %P9
+    readPrefixes = {'P9'};
+    
+    allPrefixes = {litPrefixes,numPrefixes,pronPrefixes,readPrefixes};
+    prefixIndices = {};
+    allIndices = [];
 else
+    error('Are the indices correct?');
     dataSetName = 'DS2';
     kcLast = 48;
     
@@ -51,7 +73,12 @@ else
     %Reduce Step Name
     kcDefault = 35;
 end
+columnsToUse = [studentName studResType problemName stepName ...
+    outcome kcDefault];
 fileName = ['ITS/' dataSetName '.txt'];
+if usePRG
+   fileName = ['ITS/' dataSetName '.csv']; 
+end
 dataSetName = [dataSetName '-' num2str(kcDefault)];
 if ~normalize
     dataSetName = [dataSetName '-nonNorm'];
@@ -64,85 +91,179 @@ end
 file = fopen(fileName,'r+');
 
 s = fgetl(file);
-a = StringHelpers.split_string(s,'\t',false);
-
+header = StringHelpers.split_string(s,splitChar,false);
+if usePRG
+    allIndices = false(size(header));
+    for skillIdx=1:length(allPrefixes)
+        currPrefixes = allPrefixes{skillIdx};
+        I = false(size(header));
+        for prefIdx=1:length(currPrefixes)
+            I = I | (hasPrefix(currPrefixes{prefIdx},header) & ...
+                hasSuffix('S',header));
+        end        
+        prefixIndices{end+1} = I;
+        allIndices = allIndices | I;
+    end
+end
 format = '';
-for idx=1:length(a)
+for idx=1:length(header)
+    display([num2str(idx) ': ' header{idx}]);
     if idx == 1
         format = '%s';
         continue;
     end
-    %format = [format sprintf('\t') '%c'];
-    format = [format ' %s'];
+    if usePRG
+        %format = [format splitChar];
+        if sum(idx == columnsToUse)
+            format = [format '%s'];
+        else
+            %format = [format '%*s'];
+            format = [format '%s'];
+        end
+    else
+        %format = [format splitChar];
+        display('Not adding \%c - is this okay?');
+        %format = [format '%c'];   
+        if sum(idx == columnsToUse)
+            format = [format ' %s'];
+        else
+            %format = [format '%*s'];
+            format = [format '%s'];
+        end
+    end
+    
 end
 
+printData = 0;
+if printData
+    for k=1:100
+        s2 = fgetl(file);
+        a2 = StringHelpers.split_string(s2,splitChar,false);
+        for idx=1:length(header)
+            display([num2str(idx) ': ' header{idx} ', ' a2{idx}]);
+        end
+    end
+end
 %file2 = fopen(fileName,'r+');
-a = textscan(file,format,'Delimiter',sprintf('\t'));
-fileData.studentNames = a{studentName};
-fileData.problemNames = a{problemName};
-fileData.stepNames = a{stepName};
-fileData.studResTypes = a{studResType};
-fileData.studResSubtypes = a{studResSubtype};
-fileData.outcomes = a{outcome};
-fileData.kcs = a{kcDefault};
-fileData.kcCats = a{kcDefault+1};
-%{
-numLines = 0;
-while true
-    s = fgetl(file);
-    if ~ischar(s)
-        break;
-    end
-    numLines = numLines + 1;
-    a = StringHelpers.split_string(s,'\t',false);
-    numTabs = 0;
-    for idx=1:length(s)
-        if isequal(s(idx),9)
-            numTabs = numTabs + 1;
-        end
-    end
-    for idx=1:length(a)
-        %display([num2str(idx) ' ' a{idx}]);        
-    end
-    if numLines > 1
-        i = numLines - 1;
-        fileData.studentNames{i} = a{studentName};
-        fileData.problemNames{i} = a{problemName};
-        fileData.stepNames{i} = a{stepName};
-        fileData.studResTypes{i} = a{studResType};
-        fileData.studResSubtypes{i} = a{studResSubtype};
-        fileData.outcomes{i} = a{outcome};
-        fileData.kcs{i} = a{kcDefault};
-        fileData.kcCats{i} = a{kcDefault+1};
-        %{
-        t = 1;
-        for idx=kcStart:2:kcLast
-            kcArrays{t}{end+1} = a{idx};
-            t = t+1;
-        end
-        %}
-    end    
-end
-%}
-fclose(file);
-%numEntries = numLines - 1;
-%fileData = truncateFields(fileData,numEntries);
-
+numLines = 1000;
 ordData = struct();
-uniqueOrdData = struct();
-[uniqueOrdData.uniqueStepNames,ordData.stepOrd] = makeNominal(fileData.stepNames);
-[uniqueOrdData.uniqueStudentNames,ordData.studentOrd] = makeNominal(fileData.studentNames);
-[uniqueOrdData.uniqueStudResType,ordData.studentResOrd] = makeNominal(fileData.studResTypes);
-%[uniqueStudResSubtype,studentResSubOrd] = makeOrdinal(studResSubtypes);
-[uniqueOrdData.uniqueOutcome,ordData.outcomeOrd] = makeNominal(fileData.outcomes);
-[uniqueOrdData.uniqueKC,ordData.kcOrd] = makeNominal(fileData.kcs);
-[uniqueOrdData.uniqueKCCat,ordData.kcCatOrd] = makeNominal(fileData.kcCats);
+ordData.stepOrd = [];
+ordData.studentOrd = [];
+ordData.studentResOrd = [];
+ordData.outcomeOrd = [];
+ordData.kcOrd = [];
+ordData.kcCatOrd = [];
 
-while true
-    [uniqueOrdData,ordData,numRemoved] = pruneData(uniqueOrdData,ordData);
-    if numRemoved == 0
-        break;
+uniqueOrdData = struct();
+uniqueOrdData.uniqueStepNames = [];
+uniqueOrdData.uniqueStudentNames = [];
+uniqueOrdData.uniqueStudResType = [];
+uniqueOrdData.uniqueOutcome = [];
+uniqueOrdData.uniqueKC = [];
+uniqueOrdData.uniqueKCCat = [];
+ordData.stepOrd = [];
+blockIdx = 1;
+dataLoaded = false;
+if useDS3 && exist('DS3.mat','file')
+    load DS3.mat
+    dataLoaded = true;
+end
+lineIdx = 0;
+while ~feof(file) && ~dataLoaded
+    a = textscan(file,format,numLines,'Delimiter',splitChar);
+    blockIdx = blockIdx + 1;
+    numLines = length(a{1});
+    isValid = @(s) strcmp(s,'1') || strcmp(s,'7');
+    if usePRG 
+        studentNames = [];
+        stepNames = {};
+        kcs = [];
+        outcomes = [];
+        numAdded = 0;
+        for skillIdx=1:length(prefixIndices)
+            thisSkillInds = find(prefixIndices{skillIdx});
+            numEntries = 0;
+            for qIdx=1:length(thisSkillInds)
+                s = thisSkillInds(qIdx);
+                answers = a{s};
+                hasAnswer = ~cellfun('isempty',answers);
+                answers = answers(hasAnswer);
+                hasAnswer = find(hasAnswer);
+                I = cellfun(isValid,answers);
+                hasAnswer = hasAnswer(I);
+                answers = answers(I);
+                
+                I1 = strcmp('1',answers);                
+                I7 = strcmp('7',answers);
+                assert(all(I7 | I1));
+                answers(I1) = {'CORRECT'};
+                answers(I7) = {'INCORRECT'};
+                
+                
+                studentNames = [studentNames ; lineIdx + hasAnswer];
+                outcomes = [outcomes ; answers];
+                numAnswers = length(hasAnswer);
+                stepNames = [stepNames ; repmat(header(s),numAnswers,1)];
+                numEntries = numEntries + length(answers);
+            end
+            kcs = [kcs ; skillIdx*ones(numEntries,1)];    
+            numAdded = numAdded + numEntries;
+        end
+        fileData.studentNames = studentNames;
+        fileData.problemNames = stepNames;
+        fileData.stepNames = stepNames;
+        fileData.outcomes = outcomes;
+        fileData.kcs = kcs;
+        fileData.kcCats = [];
+        fileData.studResTypes = cell(numAdded,1);
+        fileData.studResTypes(:) = {'ATTEMPT'};
+    else
+        fileData.studentNames = a{studentName};
+        fileData.problemNames = a{problemName};
+        fileData.stepNames = a{stepName};
+        fileData.studResTypes = a{studResType};
+        fileData.outcomes = a{outcome};
+        fileData.kcs = a{kcDefault};
+        fileData.kcCats = a{kcDefault+1};                        
+    end    
+    c = struct();
+    [c.uniqueKCCat,c.kcCatOrd] = makeNominal(fileData.kcCats);    
+    [c.uniqueStudResType,c.studentResOrd] = makeNominal(fileData.studResTypes);
+    [c.uniqueStepNames,c.stepOrd] = makeNominal(fileData.stepNames);
+    [c.uniqueKC,c.kcOrd] = makeNominal(fileData.kcs);
+    [c.uniqueStudentNames,c.studentOrd] = makeNominal(fileData.studentNames);
+    [c.uniqueOutcome,c.outcomeOrd] = makeNominal(fileData.outcomes);
+    ordData = combinedNominal(ordData,c);
+    
+    lineIdx = lineIdx + numLines;
+end
+if usePRG    
+    uniqueOrdData.uniqueStudentNames = nominal(1:numLines);
+    uniqueOrdData.uniqueStepNames = nominal(header(allIndices));
+    uniqueOrdData.uniqueKC = nominal(1:4);
+    uniqueOrdData.uniqueOutcome = unique(ordData.outcomeOrd);
+end
+fclose(file);
+
+uniqueOrdData.uniqueStepNames = unique(ordData.stepOrd);
+uniqueOrdData.uniqueStudentNames = unique(ordData.studentOrd);
+uniqueOrdData.uniqueStudResType = unique(ordData.studentResOrd);
+uniqueOrdData.uniqueOutcome = unique(ordData.outcomeOrd);
+uniqueOrdData.uniqueKC = unique(ordData.kcOrd);
+uniqueOrdData.uniqueKCCat = unique(ordData.kcCatOrd);
+if useDS3
+    save DS3.mat
+end
+
+if ~useDS3 || ~exist('DS3-pruned.mat','file');       
+    while true
+        [uniqueOrdData,ordData,numRemoved] = pruneData(uniqueOrdData,ordData);
+        if numRemoved == 0
+            break;
+        end
     end
+else
+    load DS3-pruned.mat
 end
 isAttempt = ordData.studentResOrd == 'ATTEMPT';
 isCorrect = ordData.outcomeOrd == 'CORRECT';
@@ -158,12 +279,17 @@ W = zeros(numStudents,numSteps);
 WCorrect = W;
 WIncorrect = W;
 for studIdx=1:numStudents
+    isStudent = studentIDs == studIdx; 
+    subStepIDs = stepIDs(isStudent);
+    isCorrectSub = isCorrect(isStudent);
+    isIncorrectSub = isIncorrect(isStudent);
     for stepIdx=1:numSteps
-        isStudent = studentIDs == studIdx;
-        isStep = stepIDs == stepIdx;
-        I = isStudent & isStep;
-        numCorrect = sum(isCorrect(I));
-        numIncorrect = sum(isIncorrect(I));
+        %isStudent = studentIDs == studIdx;
+        isStep = subStepIDs == stepIdx;
+        %I = isStudent & isStep;
+        I = isStep;
+        numCorrect = sum(isCorrectSub(I));
+        numIncorrect = sum(isIncorrectSub(I));
         WCorrect(studIdx,stepIdx) = numCorrect;
         WIncorrect(studIdx,stepIdx) = numIncorrect;
     end
@@ -222,7 +348,11 @@ save(['Data/ITS/' dataSetName '.mat'], 'data');
 end
 
 function [keys,vals] = makeNominal(v)
-if isa(v{1},'double')
+if isa(v,'double')    
+    vals = nominal(v);
+    keys = unique(v);    
+    return;
+elseif isa(v{1},'double')
     v = cell2mat(v);
     keys = unique(v);
     vals = v;
@@ -248,32 +378,24 @@ isAttempt = ordData.studentResOrd == 'ATTEMPT';
 transactionsToRemove = ~isAttempt;
 kcsToRemove = false(size(uniqueOrdData.uniqueKC));
 for kcIdx=1:length(uniqueOrdData.uniqueKC)
-    numStepsWithKC = 0;
-    cumI = false(size(transactionsToRemove));
-    for stepIdx=1:length(uniqueOrdData.uniqueStepNames)
-        I = uniqueOrdData.uniqueKC(kcIdx) == ordData.kcOrd & ...
-            uniqueOrdData.uniqueStepNames(stepIdx) == ordData.stepOrd & ...
-            ~transactionsToRemove;
-        numStepsWithKC = numStepsWithKC + (sum(I) > 0);        
-        cumI = cumI | I;
-    end
-    %numStepsWithKC
-    %uniqueKC(kcIdx)
+
+    I = uniqueOrdData.uniqueKC(kcIdx) == ordData.kcOrd;
+    stepsWithKC = unique(ordData.stepOrd(I));
+    
+    numStepsWithKC = length(stepsWithKC);
+    cumI = I;
+
     if numStepsWithKC < 3
         kcsToRemove(kcIdx) = true;
         transactionsToRemove(cumI) = true;
     end
 end
 for stepIdx=1:length(uniqueOrdData.uniqueStepNames)
-    numStudentsAsked = 0;
-    cumI = false(size(transactionsToRemove));
-    for studIdx=1:length(uniqueOrdData.uniqueStudentNames)
-        I = uniqueOrdData.uniqueStepNames(stepIdx) == ordData.stepOrd & ...
-            uniqueOrdData.uniqueStudentNames(studIdx) == ordData.studentOrd & ...
-            ~transactionsToRemove;      
-        cumI = cumI | I;
-        numStudentsAsked = numStudentsAsked + (sum(I) > 0);
-    end
+    I = uniqueOrdData.uniqueStepNames(stepIdx) == ordData.stepOrd & ...
+        ~transactionsToRemove;
+    studentsWithStep = unique(ordData.studentOrd(I));
+    numStudentsAsked = length(studentsWithStep);
+    cumI = I;
     if numStudentsAsked < 10
         stepNamesToRemove(stepIdx) = true;
         transactionsToRemove(cumI) = true;
@@ -289,20 +411,35 @@ uniqueOrdData.uniqueKC(kcsToRemove) = [];
 ordData = Helpers.mapField(ordData, @droplevels);
 uniqueOrdData = Helpers.mapField(uniqueOrdData, @droplevels);
 
-%{
-
-ordData.stepOrd(transactionsToRemove) = [];
-ordData.studentResOrd(transactionsToRemove) = [];
-ordData.studentOrd(transactionsToRemove) = [];
-ordData.outcomeOrd(transactionsToRemove) = [];
-ordData.kcOrd(transactionsToRemove) = [];
-ordData.kcCatOrd(transactionsToRemove) = [];
-
-
-ordData.kcOrd = droplevels(ordData.kcOrd);
-
-
-ordData.stepOrd = droplevels(stepOrd);
-%}
 numRemoved = sum(transactionsToRemove);
 end
+
+function a = combineUnique(a,b)
+f = fields(a);
+for idx=1:length(f)
+    a.(f{idx}) = unique([a.(f{idx}) ; b.(f{idx})]);
+end
+end
+
+
+function a = combinedNominal(a,b)
+f = fields(a);
+for idx=1:length(f)
+    a.(f{idx}) = [a.(f{idx}) ; b.(f{idx})];
+end
+end
+
+function [I] = hasPrefix(prefix,strings)
+    hasPrefix = @(s) StringHelpers.isPrefix(s,prefix);
+    I = cellfun(hasPrefix,strings,'UniformOutput',true);
+end
+
+function [I] = hasSuffix(suffix,strings)
+    hasSuffix = @(s) StringHelpers.isSuffix(s,suffix);
+    I = cellfun(hasSuffix,strings,'UniformOutput',true);
+end
+
+
+
+
+

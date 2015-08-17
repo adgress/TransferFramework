@@ -88,6 +88,9 @@ classdef Helpers < handle
             f = fields(s);
             for idx=1:length(f)
                 ff = f{idx};
+                if isempty(s.(ff))
+                    continue;
+                end
                 s.(ff) = func(s.(ff));
             end
         end

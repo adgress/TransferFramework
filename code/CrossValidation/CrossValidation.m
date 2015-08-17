@@ -72,10 +72,27 @@ classdef CrossValidation < handle
                 trainAccs(paramIdx) = trainAcc/length(obj.splits);
                 paramResults{paramIdx} = splitResults;
             end
+            print = 1;
+            if print
+                for idx=1:length(paramPowerSet)                    
+                    p = paramPowerSet{idx};
+                    for sIdx=1:length(p);
+                        s = p(sIdx).value;
+                        if isa(s,'double')
+                            s = num2str(s);
+                        end
+                        display([p(sIdx).key ': ' s]);
+                    end
+                    display(num2str(accs(idx)));
+                end
+            end
             [~,bestInd] = max(accs);
             bestParams = paramPowerSet{bestInd};
             bestAcc = accs(bestInd);
-            bestAcc
+            display(['Best Acc:' num2str(bestAcc)]);
+            for idx=1:length(bestParams)
+                display([bestParams(idx).key ': ' num2str(bestParams(idx).value)]);
+            end
         end
         
         % {a, {a1,a2,...,an}}

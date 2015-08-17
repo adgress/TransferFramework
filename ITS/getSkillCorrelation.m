@@ -1,6 +1,9 @@
-function [c] = getSkillCorrelation()
+function [c] = getSkillCorrelation(file)
+if ~exist('file','var')
+    error('');
+end
 %file = 'Data/ITS/DS1-69.mat';
-file = 'Data/ITS/DS2-35.mat';
+%file = 'Data/ITS/DS2-35.mat';
 data = load(file);
 data = data.data;
 numStuds = size(data.WCorrect,2);

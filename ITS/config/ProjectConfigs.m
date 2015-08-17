@@ -64,8 +64,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.dataSetName = 'DS2-35';
                     c.numLabeledPerClass = 2:5;                      
                     if useCommonSkills
-                        %c.numLabeledPerClass = [20];
-                        c.numLabeledPerClass = [2 5 10 20];
+                        c.numLabeledPerClass = [20];
+                        %c.numLabeledPerClass = [2 5 10 20];
                         %c.labelsToUse = [4 5 6 13];
                         c.labelsToUse = [4 5];
                         c.remapLabels = true;

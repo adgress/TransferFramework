@@ -271,7 +271,7 @@ classdef HFMethod < Method
                 a = distMat.W;
                 distMat.W = Helpers.SimilarityToDistance(distMat.W);                                    
                 [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);            
-                %Wrbf = distMat.W;
+                %Wrbf = a;
                 Wrbf(isZero) = 0;
             end
             useAlt = obj.get('useAlt');

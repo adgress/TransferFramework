@@ -6,6 +6,16 @@ classdef StringHelpers
     end
     
     methods(Static)
+        function [b] = isSuffix(string,suffix)
+            assert(~isempty(suffix));
+            I = strfind(string,suffix);
+            b = ~isempty(I) && I(end) == length(string) - length(suffix) + 1;
+        end
+        function [b] = isPrefix(string,prefix)
+            assert(~isempty(prefix));
+            I = strfind(string,prefix);
+            b = ~isempty(I) && I(1) == 1;
+        end
         function [split] = split_string(string,delim,removeDuplicates)
             if ~exist('removeDuplicates','var')
                 removeDuplicates = true;

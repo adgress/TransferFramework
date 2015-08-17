@@ -10,7 +10,9 @@ classdef ITSConstantMethod < ITSRandomMethod
             obj = obj@ITSRandomMethod(configs);
         end
         function [v] = getPrediction(obj,numRows,numCols)
-            v = .5*ones(numRows,numCols);
+            s = 1;
+            %s = .5;
+            v = s*ones(numRows,numCols);
         end
         function [prefix] = getPrefix(obj)
             prefix = 'ITSConstant';
