@@ -15,9 +15,12 @@ classdef SplitConfigs < Configs
             obj.set('normalizeRows',0);
         end
         
-        function [] = setITS(obj,dataSet)
+        function [] = setITS(obj,dataSet,useReg)
             if ~exist('dataSet','var')
                 dataSet = 'DS1';
+            end
+            if ~exist('useReg','var')
+                useReg = false;
             end
             obj.delete('maxTrainNumPerLabel');
             obj.configsStruct.inputFilePrefix='Data/ITS/';
@@ -29,6 +32,14 @@ classdef SplitConfigs < Configs
             obj.set('WName','W');
             obj.set('YName','Y');
             obj.set('includeDataStruct',true);
+            %obj.set('WIDs','');
+            %obj.set('WNames','');
+            if useReg
+                obj.set('regProb',true);
+                obj.set('WName','studentW');
+                obj.set('YName','studentSkills');
+                obj.configsStruct.outputFile=[dataSet '_reg_split_data.mat'];
+            end
         end
         function [] = setYeastUCIBinary(obj)
             obj.delete('maxTrainNumPerLabel');

@@ -1,4 +1,4 @@
-function [c] = getSkillCorrelation(file)
+function [C] = getSkillCorrelation(file)
 if ~exist('file','var')
     error('');
 end
@@ -18,13 +18,26 @@ for studIdx=1:numStuds
         stepsWithSkill = Y == skillIdx & answeredQuestion(:,studIdx);
         Wcurr = W(stepsWithSkill,studIdx);
         if isempty(Wcurr)
-            studentSkills(studIdx,skillIdx) = .5;
+            studentSkills(studIdx,skillIdx) = nan;
             continue;
         end
         studentSkills(studIdx,skillIdx) = mean(Wcurr);
     end
 end
-c = corr(studentSkills);
+C = zeros(numSkills);
+for i=1:numSkills
+    for j=1:numSkills
+        si = studentSkills(:,i);
+        sj = studentSkills(:,j);
+        I = ~isnan(si + sj);        
+        C(i,j) = corr(si(I),sj(I));
+        if sum(I) < 2
+            display('Not enough skill overlap to estimate correlation');
+        end
+    end
+end
+%c = corr(studentSkills);
+
 format short 
-c
+C
 end

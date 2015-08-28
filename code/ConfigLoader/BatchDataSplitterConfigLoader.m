@@ -91,10 +91,20 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                 end
                 Y = data.(YName);                
                 newData.Y = Y;
-                newData.WNames = Helpers.getField(data,'WNames');
+                
                 newData.YNames = Helpers.getField(data,'YNames');
-                newData.WIDs = Helpers.getField(data,'WIDs');
-                newData.Wdim = Helpers.getField(data,'Wdim');
+                newData.WIDs = {};
+                newData.Wdim = [];
+                newData.WNames = {};
+                if configs.has('WNames')
+                    newData.WNames = Helpers.getField(data,'WNames');
+                end
+                if configs.has('WIDs')
+                    newData.WIDs = Helpers.getField(data,'WIDs');
+                end
+                if configs.has('Wdim')
+                    newData.Wdim = Helpers.getField(data,'Wdim');
+                end
                 %TODO: Why did we need this?
                 %allFields = fields(data);
                 %data = data.(allFields{1});

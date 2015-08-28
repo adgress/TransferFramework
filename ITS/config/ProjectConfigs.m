@@ -13,11 +13,20 @@ classdef ProjectConfigs < ProjectConfigsBase
         llgcCVParams
         nwCVParams
         useDS1
+        useDS3
         useLLGC
+        usePRG
         QQEdgesExperiment
         QQEdges
         makeRBF
         labelsToUse
+        justCorrectNodes
+        useLLGCRegression
+        
+        sourceLabels
+        targetLabels
+        graphTransferExp
+        useMean
     end
     
     methods(Static, Access=private)
@@ -33,23 +42,64 @@ classdef ProjectConfigs < ProjectConfigsBase
             c = ProjectConfigs.CreateSingleton();
             c.smallResultsFiles = false;
             c.makeRBF = true;            
-            c.dataSet = Constants.ITS_DATA;
-            c.useStudentData = false;
-            c.useDS1 = 0;
-            c.useLLGC = 1;
+            c.dataSet = Constants.ITS_DATA;            
             c.QQEdgesExperiment = 0;
             c.QQEdges = 1;
             c.labelsToUse = [];
+            c.justCorrectNodes = false;
+            c.useLLGCRegression = false;
             useCommonSkills = 1;
             singleSkill = 1;
+            
+            
+            c.useStudentData = 1;
+            c.useDS1 = 1;
+            c.useDS3 = 0;
+            c.usePRG = 0;
+            c.graphTransferExp = 1;
+            
+            c.useLLGC = 0;
+            c.useMean = 0;
+            
+            if c.graphTransferExp
+                c.useLLGCRegression = 1;
+            end            
             if c.useStudentData
-                c.dataSetName = 'DS1-69-student';
-                c.labelsToKeep = 1;
-                %c.numLabeledPerClass = 2:2:10;
-                c.numLabeledPerClass = [5 10 15];
-                c.measure = Measure();                
-            else
                 if c.useDS1
+                    %c.dataSetName = 'DS1-69';
+                    c.dataSetName = 'DS1-69_reg';
+                    %c.labelsToKeep = 1;
+                    c.sourceLabels = 4;
+                    c.targetLabels = 5;
+                    c.numLabeledPerClass = [5 10 15];                                
+                elseif c.usePRG
+                    c.dataSetName = 'Prgusap1_reg';
+                    %c.dataSetName = 'Prgusap1';
+                    c.sourceLabels = 4;
+                    c.targetLabels = 1;    
+                    c.numLabeledPerClass = [5 10 20 30];
+                    %c.numLabeledPerClass = [30];
+                else
+                    c.dataSetName = 'DS2-35_reg';
+                    %c.dataSetName = 'DS2-35';
+                    %c.labelsToKeep = 1;
+                    c.numLabeledPerClass = [2 5 10 15];     
+                    %c.numLabeledPerClass = [15];
+                    %{
+                    c.sourceLabels = 5;
+                    c.targetLabels = 6;                    
+                    %}
+                    c.sourceLabels = 6;
+                    c.targetLabels = 14;                    
+                end
+                c.measure = L2Measure();                
+            else
+                if c.usePRG
+                    c.dataSetName = 'Prgusap1';
+                    c.labelsToUse = 1;
+                    %c.numLabeledPerClass = [5 10 15];
+                    c.numLabeledPerClass = [15];
+                elseif c.useDS1
                     c.dataSetName = 'DS1-69';
                     c.numLabeledPerClass = 2:3;   
                     if useCommonSkills
@@ -74,24 +124,32 @@ classdef ProjectConfigs < ProjectConfigsBase
                         %c.labelsToUse = 5;
                         c.labelsToUse = 4;
                     end
-                end
+                end                               
+            end
+            if ~c.useStudentData
+                c.measure = ITSMeasure();
                 c.combineGraphFunc = @combineGraphs;
                 c.evaluatePerfFunc = @evaluateITSPerf;
-                
-                c.measure = ITSMeasure();
+                if c.justCorrectNodes
+                    c.combineGraphFunc = @makeSingleNodeGraph;
+                end
+            else
+                c.measure = L2Measure();
+                c.preprocessDataFunc = @makeSkillTransferGraph;
             end
             c.llgcCVParams = struct('key',{'alpha','sigma'});
             
             c.llgcCVParams(1).values = num2cell(10.^(-4:4));            
-            c.llgcCVParams(2).values = num2cell(5.^(-4:4));
-            
-            %{
-            c.llgcCVParams(1).values = num2cell(10.^(5));
-            c.llgcCVParams(2).values = num2cell([.1]);            
-            %}
+            c.llgcCVParams(2).values = num2cell(2.^(-4:4));
+            %c.llgcCVParams(1).values = num2cell(100);            
+            %c.llgcCVParams(2).values = num2cell(.2);
+                        
+            %c.llgcCVParams(2).values = num2cell([.001 .01 .1:.1:2 10 100 1000]);
+            %c.llgcCVParams(2).values = num2cell([.001 .01 .1:.1:2 10 100 1000]);
             %c.nwCVParams = [];
             c.nwCVParams = struct('key','sigma');
-            c.nwCVParams(1).values = num2cell(2.^(-6:6));
+            c.nwCVParams(1).values = num2cell(2.^(-5:5));
+            %c.nwCVParams(1).values = num2cell(.01*(2:2:100));
             %c.nwCVParams(1).values = num2cell(.2);
             c.alpha = [];
             %c.sigma = .2;            
@@ -104,7 +162,15 @@ classdef ProjectConfigs < ProjectConfigsBase
         function [c] = SplitConfigs()
             pc = ProjectConfigs.Create();
             c = SplitConfigs();
-            c.setITS(pc.dataSetName);        
+            useReg = 1;
+            c.setITS(pc.dataSetName,useReg);                 
+            if pc.usePRG || pc.useDS3
+                if pc.useStudentData
+                    c.set('maxToUse',500);
+                else
+                    c.set('maxToUse',[inf 1000]);
+                end
+            end
         end
         
         
@@ -125,15 +191,27 @@ classdef ProjectConfigs < ProjectConfigsBase
             end
             if ~isempty(title)
                 c.set('title',title);
-            end            
+            end
             
             c.set('prefix','results');
             
             pc = ProjectConfigs.Create();
             if pc.useStudentData
-                c.set('prefix','results_DS1-69-student');
-                c.set('dataSet',{'DS1-69-student'});
-                c.set('resultsDirectory','results_DS1-69-student/DS1-69-student');
+                if pc.useDS1                    
+                    c.set('prefix','results_DS1-69_reg');
+                    c.set('dataSet',{'results_DS1-69_reg'});
+                    c.set('resultsDirectory','results_DS1-69_reg/');                                        
+                elseif pc.usePRG
+                    c.set('prefix','results_Prgusap1_reg');
+                    c.set('dataSet',{'results_Prgusap1_reg'});
+                    c.set('resultsDirectory','results_Prgusap1_reg');
+                else
+                    c.set('prefix','results_DS2-35_reg');
+                    c.set('dataSet',{'results_DS2-35_reg'});
+                    c.set('resultsDirectory','results_DS2-35_reg/');
+                                        
+                end
+                c.set('measure',L2Measure());
             else
                 c.set('measure',ITSMeasure());
                 if pc.useDS1                
@@ -163,9 +241,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                 title = 'Just Students';
                 methodResultsFileNames{end+1} = 'LLGC.mat';
                 methodResultsFileNames{end+1} = 'NW.mat';
+                methodResultsFileNames{end+1} = 'Mean.mat';
                 legend = {...
                     'LLGC', ...
                     'NW',...
+                    'Mean',...
                     };
             else
                 title = ['Bipartite Student-Question Graph: ' pc.dataSetName];

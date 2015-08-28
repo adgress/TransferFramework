@@ -193,7 +193,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             end
                             assert(all(I));
                         end
-
+                        f = pc.preprocessDataFunc;
+                        if ~isempty(f)
+                            [newSplit.targetData,removed] = f(newSplit.targetData);
+                            newSplit.targetType(removed) = [];
+                        end
                         dataAndSplitsCopy.allSplits{end+1} = newSplit;
                     end
                 end
@@ -212,7 +216,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
         function [dataAndSplits] = loadData(obj,mainConfigs)
             dataAndSplits = load(mainConfigs.getDataFileName());
             dataAndSplits = dataAndSplits.dataAndSplits;
-            if isempty(dataAndSplits.configs)
+            if ~isfield(dataAndSplits,'configs') || isempty(dataAndSplits.configs)
                 dataAndSplits.configs = Configs();
                 dataAndSplits.configs.set('numSplits',length(dataAndSplits.allSplits));
             end

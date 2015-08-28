@@ -25,7 +25,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             end
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain,classesToKeep);
             assert(sampledTrain.numClasses == train.numClasses);
-            if sum(sampledTrain.Y > 0) ~= sampledTrain.numClasses*numPerClass
+            if ~isnan(sampledTrain.Y) ~= sampledTrain.numClasses*numPerClass
                 warning('Sample size is weird');
             end
             assert(numPerClass > 1);
@@ -56,7 +56,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex);
-            if sum(sampledTrain.Y > 0) ~= numPerClass*sampledTrain.numClasses
+            if ~isnan(sampledTrain.Y) ~= numPerClass*sampledTrain.numClasses
                 warning('Possibly wrong number of labels');
             end
             [~,trainTestInput] = ...
@@ -97,10 +97,10 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 trainingDataMetadata.numSourceLabels = 0;
             else
                 trainingDataMetadata.numSourceLabels = ...
-                    size(find(sources{1}.Y > 0),1);
+                    size(find(~isnan(sources{1}.Y),1);
             end
             trainingDataMetadata.numTargetLabels = ...
-                size(find(sampledTrain.Y > 0),1);
+                size(find(~isnan(sampledTrain.Y)),1);
             trainingDataMetadata.numLabeledPerClass = numPerClass;
             trainingDataMetadata.numTrain = numel(sampledTrain.Y);
             trainingDataMetadata.numTest = numel(test.Y);

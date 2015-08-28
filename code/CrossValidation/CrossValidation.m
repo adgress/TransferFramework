@@ -17,11 +17,15 @@ classdef CrossValidation < handle
         function [] = createCVSplits(obj,numSplits,percTrain)
             percArray = [percTrain 1-percTrain 0];
             Y = obj.trainData.Y;
-            Y(obj.trainData.isTargetTest()) = -1;
+            Y(obj.trainData.isTargetTest()) = nan;
             obj.splits = cell(numSplits,1);
+            c = Configs();
+            if obj.trainData.isRegressionData
+                c.set('regProb',true);
+            end
             for idx=1:numSplits
                 obj.splits{idx} = LabeledData.generateSplit(...
-                    percArray,Y,Configs());
+                    percArray,Y,c);
             end
         end
         
@@ -72,7 +76,7 @@ classdef CrossValidation < handle
                 trainAccs(paramIdx) = trainAcc/length(obj.splits);
                 paramResults{paramIdx} = splitResults;
             end
-            print = 1;
+            print = 0;
             if print
                 for idx=1:length(paramPowerSet)                    
                     p = paramPowerSet{idx};

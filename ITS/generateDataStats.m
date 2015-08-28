@@ -1,9 +1,9 @@
 function [  ] = generateDataStats(  )
 %file = 'Data/ITS/DS1-69';
-file = 'Data/ITS/DS2-35';
+%file = 'Data/ITS/DS2-35';
 %file = 'Data/ITS/DS3-39';
 %file = 'Data/ITS/DS3-39-pruned.mat';
-%file = 'Data/ITS/Prgusap1-.mat';
+file = 'Data/ITS/Prgusap1.mat';
 
 data = load(file);
 data = data.data;

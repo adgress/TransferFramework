@@ -28,6 +28,7 @@ classdef GraphHelpers
         
         function [score,percCorrect,Ypred,Yactual,labeledTargetScores,savedData] ...
                 = LOOCV(similarityDistMat,useHF,alpha,savedData)
+            error('Update this');
             if nargin < 2
                 useHF = false;
             end             
@@ -136,7 +137,7 @@ classdef GraphHelpers
         end
         function [sigma,bestScore,bestAcc] = autoSelectSigma(...
                 distMat,useMeanSigma,useHF)
-            
+            error('update');
             if nargin < 3
                 useHF = false;
             end

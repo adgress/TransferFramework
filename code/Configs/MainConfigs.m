@@ -188,6 +188,15 @@ classdef MainConfigs < Configs
             llgcObj = LLGCMethod(learnerConfigs);
             obj.configsStruct.learners=llgcObj;
         end
+        function [] = setMeanConfigs(obj, learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.configLoader=ExperimentConfigLoader();
+            m = MeanMethod(learnerConfigs);
+            obj.configsStruct.learners=m;
+        end
+        
         function [] = setLearnerLLGC(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();

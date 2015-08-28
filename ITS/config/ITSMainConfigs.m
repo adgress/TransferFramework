@@ -26,12 +26,14 @@ classdef ITSMainConfigs < MainConfigs
             if pc.useStudentData
                 if pc.useLLGC
                     learnerConfigs.set('cvParameters',pc.llgcCVParams);                    
-                    obj.setLLGCConfigs(learnerConfigs);
                     learnerConfigs.set('makeRBF',true);
+                    obj.setLLGCConfigs(learnerConfigs);                    
+                elseif pc.useMean
+                    obj.setMeanConfigs(learnerConfigs);                    
                 else
                     learnerConfigs.set('cvParameters',pc.nwCVParams);
-                    obj.setNW(learnerConfigs);         
                     learnerConfigs.set('makeRBF',true);
+                    obj.setNW(learnerConfigs);                             
                 end                
             else               
                 if pc.useLLGC
@@ -50,11 +52,12 @@ classdef ITSMainConfigs < MainConfigs
                     learnerConfigs.set('makeRBF',true);
                                         
                     obj.setITSMethod(learnerConfigs);
+                    
                     %obj.setITSRandom(learnerConfigs);
                     
-                    learnerConfigs.set('sigma',1);
-                    learnerConfigs.set('cvParameters',[]);
-                    obj.setITSConstant(learnerConfigs);
+                    %learnerConfigs.set('sigma',1);
+                    %learnerConfigs.set('cvParameters',[]);
+                    %obj.setITSConstant(learnerConfigs);
                     
                 end
             end

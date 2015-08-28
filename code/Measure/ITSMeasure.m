@@ -14,7 +14,7 @@ classdef ITSMeasure < Measure
             normalizedError = mean(err(:));
             measureResults.learnerStats.valTest = 1 - normalizedError;
             measureResults.learnerStats.testResults = 1 - normalizedError;
-            measureResults.learnerStats.trainResults = -1;
+            measureResults.learnerStats.trainResults = nan;
             if measureResults.learnerStats.valTest > .7
                 %display('');
             end

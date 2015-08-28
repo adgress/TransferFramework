@@ -180,8 +180,8 @@ classdef DataSet < LabeledData
             if keepTestLabels
                 selectedItems = selectedItems | obj.isTargetTest();
             end
-            sampledDataSet.Y(~selectedItems,:) = -1;
-            if sum(sampledDataSet.Y(sampledDataSet.isTargetTrain) > 0) ~= numItems
+            sampledDataSet.Y(~selectedItems,:) = nan;
+            if sum(~isnan(sampledDataSet.Y(sampledDataSet.isTargetTrain))) ~= numItems
                 warning('Sample size is weird'); 
             end
         end
@@ -212,28 +212,34 @@ classdef DataSet < LabeledData
             end
             if ~exist('yIdx','var')
                 yIdx = 1;
-            end
-            itemsPerClass = ceil(numItems/obj.numClasses);
-            selectedItems = false(size(obj.Y,1),1);
-            for i=obj.classes()'               
-                if keepAllTest
-                    XWithClass = find(obj.Y(:,yIdx)==i & obj.isLabeledTargetTrain());     
-                else
-                    XWithClass = find(obj.Y(:,yIdx)==i);     
+            end            
+            if obj.isRegressionData
+                selectedItems = false(size(obj.Y,1),1);
+                I = find(obj.isLabeledTargetTrain);
+                selectedItems(I(1:numItems)) = true;
+            else
+                itemsPerClass = ceil(numItems/obj.numClasses);
+                selectedItems = false(size(obj.Y,1),1);
+                for i=obj.classes()'               
+                    if keepAllTest
+                        XWithClass = find(obj.Y(:,yIdx)==i & obj.isLabeledTargetTrain());     
+                    else
+                        XWithClass = find(obj.Y(:,yIdx)==i);     
+                    end
+                    itemsToUse = size(XWithClass,1);                
+                    if isempty(intersect(classesToKeep,i))
+                        itemsToUse = min(itemsPerClass, itemsToUse);
+                    end
+                    selectedItems(XWithClass(1:itemsToUse)) = 1;                
                 end
-                itemsToUse = size(XWithClass,1);                
-                if isempty(intersect(classesToKeep,i))
-                    itemsToUse = min(itemsPerClass, itemsToUse);
-                end
-                selectedItems(XWithClass(1:itemsToUse)) = 1;                
+                c = obj.classes;
+                assert(isequal(i,c(end)));
             end
-            c = obj.classes;
-            assert(isequal(i,c(end)));
             %assert(sum(selectedItems) ~= 49);
             %assert(sum(selectedItems) == itemsPerClass*length(obj.classes()));
         end
         function [Xl, Yl, indices] = getLabeledData(obj)
-            indices = obj.Y > 0;
+            indices = ~isnan(obj.Y);
             Xl = obj.X(indices,:);
             Yl = obj.Y(indices,:);
         end
@@ -263,8 +269,12 @@ classdef DataSet < LabeledData
                 assert(isempty(obj.W));
             else
                 obj.W = Helpers.selectW(obj.W,~shouldRemove,obj.Wdim);
-                obj.WIDs = Helpers.selectFromCells(obj.WIDs,~shouldRemove,obj.Wdim);
-                obj.WNames = Helpers.selectFromCells(obj.WNames,~shouldRemove,obj.Wdim,true);
+                if ~isempty(obj.WIDs)
+                    obj.WIDs = Helpers.selectFromCells(obj.WIDs,~shouldRemove,obj.Wdim);
+                end
+                if ~isempty(obj.WNames)
+                    obj.WNames = Helpers.selectFromCells(obj.WNames,~shouldRemove,obj.Wdim,true);
+                end
             end
             obj.Y = obj.Y(~shouldRemove,:);
             obj.type = obj.type(~shouldRemove);
@@ -310,13 +320,18 @@ classdef DataSet < LabeledData
                 end
             else
                 for idx=1:length(obj.W)
+                    %obj.W{idx} = obj.W{idx}(permutation,:);
+                    
+                    %TODO: Is this correct?
                     obj.W{idx} = obj.W{idx}(permutation,permutation);
                 end
                 p = {permutation};
             end
             
-            for idx=1:length(obj.WIDs)
-                obj.WIDs{idx} = obj.WIDs{idx}(p{idx});
+            for idx=1:length(p)
+                if ~isempty(obj.WIDs)
+                    obj.WIDs{idx} = obj.WIDs{idx}(p{idx});
+                end
                 if ~isempty(obj.WNames)
                     obj.WNames{idx} = obj.WNames{idx}(p{idx});
                 end
@@ -372,11 +387,6 @@ classdef DataSet < LabeledData
                 obj.isValidation = false(size(obj.X,1),1);
             end
         end
-        %{
-        function [I] = get.isLabeled(obj)
-            I = obj.Y > 0;
-        end
-        %}
     end
     
     methods(Static)

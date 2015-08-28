@@ -31,6 +31,7 @@ classdef LabeledData < matlab.mixin.Copyable
         numLabels
         isMultilabel
         isLabeled
+        isRegressionData
     end
     
     methods
@@ -59,7 +60,7 @@ classdef LabeledData < matlab.mixin.Copyable
             end
         end
         function [] = clearLabels(obj, shouldClearLabels)
-            obj.Y(shouldClearLabels,:) = -1;
+            obj.Y(shouldClearLabels,:) = nan;
         end
         
         function [] = swapSourceAndTarget(obj)
@@ -100,7 +101,7 @@ classdef LabeledData < matlab.mixin.Copyable
             if ~exist('yIdx','var')
                 yIdx = 1;
             end
-            I = obj.Y(:,yIdx) > 0;
+            I = ~isnan(obj.Y(:,yIdx));
         end
         
         function [b] = get.isMultilabel(obj)
@@ -112,6 +113,10 @@ classdef LabeledData < matlab.mixin.Copyable
         end
         
         function [v] = get.classes(obj,yIdx)
+            if obj.isRegressionData
+                v = [];
+                return;
+            end
             if ~exist('yIdx','var')
                 yIdx = 1;
             end
@@ -119,10 +124,21 @@ classdef LabeledData < matlab.mixin.Copyable
         end
         
         function [v] = get.isNoisy(obj)
-            v = obj.Y ~= obj.trueY & obj.isLabeled();
+            if size(obj.Y > 1)
+                v = [];
+            else
+                v = obj.Y ~= obj.trueY & obj.isLabeled();
+            end
         end
-        
+        function [b] = get.isRegressionData(obj)
+            I = obj.isLabeled;
+            b = any(obj.Y(I) ~= uint32(obj.Y(I)));
+        end
         function [v] = get.numPerClass(obj)
+            if obj.isRegressionData
+                v = [];
+                return;
+            end
             v = [];
             for i=obj.classes(:)'
                 v(i) = length(find(obj.Y == i));
@@ -131,6 +147,10 @@ classdef LabeledData < matlab.mixin.Copyable
         end
         
         function [v] = get.percLabeledNoisy(obj)
+            if obj.isRegressionData
+                v = [];
+                return;
+            end
             v = mean(obj.isNoisy(obj.isLabeled()));
         end
         
@@ -149,13 +169,13 @@ classdef LabeledData < matlab.mixin.Copyable
             n = sum(obj.type == Constants.SOURCE);
         end
         function [n] = numLabeledSource(obj)
-            n = sum(obj.Y > 0 & ...
+            n = sum(obj.isLabeled & ...
                 obj.type == Constants.SOURCE);
         end
         
         function [Yu] = getBlankLabelVector(obj)
             Yu = obj.Y;
-            Yu(:) = -1;
+            Yu(:) = nan;
         end
         function [b] = hasTypes(obj)
             b = length(obj.Y) == length(obj.type) && ...
@@ -179,7 +199,7 @@ classdef LabeledData < matlab.mixin.Copyable
             obj.type = DataSet.SourceType(obj.size());
         end
         function [] = removeTestLabels(obj)
-            obj.Y(obj.type == Constants.TARGET_TEST,:) = -1;
+            obj.Y(obj.type == Constants.TARGET_TEST,:) = nan;
         end 
         function [inds] = isClass(obj,class)
             inds = false(length(obj.Y),1);
@@ -225,7 +245,10 @@ classdef LabeledData < matlab.mixin.Copyable
             if ~exist('configs','var')
                 split = DataSet.generateSplit([percTrain percTest percValidate],...
                     obj.Y,dim);            
-            else
+            elseif configs.get('regProb',false)
+                split = DataSet.generateSplit([percTrain percTest percValidate],...
+                    obj.Y,configs,dim);
+            else                
                 IDs = 1:length(obj.Y);
                 if isempty(obj.X) && ~isempty(obj.WIDs)
                     IDs = obj.WIDs{dim};
@@ -251,44 +274,60 @@ classdef LabeledData < matlab.mixin.Copyable
             assert(sum(percentageArray) == 1,'Split doesn''t sum to one');
             percentageArray = cumsum(percentageArray);
             dataSize = size(Y,1);
-            split = zeros(dataSize,1);
-            uniqueY = unique(Y(Y > 0));
-            isMultilabel = size(Y,2) > 1;
-            if isMultilabel
-                uniqueY = 1;
-            end
-            for i=1:length(uniqueY)
-                thisClass = find(Y == uniqueY(i));   
-                if isMultilabel
-                    thisClass = 1:dataSize;
-                end
-                numThisClass = numel(thisClass);
-                assert(numThisClass >= length(unique(percentageArray)));
-                perm = randperm(numThisClass);
-                thisClassRandomized = thisClass(perm);
-                numToPick = ceil(numThisClass*percentageArray);
-                %diff = max(numToPick(1)-maxTrainNumPerLabel,0);
-                numToPick(1) = min(numToPick(1),maxTrainNumPerLabel);
-                %numToPick = numToPick-diff;                
-                if numToPick(2) == numToPick(1)
-                    numToPick(1) = numToPick(1) - 1;
-                end
-                assert(numToPick(2)-numToPick(1) > 0);
+            split = zeros(dataSize,1);            
+            if configs.get('regProb',false)
+                
+                labeledInds = find(~isnan(Y(:,1)));
+                perm = randperm(length(labeledInds));
+                perm = labeledInds(perm);
+                numToPick = floor(length(perm)*percentageArray);
                 numEach = [0 numToPick];
-                for j=1:numel(percentageArray)       
-                    if numEach(j) == numEach(j+1)
-                        %display('TODO: Potential off by one error');
-                        continue;
-                    end
-                    indices = thisClassRandomized(numEach(j)+1:numEach(j+1));
-                    split(indices) = j;  
+                for j=1:numel(percentageArray)
+                    indices = perm(numEach(j)+1:numEach(j+1));
+                    split(indices) = j;
                     if j < 3
-                        assert(length(indices) > 0);
+                        assert(~isempty(indices));
                     end
+                end                                
+            else            
+                uniqueY = unique(Y(~isnan(Y)));
+                isMultilabel = size(Y,2) > 1;
+                if isMultilabel
+                    uniqueY = 1;
                 end
-                assert(sum(split(thisClassRandomized) == 1) == numToPick(1));
-            end
-            isLabeled = sum(Y > 0,2) > 0;
+                for i=1:length(uniqueY)
+                    thisClass = find(Y == uniqueY(i));   
+                    if isMultilabel
+                        thisClass = 1:dataSize;
+                    end
+                    numThisClass = numel(thisClass);
+                    assert(numThisClass >= length(unique(percentageArray)));
+                    perm = randperm(numThisClass);
+                    thisClassRandomized = thisClass(perm);
+                    numToPick = ceil(numThisClass*percentageArray);
+                    %diff = max(numToPick(1)-maxTrainNumPerLabel,0);
+                    numToPick(1) = min(numToPick(1),maxTrainNumPerLabel);
+                    %numToPick = numToPick-diff;                
+                    if numToPick(2) == numToPick(1)
+                        numToPick(1) = numToPick(1) - 1;
+                    end
+                    assert(numToPick(2)-numToPick(1) > 0);
+                    numEach = [0 numToPick];
+                    for j=1:numel(percentageArray)       
+                        if numEach(j) == numEach(j+1)
+                            %display('TODO: Potential off by one error');
+                            continue;
+                        end
+                        indices = thisClassRandomized(numEach(j)+1:numEach(j+1));
+                        split(indices) = j;  
+                        if j < 3
+                            assert(length(indices) > 0);
+                        end
+                    end
+                    assert(sum(split(thisClassRandomized) == 1) == numToPick(1));
+                end                
+            end    
+            isLabeled = sum(~isnan(Y(:,1)),2) > 0;
             splitIsLabeled = split(isLabeled > 0);
             assert(sum(splitIsLabeled==0) == 0);
         end

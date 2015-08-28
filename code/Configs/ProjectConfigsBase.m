@@ -24,6 +24,8 @@ classdef ProjectConfigsBase < handle
         remapLabels
         
         useSavedSmallResults
+        
+        preprocessDataFunc
     end
     
     methods

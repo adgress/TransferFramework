@@ -1,5 +1,6 @@
 function [] = makeStudentData()
     fileName = 'Data/ITS/DS1-69';
+    fileName = 'Data/ITS/DS2-35';
     data = load(fileName);
     data = data.data;
     labelToUse = 1;
@@ -12,11 +13,14 @@ function [] = makeStudentData()
         y = labels(yIdx);
         I = data.Y == y;
         studentSkills = mean(W(I,:));
+        %{
         m = median(studentSkills);
         binaryY = studentSkills';
         binaryY(binaryY < m) = 0;
         binaryY(binaryY >= m) = 1;
         Y(:,yIdx) = binaryY;
+        %}
+        Y(:,yIdx) = studentSkills';
     end
     distW = zeros(numStudents);
     usesSkill = data.Y == labelToUse;

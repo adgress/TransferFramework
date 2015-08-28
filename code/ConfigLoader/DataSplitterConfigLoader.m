@@ -54,7 +54,35 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     end                                
                 end   
                 error('Set Wdim?');
-            end         
+            end    
+            if obj.has('maxToUse')
+                maxToUse = obj.get('maxToUse');
+                if length(maxToUse) == 1
+                    for wIdx=1:length(allData.W)
+                        allData.W{wIdx} = ...
+                            allData.W{wIdx}(1:maxToUse,1:maxToUse);
+                        if ~isempty(allData.WIDs)
+                            allData.WIDs{wIdx}(maxToUse+1:end) = [];
+                        end
+                        if ~isempty(allData.WNames)
+                            allData.WNames{wIdx}(maxToUse+1:end) = [];
+                        end
+                    end       
+                    allData.Y(maxToUse+1:end,:) = [];
+                    allData.trueY(maxToUse+1:end,:) = [];
+                    allData.instanceIDs(maxToUse+1:end) = [];
+                    allData.type(maxToUse+1:end) = [];
+                else
+                    error('');
+                    a = maxToUse(2);
+                    assert(isinf(maxToUse(1)));
+                    for wIdx=1:length(allData.W)
+                        allData.W{wIdx}(:,a+1:end) = [];
+                    end
+                    allData.WIDs{2}(a+1:end) = [];
+                    allData.WNames{2}(a+1:end) = [];
+                end
+            end
             allData.name = obj.get('targetName','');
             if obj.has('numToUsePerLabel')
                 n = obj.get('numToUsePerLabel');
@@ -175,6 +203,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
             outputFile = [obj.get('outputFilePrefix') '/' obj.get('outputFile')];
             Helpers.MakeDirectoryForFile(outputFile);
             dataAndSplits = obj.dataAndSplits;
+            dataAndSplits = rmfield(dataAndSplits,'data');
+            dataAndSplits.configs.delete('data')
+            dataAndSplits.configs.delete('originalData')
             display(['Saving splits to:' outputFile]);
             save(outputFile,'dataAndSplits');            
         end

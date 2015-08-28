@@ -54,18 +54,31 @@ classdef LLGC < handle
             v = mean(classScores);
         end
         
-        function [fu,invM] = llgc_inv(W,fl,alpha,invM)
+        function [fu,invM] = llgc_inv(W,fl,alpha,invM,regProb)
             if ~exist('invM','var')
                 W(logical(speye(size(W)))) = 0;
                 invM = LLGC.makeInvM(W,alpha);
             end
-            if ~LLGC.normRows && size(fl,2) > 1
-                fl = LLGC.labelMatrix2vector(fl);
-            end
-            fu = invM*fl;         
-            if LLGC.normRows
-                fu = Helpers.normRows(fu);
-            end
+            assert(size(fl,2) == 1);
+            isLabeled = ~isnan(fl);
+            if regProb
+                assert(size(fl,2) == 1)
+                %isLabeled = fl > 0;
+                subInvM = invM(:,isLabeled);
+                D = diag(sum(subInvM,2));
+                warning off;
+                fu = inv(D)*subInvM*fl(isLabeled);
+                warning on;
+            else
+                error('labelMatrix with nan?');
+                if ~LLGC.normRows && size(fl,2) > 1
+                    fl = LLGC.labelMatrix2vector(fl);
+                end
+                fu = invM*fl;
+                if LLGC.normRows
+                    fu = Helpers.normRows(fu);
+                end
+            end            
             isInvalid = isnan(fu) | isinf(fu);
             if any(isInvalid(:))
                 %display('LLGC:llgc_ls : inf or nan - randing out');
@@ -96,6 +109,7 @@ classdef LLGC < handle
         end
         
         function [fu,invM] = llgc_inv_unbiased(W,fl,alpha,invM)
+            error('nan fl?');
             %alpha = .5;       
             W(logical(speye(size(W)))) = 0;
 
@@ -159,7 +173,7 @@ classdef LLGC < handle
             W(logical(speye(size(W)))) = 0;
             Disq = diag(sum(W).^-.5);
             WN = Disq*W*Disq;
-            Y = Y > 0;
+            Y = ~isnan(Y);
             if size(Y,2) > 1
                 Y = sum(Y,2);
             end
@@ -219,6 +233,7 @@ classdef LLGC < handle
         end
         
         function [fu] = llgc_LS(W,fl,alpha,instancesToInfer)
+            error('nan fl?');
         %tic
             %alpha = .5;               
             W(logical(speye(size(W)))) = 0;   

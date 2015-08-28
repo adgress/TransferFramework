@@ -13,7 +13,7 @@ classdef Measure < Saveable
             obj = obj@Saveable(configs);
         end
         function [valTrain,valTest] = computeTrainTestResults(obj,r)
-            trainLabeled = r.yTrain > 0 & ~r.isValidation;
+            trainLabeled = ~isnan(r.yTrain) & ~r.isValidation;
             trainAccVec = r.trainPredicted==r.trainActual;            
             trainAccVec = trainAccVec(trainLabeled);
             valTrain = mean(trainAccVec);

@@ -38,8 +38,8 @@ classdef DistanceMatrix < LabeledData
         
         function [W,labels] = getTestToLabeled(obj)
             W = double(obj);
-            W = W(obj.type == Constants.TARGET_TEST,obj.Y > 0);
-            labels = obj.Y(obj.Y > 0);
+            W = W(obj.type == Constants.TARGET_TEST,obj.isLabeled);
+            labels = obj.Y(obj.isLabeled);
         end
         
         function [W,labels] = getTrainToLabeled(obj,justLabeled)
@@ -48,17 +48,17 @@ classdef DistanceMatrix < LabeledData
             end
             indices = obj.type == obj.TYPE_TARGET_TRAIN;
             if justLabeled
-                indices = indices & obj.Y > 0;
+                indices = indices & obj.isLabeled;
             end
             W = obj.W;
-            W = W(indices,obj.Y > 0);
-            labels = obj.Y(obj.Y > 0);
+            W = W(indices,obj.isLabeled);
+            labels = obj.Y(obj.isLabeled);
         end
         
         function [W,Yt,Y] = getLabeledTrainToSource(obj)
             W = obj.W;
-            It = obj.type == Constants.TARGET_TRAIN & obj.Y > 0;
-            I = obj.Y > 0;
+            It = obj.type == Constants.TARGET_TRAIN & obj.isLabeled;
+            I = obj.isLabeled;
             W = W(It,I);
             Yt = obj.Y(It);
             Y = obj.Y(I);
@@ -103,7 +103,7 @@ classdef DistanceMatrix < LabeledData
             W = obj.W;
             isTest = obj.type == Constants.TARGET_TEST;
             labeledTrain = (obj.type  == Constants.TARGET_TRAIN | ...
-                obj.type == Constants.SOURCE) & obj.Y > 0;
+                obj.type == Constants.SOURCE) & obj.isLabeled;
             perm = [find(labeledTrain) ; find(~labeledTrain)];
             isTest = isTest(perm);
             W = W(perm,perm);
@@ -113,13 +113,13 @@ classdef DistanceMatrix < LabeledData
         
         function [] = shiftLabeledDataToFront(obj)
             error('Update!');
-            isLabeled = obj.Y > 0;
+            isLabeled = obj.isLabeled;
             newPerm = [find(isLabeled); find(~isLabeled)];            
             obj.permuteData(newPerm);
         end
         function [] = shiftLabeledTargetDataToFront(obj)
             error('Update!');
-            isLabeledTarget = obj.Y > 0 & obj.type ~= Constants.SOURCE;
+            isLabeledTarget = obj.isLabeled & obj.type ~= Constants.SOURCE;
             newPerm = [find(isLabeledTarget) ; find(~isLabeledTarget)];
             obj.permuteData(newPerm);
             

@@ -3,9 +3,10 @@ function [  ] = loadData()
 %   Detailed explanation goes here
 
 useDS1 = 0;
-useDS3 = 0;
+useDS2 = 0;
+useDS3 = 1;
 useDS4 = 0;
-usePRG = 1;
+usePRG = 0;
 normalize = 1;
 
 
@@ -15,6 +16,7 @@ problemName = 15;
 stepName = 18;
 outcome = 21;
 
+realY = true;
 
 fileData = struct();
 
@@ -62,6 +64,15 @@ elseif usePRG
     allPrefixes = {litPrefixes,numPrefixes,pronPrefixes,readPrefixes};
     prefixIndices = {};
     allIndices = [];
+elseif useDS2
+    dataSetName = 'DS2';
+    kcLast = 48;
+    
+    %Default
+    %kcDefault = 31;
+    
+    %Reduce Step Name
+    kcDefault = 35;
 else
     error('Are the indices correct?');
     dataSetName = 'DS2';
@@ -164,8 +175,10 @@ uniqueOrdData.uniqueKCCat = [];
 ordData.stepOrd = [];
 blockIdx = 1;
 dataLoaded = false;
-if useDS3 && exist('DS3.mat','file')
-    load DS3.mat
+
+cachedFileName = [dataSetName '.mat'];
+if exist(cachedFileName,'file')
+    load(cachedFileName);
     dataLoaded = true;
 end
 lineIdx = 0;
@@ -238,7 +251,7 @@ while ~feof(file) && ~dataLoaded
     lineIdx = lineIdx + numLines;
 end
 if usePRG    
-    uniqueOrdData.uniqueStudentNames = nominal(1:numLines);
+    uniqueOrdData.uniqueStudentNames = nominal(1:lineIdx);
     uniqueOrdData.uniqueStepNames = nominal(header(allIndices));
     uniqueOrdData.uniqueKC = nominal(1:4);
     uniqueOrdData.uniqueOutcome = unique(ordData.outcomeOrd);
@@ -251,11 +264,11 @@ uniqueOrdData.uniqueStudResType = unique(ordData.studentResOrd);
 uniqueOrdData.uniqueOutcome = unique(ordData.outcomeOrd);
 uniqueOrdData.uniqueKC = unique(ordData.kcOrd);
 uniqueOrdData.uniqueKCCat = unique(ordData.kcCatOrd);
-if useDS3
-    save DS3.mat
-end
 
-if ~useDS3 || ~exist('DS3-pruned.mat','file');       
+save(cachedFileName);
+
+prunedFileName = [dataSetName '-pruned.mat'];
+if ~exist(prunedFileName,'file');       
     while true
         [uniqueOrdData,ordData,numRemoved] = pruneData(uniqueOrdData,ordData);
         if numRemoved == 0
@@ -263,26 +276,34 @@ if ~useDS3 || ~exist('DS3-pruned.mat','file');
         end
     end
 else
-    load DS3-pruned.mat
+    load(prunedFileName);
 end
-isAttempt = ordData.studentResOrd == 'ATTEMPT';
 isCorrect = ordData.outcomeOrd == 'CORRECT';
 isIncorrect = ordData.outcomeOrd == 'INCORRECT';
-
+isAttempt = isCorrect | isIncorrect;
+%{
+isAttempt = ordData.studentResOrd == 'ATTEMPT';
+assert(all(isAttempt == (isCorrect | isIncorrect)));
+%}
 studentIDs = double(ordData.studentOrd);
 stepIDs = double(ordData.stepOrd);
 labelIDs = double(ordData.kcOrd);
 
 numStudents = length(uniqueOrdData.uniqueStudentNames);
 numSteps = length(uniqueOrdData.uniqueStepNames);
+numLabels = length(uniqueOrdData.uniqueKC);
+
 W = zeros(numStudents,numSteps);
 WCorrect = W;
 WIncorrect = W;
-for studIdx=1:numStudents
+maxStudents = 1000;
+studentSkills = zeros(numStudents,numLabels);
+for studIdx=1:min(numStudents,maxStudents)
     isStudent = studentIDs == studIdx; 
     subStepIDs = stepIDs(isStudent);
     isCorrectSub = isCorrect(isStudent);
     isIncorrectSub = isIncorrect(isStudent);
+    labelSub = labelIDs(isStudent);
     for stepIdx=1:numSteps
         %isStudent = studentIDs == studIdx;
         isStep = subStepIDs == stepIdx;
@@ -293,18 +314,22 @@ for studIdx=1:numStudents
         WCorrect(studIdx,stepIdx) = numCorrect;
         WIncorrect(studIdx,stepIdx) = numIncorrect;
     end
+    for labelIdx=1:numLabels
+        l = double(uniqueOrdData.uniqueKC(labelIdx));
+        scores = isCorrectSub(labelSub == l);
+        scoresInc = isIncorrectSub(labelSub == l);
+        hasScore = ~((scores + scoresInc) == 0);
+        scores(~hasScore) = [];
+        studentSkills(studIdx,labelIdx) = mean(scores);
+    end
+end
+
+if size(studentSkills,1) > maxStudents
+    studentSkills(maxStudents+1:end,:) = [];
+    WCorrect = WCorrect(1:maxStudents,:);
+    WIncorrect = WIncorrect(1:maxStudents,:);
 end
 W = WCorrect + WIncorrect;
-
-data = struct();
-data.WCorrect = WCorrect;
-data.WInCorrect = WIncorrect;
-data.studentOrd = ordData.studentOrd;
-data.stepOrd = ordData.stepOrd;
-data.kcOrd = ordData.kcOrd;
-data.kcCatOrd = ordData.kcCatOrd;
-data.outcomeOrd = ordData.outcomeOrd;
-data.studentResOrd = ordData.studentResOrd;
 
 if normalize
     Wmastered = WCorrect ./ (WCorrect+WIncorrect);
@@ -313,12 +338,6 @@ else
     Wmastered = WCorrect;
     WnotMastered = WIncorrect;
 end
-Wmastered = Helpers.replaceNanInf(Wmastered);
-WnotMastered = Helpers.replaceNanInf(WnotMastered);
-Wmastered(isnan(Wmastered)) = 0;
-WnotMastered(isnan(WnotMastered)) = 0;
-
-numKC = length(uniqueOrdData.uniqueKC);
 stepY = zeros(numSteps,1);
 kcDouble = double(ordData.kcOrd);
 
@@ -329,9 +348,58 @@ for stepIdx=1:numSteps
     %assert(length(unique(Y)) == 1);
     if isempty(unique(Y))
         display('Step with zero students');
+        stepY(stepIdx) = -1;
+        continue;
     end
     stepY(stepIdx) = Y(1);    
 end
+BIG_NUMBER = 1000;
+studentQuestionW = cell(numLabels,1);
+for labIdx=1:numLabels
+    %{
+    Wcurr = BIG_NUMBER*ones(numStudents);    
+    for i=1:numStudents
+        Wi = Wmastered(i,:);
+        for j=i:numStudents    
+            Wj = Wmastered(j,:);
+            bothLabeled = find(W(i,:) > 0 & W(j,:) > 0 & stepY' == labIdx);
+            if isempty(bothLabeled)
+                continue;
+            end        
+            a = Wi(bothLabeled);
+            b = Wj(bothLabeled);            
+            w = 1 - dot(a,b)/(norm(a)*norm(b));
+            Wcurr(i,j) = w;
+            Wcurr(j,i) = w;
+            
+        end
+    end
+    %}
+    Wcurr = Helpers.CreateDistanceMatrix(studentSkills(:,labIdx));
+    Wcurr(isnan(Wcurr)) = BIG_NUMBER;
+    %assert(~any(isnan(Wcurr(:))));
+    studentQuestionW{labIdx} = Wcurr;    
+end
+data = struct();
+data.studentSkills = studentSkills;
+data.studentW = studentQuestionW;
+data.WCorrect = WCorrect;
+data.WInCorrect = WIncorrect;
+data.studentOrd = ordData.studentOrd;
+data.stepOrd = ordData.stepOrd;
+data.kcOrd = ordData.kcOrd;
+data.kcCatOrd = ordData.kcCatOrd;
+data.outcomeOrd = ordData.outcomeOrd;
+data.studentResOrd = ordData.studentResOrd;
+
+
+Wmastered = Helpers.replaceNanInf(Wmastered);
+WnotMastered = Helpers.replaceNanInf(WnotMastered);
+Wmastered(isnan(Wmastered)) = 0;
+WnotMastered(isnan(WnotMastered)) = 0;
+
+numKC = length(uniqueOrdData.uniqueKC);
+
 
 WIDs = {[1:numSteps]',[1:numStudents]'};
 %W = [Wmastered WnotMastered];
@@ -374,7 +442,12 @@ end
 
 function [uniqueOrdData,ordData,numRemoved] = pruneData(uniqueOrdData,ordData)
 stepNamesToRemove = false(size(uniqueOrdData.uniqueStepNames));
-isAttempt = ordData.studentResOrd == 'ATTEMPT';
+%isAttempt = ordData.studentResOrd == 'ATTEMPT';
+
+isCorrect = ordData.outcomeOrd == 'CORRECT';
+isIncorrect = ordData.outcomeOrd == 'INCORRECT';
+isAttempt = isCorrect | isIncorrect;
+
 transactionsToRemove = ~isAttempt;
 kcsToRemove = false(size(uniqueOrdData.uniqueKC));
 for kcIdx=1:length(uniqueOrdData.uniqueKC)

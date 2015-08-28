@@ -35,6 +35,11 @@ classdef ExperimentConfigLoader < ConfigLoader
             [results] = learner.trainAndTest(input);
         end
         function [numTrain,numPerClass] = calculateSampling(obj,experiment,test)
+            if obj.dataAndSplits.allSplits{1}.targetData.isRegressionData
+                numTrain = experiment.numLabeledPerClass;
+                numPerClass = experiment.numLabeledPerClass;
+                return;
+            end
             numClasses = test.numClasses;
             if isfield(experiment,'numLabeledPerClass')           
                 numPerClass = experiment.numLabeledPerClass;
@@ -290,7 +295,7 @@ classdef ExperimentConfigLoader < ConfigLoader
             end
             pc = ProjectConfigs.Create();            
             if pc.labelNoise > 0
-                assert(all(train.Y > 0));
+                assert(all(~isnan(train.Y)));
                 train.addRandomClassNoise(pc.labelNoise);
                 if pc.replaceTrueY
                     train.trueY = train.Y;

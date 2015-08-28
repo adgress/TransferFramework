@@ -12,25 +12,42 @@ classdef NWMethod < HFMethod
         end
         function [fu,savedData,sigma] = runNW(obj,distMat,makeRBF,savedData)
             assert(makeRBF);
-            %distMat.W = Helpers.SimilarityToDistance(distMat.W);
+
             distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
-            I = distMat.isLabeledTargetTrain();
-            fu = zeros(length(I),distMat.numClasses);
-            Wlabeled = distMat.W(I,:);
-            a = sum(Wlabeled);
-            %distMat.W(1:3,1:3)
-            for labelIdx=1:distMat.numClasses
-                currY = distMat.classes(labelIdx);
-                currTrain = distMat.Y == currY & I;
-                Wsub = distMat.W(currTrain,:);
-                conf = sum(Wsub);
-                fu(:,labelIdx) = conf';
+            I = distMat.isLabeledTargetTrain();            
+
+            if distMat.isRegressionData
+                Wlabeled = distMat.W(:,I);
+                D = diag(sum(Wlabeled,2));
+                fu = zeros(size(distMat.Y));
+                assert(size(fu,2) == 1);
+                warning off;
+                fu = inv(D)*Wlabeled*distMat.Y(I);
+                warning on;
+                
+            else
+                Wlabeled = distMat.W(I,:);
+                fu = zeros(length(I),distMat.numClasses);
+                for labelIdx=1:distMat.numClasses
+                    currY = distMat.classes(labelIdx);
+                    currTrain = distMat.Y == currY & I;
+                    Wsub = distMat.W(currTrain,:);
+                    conf = sum(Wsub);
+                    fu(:,labelIdx) = conf';
+                end
+                Izero = sum(fu,2) == 0;
+                fu(Izero,:) = rand([sum(Izero) 2]);
+                fu = Helpers.NormalizeRows(fu);
+
+                [~,fu] = max(fu,[],2);
             end
-            Izero = sum(fu,2) == 0;
-            fu(Izero,:) = rand([sum(Izero) 2]);
-            fu = Helpers.NormalizeRows(fu);
-            
-            [~,savedData.predicted] = max(fu,[],2);
+            isInvalid = isnan(fu) | isinf(fu);
+            if any(isInvalid(:))
+                %display('LLGC:llgc_ls : inf or nan - randing out');
+                r = rand(size(fu));
+                fu(isInvalid) = r(isInvalid);
+            end
+            savedData.predicted = fu;
             savedData.cvAcc = [];
             sigma = obj.get('sigma');
         end

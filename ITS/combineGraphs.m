@@ -1,5 +1,5 @@
 function [d] = combineGraphs(d)
-    assert(d.Wdim == 1);
+    assert(numel(d.Wdim) <= 1);
     W12 = Helpers.combineW(d.W{1},d.W{2},d.Wdim){1};    
     W11 = zeros(size(W12,1));
     if ~isempty(d.W11)
@@ -30,17 +30,19 @@ function [d] = combineGraphs(d)
     
     
     %Making the min class 1 fixes issues in other parts of the code
-    d.Y(d.Y > 0) = d.Y(d.Y > 0) - min(d.Y(d.Y > 0)) + 1;
+    I = ~isnan(d.Y);
+    d.Y(I) = d.Y(I) - min(d.Y(I)) + 1;
     
     Y1 = d.Y;
     Y2 = d.Y;
     numClasses = d.numClasses;
-    Y2(Y2 > 0) = Y2(Y2 > 0) + numClasses;
-    Y = [Y1 ; Y2 ; -1*ones(size2,1)];
+    I = ~isnan(Y2);
+    Y2(I) = Y2(I) + numClasses;
+    Y = [Y1 ; Y2 ; nan(size2,1)];
     d.type = [d.type ; d.type ; DataSet.TargetTestType(size2)];
-    d.trueY = [d.trueY ; d.trueY + numClasses ; -1*ones(size2,1)];
+    d.trueY = [d.trueY ; d.trueY + numClasses ; nan(size2,1)];
     d.Y = Y;
-    d.instanceIDs = [d.instanceIDs ; d.instanceIDs ; -1*ones(size2,1)];           
+    d.instanceIDs = [d.instanceIDs ; d.instanceIDs ; nan(size2,1)];           
     d.labelSets = [(1:numClasses)' ; (1:numClasses)'];
     d.instancesToInfer = false(size(W,1),1);
     d.instancesToInfer(size(W11,1)+1:end) = true;

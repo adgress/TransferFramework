@@ -41,9 +41,11 @@ classdef Helpers < handle
                 return;
             end
             if isempty(dim)
-                dim = 1;
+                dim = -1;
             end
             switch dim
+                case -1
+                    error('What do we do here?');
                 case 1
                     if length(c1) == 1
                         c = {[c1{1} ; c2{1}]};
@@ -70,6 +72,7 @@ classdef Helpers < handle
             W = cell(length(W1),1);
             for idx=1:length(W)
                 if isempty(dim)
+                    error('What do we do here?');
                     W{idx} = [W1{idx} ; W2{idx}];
                 else
                     switch dim
@@ -100,7 +103,7 @@ classdef Helpers < handle
                 allowEmpty = false;
             end
             if isempty(dim)
-                dim = 1;
+                dim = -1;
             end
             if allowEmpty && isempty(c);
                 cSub = {};
@@ -110,6 +113,8 @@ classdef Helpers < handle
             assert(cLength <= 2);            
             assert(cLength >= dim);
             switch dim
+                case -1
+                    cSub = {c{1}(I), c{2}(I)};
                 case 1
                     if cLength == 2
                         cSub = {c{1}(I),c{2}};
@@ -130,7 +135,7 @@ classdef Helpers < handle
             Ws = {};
             for idx=1:length(W)
                 if isempty(dim)
-                    Ws{idx} = W{idx}(I,:);
+                    Ws{idx} = W{idx}(I,I);
                 else
                     if dim == 1
                         Ws{idx} = W{idx}(I,:);
@@ -226,8 +231,8 @@ classdef Helpers < handle
         end
         
         function [yBinary] = MakeLabelsBinary(y)
+            y(isnan(y(:))) = [];
             u = unique(y);
-            u(u == -1) = [];
             assert(length(u) == 2);
             yBinary = zeros(size(y));
             yBinary(y == u(1)) = 1;

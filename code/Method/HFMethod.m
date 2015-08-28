@@ -20,7 +20,7 @@ classdef HFMethod < Method
         function [distMat,savedData,Xall] = createDistanceMatrix(obj,train,test,learnerConfigs,makeRBF,savedData,V)
             if obj.method == HFMethod.HFGF
                 error('Caching assumes ordering doesn''t change');
-                trainLabeled = train.Y > 0;
+                trainLabeled = train.isLabeled()
             else
                 %TODO: Ordering doesn't matter for LLGC - maybe rename
                 %variable to make this code more clear?
@@ -178,7 +178,7 @@ classdef HFMethod < Method
             [W,Y,isTest,type,perm] = distMat.prepareForHF();
             assert(issorted(perm));
             Y_testCleared = Y;
-            Y_testCleared(isTest) = -1;
+            Y_testCleared(isTest) = nan;
             if isKey(obj.configs,'sigma')
                 sigma = obj.configs('sigma');
             elseif obj.has('sigmaScale')
@@ -187,7 +187,7 @@ classdef HFMethod < Method
                 sigma = GraphHelpers.autoSelectSigma(W,Y_testCleared,~isTest,obj.configs('useMeanSigma'),type);
             end
             W = Helpers.distance2RBF(W,sigma);
-            isTrainLabeled = Y > 0 & ~isTest;
+            isTrainLabeled = ~isnan(Y) & ~isTest;
             assert(~issorted(isTrainLabeled));
             YTrain = Y(isTrainLabeled);
             YLabelMatrix = Helpers.createLabelMatrix(YTrain);
@@ -198,11 +198,17 @@ classdef HFMethod < Method
         end
         
         function [Wrbf,YtrainMat,sigma,Y_testCleared,instanceIDs] = makeLLGCMatrices(obj,distMat,makeRBF)
+            isReg = distMat.isRegressionData;
             %error('What if sigma has already been selected?');
             isTest = distMat.type == Constants.TARGET_TEST;
             Y_testCleared = distMat.Y;
-            Y_testCleared(isTest) = -1;
-            YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
+            Y_testCleared(isTest) = nan;
+            if isReg
+                YtrainMat = full(Y_testCleared);
+                YtrainMat(isnan(YtrainMat(:))) = 0;
+            else
+                YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
+            end
             if makeRBF
                 if isKey(obj.configs,'sigma') && ~isempty(obj.configs.get('sigma'))
                     sigma = obj.configs.get('sigma');
@@ -261,22 +267,28 @@ classdef HFMethod < Method
         function [fu,savedData,sigma] = runLLGC(obj,distMat,makeRBF,savedData)            
             hasInvM = exist('savedData','var') && isfield(savedData,'invM');
             if obj.get('useInv') && hasInvM
+                %{
                 isTest = distMat.type == Constants.TARGET_TEST;
                 Y_testCleared = distMat.Y;
-                Y_testCleared(isTest) = -1;
+                Y_testCleared(isTest) = nan;
                 YtrainMat = full(Helpers.createLabelMatrix(Y_testCleared));
+                %}
                 sigma = obj.get('sigma');
             else
                 isZero = distMat.W(:) == 0;
                 a = distMat.W;
-                distMat.W = Helpers.SimilarityToDistance(distMat.W);                                    
+                %distMat.W = Helpers.SimilarityToDistance(distMat.W);                                    
                 [Wrbf,YtrainMat,sigma] = makeLLGCMatrices(obj,distMat,makeRBF);            
                 %Wrbf = a;
                 Wrbf(isZero) = 0;
             end
+            isTest = distMat.type == Constants.TARGET_TEST;
+            Y_testCleared = distMat.Y;
+            Y_testCleared(isTest) = nan;
+            YtrainMat = Y_testCleared;
             useAlt = obj.get('useAlt');
             alpha = obj.get('alpha');
- 
+            isReg = distMat.isRegressionData;
             if useAlt
                 [fu, savedData.invM] = LLGC.llgc_inv_alt(Wrbf, YtrainMat, alpha);
             else
@@ -284,8 +296,9 @@ classdef HFMethod < Method
                     if ~hasInvM
                         savedData.invM = LLGC.makeInvM(Wrbf,alpha);            
                     end
-                    [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM);
+                    [fu] = LLGC.llgc_inv([], YtrainMat, alpha,savedData.invM,isReg);
                 else
+                    assert(~isReg);
                     if obj.get('inferSubset')
                         assert(~isempty(distMat.instancesToInfer));
                         [fu] = LLGC.llgc_LS(Wrbf, YtrainMat, alpha,distMat.instancesToInfer);
@@ -302,7 +315,11 @@ classdef HFMethod < Method
                 classes = distMat.classes;
             end
             labelSets = distMat.labelSets;
-            savedData.predicted = LLGC.getPrediction(fu,classes,YtrainMat,labelSets);
+            if distMat.isRegressionData
+                savedData.predicted = fu;
+            else
+                savedData.predicted = LLGC.getPrediction(fu,classes,YtrainMat,labelSets);
+            end
             fu(isnan(fu(:))) = .5;
             assert(isempty(find(isnan(fu))));
         end
@@ -335,7 +352,7 @@ classdef HFMethod < Method
                     error('unknown method');
             end
             predicted = savedData.predicted;     
-            isYTest = distMat.Y > 0 & distMat.type == Constants.TARGET_TEST;
+            isYTest = distMat.isLabeled & distMat.type == Constants.TARGET_TEST;
             
             %test instances should be last
             %assert(issorted(distMat.type == Constants.TARGET_TEST));
@@ -349,20 +366,24 @@ classdef HFMethod < Method
                 f = obj.get('evaluatePerfFunc',[]);
                 if ~isempty(f)                    
                     [val,yPred,yActual] = f(distMatOrig,fu,savedData.predicted);
-                else
+                else               
+                    %{
                     yTestPred = predicted(isYTest);
                     val = sum(yTestPred == YTest)/...
                             length(YTest);
+                    %}
                     yPred = predicted;
                     yActual = distMatOrig.Y;
-                end
-                assert(~isnan(val));
+                    
+                end                
                          
             end
             testResults.yPred = yPred;
             testResults.yActual = yActual;
             testResults.learnerMetadata.sigma = sigma;
-            savedData.val = val;
+            a = obj.configs.get('measure').evaluate(testResults);
+            savedData.val = a.learnerStats.valTest;
+            assert(~isnan(savedData.val));
         end
         
         function [testResults,savedData] = ...
