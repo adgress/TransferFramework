@@ -11,11 +11,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         useStudentData
         measure
         llgcCVParams
-        nwCVParams
-        useDS1
-        useDS3
+        nwCVParams        
         useLLGC
-        usePRG
+        
         QQEdgesExperiment
         QQEdges
         makeRBF
@@ -27,6 +25,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         targetLabels
         graphTransferExp
         useMean
+        
+        useStudentQuestionGraph
     end
     
     methods(Static, Access=private)
@@ -41,8 +41,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c = ProjectConfigs.instance;            
             c = ProjectConfigs.CreateSingleton();
             c.smallResultsFiles = false;
-            c.makeRBF = true;            
-            c.dataSet = Constants.ITS_DATA;            
+            c.makeRBF = true;                          
             c.QQEdgesExperiment = 0;
             c.QQEdges = 1;
             c.labelsToUse = [];
@@ -51,13 +50,10 @@ classdef ProjectConfigs < ProjectConfigsBase
             useCommonSkills = 1;
             singleSkill = 1;
             
-            
+            c.dataSet = Constants.DS1;
             c.useStudentData = 1;
-            c.useDS1 = 1;
-            c.useDS3 = 0;
-            c.usePRG = 0;
             c.graphTransferExp = 1;
-            
+            c.useStudentQuestionGraph = 0;
             c.useLLGC = 0;
             c.useMean = 0;
             
@@ -65,66 +61,91 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.useLLGCRegression = 1;
             end            
             if c.useStudentData
-                if c.useDS1
-                    %c.dataSetName = 'DS1-69';
-                    c.dataSetName = 'DS1-69_reg';
-                    %c.labelsToKeep = 1;
-                    c.sourceLabels = 4;
-                    c.targetLabels = 5;
-                    c.numLabeledPerClass = [5 10 15];                                
-                elseif c.usePRG
-                    c.dataSetName = 'Prgusap1_reg';
-                    %c.dataSetName = 'Prgusap1';
-                    c.sourceLabels = 4;
-                    c.targetLabels = 1;    
-                    c.numLabeledPerClass = [5 10 20 30];
-                    %c.numLabeledPerClass = [30];
-                else
-                    c.dataSetName = 'DS2-35_reg';
-                    %c.dataSetName = 'DS2-35';
-                    %c.labelsToKeep = 1;
-                    c.numLabeledPerClass = [2 5 10 15];     
-                    %c.numLabeledPerClass = [15];
-                    %{
+                switch c.dataSet
+                    case Constants.DS1
+                        %c.dataSetName = 'DS1-69';
+                        c.dataSetName = 'DS1-69_reg';
+                        %c.labelsToKeep = 1;
+                        
+                        %.8
+                        %{
+                        c.sourceLabels = 4;
+                        c.targetLabels = 5;
+                        %}
+                        %.73
+                        %{
+                        c.sourceLabels = 3;
+                        c.targetLabels = 6;
+                        %}
+                        
+                        %.68
+                        %{
+                        c.sourceLabels = 5;
+                        c.targetLabels = 6;
+                        %}
+                        
+                        
+                        c.sourceLabels = 2;
+                        c.targetLabels = 1;
+                        
+                        c.numLabeledPerClass = [5 10 15];
+                    case Constants.PRG
+                        c.dataSetName = 'Prgusap1_reg';
+                        %c.dataSetName = 'Prgusap1';
+                        c.sourceLabels = 4;
+                        c.targetLabels = 1;
+                        c.numLabeledPerClass = [5 10 20 30];
+                        %c.numLabeledPerClass = [30];
+                    case Constants.DS2
+                        c.dataSetName = 'DS2-35_reg';
+                        %c.dataSetName = 'DS2-35';
+                        %c.labelsToKeep = 1;
+                        c.numLabeledPerClass = [2 5 10 15];
+                        %c.numLabeledPerClass = [15];
+                        %{
                     c.sourceLabels = 5;
-                    c.targetLabels = 6;                    
-                    %}
-                    c.sourceLabels = 6;
-                    c.targetLabels = 14;                    
+                    c.targetLabels = 6;
+                        %}
+                        c.sourceLabels = 6;
+                        c.targetLabels = 14;
                 end
-                c.measure = L2Measure();                
+                c.measure = L2Measure();
             else
-                if c.usePRG
-                    c.dataSetName = 'Prgusap1';
-                    c.labelsToUse = 1;
-                    %c.numLabeledPerClass = [5 10 15];
-                    c.numLabeledPerClass = [15];
-                elseif c.useDS1
-                    c.dataSetName = 'DS1-69';
-                    c.numLabeledPerClass = 2:3;   
-                    if useCommonSkills
-                        c.labelsToUse = [5 6];
-                        c.remapLabels = true;
-                        c.numLabeledPerClass = 2:2:10;
-                    end
-                    if singleSkill
-                        c.labelsToUse = 5;
-                    end
-                else
-                    c.dataSetName = 'DS2-35';
-                    c.numLabeledPerClass = 2:5;                      
-                    if useCommonSkills
-                        c.numLabeledPerClass = [20];
-                        %c.numLabeledPerClass = [2 5 10 20];
-                        %c.labelsToUse = [4 5 6 13];
-                        c.labelsToUse = [4 5];
-                        c.remapLabels = true;
-                    end
-                    if singleSkill
-                        %c.labelsToUse = 5;
-                        c.labelsToUse = 4;
-                    end
-                end                               
+                switch c.dataSet
+                    case Constants.PRG
+                        c.dataSetName = 'Prgusap1';
+                        c.labelsToUse = 1;
+                        %c.numLabeledPerClass = [5 10 15];
+                        c.numLabeledPerClass = [15];
+                    case Constants.DS1
+                        c.dataSetName = 'DS1-69';
+                        c.numLabeledPerClass = 2:3;
+                        if useCommonSkills
+                            c.labelsToUse = [5 6];
+                            c.remapLabels = true;
+                            c.numLabeledPerClass = 2:2:10;
+                        end
+                        if singleSkill
+                            c.labelsToUse = 5;
+                        end
+                    case Constants.DS2
+                        c.dataSetName = 'DS2-35';
+                        c.numLabeledPerClass = 2:5;
+                        if useCommonSkills
+                            c.numLabeledPerClass = [20];
+                            %c.numLabeledPerClass = [2 5 10 20];
+                            %c.labelsToUse = [4 5 6 13];
+                            c.labelsToUse = [4 5];
+                            c.remapLabels = true;
+                        end
+                        if singleSkill
+                            %c.labelsToUse = 5;
+                            c.labelsToUse = 4;
+                        end
+                end
+            end
+            if c.useStudentQuestionGraph
+                c.dataSetName = [c.dataSetName '_SQgraph'];
             end
             if ~c.useStudentData
                 c.measure = ITSMeasure();
@@ -163,17 +184,20 @@ classdef ProjectConfigs < ProjectConfigsBase
             pc = ProjectConfigs.Create();
             c = SplitConfigs();
             useReg = 1;
-            c.setITS(pc.dataSetName,useReg);                 
-            if pc.usePRG || pc.useDS3
+            d = pc.dataSetName;
+            i = strfind(d,'_SQgraph');
+            if ~isempty(i)
+                d = d(1:i-1);
+            end
+            c.setITS(d,useReg,pc.useStudentQuestionGraph);                 
+            if pc.dataSet == Constants.PRG || pc.dataSet == Constants.DS3
                 if pc.useStudentData
                     c.set('maxToUse',500);
                 else
                     c.set('maxToUse',[inf 1000]);
                 end
             end
-        end
-        
-        
+        end                
         
         function [c] = VisualizationConfigs()            
             c = VisualizationConfigs();                                                       
@@ -197,31 +221,39 @@ classdef ProjectConfigs < ProjectConfigsBase
             
             pc = ProjectConfigs.Create();
             if pc.useStudentData
-                if pc.useDS1                    
-                    c.set('prefix','results_DS1-69_reg');
-                    c.set('dataSet',{'results_DS1-69_reg'});
-                    c.set('resultsDirectory','results_DS1-69_reg/');                                        
-                elseif pc.usePRG
-                    c.set('prefix','results_Prgusap1_reg');
-                    c.set('dataSet',{'results_Prgusap1_reg'});
-                    c.set('resultsDirectory','results_Prgusap1_reg');
-                else
-                    c.set('prefix','results_DS2-35_reg');
-                    c.set('dataSet',{'results_DS2-35_reg'});
-                    c.set('resultsDirectory','results_DS2-35_reg/');
-                                        
+                switch pc.dataSet
+                    case Constants.DS1
+                        c.set('prefix','results_DS1-69_reg');
+                        c.set('dataSet',{'results_DS1-69_reg'});
+                        c.set('resultsDirectory','results_DS1-69_reg');
+                    case Constants.PRG
+                        c.set('prefix','results_Prgusap1_reg');
+                        c.set('dataSet',{'results_Prgusap1_reg'});
+                        c.set('resultsDirectory','results_Prgusap1_reg');
+                    case Constants.DS2
+                        c.set('prefix','results_DS2-35_reg');
+                        c.set('dataSet',{'results_DS2-35_reg'});
+                        c.set('resultsDirectory','results_DS2-35_reg');
                 end
                 c.set('measure',L2Measure());
             else
                 c.set('measure',ITSMeasure());
-                if pc.useDS1                
-                    c.set('prefix','results_DS1-69');
-                    c.set('dataSet',{'DS1-69'});
-                    c.set('resultsDirectory','results_DS1-69/');
-                else
-                    c.set('prefix','results_DS2-35');
-                    c.set('dataSet',{'DS2-35'});
-                    c.set('resultsDirectory',['results_DS2-35/']);                    
+                switch pc.dataSet
+                    case Constants.DS1           
+                        c.set('prefix','results_DS1-69');
+                        c.set('dataSet',{'DS1-69'});
+                        c.set('resultsDirectory','results_DS1-69/');
+                    case Constants.DS2
+                        c.set('prefix','results_DS2-35');
+                        c.set('dataSet',{'DS2-35'});
+                        c.set('resultsDirectory',['results_DS2-35/']);
+                end
+            end
+            if pc.useStudentQuestionGraph
+                f = {'prefix','dataSet','resultsDirectory'};
+                for idx=1:length(f)
+                    s = c.get(f{idx});
+                    c.set(f{idx},[s '_SQgraph']);
                 end
             end
             r = c.get('resultsDirectory');

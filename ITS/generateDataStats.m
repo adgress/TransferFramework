@@ -1,10 +1,16 @@
 function [  ] = generateDataStats(  )
-%file = 'Data/ITS/DS1-69';
-%file = 'Data/ITS/DS2-35';
-%file = 'Data/ITS/DS3-39';
-%file = 'Data/ITS/DS3-39-pruned.mat';
-file = 'Data/ITS/Prgusap1.mat';
-
+pc = ProjectConfigs.Create();
+switch pc.dataSet
+    case Constants.DS1
+        file = 'Data/ITS/DS1-69_reg';
+    case Constants.DS2
+        file = 'Data/ITS/DS2-35_reg';
+    case Constants.DS3
+        %file = 'Data/ITS/DS3-39';
+        file = 'Data/ITS/DS3-39-pruned_reg';
+    case Constants.PRG
+        file = 'Data/ITS/Prgusap1_reg';
+end
 data = load(file);
 data = data.data;
 isLabeled = (data.W{1} + data.W{2}) > 0;

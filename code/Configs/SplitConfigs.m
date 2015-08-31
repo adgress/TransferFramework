@@ -15,7 +15,7 @@ classdef SplitConfigs < Configs
             obj.set('normalizeRows',0);
         end
         
-        function [] = setITS(obj,dataSet,useReg)
+        function [] = setITS(obj,dataSet,useReg,useStudQGraph)
             if ~exist('dataSet','var')
                 dataSet = 'DS1';
             end
@@ -25,6 +25,7 @@ classdef SplitConfigs < Configs
             obj.delete('maxTrainNumPerLabel');
             obj.configsStruct.inputFilePrefix='Data/ITS/';
             obj.configsStruct.inputDataSets={[dataSet '.mat']};
+
             obj.configsStruct.dataSetAcronyms={dataSet};
             obj.configsStruct.outputFilePrefix='Data/ITS/';
             obj.configsStruct.outputFile=[dataSet '_split_data.mat'];
@@ -38,7 +39,11 @@ classdef SplitConfigs < Configs
                 obj.set('regProb',true);
                 obj.set('WName','studentW');
                 obj.set('YName','studentSkills');
-                obj.configsStruct.outputFile=[dataSet '_reg_split_data.mat'];
+                obj.configsStruct.outputFile=[dataSet '_split_data.mat'];
+                if useStudQGraph
+                    obj.set('WName','studentQuestionW');
+                    obj.configsStruct.outputFile=[dataSet '_SQgraph_split_data.mat'];
+                end
             end
         end
         function [] = setYeastUCIBinary(obj)

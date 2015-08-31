@@ -1,12 +1,8 @@
 function [  ] = loadData()
 %LOADDATA Summary of this function goes here
 %   Detailed explanation goes here
-
-useDS1 = 0;
-useDS2 = 0;
-useDS3 = 1;
-useDS4 = 0;
-usePRG = 0;
+pc = ProjectConfigs.Create();
+dataSet = pc.dataSet;
 normalize = 1;
 
 
@@ -23,74 +19,59 @@ fileData = struct();
 studResTypeValues = {'ATTEMPT', 'HINT_REQUEST'};
 tutResTypeValues = {'RESULT','HINT_MSG'};
 splitChar = sprintf('\t');
-if useDS1
-    dataSetName = 'DS1';       
-    kcLast = 100;    
-    %LFA_AIC_Model0_v2 (21 KCs)
-    %kcDefault = 85;
-    
-    %LFASearchModel0 (7 KCs)
-    kcDefault = 69;
-elseif useDS3
-    dataSetName = 'DS3';
-    
-    problemName = 14;
-    stepName = 17;
-    outcome = 19;
-    
-    %MCAS39-State_WPI-Simple
-    kcDefault = 39;            
-elseif useDS4
-    error('Are the indices correct?');
-    dataSetName = 'DSFrac';
-    
-    %DefaultFewer_corrected
-    kcDefault = 35;
-elseif usePRG    
-    dataSetName = 'Prgusap1';
-    splitChar = sprintf(',');
-    kcDefault = [];
-    %966
-    
-    %A3
-    litPrefixes = {'C3','D3','E3','M3','N3','P3'};  
-    %A6
-    numPrefixes = {'D6','E6','M6','P6'};
-    %UX
-    pronPrefixes = {'U0','U1','U2'};
-    %P9
-    readPrefixes = {'P9'};
-    
-    allPrefixes = {litPrefixes,numPrefixes,pronPrefixes,readPrefixes};
-    prefixIndices = {};
-    allIndices = [];
-elseif useDS2
-    dataSetName = 'DS2';
-    kcLast = 48;
-    
-    %Default
-    %kcDefault = 31;
-    
-    %Reduce Step Name
-    kcDefault = 35;
-else
-    error('Are the indices correct?');
-    dataSetName = 'DS2';
-    kcLast = 48;
-    
-    %Default
-    %kcDefault = 31;
-    
-    %Reduce Step Name
-    kcDefault = 35;
+switch dataSet
+    case Constants.DS1
+        dataSetName = 'DS1';
+        kcLast = 100;
+        %LFA_AIC_Model0_v2 (21 KCs)
+        %kcDefault = 85;
+        
+        %LFASearchModel0 (7 KCs)
+        kcDefault = 69;
+    case Constants.DS2
+        dataSetName = 'DS2';
+        kcLast = 48;
+        
+        %Default
+        %kcDefault = 31;
+        
+        %Reduce Step Name
+        kcDefault = 35;
+    case Constants.DS3
+        dataSetName = 'DS3';
+        
+        problemName = 14;
+        stepName = 17;
+        outcome = 19;
+        
+        %MCAS39-State_WPI-Simple
+        kcDefault = 39;
+    case Constants.PRG
+        dataSetName = 'Prgusap1';
+        splitChar = sprintf(',');
+        kcDefault = [];
+        %966
+        
+        %A3
+        litPrefixes = {'C3','D3','E3','M3','N3','P3'};
+        %A6
+        numPrefixes = {'D6','E6','M6','P6'};
+        %UX
+        pronPrefixes = {'U0','U1','U2'};
+        %P9
+        readPrefixes = {'P9'};
+        
+        allPrefixes = {litPrefixes,numPrefixes,pronPrefixes,readPrefixes};
+        prefixIndices = {};
+        allIndices = [];
 end
 columnsToUse = [studentName studResType problemName stepName ...
     outcome kcDefault];
 fileName = ['ITS/' dataSetName '.txt'];
-if usePRG
+if dataSet == Constants.PRG
    fileName = ['ITS/' dataSetName '.csv']; 
 end
-dataSetName = [dataSetName '-' num2str(kcDefault)];
+dataSetName = [dataSetName '-' num2str(kcDefault) '_reg'];
 if ~normalize
     dataSetName = [dataSetName '-nonNorm'];
 end
@@ -103,7 +84,7 @@ file = fopen(fileName,'r+');
 
 s = fgetl(file);
 header = StringHelpers.split_string(s,splitChar,false);
-if usePRG
+if dataSet == Constants.PRG
     allIndices = false(size(header));
     for skillIdx=1:length(allPrefixes)
         currPrefixes = allPrefixes{skillIdx};
@@ -123,7 +104,7 @@ for idx=1:length(header)
         format = '%s';
         continue;
     end
-    if usePRG
+    if dataSet == Constants.PRG
         %format = [format splitChar];
         if sum(idx == columnsToUse)
             format = [format '%s'];
@@ -187,7 +168,7 @@ while ~feof(file) && ~dataLoaded
     blockIdx = blockIdx + 1;
     numLines = length(a{1});
     isValid = @(s) strcmp(s,'1') || strcmp(s,'7');
-    if usePRG 
+    if dataSet == Constants.PRG 
         studentNames = [];
         stepNames = {};
         kcs = [];
@@ -250,7 +231,7 @@ while ~feof(file) && ~dataLoaded
     
     lineIdx = lineIdx + numLines;
 end
-if usePRG    
+if dataSet == Constants.PRG    
     uniqueOrdData.uniqueStudentNames = nominal(1:lineIdx);
     uniqueOrdData.uniqueStepNames = nominal(header(allIndices));
     uniqueOrdData.uniqueKC = nominal(1:4);
@@ -354,13 +335,14 @@ for stepIdx=1:numSteps
     stepY(stepIdx) = Y(1);    
 end
 BIG_NUMBER = 1000;
+studentSkillW = cell(numLabels,1);
 studentQuestionW = cell(numLabels,1);
 for labIdx=1:numLabels
-    %{
+    
     Wcurr = BIG_NUMBER*ones(numStudents);    
-    for i=1:numStudents
+    for i=1:min(numStudents,maxStudents)
         Wi = Wmastered(i,:);
-        for j=i:numStudents    
+        for j=i:min(numStudents,maxStudents)    
             Wj = Wmastered(j,:);
             bothLabeled = find(W(i,:) > 0 & W(j,:) > 0 & stepY' == labIdx);
             if isempty(bothLabeled)
@@ -368,21 +350,25 @@ for labIdx=1:numLabels
             end        
             a = Wi(bothLabeled);
             b = Wj(bothLabeled);            
-            w = 1 - dot(a,b)/(norm(a)*norm(b));
+            %w = 1 - dot(a,b)/(norm(a)*norm(b));
+            w = norm(a-b);
             Wcurr(i,j) = w;
-            Wcurr(j,i) = w;
-            
+            Wcurr(j,i) = w; 
+            if any(isnan(w))
+                display('');
+            end
         end
     end
-    %}
+    studentQuestionW{labIdx} = Wcurr;
     Wcurr = Helpers.CreateDistanceMatrix(studentSkills(:,labIdx));
     Wcurr(isnan(Wcurr)) = BIG_NUMBER;
     %assert(~any(isnan(Wcurr(:))));
-    studentQuestionW{labIdx} = Wcurr;    
+    studentSkillW{labIdx} = Wcurr;    
 end
 data = struct();
 data.studentSkills = studentSkills;
-data.studentW = studentQuestionW;
+data.studentW = studentSkillW;
+data.studentQuestionW = studentQuestionW;
 data.WCorrect = WCorrect;
 data.WInCorrect = WIncorrect;
 data.studentOrd = ordData.studentOrd;

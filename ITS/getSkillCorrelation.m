@@ -30,10 +30,12 @@ for i=1:numSkills
         si = studentSkills(:,i);
         sj = studentSkills(:,j);
         I = ~isnan(si + sj);        
-        C(i,j) = corr(si(I),sj(I));
         if sum(I) < 2
             display('Not enough skill overlap to estimate correlation');
+            C(i,j) = nan;
+            continue;
         end
+        C(i,j) = corr(si(I),sj(I));        
     end
 end
 %c = corr(studentSkills);

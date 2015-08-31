@@ -11,12 +11,6 @@ classdef BatchConfigs < Configs
             c = ProjectConfigs.Create();            
             obj.configsStruct.mainConfigs=ITSMainConfigs();
             obj.configsStruct.overrideConfigs = {Configs()};
-            switch c.dataSet
-                case Constants.ITS_DATA
-                    %obj.set('overrideConfigs',BatchConfigs.makeITSOverrideConfigs());
-                otherwise                    
-                    error('unknown data set');
-            end
         end                
     end
     methods(Static)                

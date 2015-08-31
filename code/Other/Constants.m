@@ -14,7 +14,12 @@ classdef Constants < handle
         USPS_DATA = 5
         HOUSING_DATA = 6
         YEAST_BINARY_DATA = 7
+        
         ITS_DATA = 8
+        DS1 = 9
+        DS2 = 10
+        DS3 = 11
+        PRG = 12
         
         %Used for plotting multiple data sets
         ALL_DATA = 100
