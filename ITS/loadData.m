@@ -256,6 +256,7 @@ if ~exist(prunedFileName,'file');
             break;
         end
     end
+    save(prunedFileName);
 else
     load(prunedFileName);
 end
@@ -277,7 +278,7 @@ numLabels = length(uniqueOrdData.uniqueKC);
 W = zeros(numStudents,numSteps);
 WCorrect = W;
 WIncorrect = W;
-maxStudents = 1000;
+maxStudents = inf;
 studentSkills = zeros(numStudents,numLabels);
 for studIdx=1:min(numStudents,maxStudents)
     isStudent = studentIDs == studIdx; 
@@ -337,9 +338,9 @@ end
 BIG_NUMBER = 1000;
 studentSkillW = cell(numLabels,1);
 studentQuestionW = cell(numLabels,1);
+%{
 for labIdx=1:numLabels
-    
-    Wcurr = BIG_NUMBER*ones(numStudents);    
+    Wcurr = BIG_NUMBER*ones(min(numStudents,maxStudents));    
     for i=1:min(numStudents,maxStudents)
         Wi = Wmastered(i,:);
         for j=i:min(numStudents,maxStudents)    
@@ -358,13 +359,15 @@ for labIdx=1:numLabels
                 display('');
             end
         end
-    end
+    end    
     studentQuestionW{labIdx} = Wcurr;
+    
     Wcurr = Helpers.CreateDistanceMatrix(studentSkills(:,labIdx));
     Wcurr(isnan(Wcurr)) = BIG_NUMBER;
     %assert(~any(isnan(Wcurr(:))));
     studentSkillW{labIdx} = Wcurr;    
 end
+%}
 data = struct();
 data.studentSkills = studentSkills;
 data.studentW = studentSkillW;

@@ -13,6 +13,11 @@ classdef ProjectConfigs < ProjectConfigsBase
         llgcCVParams
         nwCVParams        
         useLLGC
+        useLogReg
+        useLinReg
+        linRegCVParams
+        useAddMod
+        addModCVParams
         
         QQEdgesExperiment
         QQEdges
@@ -27,6 +32,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         useMean
         
         useStudentQuestionGraph
+        useLabelsAsX
+                
+        sigmaVals
     end
     
     methods(Static, Access=private)
@@ -50,12 +58,20 @@ classdef ProjectConfigs < ProjectConfigsBase
             useCommonSkills = 1;
             singleSkill = 1;
             
-            c.dataSet = Constants.DS1;
+            c.dataSet = Constants.DS3;
+            %c.dataSet = Constants.PRG;
+            
             c.useStudentData = 1;
             c.graphTransferExp = 1;
             c.useStudentQuestionGraph = 0;
+            c.useLabelsAsX = 1;
+            
             c.useLLGC = 0;
             c.useMean = 0;
+            c.useLinReg = 0;
+            c.useAddMod = 1;
+            
+            c.useLogReg = 0;
             
             if c.graphTransferExp
                 c.useLLGCRegression = 1;
@@ -84,30 +100,48 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.targetLabels = 6;
                         %}
                         
-                        
+                        %{
                         c.sourceLabels = 2;
                         c.targetLabels = 1;
+                        %}
                         
+                        c.sourceLabels = 1:5;
+                        c.targetLabels = 6;
                         c.numLabeledPerClass = [5 10 15];
                     case Constants.PRG
                         c.dataSetName = 'Prgusap1_reg';
                         %c.dataSetName = 'Prgusap1';
-                        c.sourceLabels = 4;
-                        c.targetLabels = 1;
-                        c.numLabeledPerClass = [5 10 20 30];
+                        
+                        %{
+                        c.sourceLabels = 2;
+                        c.targetLabels = 3;
+                        %}
+                        c.sourceLabels = [1 2];
+                        c.targetLabels = 3;
+                        %c.numLabeledPerClass = [5 10 20 30];
+                        c.numLabeledPerClass = [20 50 100 150];
                         %c.numLabeledPerClass = [30];
                     case Constants.DS2
                         c.dataSetName = 'DS2-35_reg';
                         %c.dataSetName = 'DS2-35';
                         %c.labelsToKeep = 1;
-                        c.numLabeledPerClass = [2 5 10 15];
+                        c.numLabeledPerClass = [5 10 20 40];
                         %c.numLabeledPerClass = [15];
                         %{
                     c.sourceLabels = 5;
                     c.targetLabels = 6;
                         %}
+                        %{
                         c.sourceLabels = 6;
                         c.targetLabels = 14;
+                        %}
+                        c.sourceLabels = 3:6;
+                        c.targetLabels = 7;
+                    case Constants.DS3
+                        c.dataSetName = 'DS3-39_reg';
+                        c.numLabeledPerClass = [20 50 100 150];
+                        c.sourceLabels = 2:10;
+                        c.targetLabels = 11;
                 end
                 c.measure = L2Measure();
             else
@@ -142,6 +176,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                             %c.labelsToUse = 5;
                             c.labelsToUse = 4;
                         end
+                    case Constants.DS3
+                        error('');
                 end
             end
             if c.useStudentQuestionGraph
@@ -175,7 +211,11 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.alpha = [];
             %c.sigma = .2;            
             c.sigma = [];
+            c.linRegCVParams = struct('key','reg');
+            c.linRegCVParams(1).values = num2cell(10.^(-10:10));
             
+            c.addModCVParams = c.nwCVParams;
+            c.sigmaVals = 2.^(-10:10);
         end
         function [c] = BatchConfigs()            
             c = BatchConfigs();
@@ -189,7 +229,12 @@ classdef ProjectConfigs < ProjectConfigsBase
             if ~isempty(i)
                 d = d(1:i-1);
             end
-            c.setITS(d,useReg,pc.useStudentQuestionGraph);                 
+            c.setITS(d,useReg,pc.useStudentQuestionGraph);    
+            if pc.useLabelsAsX
+                c.delete('WName');
+                c.set('XName','studentSkills');
+            end
+            %{
             if pc.dataSet == Constants.PRG || pc.dataSet == Constants.DS3
                 if pc.useStudentData
                     c.set('maxToUse',500);
@@ -197,6 +242,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.set('maxToUse',[inf 1000]);
                 end
             end
+            %}
         end                
         
         function [c] = VisualizationConfigs()            
@@ -234,6 +280,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.set('prefix','results_DS2-35_reg');
                         c.set('dataSet',{'results_DS2-35_reg'});
                         c.set('resultsDirectory','results_DS2-35_reg');
+                    case Constants.DS3
+                        c.set('prefix','results_DS3-39_reg');
+                        c.set('dataSet',{'results_DS3-39_reg'});
+                        c.set('resultsDirectory','results_DS3-39_reg');
                 end
                 c.set('measure',L2Measure());
             else
@@ -274,10 +324,14 @@ classdef ProjectConfigs < ProjectConfigsBase
                 methodResultsFileNames{end+1} = 'LLGC.mat';
                 methodResultsFileNames{end+1} = 'NW.mat';
                 methodResultsFileNames{end+1} = 'Mean.mat';
+                methodResultsFileNames{end+1} = 'LinReg.mat';
+                methodResultsFileNames{end+1} = 'AddMod.mat';
                 legend = {...
                     'LLGC', ...
                     'NW',...
                     'Mean',...
+                    'LinReg',...
+                    'AddMod',...
                     };
             else
                 title = ['Bipartite Student-Question Graph: ' pc.dataSetName];

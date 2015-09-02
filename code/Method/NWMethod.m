@@ -3,13 +3,68 @@ classdef NWMethod < HFMethod
     %   Detailed explanation goes here
     
     properties
+        X
+        Y
+        sigma
     end
     
     methods
         function obj = NWMethod(configs)
+            if ~exist('configs','var')
+                configs = Configs();
+            end
             obj = obj@HFMethod(configs);
             obj.method = HFMethod.NW;
         end
+        
+        
+        
+        function [] = train(obj,X,Y)
+            if all(Y == 0)
+                obj.X = [];
+                obj.Y = [];
+                return;
+            end
+            assert(size(X,2) == 1);
+            sig = obj.get('sigma');
+            assert(~isempty(sig));
+            if length(sig) == 1                
+                obj.sigma = sig;
+            else
+                cv = CrossValidation();
+                cv.setData(X,Y);
+                cv.methodObj = obj;
+                cv.measure = obj.get('measure');
+                cvParams = Helpers.vector2cvParams(sig,'sigma');
+                cv.parameters = cvParams;
+                [bestParams,acc] = cv.runCV();                
+                obj.sigma = bestParams.value;
+            end            
+            isLabeled = ~isnan(Y);
+            obj.X = X(isLabeled,:);
+            obj.Y = Y(isLabeled,:);
+        end
+        
+        function [y] = predict(obj,X)
+            assert(size(X,2) == 1);
+            if isempty(obj.Y)
+                y = zeros(size(X,1),1);
+                return;
+            end
+            nl = size(obj.X,1);            
+            Xall = [obj.X ; X];
+            W = Helpers.CreateDistanceMatrix(Xall);
+            W = W(nl+1:end,1:nl);
+            W = Helpers.distance2RBF(W,obj.sigma);   
+            d = sum(W,2);
+            d(d < 1e-8) = 1;
+            D = diag(d);
+            warning off;
+            S = inv(D)*W;
+            warning on;
+            y = S*obj.Y;            
+        end
+        
         function [fu,savedData,sigma] = runNW(obj,distMat,makeRBF,savedData)
             assert(makeRBF);
 

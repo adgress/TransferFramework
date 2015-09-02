@@ -93,7 +93,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 [distMat] = obj.createDistanceMatrix(train,test,obj.configs,makeRBF);
                 testResults.dataType = distMat.type;
             end
-            [Wrbf,~,sigma,Y_testCleared,instanceIDs] = obj.makeLLGCMatrices(distMat);
+            [Wrbf,~,sigma,Y_testCleared,instanceIDs] = obj.makeLLGCMatrices(distMat,~makeRBF);
             %error('use targetLabels instead?');
             %labels = pc.labelsToUse;
             labels = [];
@@ -108,7 +108,7 @@ classdef LLGCWeightedMethod < LLGCMethod
                 dataSetIDs = unique(distMat.instanceIDs);
                 for i=1:length(dataSetIDs)
                     d = dataSetIDs(i);
-                    I = distMat.instanceIDs == d & Y_testCleared > 0;
+                    I = distMat.instanceIDs == d & ~isnan(Y_testCleared);
                     n = sum(I);
                     YtrainMat(I,:) = YtrainMat(I,:) / n;
                 end

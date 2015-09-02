@@ -11,6 +11,7 @@ classdef DistanceMatrix < LabeledData
     
     properties
         W
+        X
         WNames
         WIDs        
     end
@@ -99,7 +100,7 @@ classdef DistanceMatrix < LabeledData
         end
         
         function [W,Y,isTest,type,perm] = prepareForHF(obj)
-            %error('Update!');
+            error('Update!');
             W = obj.W;
             isTest = obj.type == Constants.TARGET_TEST;
             labeledTrain = (obj.type  == Constants.TARGET_TRAIN | ...
@@ -132,29 +133,9 @@ classdef DistanceMatrix < LabeledData
             obj.W = obj.W(newPerm,newPerm);
             obj.type = obj.type(newPerm);
             obj.Y = obj.Y(newPerm);
+            obj.X = obj.X(newPerm,:);
         end
-        
-        function [W,Y,type] = prepareForHF_LOOCV(obj)
-            error('Update!');
-            obj.shiftLabeledDataToFront();
-            obj.shiftLabeledTargetDataToFront();
-            W = obj.W;
-            Y = obj.Y;
-            type = obj.type;
-        end
-        
-        %function [W,Ys,Yt,type,isTarget] = prepareForSourceHF(obj)
-        function [] = prepareForSourceHF(obj)
-            error('Update!');
-            sourceInds = find(obj.isSource());
-            targetInds = find(obj.isTarget());
-            allInds = [sourceInds; targetInds];
-            Ys = obj.Y(sourceInds);
-            Yt = obj.Y(targetInds);
-            obj.W = obj.W(allInds,allInds);
-            obj.type = obj.type(allInds);
-            obj.Y = [Ys ; Yt];
-        end
+    
         
         function[] = removeInstances(obj, shouldRemove)
             obj.Y = obj.Y(~shouldRemove);
@@ -162,6 +143,7 @@ classdef DistanceMatrix < LabeledData
             obj.type = obj.type(~shouldRemove);
             obj.trueY = obj.trueY(~shouldRemove);
             obj.instanceIDs = obj.instanceIDs(~shouldRemove);
+            obj.X(shouldRemove,:) = [];
         end
         
         function [n] = get.meanDistance(obj)

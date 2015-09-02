@@ -7,7 +7,7 @@ switch pc.dataSet
         file = 'Data/ITS/DS2-35_reg';
     case Constants.DS3
         %file = 'Data/ITS/DS3-39';
-        file = 'Data/ITS/DS3-39-pruned_reg';
+        file = 'Data/ITS/DS3-39_reg';
     case Constants.PRG
         file = 'Data/ITS/Prgusap1_reg';
 end

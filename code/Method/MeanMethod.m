@@ -23,16 +23,19 @@ classdef MeanMethod < Method
             train = input.train;
             test = input.test;
             testResults = FoldResults();   
+            assert(isempty(train.W));
             
-            t = train.copy();
-            t.removeTestLabels();
-            y = t.Y(t.isLabeled());
-            fu = mean(y)*ones(size(t.Y));
+            d = DataSet.Combine(train.copy(),test.copy());
+            y = d.Y(d.isLabeled());
+            fu = mean(y)*ones(size(d.Y));
+            
             testResults.dataFU = sparse(fu);
             testResults.labelSets = [];
-            testResults.dataType = train.type;
+            testResults.dataType = d.type;
             testResults.yPred = fu;
-            testResults.yActual = train.Y;
+            testResults.yActual = d.Y;
+            
+            
             a = obj.get('measure').evaluate(testResults);
             savedData.val = a.learnerStats.valTest;
             display([obj.getPrefix ': ' num2str(savedData.val)]);

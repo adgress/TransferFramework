@@ -14,6 +14,10 @@ classdef CrossValidation < handle
         function obj = CrossValidation()         
         end
         
+        function [] = setData(obj,X,Y)
+            obj.trainData = DataSet([],[],[],X,Y);
+        end
+        
         function [] = createCVSplits(obj,numSplits,percTrain)
             percArray = [percTrain 1-percTrain 0];
             Y = obj.trainData.Y;
@@ -58,15 +62,27 @@ classdef CrossValidation < handle
                     input = struct();
                     s = obj.splits{splitIdx};
                     [train,test,~] = obj.trainData.splitDataSet(s);
-                    ns = obj.trainData.type ~= Constants.SOURCE;                    
-                    train.type(s == 1 & ns) = Constants.TARGET_TRAIN;
-                    train.type(s == 2 & ns) = Constants.TARGET_TEST;
-                    test.type(s == 1 & ns) = Constants.TARGET_TRAIN;
-                    test.type(s == 2 & ns) = Constants.TARGET_TEST;
+                    ns = obj.trainData.type ~= Constants.SOURCE;   
+                    
+                    %Is this necessary?
+                    if ~isempty(train.W)
+                        train.type(s == 1 & ns) = Constants.TARGET_TRAIN;
+                        train.type(s == 2 & ns) = Constants.TARGET_TEST;
+                        test.type(s == 1 & ns) = Constants.TARGET_TRAIN;
+                        test.type(s == 2 & ns) = Constants.TARGET_TEST;
+                    end
                     input.train = train;
                     input.test = test;
+                    %Don't use cached data until ordering issues are
+                    %figured out
+                    %{
                     [splitResults{splitIdx},savedData] = ...
                         obj.methodObj.runMethod(input,savedData);
+                    %}
+                    
+                    
+                    [splitResults{splitIdx}] = ...
+                        obj.methodObj.runMethod(input);
                     processedSplitResults{splitIdx} = ...
                         obj.measure.evaluate(splitResults{splitIdx});
                     acc = acc + processedSplitResults{splitIdx}.learnerStats.testResults;
@@ -90,6 +106,8 @@ classdef CrossValidation < handle
                     display(num2str(accs(idx)));
                 end
             end
+            I = Helpers.isInfOrNan(accs);
+            assert(~any(I));
             [~,bestInd] = max(accs);
             bestParams = paramPowerSet{bestInd};
             bestAcc = accs(bestInd);

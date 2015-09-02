@@ -172,6 +172,25 @@ classdef MainConfigs < Configs
             obj.set('resultsDir','results_yeast');
             obj.set('dataSet','yeastBinary_split_data');            
         end
+        
+        function [] = setLinearRegressionConfigs(obj,learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.configLoader=ExperimentConfigLoader();
+            linRegObj = LinearRegressionMethod(learnerConfigs);
+            obj.configsStruct.learners=linRegObj;
+        end
+        
+        function [] = setLogisticRegressionConfigs(obj,learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.configLoader=ExperimentConfigLoader();
+            logRegObj = LogisticRegressionMethod(learnerConfigs);
+            obj.configsStruct.learners=logRegObj;
+        end
+        
         function [] = setNW(obj,learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
@@ -180,6 +199,16 @@ classdef MainConfigs < Configs
             nwObj = NWMethod(learnerConfigs);
             obj.configsStruct.learners=nwObj;
         end
+        
+        function [] = setAdditiveModel(obj,learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            obj.configsStruct.configLoader=ExperimentConfigLoader();
+            addModObj = AdditiveModelMethod(learnerConfigs);
+            obj.configsStruct.learners=addModObj;
+        end
+        
         function [] = setLLGCConfigs(obj, learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();

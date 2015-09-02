@@ -17,6 +17,15 @@ classdef NormalizeTransform < TransformBase
         
         function [] = learn(obj,X,Y)
             [~,obj.mean,obj.stdevs] = zscore(X);
+            I = isnan(obj.mean) | isinf(obj.mean);
+            assert(~any(I));
+            I = isnan(obj.stdevs) | isinf(obj.stdevs);
+            assert(~any(I));
+            I = obj.stdevs == 0;
+            if any(I)
+                display('NormalizeTransform: 0 stdev - replacing with 1');
+                obj.stdevs(I) = 1;
+            end
         end
         
         function [Z] = apply(obj,X,Y)

@@ -68,7 +68,7 @@ classdef DataSet < LabeledData
         end                
         function [n] = get.numInstances(obj)
             if isempty(obj.W)
-                n = size(Y,1);
+                n = size(obj.Y,1);
             else
                 if isempty(obj.Wdim)
                     n = size(obj.W{1},1);
@@ -90,15 +90,15 @@ classdef DataSet < LabeledData
             trueYSplit = {};
             instanceIDsSplit = {};
             typeSplit = {};
+            type = obj.type;
+            type(split == 1) = Constants.TARGET_TRAIN;
+            type(split == 2) = Constants.TARGET_TEST;
             if isempty(obj.X)
                 assert(max(split) == 2);
                 %isTest = split == 2;
                 %p = [find(~isTest) ; find(isTest)];
                 %obj.applyPermutation(p);
                 %split = split(p);
-                type = obj.type;
-                type(split == 1) = Constants.TARGET_TRAIN;
-                type(split == 2) = Constants.TARGET_TEST;
                 for idx=1:length(allDataSets);                   
                     I = split==idx;                    
                     %This is important if there's extra unlabeled data we
@@ -132,8 +132,8 @@ classdef DataSet < LabeledData
                 YSplit = DataSet.splitMatrix(obj.Y,split);
                 trueYSplit = DataSet.splitMatrix(obj.trueY,split);
                 instanceIDsSplit = DataSet.splitMatrix(obj.instanceIDs,split);            
-                typeSplit = DataSet.splitMatrix(obj.type,split);
-                error('Update typeSplit!');
+                typeSplit = DataSet.splitMatrix(type,split);
+                %error('Update typeSplit!');
             end
             
             

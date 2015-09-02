@@ -15,6 +15,12 @@ classdef HFMethod < Method
         function obj = HFMethod(configs)
             obj = obj@Method(configs);
             obj.method = HFMethod.HFGF;
+            if ~obj.has('makeRBF')
+                obj.set('makeRBF',true);
+            end
+            if ~obj.has('zscore')
+                obj.set('zscore',false);
+            end
         end
         
         function [distMat,savedData,Xall] = createDistanceMatrix(obj,train,test,learnerConfigs,makeRBF,savedData,V)
@@ -92,7 +98,7 @@ classdef HFMethod < Method
                 W = savedData.W;
                 error('Data ordering issue with caching?');
             else
-                error('Data ordering issue with caching?');
+                %warning('Data ordering issue with caching?');
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];                  
@@ -133,7 +139,7 @@ classdef HFMethod < Method
                     end
                     %W = exp(W);
                 else
-                    error('Don''t make RBF here?');
+                    %warning('Don''t make RBF here?');
                     if exist('V','var')
                         WDist = Helpers.CreateDistanceMatrixMahabolis(Xall,V);
                     else
@@ -158,7 +164,7 @@ classdef HFMethod < Method
                 if exist('savedData','var')
                     savedData.W = W;
                 end
-                error('Applying sigma twice?');
+                %warning('Applying sigma twice?');
             end
             
             distMat = DistanceMatrix(W,Y,type,trueY,instanceIDs);

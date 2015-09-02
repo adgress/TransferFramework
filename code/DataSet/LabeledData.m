@@ -124,7 +124,7 @@ classdef LabeledData < matlab.mixin.Copyable
         end
         
         function [v] = get.isNoisy(obj)
-            if size(obj.Y > 1)
+            if size(obj.Y,2) > 1
                 v = [];
             else
                 v = obj.Y ~= obj.trueY & obj.isLabeled();

@@ -24,6 +24,12 @@ classdef Method < Saveable
                 obj.set(k,v);
             end
         end
+        function [y] = train(obj,X,Y)
+            error('Not implemented!');
+        end
+        function [y] = predict(obj,X)
+            error('Not Implemented');
+        end
     end
     methods(Abstract)
         [testResults,savedData] = ...

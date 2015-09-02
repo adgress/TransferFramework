@@ -20,7 +20,10 @@ classdef ITSMainConfigs < MainConfigs
             learnerConfigs.set('sigma',pc.sigma);
             learnerConfigs.delete('sigmaScale');
             learnerConfigs.set('measure',pc.measure);
-            learnerConfigs.set('useInv',1);
+            
+            %Don't use inverse method until matrix caching is figured out
+            %learnerConfigs.set('useInv',1);
+            learnerConfigs.set('useInv',0);
             learnerConfigs.set('inferSubset',0);
             
             if pc.useStudentData
@@ -29,7 +32,17 @@ classdef ITSMainConfigs < MainConfigs
                     learnerConfigs.set('makeRBF',true);
                     obj.setLLGCConfigs(learnerConfigs);                    
                 elseif pc.useMean
-                    obj.setMeanConfigs(learnerConfigs);                    
+                    obj.setMeanConfigs(learnerConfigs);   
+                elseif pc.useLogReg
+                    error('update!');
+                    obj.setLogisticRegressionConfigs(learnerConfigs);
+                elseif pc.useLinReg
+                    learnerConfigs.set('cvParameters',pc.linRegCVParams);
+                    obj.setLinearRegressionConfigs(learnerConfigs);                    
+                elseif pc.useAddMod
+                    learnerConfigs.set('cvParameters',pc.addModCVParams);
+                    learnerConfigs.set('sigmaVals',pc.sigmaVals);
+                    obj.setAdditiveModel(learnerConfigs);                    
                 else
                     learnerConfigs.set('cvParameters',pc.nwCVParams);
                     learnerConfigs.set('makeRBF',true);

@@ -10,8 +10,12 @@ classdef LogisticRegressionMethod < Method
         
         function obj = LogisticRegressionMethod(configs)
             obj = obj@Method(configs);
+            pc = ProjectConfigs.Create();
+            if ~obj.has('useManualCV')
+                obj.set('useManualCV',1);
+            end
             if ~obj.has('fixReg')
-                obj.set('fixReg',ProjectConfigs.fixReg);
+                obj.set('fixReg',pc.fixReg);
             end
             if ~obj.has('useVal')
                 obj.set('useVal',0);
@@ -29,23 +33,28 @@ classdef LogisticRegressionMethod < Method
                 obj.set('LOOCV',0);
             end
             if ~obj.has('svm')
-                obj.set('svm',ProjectConfigs.useSVM);
+                obj.set('svm',pc.useSVM);
             end
             if ~obj.has('NB')
-                obj.set('NB',ProjectConfigs.useNB);
+                obj.set('NB',pc.useNB);
             end
             assert(~(obj.get('svm') && obj.get('NB')));
         end
         
+        function [testResults,savedData] = runMethod(obj,input,savedData)
+            error('TODO');
+        end
+        
         function [testResults,savedData] = ...
                 trainAndTest(obj,input,savedData)
+            pc = ProjectConfigs.Create();
             %error('TODO: Try resampling training data');
             testResults = FoldResults();
             trainData = input.train;
             test = input.test;   
             trainX = trainData.X;
             testX = test.X;
-            if ProjectConfigs.data == Constants.NG_DATA && ProjectConfigs.useNB
+            if pc.dataSet == Constants.NG_DATA && pc.useNB
                 trainX = double(trainData.X > 0);
                 testX = double(test.X > 0);
             end
@@ -62,7 +71,7 @@ classdef LogisticRegressionMethod < Method
                 end
             end
             t = find(shouldUseFeature);
-            if ProjectConfigs.logRegNumFeatures < length(t)                
+            if pc.logRegNumFeatures < length(t)                
                 t(ProjectConfigs.logRegNumFeatures+1:end) = [];
             end
             shouldUseFeature(:) = 0;
@@ -81,7 +90,7 @@ classdef LogisticRegressionMethod < Method
             YLabeledCurr = YLabeled;
             
             liblinearMethod = 0;
-            if ProjectConfigs.useL1LogReg
+            if pc.useL1LogReg
                 liblinearMethod = 6;
             end
             useLogReg = true;
@@ -110,13 +119,13 @@ classdef LogisticRegressionMethod < Method
             accs = zeros(size(C));
             NBOptions = {};
             transform = NormalizeTransform();
-            if ProjectConfigs.data == Constants.NG_DATA
+            if pc.dataSet == Constants.NG_DATA
                 transform = TransformBase();
                 %NBOptions = {'Distribution','mvmn'};            
             end
             %transform = TransformBase();
             instanceWeights = ones(size(YLabeledCurr));
-            if ProjectConfigs.resampleTarget
+            if pc.resampleTarget
                 numSource = sum(labeledType == Constants.SOURCE);
                 numTarget = sum(labeledType == Constants.TARGET_TRAIN);
                 instanceWeights(labeledType == Constants.SOURCE) = 1/numSource;
@@ -124,7 +133,7 @@ classdef LogisticRegressionMethod < Method
             end
             useInitialVal = obj.get('justInitialVal');
             useManualCV = sum(trainData.isSource()) > 0 || useValidationSet || useInitialVal ...
-                    || ~isempty(validationWeights) || ~useLibLinear;
+                    || ~isempty(validationWeights) || ~useLibLinear || obj.get('useManualCV');;
             if ~useManualCV
                 for cIdx=1:length(C)
                     options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -v 10 -q'];                
@@ -180,7 +189,7 @@ classdef LogisticRegressionMethod < Method
                         transform.learn(Xcurr);                    
                         Xcurr = transform.apply(Xcurr,Ycurr);
                         instanceWeights = ones(size(Ycurr));
-                        if ProjectConfigs.resampleTarget                                                        
+                        if pc.resampleTarget                                                        
                             numSource = sum(type == Constants.SOURCE);
                             numTarget = sum(type == Constants.TARGET_TRAIN);                            
                             if numSource > 0
@@ -196,7 +205,7 @@ classdef LogisticRegressionMethod < Method
                         if useLibLinear
                             options = ['-s ' num2str(liblinearMethod) ' -c ' num2str(C(cIdx)) ' -B 1 -q'];
                             m = train(instanceWeights,Ycurr,sparse(Xcurr),options);                        
-                            [predLabels,t,~] = predict(Ytest, sparse(Xtest), m, '-q');
+                            [predLabels,t,probEst] = predict(Ytest, sparse(Xtest), m, '-q');
                         elseif useNB
                             featsToUse = Helpers.hasZeroInClassVariance(Xcurr,Ycurr);
                             m = NaiveBayes.fit(full(Xcurr(:,~featsToUse)),Ycurr,NBOptions{:});
@@ -255,7 +264,7 @@ classdef LogisticRegressionMethod < Method
                 transform.learn(XLabeled,YLabeled);
                 XLabeled = transform.apply(XLabeled,YLabeled);
                 
-                if ProjectConfigs.resampleTarget
+                if pc.resampleTarget
                     numSource = sum(labeledType == Constants.SOURCE);
                     numTarget = sum(labeledType == Constants.TARGET_TRAIN);
                     instanceWeights(labeledType == Constants.SOURCE) = 1/numSource;

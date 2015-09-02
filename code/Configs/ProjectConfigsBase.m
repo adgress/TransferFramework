@@ -26,6 +26,13 @@ classdef ProjectConfigsBase < handle
         useSavedSmallResults
         
         preprocessDataFunc
+        
+        useSVM
+        useNB
+        fixReg
+        logRegNumFeatures
+        useL1LogReg
+        resampleTarget
     end
     
     methods
@@ -49,6 +56,13 @@ classdef ProjectConfigsBase < handle
             obj.labelNoise = 0;
             obj.smallResultsFiles = true;
             obj.labelsToKeep = [];
+            
+            obj.useSVM = 0;
+            obj.useNB = 0;
+            obj.fixReg = 0;
+            obj.logRegNumFeatures = inf;
+            obj.useL1LogReg = 0;
+            obj.resampleTarget = 0;
         end
         function [labelProduct] = MakeLabelProduct(obj)         
             error('Shouldn''t this be in MainConfigs?');

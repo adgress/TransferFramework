@@ -6,7 +6,15 @@ classdef Helpers < handle
     end
     
     methods(Static)   
+        function [s] = vector2cvParams(v,name)
+            s = struct();
+            s.values = num2cell(v);
+            s.key = name;
+        end
         
+        function [I] = isInfOrNan(v)
+            I = isinf(v) | isnan(v);
+        end
         function [v] = selectFromCellofCells(c,I)
             v = cell(size(c));
             assert(length(c) == length(I));
@@ -569,7 +577,7 @@ classdef Helpers < handle
             %Ymat(:,Y) = 1;
             Ymat = sparse(length(Y),m);
             n = size(Y,1);
-            Y(Y < 0) = m+1;
+            Y(isnan(Y)) = m+1;
             for i=1:size(Y,2)            
                 assert(m > 0);                
                 s = sparse(1:n,Y(:,i),1,n,m+1);

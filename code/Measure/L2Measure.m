@@ -11,6 +11,9 @@ classdef L2Measure < Measure
             isTest = split.dataType == Constants.TARGET_TEST;
             isTrain = split.dataType == Constants.TARGET_TRAIN;
             measureResults = struct();
+            if ~isfield(split,'learnerStats')
+                split.learnerStats = struct();
+            end
             measureResults.learnerStats = split.learnerStats;
             %measureResults.valTrain = -1;
             ITest = isTest & isLabeled;

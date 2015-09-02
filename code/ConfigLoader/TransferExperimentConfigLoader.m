@@ -25,7 +25,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             end
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain,classesToKeep);
             assert(sampledTrain.numClasses == train.numClasses);
-            if ~isnan(sampledTrain.Y) ~= sampledTrain.numClasses*numPerClass
+            if sum(~isnan(sampledTrain.Y)) ~= sampledTrain.numClasses*numPerClass
                 warning('Sample size is weird');
             end
             assert(numPerClass > 1);
@@ -97,7 +97,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
                 trainingDataMetadata.numSourceLabels = 0;
             else
                 trainingDataMetadata.numSourceLabels = ...
-                    size(find(~isnan(sources{1}.Y),1);
+                    size(find(~isnan(sources{1}.Y),1));
             end
             trainingDataMetadata.numTargetLabels = ...
                 size(find(~isnan(sampledTrain.Y)),1);
