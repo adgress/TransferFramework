@@ -57,10 +57,17 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             I = ~isnan(Y);
             Ymat = Helpers.createLabelMatrix(Y);
             invL = inv(L + (alpha+numSources)*eye(size(L)));
-            mask = ones(n);
-            mask = mask - diag(diag(mask));
-            mask = logical(mask);
+            invL = invL - diag(diag(invL));
 
+            betaRowIdx = 1:(numLabels*numSources);
+            betaColIdx = zeros(numLabels*numSources,1);
+            betaIdx = zeros(numLabels*numSources,1);
+            for idx=1:numLabels
+                range = numSources*(idx-1)+1:numSources*idx;
+                betaColIdx(range) = idx;
+                betaIdx(range) = (1:numSources)';
+            end
+            
             warning off
             cvx_begin quiet
                 variable F(n,numLabels)             
@@ -72,14 +79,10 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 minimize(norm(F(I,:)-Ymat(I,:),1))
                 subject to
                     b >= 0
-                    b <= 1
+                    %b <= 1
                     norm(b,1) <= reg
-                    %bRep == repmat(b(betaIndex),1,numLabels)
-                    bRep == blkdiag(b,b,b,b,b,b,b,b,b,b,b,b,b,b,b)
-                    for idx=1:n                        
-                        F(idx,:) == invL(idx,mask(idx,:))*(alpha*Ymat(mask(idx,:),:)) + ...
-                            invL(idx,:)*fuCombined*bRep;
-                    end
+                    bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))
+                    F == invL*(alpha*Ymat + fuCombined*bRep)
             cvx_end  
             warning on
             %fuCombined(:,10)
@@ -179,7 +182,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             cvParams = struct('key','values');
             cvParams(1).key = 'reg';
             %cvParams(1).values = num2cell([0 10.^(-1:3)]);
-            cvParams(1).values = num2cell(0:3);
+            cvParams(1).values = num2cell([0 1 5 10 20]);
             
             obj.set('alpha',alpha);
             %obj.set('reg',reg);
