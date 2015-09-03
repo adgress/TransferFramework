@@ -439,7 +439,7 @@ classdef DataSet < LabeledData
             allSplits = cell(max(splits),1);
             for i=1:3
                 allSplits{i} = mat(splits == i,:);
-            end
+            end            
         end                
     end
     methods(Static)

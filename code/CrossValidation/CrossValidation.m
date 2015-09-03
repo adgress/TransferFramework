@@ -37,6 +37,10 @@ classdef CrossValidation < handle
             if isempty(obj.splits)
                 obj.createCVSplits(10,.8);
             end
+            for idx=1:length(obj.splits)
+                I = obj.splits{idx} == 0;
+                obj.splits{idx}(I) = 1;
+            end
             if isempty(obj.measure)
                 obj.measure = Measure();
             end

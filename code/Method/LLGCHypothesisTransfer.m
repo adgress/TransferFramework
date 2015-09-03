@@ -183,6 +183,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             cvParams(1).key = 'reg';
             %cvParams(1).values = num2cell([0 10.^(-1:3)]);
             cvParams(1).values = num2cell([0 1 5 10 20]);
+            %cvParams(1).values = num2cell([5]);
             
             obj.set('alpha',alpha);
             %obj.set('reg',reg);
