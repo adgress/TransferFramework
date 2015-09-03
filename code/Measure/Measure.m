@@ -55,6 +55,7 @@ classdef Measure < Saveable
             %end
             if exist('valTest','var')
                 measureResults.learnerStats.testResults = valTest;
+                measureResults.learnerStats.valTest = valTest;
             end
             if exist('valTrain','var')
                 measureResults.learnerStats.trainResults = valTrain;

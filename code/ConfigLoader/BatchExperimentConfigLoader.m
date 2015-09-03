@@ -256,6 +256,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 end
                 targetDataCopy = dataAndSplits.allData.copy();
                 targetDataCopy.applyPermutation(split.permutation);
+                targetDataCopy.type = split.split;
                 targetClassInds = targetDataCopy.hasLabel(targetLabel);
                 targetDataCopy.remove(~targetClassInds);
                 targetOverlap = pc.numOverlap;

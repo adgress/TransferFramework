@@ -99,10 +99,10 @@ classdef LLGC < handle
         end
         
         function [L] = make_L(W)
-            error('Signed Lap?');
+            %error('Signed Lap?');
             W(logical(speye(size(W)))) = 0;
 
-            Disq = diag(sum(W).^-.5);
+            Disq = diag(sum(abs(W)).^-.5);
             WN = Disq*W*Disq;
             I = eye(size(WN,1));
             L = I - WN;

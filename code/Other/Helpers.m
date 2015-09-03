@@ -709,6 +709,9 @@ classdef Helpers < handle
         end
         
         function [] = AssertInvalidPercent(x,perc)
+            if ~exist('perc','var')
+                perc = 0;
+            end
             isInvalid = isnan(x(:)) | isinf(x(:));
             percInvalid = mean(isInvalid);
             if percInvalid > perc

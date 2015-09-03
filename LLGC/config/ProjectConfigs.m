@@ -1,4 +1,4 @@
-classdef ProjectConfigs < handle
+classdef ProjectConfigs < ProjectConfigsBase
     %PROJECTCONFIGS Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -16,20 +16,17 @@ classdef ProjectConfigs < handle
         instance = ProjectConfigs.CreateSingleton()
         
         vizIncreasingNoise = 0
-        vizWeights = 1
+        vizWeights = 0
         vizNoisyAcc = 0
         trainLabels = [10 15]
         labels = [10 15 23 25 26 30]
         
         noisyTommasiLabels = ProjectConfigs.trainLabels
         
-        useSavedSmallResults = true
         CLASS_NOISE = .0
         
         noisesToViz = [.05 .1 .15 .25 0.35]
         %noisesToViz = [.15 .25 0.35]
-        numRandomFeatures = 0        
-        smallResultsFiles = true
         
         useOldMethod = false
         useNewOpt = 1
@@ -45,18 +42,11 @@ classdef ProjectConfigs < handle
         k
         alpha
         labelsToUse
-        labelNoise
-        numLabeledPerClass        
         numFolds
         reg
         noise
         numOverlap
-        computeLossFunction
-        processMeasureResults
         
-        numTarget
-        numSource
-        tommasiLabels
         addTargetDomain
         
         useOracle
@@ -69,13 +59,11 @@ classdef ProjectConfigs < handle
         
         useJustTargetNoSource
         
-        dataSet
         cvParams
         
-        makeSubDomains
         maxSourceSize
-        rerunExperiments
-        classNoise                
+        classNoise   
+        useHypothesisTransfer
     end
     
     methods(Static, Access=private)
@@ -89,9 +77,10 @@ classdef ProjectConfigs < handle
             c.computeLossFunction = true;
             c.processMeasureResults = false;
             c.useOracleNoise=false;
-            c.rerunExperiments = false;
-            
+            c.rerunExperiments = false;            
             c.useDataSetWeights=false;                        
+            
+            c.useHypothesisTransfer = 1;
             
             c.makeSubDomains = false;
                         
@@ -104,6 +93,7 @@ classdef ProjectConfigs < handle
             c.numFolds = 3;
             c.reg = 0;
             c.noise = 0;
+            c.labelsToKeep = [];
             %c.dataSet = Constants.COIL20_DATA;
             c.dataSet = Constants.TOMMASI_DATA;
             %c.dataSet = Constants.HOUSING_DATA;
@@ -172,9 +162,9 @@ classdef ProjectConfigs < handle
                     c.reg = [1 10 100 1000 10000];    
                 end
                 switch c.dataSet
-                    case Constants.TOMMASI_DATA
-                        %c.numLabeledPerClass=[5 10 15 20 25];
-                        c.numLabeledPerClass=[5 10 15 20];                                                
+                    case Constants.TOMMASI_DATA                        
+                        %c.numLabeledPerClass=[5 10 15 20];
+                        c.numLabeledPerClass=[20];
                         c.numOverlap = 30;
                         c.addTargetDomain = true;
                         
@@ -235,7 +225,12 @@ classdef ProjectConfigs < handle
                 otherwise
                     error('unknown data set');
             end
-            c.get('mainConfigs').setLLGCWeightedConfigs();
+            %
+            if pc.useHypothesisTransfer
+                c.get('mainConfigs').setHypothesisTransferConfigs();
+            else
+                c.get('mainConfigs').setLLGCWeightedConfigs();
+            end
             if pc.dataSet == Constants.NG_DATA
                 c.get('mainConfigs').get('learners').configs.set('zscore',0)
             end
@@ -447,9 +442,13 @@ classdef ProjectConfigs < handle
                     if pc.dataSet == Constants.TOMMASI_DATA
                         methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1.mat'];
                         legend{end+1} = 'Just Target';
+                        methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-justTarget=1-newOpt=1.mat'];
+                        legend{end+1} = 'Just Target';
                     end
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
-                    legend{end+1} = 'Uniform Weights';                    
+                    legend{end+1} = 'Uniform Weights';     
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-alpha=0.9.mat'];
+                    legend{end+1} = 'Hypothesis Transfer';     
                 end
             else
                 error('TODO');

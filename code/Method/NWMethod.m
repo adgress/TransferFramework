@@ -15,17 +15,20 @@ classdef NWMethod < HFMethod
             end
             obj = obj@HFMethod(configs);
             obj.method = HFMethod.NW;
+            if ~obj.has('classification')
+                obj.set('classification',true);
+            end
         end
         
         
         
         function [] = train(obj,X,Y)
+            X = zscore(X);
             if all(Y == 0)
                 obj.X = [];
                 obj.Y = [];
                 return;
             end
-            assert(size(X,2) == 1);
             sig = obj.get('sigma');
             assert(~isempty(sig));
             if length(sig) == 1                
@@ -45,10 +48,12 @@ classdef NWMethod < HFMethod
             obj.Y = Y(isLabeled,:);
         end
         
-        function [y] = predict(obj,X)
-            assert(size(X,2) == 1);
+        function [y,fu] = predict(obj,X)
             if isempty(obj.Y)
                 y = zeros(size(X,1),1);
+                if obj.get('classification')
+                    y(:) = nan;
+                end
                 return;
             end
             nl = size(obj.X,1);            
@@ -62,7 +67,22 @@ classdef NWMethod < HFMethod
             warning off;
             S = inv(D)*W;
             warning on;
-            y = S*obj.Y;            
+            if obj.get('classification')
+                classes = unique(obj.Y);
+                fu = zeros(size(X,1),max(classes));
+                for idx=1:max(classes)
+                    I = obj.Y == idx;
+                    Si = S(:,I);
+                    Yi = ones(sum(I),1);
+                    fu(:,idx) = Si*Yi;
+                end
+                assert(all(fu(:) >= 0));                
+                fu = Helpers.NormalizeRows(fu);
+                Helpers.AssertInvalidPercent(fu);
+                [~,y] = max(fu,[],2);
+            else
+                y = S*obj.Y;            
+            end
         end
         
         function [fu,savedData,sigma] = runNW(obj,distMat,makeRBF,savedData)
@@ -71,15 +91,14 @@ classdef NWMethod < HFMethod
             distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
             I = distMat.isLabeledTargetTrain();            
 
-            if distMat.isRegressionData
+            if distMat.isRegressionData && ~obj.get('classification')
                 Wlabeled = distMat.W(:,I);
                 D = diag(sum(Wlabeled,2));
                 fu = zeros(size(distMat.Y));
                 assert(size(fu,2) == 1);
                 warning off;
                 fu = inv(D)*Wlabeled*distMat.Y(I);
-                warning on;
-                
+                warning on;                
             else
                 Wlabeled = distMat.W(I,:);
                 fu = zeros(length(I),distMat.numClasses);
@@ -95,6 +114,7 @@ classdef NWMethod < HFMethod
                 fu = Helpers.NormalizeRows(fu);
 
                 [~,fu] = max(fu,[],2);
+                fu = distMat.classes(fu);
             end
             isInvalid = isnan(fu) | isinf(fu);
             if any(isInvalid(:))

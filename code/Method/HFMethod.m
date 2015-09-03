@@ -168,6 +168,7 @@ classdef HFMethod < Method
             end
             
             distMat = DistanceMatrix(W,Y,type,trueY,instanceIDs);
+            distMat.X = Xall;
             distMat.WNames = WNames;
             distMat.WIDs = WIDs;
             distMat.labelSets = labelSets;

@@ -56,7 +56,7 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
             
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex);
-            if ~isnan(sampledTrain.Y) ~= numPerClass*sampledTrain.numClasses
+            if sum(~isnan(sampledTrain.Y)) ~= numPerClass*sampledTrain.numClasses
                 warning('Possibly wrong number of labels');
             end
             [~,trainTestInput] = ...
