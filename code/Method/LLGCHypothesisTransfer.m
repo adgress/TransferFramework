@@ -67,8 +67,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 variable FbTemp(n,numLabels)
                 variable b(numSources,1)
                 variable bRep(length(betaIndex)*numSources,numLabels)
-                variable c
-                minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
+                %variable c
+                %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
+                minimize(norm(F(I,:)-Ymat(I,:),1))
                 subject to
                     b >= 0
                     b <= 1
@@ -84,7 +85,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             %fuCombined(:,10)
             %b
             obj.set('beta',b);
-            obj.set('c',c);
+            %obj.set('c',c);
         end
         
         function [y,fu] = getSourcePredictions(obj,X)
