@@ -158,8 +158,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             sourceDataSetIDs = dataSetIDs(dataSetIDs ~= 0);
             obj.sourceHyp = {};
             %nwSigmas = 2.^(-5:5);
-            %nwSigmas = 4;
-            nwSigmas = .03;
+            nwSigmas = 4;
+            %nwSigmas = .03;
             for idx=1:length(sourceDataSetIDs)
                 nwObj = NWMethod();
                 nwObj.set('sigma',nwSigmas);
@@ -184,13 +184,14 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             %cvParams(1).values = num2cell([0 10.^(-1:3)]);
             cvParams(1).values = num2cell([0 1 5]);
             %cvParams(1).values = num2cell([5]);
-            cvParams(2).key = 'sigma';
-            cvParams(2).values = num2cell(2.^(-3:3));
+            %cvParams(2).key = 'sigma';
+            %cvParams(2).values = num2cell(2.^(-3:3));
             
             obj.set('alpha',alpha);
             %obj.set('reg',reg);
-            %obj.set('sigma',llgcSigma);  
-            obj.delete('sigma');
+            %obj.delete('sigma');
+            obj.set('sigma',llgcSigma);  
+            
             %obj.set('sigmaScale',llgcSigmaScale);
             
             cv = CrossValidation();
