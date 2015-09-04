@@ -103,7 +103,7 @@ classdef HFMethod < Method
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];                  
                 if learnerConfigs.get('zscore')
-                    %Xall = zscore(Xall);
+                    Xall = zscore(Xall);
                 end   
                 %TODO: I turned this off because it was causing bugs elsewhere
                 if size(Xall,2) == 1 && false

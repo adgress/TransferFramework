@@ -23,7 +23,7 @@ classdef NWMethod < HFMethod
         
         
         function [] = train(obj,X,Y)
-            %X = zscore(X);
+            X = zscore(X);
             if all(Y == 0)
                 obj.X = [];
                 obj.Y = [];

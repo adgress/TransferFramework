@@ -109,8 +109,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             Y = alpha*Helpers.createLabelMatrix(Y_testCleared);
             for idx=1:length(obj.sourceHyp)
                 assert(~isempty(distMat.X));
-                Yi = obj.sourceHyp{idx}.predict(distMat.X);
-                Y = Y + beta(idx)*Helpers.createLabelMatrix(Yi);
+                [Yi,FUi] = obj.sourceHyp{idx}.predict(distMat.X);
+                %Y = Y + beta(idx)*Helpers.createLabelMatrix(Yi,size(Y,2));
+                Y = Y + beta(idx)*FUi;
             end
             fu = M\Y;
             fu = Helpers.NormalizeRows(fu);
@@ -160,6 +161,13 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             %nwSigmas = 2.^(-5:5);
             nwSigmas = 4;
             %nwSigmas = .03;
+            
+            %{
+            n = size(train.X,1);
+            Xall = zscore([train.X ; test.X]);
+            train.X = Xall(1:n,:);
+            test.X = Xall(n+1:end,:);
+            %}
             for idx=1:length(sourceDataSetIDs)
                 nwObj = NWMethod();
                 nwObj.set('sigma',nwSigmas);
