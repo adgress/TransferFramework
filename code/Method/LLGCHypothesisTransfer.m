@@ -38,27 +38,15 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             
             
             fuCombined = zeros(n,numLabels*numSources);
-            betaIndex = ones(size(fuSource{1},2),1);
             for j=1:numLabels
                 f = zeros(n,numSources);
                 for idx=1:length(fuSource)
                     f(:,idx) = fuSource{idx}(:,j);                    
 
-                end
-                
-                rows = n*(j-1)+1:n*j;                
+                end                              
                 cols = numSources*(j-1)+1:numSources*j;
                 fuCombined(:,cols) = f;
-                %fuCombined = [fuCombined fuSource{idx}];
-                %betaIndex = [betaIndex ; idx*ones(size(fuSource{idx},2),1)];
             end
-            
-            
-            I = ~isnan(Y);
-            Ymat = Helpers.createLabelMatrix(Y);
-            invL = inv(L + (alpha+numSources)*eye(size(L)));
-            invL = invL - diag(diag(invL));
-
             betaRowIdx = 1:(numLabels*numSources);
             betaColIdx = zeros(numLabels*numSources,1);
             betaIdx = zeros(numLabels*numSources,1);
@@ -68,12 +56,19 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 betaIdx(range) = (1:numSources)';
             end
             
+            I = ~isnan(Y);
+            Ymat = Helpers.createLabelMatrix(Y);
+            %invL = inv(L + (alpha+numSources)*eye(size(L)));
+            invL = inv(L + alpha*eye(size(L)));
+            invL = invL - diag(diag(invL));
+            
+            
             warning off
             cvx_begin quiet
                 variable F(n,numLabels)             
                 variable FbTemp(n,numLabels)
                 variable b(numSources,1)
-                variable bRep(length(betaIndex)*numSources,numLabels)
+                variable bRep(numLabels*numSources,numLabels)
                 %variable c
                 %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
                 minimize(norm(F(I,:)-Ymat(I,:),1))
@@ -190,11 +185,13 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             cvParams = struct('key','values');
             cvParams(1).key = 'reg';
             %cvParams(1).values = num2cell([0 10.^(-1:3)]);
-            cvParams(1).values = num2cell([0 1 5]);
+            cvParams(1).values = num2cell([0 1 5 10]);
+            %cvParams(1).values = num2cell([0 1 5]);
             %cvParams(1).values = num2cell([5]);
             %cvParams(2).key = 'sigma';
             %cvParams(2).values = num2cell(2.^(-3:3));
-            
+            cvParams(2).key = 'alpha';
+            cvParams(2).values = num2cell([1 5 10]);
             obj.set('alpha',alpha);
             %obj.set('reg',reg);
             %obj.delete('sigma');
