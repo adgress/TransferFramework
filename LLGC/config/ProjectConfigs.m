@@ -92,7 +92,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.sigmaScale = .01;
             c.k=inf;
             
-            c.noTransfer = true;
+            c.noTransfer = 0;
             c.alpha=[1 5 10];
             c.reg = [0 1 5 10];
             
@@ -456,10 +456,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                     end
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
                     legend{end+1} = 'Uniform Weights';     
-                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-alpha=0.9.mat'];
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran.mat'];
                     legend{end+1} = 'Hypothesis Transfer';     
-                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-alpha=0.9(noSource).mat'];
-                    legend{end+1} = 'Hypothesis Transfer (no Source)';  
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (no Transfer)';  
                 end
             else
                 error('TODO');

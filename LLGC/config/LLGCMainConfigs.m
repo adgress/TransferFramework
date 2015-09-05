@@ -15,8 +15,8 @@ classdef LLGCMainConfigs < MainConfigs
             
             obj.configsStruct.numLabeledPerClass=pc.numLabeledPerClass;
             learnerConfigs = obj.makeDefaultLearnerConfigs();                              
-            learnerConfigs.set('reg',pc.reg);
-            learnerConfigs.set('alpha',pc.alpha);
+            learnerConfigs.set('cvReg',pc.reg);
+            learnerConfigs.set('cvAlpha',pc.alpha);
             
             obj.configsStruct.learners=[];
             %obj.setLLGCConfigs(learnerConfigs);            

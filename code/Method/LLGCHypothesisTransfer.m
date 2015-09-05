@@ -189,14 +189,14 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             reg = 1;
             cvParams = struct('key','values');
             cvParams(1).key = 'reg';
-            cvParams(1).values = num2cell(obj.get('reg'));
+            cvParams(1).values = num2cell(obj.get('cvReg'));
             if obj.get('noTransfer')
                 cvParams(1).values = {0};
             end            
             %cvParams(2).key = 'sigma';
             %cvParams(2).values = num2cell(2.^(-3:3));
             cvParams(2).key = 'alpha';
-            cvParams(2).values = num2cell(obj.get('alpha'));
+            cvParams(2).values = num2cell(obj.get('cvAlpha'));
             %obj.set('alpha',alpha);
             %obj.set('reg',reg);
             %obj.delete('sigma');
@@ -227,10 +227,10 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if obj.get('noTransfer',false)
                 nameParams{end+1} = 'noTransfer';
             end
-            if length(obj.get('alpha')) == 1
+            if length(obj.get('cvAlpha')) == 1
                 nameParams{end+1} = 'alpha';
             end
-            if length(obj.get('reg')) == 1
+            if length(obj.get('cvReg')) == 1
                 nameParams{end+1} = 'reg';
             end
         end 
