@@ -11,11 +11,13 @@ classdef LLGCMainConfigs < MainConfigs
             obj = obj@MainConfigs();            
             obj.setUSPS();
             
-            c = ProjectConfigs.Create();
+            pc = ProjectConfigs.Create();
             
-            obj.configsStruct.numLabeledPerClass=c.numLabeledPerClass;
+            obj.configsStruct.numLabeledPerClass=pc.numLabeledPerClass;
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
-                        
+            learnerConfigs.set('reg',pc.reg);
+            learnerConfigs.set('alpha',pc.alpha);
+            
             obj.configsStruct.learners=[];
             %obj.setLLGCConfigs(learnerConfigs);            
             obj.setHypothesisTransferConfigs(learnerConfigs);
@@ -44,6 +46,7 @@ classdef LLGCMainConfigs < MainConfigs
             llgcObj.set('justTargetNoSource',c.useJustTargetNoSource);
             llgcObj.set('robustLoss',c.useRobustLoss);
             llgcObj.set('measure',obj.get('measure'));
+            llgcObj.set('noTransfer',c.noTransfer);
             obj.configsStruct.learners=llgcObj;
         end
         

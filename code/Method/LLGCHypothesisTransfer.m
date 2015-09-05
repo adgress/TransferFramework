@@ -10,6 +10,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         function obj = LLGCHypothesisTransfer(configs)
             obj = obj@LLGCMethod(configs);
             obj.sourceHyp = [];
+            if ~obj.has('noTransfer')
+                obj.set('noTransfer',0);
+            end
         end
         
         function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
@@ -23,6 +26,12 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         end
         
         function [] = train(obj,distMat)
+            numSources = length(obj.sourceHyp);
+            reg = obj.get('reg');
+            if reg == 0
+                obj.set('beta',zeros(numSources,1));
+                return;
+            end            
             makeRBF = false;
             [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);
             Y = Y_testCleared;
@@ -30,13 +39,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             n = size(Wrbf,1);
             alpha = obj.get('alpha');
             L = LLGC.make_L(Wrbf);
-            reg = obj.get('reg');                        
             
             [ySource,fuSource] = obj.getSourcePredictions(distMat.X);
-            
-            numSources = length(obj.sourceHyp);
-            
-            
+
             fuCombined = zeros(n,numLabels*numSources);
             for j=1:numLabels
                 f = zeros(n,numSources);
@@ -184,17 +189,18 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             reg = 1;
             cvParams = struct('key','values');
             cvParams(1).key = 'reg';
-            %cvParams(1).values = num2cell([0 10.^(-1:3)]);
-            %cvParams(1).values = num2cell([0 1 5 10]);
-            %cvParams(1).values = num2cell([0 1 5]);
-            cvParams(1).values = num2cell([5]);
+            cvParams(1).values = obj.get('reg');
+            if obj.get('noTransfer')
+                cvParams(1).values = num2cell([0]);
+            end            
             %cvParams(2).key = 'sigma';
             %cvParams(2).values = num2cell(2.^(-3:3));
             cvParams(2).key = 'alpha';
-            cvParams(2).values = num2cell([1 5 10]);
-            obj.set('alpha',alpha);
+            cvParams(2).values = obj.get('alpha');
+            %obj.set('alpha',alpha);
             %obj.set('reg',reg);
             %obj.delete('sigma');
+            obj.delete('sigmaScale');
             obj.set('sigma',llgcSigma);  
             
             %obj.set('sigmaScale',llgcSigmaScale);
@@ -217,11 +223,15 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             prefix = 'HypTran';
         end
         function [nameParams] = getNameParams(obj)
-            %nameParams = {'sigma','sigmaScale','k','alpha'};            
-            %nameParams = {'sigma'};
             nameParams = {};
+            if obj.get('noTransfer',false)
+                nameParams{end+1} = 'noTransfer';
+            end
             if length(obj.get('alpha')) == 1
                 nameParams{end+1} = 'alpha';
+            end
+            if length(obj.get('reg')) == 1
+                nameParams{end+1} = 'reg';
             end
         end 
     end

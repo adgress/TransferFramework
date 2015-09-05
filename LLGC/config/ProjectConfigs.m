@@ -64,6 +64,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         maxSourceSize
         classNoise   
         useHypothesisTransfer
+        noTransfer
     end
     
     methods(Static, Access=private)
@@ -78,7 +79,9 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.processMeasureResults = false;
             c.useOracleNoise=false;
             c.rerunExperiments = false;            
-            c.useDataSetWeights=false;                        
+            c.useDataSetWeights=false;      
+            
+            
             
             c.useHypothesisTransfer = 1;
             
@@ -88,10 +91,14 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.sigmaScale = .2;
             c.sigmaScale = .01;
             c.k=inf;
-            c.alpha=.9;
+            
+            c.noTransfer = true;
+            c.alpha=[1 5 10];
+            c.reg = [0 1 5 10];
+            
             c.labelNoise = 0;
             c.numFolds = 3;
-            c.reg = 0;
+            
             c.noise = 0;
             c.labelsToKeep = [];
             %c.dataSet = Constants.COIL20_DATA;
@@ -449,6 +456,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'Uniform Weights';     
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-alpha=0.9.mat'];
                     legend{end+1} = 'Hypothesis Transfer';     
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-alpha=0.9(noSource).mat'];
+                    legend{end+1} = 'Hypothesis Transfer (no Source)';  
                 end
             else
                 error('TODO');
