@@ -17,6 +17,7 @@ classdef LLGCMainConfigs < MainConfigs
             learnerConfigs = obj.makeDefaultLearnerConfigs();                              
             learnerConfigs.set('cvReg',pc.reg);
             learnerConfigs.set('cvAlpha',pc.alpha);
+            learnerConfigs.set('cvSigma',pc.sigma);
             
             obj.configsStruct.learners=[];
             %obj.setLLGCConfigs(learnerConfigs);            

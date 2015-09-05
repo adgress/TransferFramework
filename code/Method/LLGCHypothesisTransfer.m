@@ -13,6 +13,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~obj.has('noTransfer')
                 obj.set('noTransfer',0);
             end
+            if ~obj.has('useNW')
+                obj.set('useNW',1);
+            end
         end
         
         function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
@@ -31,7 +34,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if reg == 0
                 obj.set('beta',zeros(numSources,1));
                 return;
-            end            
+            end                   
+            useNW = obj.get('useNW');
             makeRBF = false;
             [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);
             Y = Y_testCleared;
@@ -62,12 +66,16 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             
             I = ~isnan(Y);
-            Ymat = Helpers.createLabelMatrix(Y);
-            %invL = inv(L + (alpha+numSources)*eye(size(L)));
-            invL = inv(L + alpha*eye(size(L)));
+            Ymat = Helpers.createLabelMatrix(Y);            
+            
+            if useNW
+                invL = diag(1 ./ sum(Wrbf,2)) * Wrbf;
+                alpha = 1;
+            else
+                %invL = inv(L + (alpha+numSources)*eye(size(L)));
+                invL = inv(L + alpha*eye(size(L)));            
+            end
             invL = invL - diag(diag(invL));
-            
-            
             warning off
             cvx_begin quiet
                 variable F(n,numLabels)             
@@ -82,6 +90,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     %b <= 1
                     norm(b,1) <= reg
                     bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))
+                    
                     F == invL*(alpha*Ymat + fuCombined*bRep)
             cvx_end  
             warning on
@@ -101,19 +110,33 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         
         function [y,fu] = predict(obj,distMat)
             makeRBF = false;
-            [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);
-            L = LLGC.make_L(Wrbf);
+            [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);            
             beta = obj.get('beta');
-            alpha = obj.get('alpha');
-            M = L + eye(size(L))*(sum(beta) + alpha);
-            Y = alpha*Helpers.createLabelMatrix(Y_testCleared);
+            Y = Helpers.createLabelMatrix(Y_testCleared);
+            if obj.get('useNW')
+                M = diag(1 ./ sum(Wrbf,2))*Wrbf;
+            else
+                L = LLGC.make_L(Wrbf);
+                alpha = obj.get('alpha');
+                M = L + eye(size(L))*(sum(beta) + alpha);
+                Y = Y*alpha;
+            end            
             for idx=1:length(obj.sourceHyp)
                 assert(~isempty(distMat.X));
                 [Yi,FUi] = obj.sourceHyp{idx}.predict(distMat.X);
                 %Y = Y + beta(idx)*Helpers.createLabelMatrix(Yi,size(Y,2));
                 Y = Y + beta(idx)*FUi;
             end
-            fu = M\Y;
+            if obj.get('useNW')
+                fu = M * Y;
+            else
+                fu = M\Y;
+            end
+             assert(all(fu(:) >= 0));       
+             I = find(sum(fu,2) == 0);
+             if ~isempty(I)
+                 fu(I,:) = rand(length(I),size(fu,2));
+             end
             fu = Helpers.NormalizeRows(fu);
             [~,y] = max(fu,[],2);
         end
@@ -159,31 +182,33 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             sourceDataSetIDs = dataSetIDs(dataSetIDs ~= 0);
             obj.sourceHyp = {};
             %nwSigmas = 2.^(-5:5);
-            nwSigmas = 4;
+            %nwSigmas = 4;
             %nwSigmas = .03;
-            
+            nwSigmas = obj.get('cvSigma');
             %{
             n = size(train.X,1);
             Xall = zscore([train.X ; test.X]);
             train.X = Xall(1:n,:);
             test.X = Xall(n+1:end,:);
             %}
-            for idx=1:length(sourceDataSetIDs)
-                nwObj = NWMethod();
-                nwObj.set('sigma',nwSigmas);
-                nwObj.set('measure',Measure());
-                nwObj.set('classification',true);
-                I = train.instanceIDs == sourceDataSetIDs(idx);
-                X = train.X(I,:);
-                Y = train.Y(I,:);
-                nwObj.train(X,Y);
-                obj.sourceHyp{idx} = nwObj;
+            if isempty(obj.sourceHyp)
+                for idx=1:length(sourceDataSetIDs)
+                    nwObj = NWMethod();
+                    nwObj.set('sigma',nwSigmas);
+                    nwObj.set('measure',Measure());
+                    nwObj.set('classification',true);
+                    I = train.instanceIDs == sourceDataSetIDs(idx);
+                    X = train.X(I,:);
+                    Y = train.Y(I,:);
+                    nwObj.train(X,Y);
+                    obj.sourceHyp{idx} = nwObj;
+                end
             end
             targetTrain = train.copy();
             targetTrain.remove(targetTrain.instanceIDs ~= 0);
             input.train = targetTrain;
-            
-            llgcSigma = 10;
+            llgcSigma = obj.get('cvSigma');
+            %llgcSigma = 10;
             llgcSigmaScale = .01;
             alpha = .9;
             reg = 1;
@@ -193,15 +218,18 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if obj.get('noTransfer')
                 cvParams(1).values = {0};
             end            
-            %cvParams(2).key = 'sigma';
-            %cvParams(2).values = num2cell(2.^(-3:3));
-            cvParams(2).key = 'alpha';
-            cvParams(2).values = num2cell(obj.get('cvAlpha'));
+            cvParams(2).key = 'sigma';
+            cvParams(2).values = num2cell(llgcSigma);
+            %obj.set('sigma',llgcSigma);  
+            if ~obj.get('useNW')
+                cvParams(3).key = 'alpha';
+                cvParams(3).values = num2cell(obj.get('cvAlpha'));
+            end
             %obj.set('alpha',alpha);
             %obj.set('reg',reg);
             %obj.delete('sigma');
             obj.delete('sigmaScale');
-            obj.set('sigma',llgcSigma);  
+            
             
             %obj.set('sigmaScale',llgcSigmaScale);
             
@@ -232,6 +260,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if length(obj.get('cvReg')) == 1
                 nameParams{end+1} = 'reg';
+            end
+            if obj.get('useNW',0)
+                nameParams{end+1} = 'useNW';
             end
         end 
     end

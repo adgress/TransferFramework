@@ -76,8 +76,13 @@ classdef NWMethod < HFMethod
                     Yi = ones(sum(I),1);
                     fu(:,idx) = Si*Yi;
                 end
-                assert(all(fu(:) >= 0));                
-                fu = Helpers.NormalizeRows(fu);
+                assert(all(fu(:) >= 0));       
+                I = find(sum(fu,2) == 0);
+                if ~isempty(I)
+                    fu(I,:) = rand(length(I),size(fu,2));
+                end
+                fu = Helpers.NormalizeRows(fu);                
+                
                 Helpers.AssertInvalidPercent(fu);
                 [~,y] = max(fu,[],2);
             else

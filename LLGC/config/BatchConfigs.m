@@ -9,7 +9,8 @@ classdef BatchConfigs < Configs
         function [obj] = BatchConfigs()
             obj = obj@Configs();
             c = ProjectConfigs.Create();
-            obj.configsStruct.paramsToVary={'sigmaScale','k','alpha','sigma'};
+            %obj.configsStruct.paramsToVary={'sigmaScale','k','alpha','sigma'};
+            obj.configsStruct.paramsToVary={};
             obj.configsStruct.sigma = num2cell(c.sigma);
             obj.configsStruct.sigmaScale = num2cell(c.sigmaScale);
             obj.configsStruct.k = num2cell(c.k);
