@@ -14,7 +14,7 @@ classdef LLGCMainConfigs < MainConfigs
             pc = ProjectConfigs.Create();
             
             obj.configsStruct.numLabeledPerClass=pc.numLabeledPerClass;
-            learnerConfigs = obj.makeDefaultLearnerConfigs();                  
+            learnerConfigs = obj.makeDefaultLearnerConfigs();                              
             learnerConfigs.set('reg',pc.reg);
             learnerConfigs.set('alpha',pc.alpha);
             

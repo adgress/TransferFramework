@@ -162,12 +162,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                 
                 c.labelsToUse = [];
                 c.numFolds = 5;
-                
+                %{
                 if ProjectConfigs.useNewOpt
                     c.reg = 0:1:2;
                 else
                     c.reg = [1 10 100 1000 10000];    
                 end
+                %}
                 switch c.dataSet
                     case Constants.TOMMASI_DATA                        
                         c.numLabeledPerClass=[5 10 15 20];
@@ -232,12 +233,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                 otherwise
                     error('unknown data set');
             end
-            %
+            %{
             if pc.useHypothesisTransfer
                 c.get('mainConfigs').setHypothesisTransferConfigs();
             else
                 c.get('mainConfigs').setLLGCWeightedConfigs();
             end
+            %}
             if pc.dataSet == Constants.NG_DATA
                 c.get('mainConfigs').get('learners').configs.set('zscore',0)
             end
