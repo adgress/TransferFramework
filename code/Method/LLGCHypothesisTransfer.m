@@ -110,7 +110,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         
         function [y,fu] = predict(obj,distMat)
             makeRBF = false;
-            [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);            
+            [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);
             beta = obj.get('beta');
             Y = Helpers.createLabelMatrix(Y_testCleared);
             if obj.get('useNW')
@@ -120,7 +120,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 alpha = obj.get('alpha');
                 M = L + eye(size(L))*(sum(beta) + alpha);
                 Y = Y*alpha;
-            end            
+            end
             for idx=1:length(obj.sourceHyp)
                 assert(~isempty(distMat.X));
                 [Yi,FUi] = obj.sourceHyp{idx}.predict(distMat.X);
@@ -132,11 +132,15 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             else
                 fu = M\Y;
             end
-             assert(all(fu(:) >= 0));       
-             I = find(sum(fu,2) == 0);
-             if ~isempty(I)
-                 fu(I,:) = rand(length(I),size(fu,2));
-             end
+            I = fu(:) < 0;
+            if any(I)
+                fu(I)
+            end
+            assert(all(fu(:) >= 0));
+            I = find(sum(fu,2) == 0);
+            if ~isempty(I)
+                fu(I,:) = rand(length(I),size(fu,2));
+            end
             fu = Helpers.NormalizeRows(fu);
             [~,y] = max(fu,[],2);
         end
