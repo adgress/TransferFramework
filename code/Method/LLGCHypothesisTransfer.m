@@ -132,7 +132,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             else
                 fu = M\Y;
             end
-            I = fu(:) < 0;
+            I = ~(fu(:) >= 0);
             if any(I)
                 fu(I)
             end
