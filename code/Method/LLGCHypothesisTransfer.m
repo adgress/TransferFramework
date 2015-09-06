@@ -16,6 +16,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~obj.has('useNW')
                 obj.set('useNW',1);
             end
+            if ~obj.has('useBaseNW')
+                obj.set('useBaseNW',1);
+            end
         end
         
         function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
@@ -109,6 +112,15 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         end
         
         function [y,fu] = predict(obj,distMat)
+            if obj.get('useBaseNW')
+                nwMethod = NWMethod(obj.configs);
+                assert(obj.get('noTransfer') ~= 0);
+                Y = distMat.Y;
+                Y(distMat.isTargetTest) = nan;
+                nwMethod.train(distMat.X,Y);
+                [y,fu] = nwMethod.predict(distMat.X);
+                return;
+            end
             makeRBF = false;
             [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);
             beta = obj.get('beta');
@@ -196,7 +208,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             train.X = Xall(1:n,:);
             test.X = Xall(n+1:end,:);
             %}
-            if isempty(obj.sourceHyp)
+            if isempty(obj.sourceHyp) && ~obj.get('useBaseNW')
                 for idx=1:length(sourceDataSetIDs)
                     nwObj = NWMethod();
                     nwObj.set('sigma',nwSigmas);
@@ -268,6 +280,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('useNW',0)
                 nameParams{end+1} = 'useNW';
+            end
+            if obj.get('useBaseNW',0)
+                nameParams{end+1} = 'useBaseNW';
             end
         end 
     end

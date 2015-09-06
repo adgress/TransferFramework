@@ -92,7 +92,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.sigmaScale = .01;
             c.k=inf;
             
-            c.noTransfer = 0;
+            c.noTransfer = 1;
             c.alpha=[1 5 10];
             c.reg = [0 1 5 10];
             c.sigma = (2.^(-5:5));
