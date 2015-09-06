@@ -134,7 +134,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             I = ~(fu(:) >= 0);
             if any(I)
-                fu(I)
+                fu(I);
+                fu(I) = rand(size(I));
             end
             assert(all(fu(:) >= 0));
             I = find(sum(fu,2) == 0);
