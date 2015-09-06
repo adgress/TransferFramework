@@ -92,7 +92,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.sigmaScale = .01;
             c.k=inf;
             
-            c.noTransfer = 1;
+            c.noTransfer = 0;
             c.alpha=[1 5 10];
             c.reg = [0 1 5 10];
             c.sigma = (2.^(-5:5));
@@ -466,6 +466,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-useNW=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, No Transfer)';  
                 end
+                methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-useNW=1-useBaseNW=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (Base NW, No Transfer)';  
             else
                 error('TODO');
             end

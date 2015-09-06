@@ -17,7 +17,10 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.set('useNW',1);
             end
             if ~obj.has('useBaseNW')
-                obj.set('useBaseNW',1);
+                obj.set('useBaseNW',0);
+            end
+            if ~obj.has('newZ')
+                obj.set('newZ',1);
             end
         end
         
@@ -202,18 +205,21 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             %nwSigmas = 4;
             %nwSigmas = .03;
             nwSigmas = obj.get('cvSigma');
-            %{
-            n = size(train.X,1);
-            Xall = zscore([train.X ; test.X]);
-            train.X = Xall(1:n,:);
-            test.X = Xall(n+1:end,:);
-            %}
+            
+            if obj.get('newZ')
+                n = size(train.X,1);
+                Xall = zscore([train.X ; test.X]);
+                train.X = Xall(1:n,:);
+                test.X = Xall(n+1:end,:);
+            end
+
             if isempty(obj.sourceHyp) && ~obj.get('useBaseNW')
                 for idx=1:length(sourceDataSetIDs)
                     nwObj = NWMethod();
                     nwObj.set('sigma',nwSigmas);
                     nwObj.set('measure',Measure());
                     nwObj.set('classification',true);
+                    nwObj.set('newZ',obj.get('newZ'));
                     I = train.instanceIDs == sourceDataSetIDs(idx);
                     X = train.X(I,:);
                     Y = train.Y(I,:);
@@ -283,6 +289,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('useBaseNW',0)
                 nameParams{end+1} = 'useBaseNW';
+            end
+            if obj.get('newZ',0)
+                nameParams{end+1} = 'newZ';
             end
         end 
     end

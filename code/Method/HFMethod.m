@@ -102,7 +102,7 @@ classdef HFMethod < Method
                 XLabeled = train.X(trainLabeled,:);
                 XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
                 Xall = [XLabeled ; XUnlabeled];                  
-                if learnerConfigs.get('zscore')
+                if learnerConfigs.get('zscore') && ~obj.get('newZ');
                     Xall = zscore(Xall);
                 end   
                 %TODO: I turned this off because it was causing bugs elsewhere
