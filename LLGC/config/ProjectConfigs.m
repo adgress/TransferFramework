@@ -98,7 +98,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.reg = 0:.2:.8;
             %c.sigma = (2.^(1:5));
             c.sigma = 4;
-            c.useOracle=false;
+            c.useOracle=true;
             
             c.labelNoise = 0;
             c.numFolds = 3;
@@ -474,7 +474,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'Hypothesis Transfer (NW, New Z)';  
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-oracle=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (Base NW, Oracle)';
-                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-alpha=10-useNW=1-oracle=1.mat'];
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=4-useNW=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer ( NW,Fixed sigma)';
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=4-useNW=1-oracle=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (Base NW, Oracle, Fixed sigma)';
                     
                 end
