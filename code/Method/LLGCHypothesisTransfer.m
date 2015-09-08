@@ -76,11 +76,12 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             
             if useNW
                 Wrbf = Wrbf - diag(diag(Wrbf));
+                Wrbf = Wrbf(:,I);
                 d = sum(Wrbf,2);
                 d(d < 1e-8) = 1;
                 M = diag(1 ./ d) * Wrbf;
-                invL = eye(size(M));
-                Ftarget = (1-reg)*M*Ymat;
+                invL = eye(size(M,1));
+                Ftarget = (1-reg)*M*Ymat(I,:);
             else
                 %invL = inv(L + (alpha+numSources)*eye(size(L)));
                 invL = inv(L + alpha*eye(size(L)));    
@@ -101,7 +102,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 subject to
                     b >= 0
                     %b <= 1
-                    norm(b,1) <= reg
+                    %norm(b,1) <= reg
+                    sum(b) == reg
                     bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
                     F == Ftarget + invL*fuCombined*bRep
             cvx_end  

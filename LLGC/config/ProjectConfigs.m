@@ -94,9 +94,11 @@ classdef ProjectConfigs < ProjectConfigsBase
             
             c.noTransfer = 0;
             c.alpha=[1 5 10];
-            c.reg = [0 1 2 5 10];
-            %c.reg = 0:.2:.8;
+            %c.alpha = 10;
+            %c.reg = [0 1 2 5 10];
+            c.reg = 0:.2:.8;
             c.sigma = (2.^(1:5));
+            %c.sigma = 4;
             
             c.labelNoise = 0;
             c.numFolds = 3;
@@ -174,7 +176,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 switch c.dataSet
                     case Constants.TOMMASI_DATA                        
                         c.numLabeledPerClass=[5 10 15 20];
-                        %c.numLabeledPerClass=[20];
+                        %c.numLabeledPerClass=[15];
                         c.numOverlap = 30;
                         c.addTargetDomain = true;
                         
