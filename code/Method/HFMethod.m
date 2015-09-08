@@ -21,6 +21,9 @@ classdef HFMethod < Method
             if ~obj.has('zscore')
                 obj.set('zscore',false);
             end
+            if ~obj.has('newZ')
+                obj.set('newZ',false);
+            end
         end
         
         function [distMat,savedData,Xall] = createDistanceMatrix(obj,train,test,learnerConfigs,makeRBF,savedData,V)
@@ -425,7 +428,7 @@ classdef HFMethod < Method
             prefix = 'HF';
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {};
+            nameParams = getNameParams@Method(obj);
         end
         function [d] = getDirectory(obj)
             error('Do we save based on method?');

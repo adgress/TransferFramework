@@ -46,7 +46,9 @@ classdef ITSMainConfigs < MainConfigs
                 else
                     learnerConfigs.set('cvParameters',pc.nwCVParams);
                     learnerConfigs.set('makeRBF',true);
-                    obj.setNW(learnerConfigs);                             
+                    learnerConfigs.set('classification',false);
+                    obj.setNW(learnerConfigs);     
+                    
                 end                
             else               
                 if pc.useLLGC
@@ -66,12 +68,10 @@ classdef ITSMainConfigs < MainConfigs
                                         
                     obj.setITSMethod(learnerConfigs);
                     
-                    %obj.setITSRandom(learnerConfigs);
-                    
+                    %obj.setITSRandom(learnerConfigs);                    
                     %learnerConfigs.set('sigma',1);
                     %learnerConfigs.set('cvParameters',[]);
-                    %obj.setITSConstant(learnerConfigs);
-                    
+                    %obj.setITSConstant(learnerConfigs);                    
                 end
             end
             obj.configsStruct.measure=pc.measure;
@@ -80,6 +80,10 @@ classdef ITSMainConfigs < MainConfigs
             else
                 obj.configsStruct.configLoader=ExperimentConfigLoader();
             end
+            nameParams = {'source','target'};
+            obj.c.learners.set('nameParams',nameParams);
+            obj.c.learners.set('source',pc.sourceLabels);
+            obj.c.learners.set('target',pc.targetLabels);
         end    
         
         function [] = setITSData(obj,dataSet)

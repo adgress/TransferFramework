@@ -137,8 +137,9 @@ classdef NWMethod < HFMethod
             s = 'NW';
         end
         function [nameParams] = getNameParams(obj)
-            %nameParams = {'sigma','sigmaScale','k','alpha'};            
-            nameParams = {'sigmaScale'};
+            %nameParams = {'sigma','sigmaScale','k','alpha'};  
+            nameParams = getNameParams@HFMethod(obj);
+            nameParams{end+1} = 'sigmaScale';
             if obj.has('sigma') && length(obj.get('sigma')) == 1
                 nameParams{end+1} = 'sigma';
             end

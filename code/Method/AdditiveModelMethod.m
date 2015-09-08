@@ -94,7 +94,7 @@ classdef AdditiveModelMethod < Method
             s = 'AddMod';
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {};
+            nameParams = getNameParams@Method(obj);
         end 
     end
     

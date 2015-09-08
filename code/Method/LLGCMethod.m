@@ -32,8 +32,9 @@ classdef LLGCMethod < HFMethod
             prefix = 'LLGC';
         end
         function [nameParams] = getNameParams(obj)
-            %nameParams = {'sigma','sigmaScale','k','alpha'};            
-            nameParams = {'sigmaScale'};
+            %nameParams = {'sigma','sigmaScale','k','alpha'};
+            nameParams = getNameParams@HFMethod(obj);
+            nameParams{end+1} = 'sigmaScale';
             if length(obj.get('alpha')) == 1
                 nameParams{end+1} = 'alpha';
             end

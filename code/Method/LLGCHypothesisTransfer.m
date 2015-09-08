@@ -75,13 +75,19 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             Ymat = Helpers.createLabelMatrix(Y);            
             
             if useNW
-                invL = diag(1 ./ sum(Wrbf,2)) * Wrbf;
-                alpha = 1;
+                Wrbf = Wrbf - diag(diag(Wrbf));
+                d = sum(Wrbf,2);
+                d(d < 1e-8) = 1;
+                M = diag(1 ./ d) * Wrbf;
+                invL = eye(size(M));
+                Ftarget = (1-reg)*M*Ymat;
             else
                 %invL = inv(L + (alpha+numSources)*eye(size(L)));
-                invL = inv(L + alpha*eye(size(L)));            
-            end
-            invL = invL - diag(diag(invL));
+                invL = inv(L + alpha*eye(size(L)));    
+                invL = invL - diag(diag(invL));
+                Ftarget = invL*alpha*Ymat;
+                
+            end            
             warning off
             cvx_begin quiet
                 variable F(n,numLabels)             
@@ -90,14 +96,14 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 variable bRep(numLabels*numSources,numLabels)
                 %variable c
                 %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
+                %minimize(norm(F(I,:)-Ymat(I,:),1))
                 minimize(norm(F(I,:)-Ymat(I,:),1))
                 subject to
                     b >= 0
                     %b <= 1
                     norm(b,1) <= reg
-                    bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))
-                    
-                    F == invL*(alpha*Ymat + fuCombined*bRep)
+                    bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
+                    F == Ftarget + invL*fuCombined*bRep
             cvx_end  
             warning on
             %fuCombined(:,10)
@@ -201,10 +207,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             dataSetIDs = unique(train.instanceIDs);
             sourceDataSetIDs = dataSetIDs(dataSetIDs ~= 0);
             obj.sourceHyp = {};
-            %nwSigmas = 2.^(-5:5);
-            %nwSigmas = 4;
-            %nwSigmas = .03;
+            
+            %nwSigmas = 2.^(-5:5);                        
+            %nwSigmas = .03;            
             nwSigmas = obj.get('cvSigma');
+            %nwSigmas = 4;
             
             if obj.get('newZ')
                 n = size(train.X,1);

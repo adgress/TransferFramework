@@ -62,7 +62,7 @@ classdef LinearRegressionMethod < Method
             s = 'LinReg';
         end
         function [nameParams] = getNameParams(obj)
-            nameParams = {};
+            nameParams = getNameParams@HFMethod(obj);
         end 
     end   
 end

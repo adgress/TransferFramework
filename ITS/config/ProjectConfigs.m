@@ -58,7 +58,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             useCommonSkills = 1;
             singleSkill = 1;
             
-            c.dataSet = Constants.DS3;
+            c.dataSet = Constants.DS2;
+            %c.dataSet = Constants.DS3;
             %c.dataSet = Constants.PRG;
             
             c.useStudentData = 1;
@@ -69,7 +70,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.useLLGC = 0;
             c.useMean = 0;
             c.useLinReg = 0;
-            c.useAddMod = 1;
+            c.useAddMod = 0;
             
             c.useLogReg = 0;
             
@@ -82,30 +83,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                         %c.dataSetName = 'DS1-69';
                         c.dataSetName = 'DS1-69_reg';
                         %c.labelsToKeep = 1;
-                        
-                        %.8
-                        %{
-                        c.sourceLabels = 4;
-                        c.targetLabels = 5;
-                        %}
-                        %.73
-                        %{
-                        c.sourceLabels = 3;
-                        c.targetLabels = 6;
-                        %}
-                        
-                        %.68
-                        %{
-                        c.sourceLabels = 5;
-                        c.targetLabels = 6;
-                        %}
-                        
-                        %{
-                        c.sourceLabels = 2;
-                        c.targetLabels = 1;
-                        %}
-                        
-                        c.sourceLabels = 1:5;
+                       
+                        c.sourceLabels = 6;
                         c.targetLabels = 6;
                         c.numLabeledPerClass = [5 10 15];
                     case Constants.PRG
@@ -128,8 +107,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.numLabeledPerClass = [5 10 20 40];
                         %c.numLabeledPerClass = [15];
                         %{
-                    c.sourceLabels = 5;
-                    c.targetLabels = 6;
+                        c.sourceLabels = 5;
+                        c.targetLabels = 6;
                         %}
                         %{
                         c.sourceLabels = 6;
@@ -321,6 +300,15 @@ classdef ProjectConfigs < ProjectConfigsBase
             title = '';
             if pc.useStudentData
                 title = 'Just Students';
+                sources = [3:6];
+                t = pc.targetLabels;
+                for idx=1:length(sources)
+                    s = sources(idx);
+                    methodResultsFileNames{end+1} = ...
+                        ['NW-source=' num2str(s) '-target=' num2str(t) '.mat'];
+                    legend{end+1} = [num2str(s) ' to ' num2str(t)];
+                end
+                %{
                 methodResultsFileNames{end+1} = 'LLGC.mat';
                 methodResultsFileNames{end+1} = 'NW.mat';
                 methodResultsFileNames{end+1} = 'Mean.mat';
@@ -333,6 +321,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                     'LinReg',...
                     'AddMod',...
                     };
+                %}
             else
                 title = ['Bipartite Student-Question Graph: ' pc.dataSetName];
                 if ~isempty(pc.labelsToUse) 

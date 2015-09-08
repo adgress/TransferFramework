@@ -16,6 +16,13 @@ classdef Method < Saveable
         end
         function [nameParams] = getNameParams(obj)
             nameParams = {};
+            a = obj.get('nameParams',{});
+            for idx=1:length(a)
+                s = a{idx};
+                if obj.has(s)
+                    nameParams{end+1} = s;
+                end
+            end
         end
         function [] = setParams(obj,params)
             for idx=1:length(params)
