@@ -94,7 +94,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             
             c.noTransfer = 0;
             c.alpha=[1 5 10];
-            c.reg = [0 1 5 10];
+            c.reg = [0 1 2 5 10];
             %c.reg = 0:.2:.8;
             c.sigma = (2.^(1:5));
             
