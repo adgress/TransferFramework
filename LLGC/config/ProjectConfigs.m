@@ -96,7 +96,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.alpha=[1 5 10];
             %c.alpha = 10;
             %c.reg = [0 1 2 5 10];
-            c.reg = 0:.2:.8;
+            %c.reg = 0:.2:.8;
+            c.reg = .5;
             c.sigma = (2.^(1:5));
             %c.sigma = 4;
             
