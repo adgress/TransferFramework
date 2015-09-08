@@ -22,6 +22,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~obj.has('newZ')
                 obj.set('newZ',1);
             end
+            if ~obj.has('oracle')
+                obj.set('oracle',false);
+            end
         end
         
         function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
@@ -36,7 +39,13 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         
         function [] = train(obj,distMat)
             numSources = length(obj.sourceHyp);
-            reg = obj.get('reg');
+            reg = obj.get('reg');   
+            if obj.get('oracle')
+                beta = zeros(numSources,1);
+                beta(1) = reg;
+                obj.set('beta',beta);
+                return;
+            end                     
             if reg == 0
                 obj.set('beta',zeros(numSources,1));
                 return;
@@ -250,6 +259,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if obj.get('noTransfer')
                 cvParams(1).values = {0};
             end            
+            if obj.get('oracle')
+                cvParams(1).values = {.5};
+            end
             cvParams(2).key = 'sigma';
             cvParams(2).values = num2cell(llgcSigma);
             %obj.set('sigma',llgcSigma);  
@@ -303,6 +315,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('newZ',0)
                 nameParams{end+1} = 'newZ';
+            end
+            if obj.get('oracle',0)
+                nameParams{end+1} = 'oracle';
             end
         end 
     end

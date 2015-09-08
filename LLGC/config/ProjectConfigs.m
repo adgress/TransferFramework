@@ -69,8 +69,7 @@ classdef ProjectConfigs < ProjectConfigsBase
     
     methods(Static, Access=private)
         function [c] = CreateSingleton()
-            c = ProjectConfigs();
-            c.useOracle=false;
+            c = ProjectConfigs();            
             c.useUnweighted=false;                        
             c.useJustTarget=false;
             c.useJustTargetNoSource=false;
@@ -96,10 +95,10 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.alpha=[1 5 10];
             %c.alpha = 10;
             %c.reg = [0 1 2 5 10];
-            %c.reg = 0:.2:.8;
-            c.reg = .5;
+            c.reg = 0:.2:.8;
             c.sigma = (2.^(1:5));
             %c.sigma = 4;
+            c.useOracle=true;
             
             c.labelNoise = 0;
             c.numFolds = 3;
