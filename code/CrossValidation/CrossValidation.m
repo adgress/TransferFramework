@@ -1,4 +1,4 @@
-classdef CrossValidation < handle
+classdef CrossValidation < Saveable
     %CROSSVALIDATION Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -8,10 +8,13 @@ classdef CrossValidation < handle
         trainData
         splits
         measure
+        print
     end
     
     methods
         function obj = CrossValidation()         
+            obj = obj@Saveable();
+            obj.set('print',false);
         end
         
         function [] = setData(obj,X,Y)
@@ -115,9 +118,11 @@ classdef CrossValidation < handle
             [~,bestInd] = max(accs);
             bestParams = paramPowerSet{bestInd};
             bestAcc = accs(bestInd);
-            display(['Best Acc:' num2str(bestAcc)]);
-            for idx=1:length(bestParams)
-                display([bestParams(idx).key ': ' num2str(bestParams(idx).value)]);
+            if obj.get('print')
+                display(['Best Acc:' num2str(bestAcc)]);
+                for idx=1:length(bestParams)
+                    display([bestParams(idx).key ': ' num2str(bestParams(idx).value)]);
+                end
             end
         end
         

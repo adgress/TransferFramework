@@ -37,6 +37,7 @@ classdef NWMethod < HFMethod
                 obj.sigma = sig;
             else
                 cv = CrossValidation();
+                cv.set('print',false);
                 cv.setData(X,Y);
                 cv.methodObj = obj;
                 cv.measure = obj.get('measure');
