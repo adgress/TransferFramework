@@ -28,6 +28,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         end
         
         function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
+            error('Is this used?');
             invM = inv(L + eye(size(L))*(alpha+sum(beta)));
             I = ~isnan(y);
             v = reg*norm(beta,1);
@@ -146,22 +147,24 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             beta = obj.get('beta');
             Y = Helpers.createLabelMatrix(Y_testCleared);
             if obj.get('useNW')
+                isLabeled = ~isnan(Y_testCleared);
+                Wrbf = Wrbf(:,isLabeled);
                 M = diag(1 ./ sum(Wrbf,2))*Wrbf;
+                fu = (1-obj.get('reg'))*M * Y(isLabeled,:);
             else
                 L = LLGC.make_L(Wrbf);
                 alpha = obj.get('alpha');
                 M = L + eye(size(L))*(sum(beta) + alpha);
-                Y = Y*alpha;
+                fu = Y*alpha;
             end
             for idx=1:length(obj.sourceHyp)
                 assert(~isempty(distMat.X));
                 [Yi,FUi] = obj.sourceHyp{idx}.predict(distMat.X);
                 %Y = Y + beta(idx)*Helpers.createLabelMatrix(Yi,size(Y,2));
-                Y = Y + beta(idx)*FUi;
+                fu = fu + beta(idx)*FUi;
             end
-            if obj.get('useNW')
-                fu = M * Y;
-            else
+            if ~obj.get('useNW')
+                error('is this the right place for this?');
                 fu = M\Y;
             end
             I = ~(fu(:) >= 0);
@@ -301,8 +304,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if obj.get('noTransfer',false)
                 nameParams{end+1} = 'noTransfer';
             end
-            if length(obj.get('cvAlpha')) == 1
+            if length(obj.get('cvAlpha')) == 1 && ~obj.get('useNW')
                 nameParams{end+1} = 'alpha';
+            end
+            if length(obj.get('cvSigma')) == 1
+                nameParams{end+1} = 'sigma';
             end
             if length(obj.get('cvReg')) == 1
                 nameParams{end+1} = 'reg';

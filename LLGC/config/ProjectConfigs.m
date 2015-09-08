@@ -96,9 +96,9 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.alpha = 10;
             %c.reg = [0 1 2 5 10];
             c.reg = 0:.2:.8;
-            c.sigma = (2.^(1:5));
-            %c.sigma = 4;
-            c.useOracle=true;
+            %c.sigma = (2.^(1:5));
+            c.sigma = 4;
+            c.useOracle=false;
             
             c.labelNoise = 0;
             c.numFolds = 3;
@@ -470,9 +470,15 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'Hypothesis Transfer (NW, No Transfer)';
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, new Z)';  
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (NW, New Z)';  
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-oracle=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (Base NW, Oracle)';
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-alpha=10-useNW=1-oracle=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (Base NW, Oracle, Fixed sigma)';
+                    
                 end
-                methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-useNW=1-useBaseNW=1.mat'];
-                    legend{end+1} = 'Hypothesis Transfer (Base NW, No Transfer)';  
+                
             else
                 error('TODO');
             end
