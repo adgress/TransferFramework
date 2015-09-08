@@ -13,7 +13,7 @@ classdef CrossValidation < Saveable
     
     methods
         function obj = CrossValidation()         
-            obj = obj@Saveable();
+            obj = obj@Saveable(Configs());
             obj.set('print',false);
         end
         
@@ -148,6 +148,17 @@ classdef CrossValidation < Saveable
                 a = struct('key',keys,'value',p{idx});
                 retVal{idx} = a;
             end
+        end
+        function [prefix] = getPrefix(obj)
+            prefix = 'CV';
+        end
+        function [d] = getDirectory(obj)
+            d = '';
+            error('');
+        end
+        function [nameParams] = getNameParams(obj)
+            nameParams = {};
+            error('');
         end
     end
     
