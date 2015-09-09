@@ -196,7 +196,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.addTargetDomain = false;
                         c.makeSubDomains = false;                        
                         %c.numLabeledPerClass=[5 10 15 20 25];
-                        c.numLabeledPerClass=[5 10 20 30 40];
+                        c.numLabeledPerClass=[5 10 20 30];
                     otherwise
                         error('unknown data set');
                 end                                
