@@ -290,11 +290,12 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             toc
             obj.setParams(bestParams);
             [testResults,savedData] = obj.runMethod(input,savedData);
+            
             if ~obj.configs.get('quiet')
                 display([ obj.getPrefix() ' Acc: ' num2str(savedData.val)]);                                
             end
             beta = obj.get('beta');
-            beta
+            testResults.learnerStats.dataSetWeights = beta;
         end
         function [prefix] = getPrefix(obj)
             prefix = 'HypTran';

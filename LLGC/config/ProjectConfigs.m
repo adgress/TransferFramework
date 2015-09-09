@@ -105,10 +105,11 @@ classdef ProjectConfigs < ProjectConfigsBase
             
             c.noise = 0;
             c.labelsToKeep = [];
-            %c.dataSet = Constants.COIL20_DATA;
-            c.dataSet = Constants.TOMMASI_DATA;
+            %c.dataSet = Constants.COIL20_DATA;            
             %c.dataSet = Constants.HOUSING_DATA;
-            %c.dataSet = Constants.NG_DATA;
+            
+            %c.dataSet = Constants.TOMMASI_DATA;
+            c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
@@ -277,7 +278,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             if ProjectConfigs.vizWeights
                 c.configsStruct.xAxisField = 'dataSetWeights';
                 c.configsStruct.xAxisDisplay = 'Data Set';
-                c.configsStruct.sizeToUse = 40;
+                c.configsStruct.sizeToUse = 5;
                 c.configsStruct.confidenceInterval = ...
                     VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
                 c.set('vizBarChartForField',true);
@@ -437,10 +438,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                     d = [s '-numOverlap=' num2str(pc.numOverlap)];
                 end                
                 if ProjectConfigs.vizWeights
-                    methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-newOpt=1.mat'];
-                    legend = {...                      
-                        'LLGC: Learn Weights',...
-                    };
+                    %methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-newOpt=1.mat'];
+                    %legend = {'LLGC: Learn Weights'};
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1.mat'];
+                    legend = {'NW: Learn Weights'};
                     fields = {'dataSetWeights'};
                 else
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-oracle=1.mat'];                    
@@ -474,13 +475,14 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'Hypothesis Transfer (NW, New Z)';  
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-oracle=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (Base NW, Oracle)';
+                    %{
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=4-useNW=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW,Fixed sigma)';
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=4-useNW=1-oracle=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, Oracle, Fixed sigma)';
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-sigma=4-useNW=1.mat'];                    
                     legend{end+1} = 'Hypothesis Transfer (NW, No Transfer, Fixed sigma)';
-                    
+                    %}
                 end
                 
             else
