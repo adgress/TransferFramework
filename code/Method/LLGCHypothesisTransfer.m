@@ -170,7 +170,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             I = ~(fu(:) >= 0);
             if any(I)
                 fu(I);
-                fu(I) = rand(size(I));
+                fu(I) = rand(sum(I),1);
             end
             assert(all(fu(:) >= 0));
             I = find(sum(fu,2) == 0);
@@ -264,6 +264,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end            
             if obj.get('oracle')
                 cvParams(1).values = {.5};
+                if pc.dataSet == Constants.NG_DATA
+                    cvParams(1).values = {0};
+                end
             end
             cvParams(2).key = 'sigma';
             cvParams(2).values = num2cell(llgcSigma);
