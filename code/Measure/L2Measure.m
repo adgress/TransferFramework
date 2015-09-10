@@ -6,6 +6,20 @@ classdef L2Measure < Measure
     end
     
     methods
+        function obj = L2Measure(configs)
+            if ~exist('configs','var')
+                configs = [];
+            end
+            obj = obj@Measure(configs);
+        end
+        function [valTrain,valTest] = computeTrainTestResults(obj,r)
+            %trainLabeled = ~isnan(r.yTrain) & ~r.isValidation;
+            trainLabeled = ~isnan(r.yTrain);
+            trainAccVec = abs(r.trainPredicted - r.trainActual);
+            trainAccVec = trainAccVec(trainLabeled);
+            valTrain = 1 - mean(trainAccVec);
+            valTest = 1 - mean(abs(r.testPredicted-r.testActual));
+        end
         function [measureResults] = evaluate(obj,split)        
             isLabeled = ~isnan(split.yActual);
             isTest = split.dataType == Constants.TARGET_TEST;

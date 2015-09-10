@@ -22,7 +22,7 @@ classdef EntropyAllActiveMethod < EntropyActiveMethod
         %}
         function [scores] = getScores(obj,input,results,s)
             r = s.preTransferResults;
-            unlabeledInds = find(input.train.Y < 0);
+            unlabeledInds = find(~input.train.isLabeled());
             scores = zeros(length(unlabeledInds),length(r.modelResults));
             for indIdx=1:length(unlabeledInds)
                 ind = unlabeledInds(indIdx);

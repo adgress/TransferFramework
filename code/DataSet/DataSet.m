@@ -278,7 +278,7 @@ classdef DataSet < LabeledData
             end
             obj.Y = obj.Y(~shouldRemove,:);
             obj.type = obj.type(~shouldRemove);
-            obj.trueY = obj.trueY(~shouldRemove);
+            obj.trueY = obj.trueY(~shouldRemove,:);
             obj.instanceIDs = obj.instanceIDs(~shouldRemove);
             if ~isempty(obj.isValidation)
                 obj.isValidation = obj.isValidation(~shouldRemove);

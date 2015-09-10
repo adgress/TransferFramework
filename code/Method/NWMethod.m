@@ -18,15 +18,16 @@ classdef NWMethod < HFMethod
             if ~obj.has('classification')
                 obj.set('classification',true);
             end
+            display('Not calling zscore');
         end
         
         
         
         function [] = train(obj,X,Y)
             if ~obj.get('newZ')
-                X = zscore(X);
+                %X = zscore(X);
             end
-            if all(Y == 0)
+            if all(isnan(Y))
                 obj.X = [];
                 obj.Y = [];
                 return;
@@ -59,6 +60,11 @@ classdef NWMethod < HFMethod
                 end
                 return;
             end
+            %{
+            y = X;
+            fu = X;
+            return;
+            %}
             nl = size(obj.X,1);            
             Xall = [obj.X ; X];
             W = Helpers.CreateDistanceMatrix(Xall);
@@ -90,12 +96,18 @@ classdef NWMethod < HFMethod
                 [~,y] = max(fu,[],2);
             else
                 y = S*obj.Y;            
+                fu = y;
             end
         end
         
-        function [fu,savedData,sigma] = runNW(obj,distMat,makeRBF,savedData)
+        function [fu,savedData,sigma] = runNW(obj,distMat,makeRBF,savedData)            
             assert(makeRBF);
-
+            %assert(isequal(obj.configs.c.cvParameters(1).key,'sigma'));
+            %obj.set('sigma',obj.configs.c.cvParameters(1).valu
+            I = distMat.isLabeledTargetTrain();
+            obj.train(distMat.X(I,:),distMat.Y(I));
+            [y,fu] = obj.predict(distMat.X);
+            %{
             distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
             I = distMat.isLabeledTargetTrain();            
 
@@ -130,7 +142,8 @@ classdef NWMethod < HFMethod
                 r = rand(size(fu));
                 fu(isInvalid) = r(isInvalid);
             end
-            savedData.predicted = fu;
+            %}
+            savedData.predicted = y;
             savedData.cvAcc = [];
             sigma = obj.get('sigma');
         end

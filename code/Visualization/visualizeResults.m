@@ -200,8 +200,9 @@ function [displayVal] = plotResults(results,sizes,field,colors,lineStyle,options
     if ~options.c.showTable && options.get('showPlots')
         if length(means) == length(sizes)
             errorbar(sizes,means,vars,'color',colors,'LineStyle',lineStyle);    
-        else            
-            if ProjectConfigs.useKSR
+        else         
+            pc = ProjectConfigs.Create();
+            if isprop(pc,'useKSR') && pc.useKSR
                 a = ksr(1:length(means),means,2);
                 plot(a.x,a.f,'color',colors);
             else

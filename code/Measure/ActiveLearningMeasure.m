@@ -6,6 +6,12 @@ classdef ActiveLearningMeasure < Measure
     end
     
     methods
+        function obj = ActiveLearningMeasure(configs)
+            if ~exist('configs','var')
+                configs = [];
+            end
+            obj = obj@Measure(configs);
+        end
         function [measureResults] = evaluate(obj,split)
             measureResults = struct();
             iterationResults = split.iterationResults;
@@ -34,9 +40,15 @@ classdef ActiveLearningMeasure < Measure
                     [preTransferValTrain(resultIdx), ...
                         preTransferValTest(resultIdx)] = ...
                         obj.computeTrainTestResults(r2);
-                    regs(resultIdx) = r2.learnerMetadata.reg;
-                    cvAcc(resultIdx) = r2.learnerMetadata.cvAcc;
-                    bestRegs(resultIdx) = r2.modelResults(argmax([r2.modelResults.testAcc])).reg;
+                    if isfield(r2.learnerMetadata,'reg')
+                        regs(resultIdx) = r2.learnerMetadata.reg;
+                    end
+                    if isfield(r2.learnerMetadata,'cvAcc')
+                        cvAcc(resultIdx) = r2.learnerMetadata.cvAcc;
+                    end
+                    if isfield(r2.modelResults(1),'testAcc')
+                        bestRegs(resultIdx) = r2.modelResults(argmax([r2.modelResults.testAcc])).reg;
+                    end
                 end
                 if ~isempty(split.transferMeasureResults)
                     transferMeasures(resultIdx) = ...
@@ -62,15 +74,17 @@ classdef ActiveLearningMeasure < Measure
                 measureResults.learnerStats.regs = log10(regs);
                 measureResults.learnerStats.bestRegs = log10(bestRegs);
                 measureResults.learnerStats.regDiffs = abs(log10(bestRegs)-log10(regs));
-                measureResults.learnerStats.cvPerfDiff = abs(preTransferValTest-cvAcc);
-                measureResults.learnerStats.cvPerfDelta = cvAcc-preTransferValTest;
-                measureResults.learnerStats.cvAcc = cvAcc;
-                
-                desiredPerf = ProjectConfigs.desiredPerf;
-                measureResults.learnerStats.terminatedPerf = zeros(size(desiredPerf));
-                measureResults.learnerStats.numIterations = zeros(size(desiredPerf));
-                measureResults.learnerStats.terminatedPerfError = zeros(size(desiredPerf));
-                %{
+                if ~isempty(cvAcc)
+                    measureResults.learnerStats.cvPerfDiff = abs(preTransferValTest-cvAcc);
+                    measureResults.learnerStats.cvPerfDelta = cvAcc-preTransferValTest;
+                    measureResults.learnerStats.cvAcc = cvAcc;
+                end                
+                if isprop(ProjectConfigs.Create(),'desiredPerf')
+                    desiredPerf = ProjectConfigs.desiredPerf;
+                    measureResults.learnerStats.terminatedPerf = zeros(size(desiredPerf));
+                    measureResults.learnerStats.numIterations = zeros(size(desiredPerf));
+                    measureResults.learnerStats.terminatedPerfError = zeros(size(desiredPerf));
+                    %{
                     for idx=1:length(desiredPerf)
                         hasDesiredPerf = cvAcc >= desiredPerf(idx);
                         minIdx = find(hasDesiredPerf,1,'first');
@@ -82,27 +96,30 @@ classdef ActiveLearningMeasure < Measure
                         measureResults.learnerStats.terminatedPerfError(idx) ...
                             = abs(preTransferValTest(minIdx) - cvAcc(minIdx));
                     end
-                %}
-                iterationDelta = ProjectConfigs.iterationDelta;
-                for idx=1:length(iterationDelta)
-                    %delta = cvAcc(2:end) - cvAcc(1:end-1);
-                    %meetsDelta = delta <= cvDelta(idx);
-                    %minIdx = find(meetsDelta,1,'first');
-                    %minIdx = findsubmat(meetsDelta, true(1,3));
-                    isDec = Helpers.isDecreasing(cvAcc,iterationDelta(idx));
-                    minIdx = find(isDec,1,'first');
-                    if isempty(minIdx)
-                        minIdx = length(cvAcc)-iterationDelta(idx);
-                    else
-                        minIdx = minIdx(1);
+                    %}
+                end
+                if isprop(ProjectConfigs.Create(),'iterationDelta')
+                    iterationDelta = ProjectConfigs.iterationDelta;
+                    for idx=1:length(iterationDelta)
+                        %delta = cvAcc(2:end) - cvAcc(1:end-1);
+                        %meetsDelta = delta <= cvDelta(idx);
+                        %minIdx = find(meetsDelta,1,'first');
+                        %minIdx = findsubmat(meetsDelta, true(1,3));
+                        isDec = Helpers.isDecreasing(cvAcc,iterationDelta(idx));
+                        minIdx = find(isDec,1,'first');
+                        if isempty(minIdx)
+                            minIdx = length(cvAcc)-iterationDelta(idx);
+                        else
+                            minIdx = minIdx(1);
+                        end
+                        minIdx = minIdx + iterationDelta(idx);
+                        measureResults.learnerStats.terminatedPerf(idx) = preTransferValTest(minIdx);
+                        measureResults.learnerStats.numIterations(idx) = minIdx -1;
+                        measureResults.learnerStats.terminatedPerfCVDelta(idx) ...
+                            = preTransferValTest(minIdx);
+                        measureResults.learnerStats.terminatedPerfError(idx) ...
+                            = abs(preTransferValTest(minIdx) - cvAcc(minIdx));
                     end
-                    minIdx = minIdx + iterationDelta(idx);
-                    measureResults.learnerStats.terminatedPerf(idx) = preTransferValTest(minIdx);
-                    measureResults.learnerStats.numIterations(idx) = minIdx -1;
-                    measureResults.learnerStats.terminatedPerfCVDelta(idx) ...
-                        = preTransferValTest(minIdx);
-                    measureResults.learnerStats.terminatedPerfError(idx) ...
-                        = abs(preTransferValTest(minIdx) - cvAcc(minIdx));
                 end
             end
             if ~isempty(preTransferMeasures)

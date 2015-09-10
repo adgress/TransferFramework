@@ -19,9 +19,12 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~obj.has('useBaseNW')
                 obj.set('useBaseNW',0);
             end
+            %{
             if ~obj.has('newZ')
                 obj.set('newZ',1);
             end
+            %}
+            obj.set('newZ',1);
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end

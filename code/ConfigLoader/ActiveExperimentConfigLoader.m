@@ -23,8 +23,8 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             [numTrain,numPerClass] = obj.calculateSampling(experiment,originalTest);
             [sampledTrain] = originalTrain.stratifiedSampleByLabels(numTrain,[]);
                         
-            transferMethodObj = obj.get('transferMethodClass');
-            transferMeasureObj = obj.get('transferMeasure');
+            transferMethodObj = obj.get('transferMethodClass',[]);
+            transferMeasureObj = obj.get('transferMeasure',[]);
             
             useTransfer = ~isempty(transferMethodObj);
             
@@ -54,9 +54,9 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
             input.sharedConfigs = obj.configs;
             input.validationWeights = ones(size(sampledTrain.Y));
             activeIterations = obj.get('activeIterations');
-            labelsPerIteration = obj.get('labelsPerIteration');
+            labelsPerIteration = obj.get('numLabelsPerIteration');
             activeMethodObj = obj.get('activeMethodObj');
-            activeMethodObj.set('labelsPerIteration',labelsPerIteration);
+            activeMethodObj.set('numLabelsPerIteration',labelsPerIteration);
             activeResults = ActiveLearningResults();                        
             
             measureSavedData = struct();
@@ -89,7 +89,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
                 
                 queriedYVals = s.preTransferInput.train.Y(queriedIdx);
                 
-                assert(all(queriedYVals == -1));
+                assert(all(isnan(queriedYVals)));
                 preTransferInput.train.isValidation(queriedIdx) = true;
                 input.train.isValidation(queriedIdx) = true;
                     
@@ -175,7 +175,7 @@ classdef ActiveExperimentConfigLoader < ExperimentConfigLoader
 
             outputFile = [s '_' outputFile];
             activeIterations = obj.get('activeIterations');
-            labelsPerIteration = obj.get('labelsPerIteration');
+            labelsPerIteration = obj.get('numLabelsPerIteration');
             outputFile = [outputFile '_' num2str(activeIterations) '_' num2str(labelsPerIteration)];
 
             outputFileName = [outputDir outputFile '.mat'];

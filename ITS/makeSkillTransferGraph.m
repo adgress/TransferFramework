@@ -9,6 +9,7 @@ I = sum(isnan(sourceY),2) | sum(isnan(targetY),2);
 
 d.Wdim = [];
 d.Y = targetY;
+d.trueY = targetY;
 d.YNames = d.YNames(targetLabels);
 if ~isempty(d.X)
     d.X = d.X(:,sourceLabels);

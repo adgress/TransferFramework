@@ -11,7 +11,7 @@ classdef DisagreementActiveMethod < EntropyActiveMethod
         end
         function [scores] = getScores(obj,input,results,s)
             
-            unlabeledInds = find(input.train.Y < 0); 
+            unlabeledInds = ~input.train.isLabeled();
             transferPred = results.yPred(unlabeledInds);
             preTransferPred = s.preTransferResults.yPred(unlabeledInds);
             

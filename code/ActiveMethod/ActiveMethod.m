@@ -11,7 +11,10 @@ classdef ActiveMethod < Saveable
             if ~obj.has('valWeights')
                 obj.set('valWeights',0);
             end
-            obj.set('scale',ProjectConfigs.activeMethodScale);
+            obj.set('scale',1);
+            if isprop(ProjectConfigs.Create(),'activeMethodScale')
+                obj.set('scale',ProjectConfigs.activeMethodScale);
+            end
         end
         function n = getDisplayName(obj)
             n = obj.getPrefix();
@@ -20,9 +23,9 @@ classdef ActiveMethod < Saveable
         function [queriedIdx,scores,metadata] = queryLabel(obj,input,results,s)               
             metadata = struct();
             metadata.divergence = 0;
-            labelsPerIteration = obj.get('labelsPerIteration');
+            labelsPerIteration = obj.get('numLabelsPerIteration');
             unlabeledScores = obj.getScores(input,results,s);  
-            unlabeledInds = find(input.train.Y < 0);
+            unlabeledInds = find(~input.train.isLabeled());
             %[~,maxIdx] = max(unlabeledScores);
                         
             if obj.get('valWeights')

@@ -12,7 +12,7 @@ classdef ITSMainConfigs < MainConfigs
             
             obj.configsStruct.numLabeledPerClass=pc.numLabeledPerClass;
             learnerConfigs = obj.makeDefaultLearnerConfigs();                  
-                        
+                                    
             obj.configsStruct.learners=[];
             learnerConfigs.set('combineGraphFunc',pc.combineGraphFunc);
             learnerConfigs.set('evaluatePerfFunc',pc.evaluatePerfFunc);
@@ -25,7 +25,7 @@ classdef ITSMainConfigs < MainConfigs
             %learnerConfigs.set('useInv',1);
             learnerConfigs.set('useInv',0);
             learnerConfigs.set('inferSubset',0);
-            
+            learnerConfigs.set('zscore',0);
             if pc.useStudentData
                 if pc.useLLGC
                     learnerConfigs.set('cvParameters',pc.llgcCVParams);                    
@@ -84,6 +84,27 @@ classdef ITSMainConfigs < MainConfigs
             obj.c.learners.set('nameParams',nameParams);
             obj.c.learners.set('source',pc.sourceLabels);
             obj.c.learners.set('target',pc.targetLabels);
+            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                
+                obj.configsStruct.activeMethodObj = ...
+                    RandomActiveMethod(Configs());
+                
+                %{
+                obj.configsStruct.activeMethodObj = ...
+                    DistanceActiveMethod(Configs());
+                %}
+                %{
+                obj.configsStruct.activeMethodObj = ...
+                    VarianceEstimateActiveMethod(Configs());
+                %}
+                obj.set('activeIterations',pc.activeIterations);
+                obj.set('numLabelsPerIteration',pc.numLabelsPerIteration);
+                a = ActiveExperimentConfigLoader();
+                m = ActiveLearningL2Measure();
+                a.set('measure',m);
+                obj.set('configLoader',a);
+                obj.set('measure',m);
+            end
         end    
         
         function [] = setITSData(obj,dataSet)

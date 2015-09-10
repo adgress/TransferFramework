@@ -22,7 +22,7 @@ classdef EntropyActiveMethod < ActiveMethod
         function [scores] = getScores(obj,input,results,s)
             scores = [];
             fuTrain = results.trainFU;
-            unlabeledInds = find(input.train.Y < 0);
+            unlabeledInds = find(isnan(input.train.Y));
             if size(fuTrain,2) == 1 
                 %error('2nd dimension  == 1');
                 scores =  1 ./ abs(fuTrain(unlabeledInds));

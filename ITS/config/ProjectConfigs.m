@@ -2,6 +2,11 @@ classdef ProjectConfigs < ProjectConfigsBase
     %PROJECTCONFIGSBASE Summary of this class goes here
     %   Detailed explanation goes here
     
+    properties(Constant)
+        EXPERIMENT_REGRESSION = 1
+        EXPERIMENT_ACTIVE = 2
+        experimentSetting = 2
+    end
     properties
         dataSetName
         combineGraphFunc
@@ -33,6 +38,9 @@ classdef ProjectConfigs < ProjectConfigsBase
         
         useStudentQuestionGraph
         useLabelsAsX
+        
+        numLabelsPerIteration
+        activeIterations
                 
         sigmaVals
     end
@@ -58,7 +66,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             useCommonSkills = 1;
             singleSkill = 1;
             
-            c.dataSet = Constants.DS2;
+            c.dataSet = Constants.DS1;
             %c.dataSet = Constants.DS3;
             %c.dataSet = Constants.PRG;
             
@@ -84,9 +92,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.dataSetName = 'DS1-69_reg';
                         %c.labelsToKeep = 1;
                        
-                        c.sourceLabels = 6;
-                        c.targetLabels = 6;
-                        c.numLabeledPerClass = [5 10 15];
+                        %c.sourceLabels = 3:5;
+                        c.sourceLabels = 4;
+                        c.targetLabels = 4;
+                        c.numLabeledPerClass = [5 10 15 20];
                     case Constants.PRG
                         c.dataSetName = 'Prgusap1_reg';
                         %c.dataSetName = 'Prgusap1';
@@ -159,6 +168,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                         error('');
                 end
             end
+            if ProjectConfigs.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                c.numLabeledPerClass = 3;
+                c.numLabelsPerIteration = 1;
+                c.activeIterations = 20;
+            end
             if c.useStudentQuestionGraph
                 c.dataSetName = [c.dataSetName '_SQgraph'];
             end
@@ -183,10 +197,9 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.llgcCVParams(2).values = num2cell([.001 .01 .1:.1:2 10 100 1000]);
             %c.llgcCVParams(2).values = num2cell([.001 .01 .1:.1:2 10 100 1000]);
             %c.nwCVParams = [];
-            c.nwCVParams = struct('key','sigma');
-            c.nwCVParams(1).values = num2cell(2.^(-5:5));
-            %c.nwCVParams(1).values = num2cell(.01*(2:2:100));
-            %c.nwCVParams(1).values = num2cell(.2);
+            c.nwCVParams = struct('key','sigma');            
+            c.nwCVParams(1).values = num2cell(2.^(5:-1:-5));
+            %c.nwCVParams(1).values = num2cell(.5);
             c.alpha = [];
             %c.sigma = .2;            
             c.sigma = [];
@@ -285,6 +298,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.set(f{idx},[s '_SQgraph']);
                 end
             end
+            if pc.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                c.set('measure',ActiveLearningL2Measure());
+            end
             r = c.get('resultsDirectory');
             c.set('resultsDirectory',[r '/' num2str(pc.labelsToUse) '/']);
         end
@@ -298,6 +314,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             pc = ProjectConfigs.Create();
 
             title = '';
+            fields = {};
             if pc.useStudentData
                 title = 'Just Students';
                 sources = [3:6];
@@ -342,9 +359,26 @@ classdef ProjectConfigs < ProjectConfigsBase
                 legend{end+1} = 'LLGC with all QQ edges';
                 %legend{end+1} = 'LLGC with no QQ edges';                
             end
+            if pc.experimentSetting == ProjectConfigs.EXPERIMENT_ACTIVE
+                methodResultsFileNames = {};
+                legend = {};
+                s1 = num2str(pc.sourceLabels);
+                s2 = num2str(pc.targetLabels);
+                
+                methodResultsFileNames{end+1} = ['Random_NW-source=' s1 '-target=' s2 '_20_1.mat'];
+                legend{end+1} = 'NW - Random Queries';
+                fields{end+1} = 'preTransferValTest';
+                
+                methodResultsFileNames{end+1} = ['MinDistance_NW-source=' s1 '-target=' s2 '_20_1.mat'];
+                legend{end+1} = 'NW - Min Distance';
+                fields{end+1} = 'preTransferValTest';
+                
+                methodResultsFileNames{end+1} = ['VarEstimate_NW-source=' s1 '-target=' s2 '_20_1.mat'];
+                legend{end+1} = 'NW - Variance Estimate';
+                fields{end+1} = 'preTransferValTest';
+            end
             
             
-            fields = {};
                 
             plotConfigs = {};
             for fileIdx=1:length(methodResultsFileNames)

@@ -14,7 +14,7 @@ classdef CrossValidation < Saveable
     methods
         function obj = CrossValidation()         
             obj = obj@Saveable(Configs());
-            obj.set('print',false);
+            obj.set('print',1);
         end
         
         function [] = setData(obj,X,Y)

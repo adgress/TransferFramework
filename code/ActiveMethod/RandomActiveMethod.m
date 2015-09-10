@@ -11,7 +11,7 @@ classdef RandomActiveMethod < ActiveMethod
         end        
         
         function [scores] = getScores(obj,input,results,s)
-            numUnlabeled = sum(input.train.Y < 0);
+            numUnlabeled = sum(~input.train.isLabeled());
             scores = rand(numUnlabeled,1);
         end
         

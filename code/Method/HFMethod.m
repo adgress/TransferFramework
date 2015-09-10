@@ -28,12 +28,7 @@ classdef HFMethod < Method
         
         function [distMat,savedData,Xall] = createDistanceMatrix(obj,train,test,learnerConfigs,makeRBF,savedData,V)
             if obj.method == HFMethod.HFGF
-                error('Caching assumes ordering doesn''t change');
-                trainLabeled = train.isLabeled()
-            else
-                %TODO: Ordering doesn't matter for LLGC - maybe rename
-                %variable to make this code more clear?
-                trainLabeled = true(length(train.Y),1);
+                error('Need to sort by whether instance is labeled?');
             end            
             if isempty(test)
                 test = DataSet();
@@ -41,17 +36,13 @@ classdef HFMethod < Method
             end
             WNames = [];
             WIDs = [];
-            Y = [train.Y(trainLabeled,:) ; ...
-                train.Y(~trainLabeled,:) ; ...
+            Y = [train.Y; ...
                 test.Y];
-            type = [train.type(trainLabeled);...
-                train.type(~trainLabeled);...
+            type = [train.type;...
                 test.type];                                
-            trueY = [train.trueY(trainLabeled,:) ; ...
-                train.trueY(~trainLabeled,:) ; ...
+            trueY = [train.trueY; ...
                 test.trueY];
-            instanceIDs = [train.instanceIDs(trainLabeled) ; ...
-                train.instanceIDs(~trainLabeled) ; ...
+            instanceIDs = [train.instanceIDs; ...
                 test.instanceIDs];
             objectType = [];
             labelSets = train.labelSets;
@@ -61,6 +52,7 @@ classdef HFMethod < Method
                 sigmaScale = obj.get('sigmaScale');
             end
             if ~isempty(train.W)
+                error('data ordering issues?');
                 assert(isempty(train.X));      
                 %combined = DataSet.Combine(train,test);                
                 combined = train.copy();
@@ -102,9 +94,7 @@ classdef HFMethod < Method
                 error('Data ordering issue with caching?');
             else
                 %warning('Data ordering issue with caching?');
-                XLabeled = train.X(trainLabeled,:);
-                XUnlabeled = [train.X(~trainLabeled,:) ; test.X];
-                Xall = [XLabeled ; XUnlabeled];                  
+                Xall = [train.X ; test.X];                  
                 if learnerConfigs.get('zscore') && ~obj.get('newZ');
                     Xall = zscore(Xall);
                 end   
@@ -411,6 +401,9 @@ classdef HFMethod < Method
             if ~obj.configs.get('quiet')
                 display([ obj.getPrefix() ' Acc: ' num2str(savedData.val)]);
             end
+            %full([testResults.testFU testResults.testActual])
+            %I = ~isnan(testResults.trainActual);
+            %full([testResults.trainFU(I) testResults.trainActual(I)])
             %testResults.learnerStats.featureSmoothness = savedData.featureSmoothness;            
         end
         
