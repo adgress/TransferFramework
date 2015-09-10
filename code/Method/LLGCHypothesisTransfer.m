@@ -24,7 +24,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.set('newZ',1);
             end
             %}
-            obj.set('newZ',1);
+            obj.set('newZ',0);
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end
@@ -237,7 +237,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 test.X = Xall(n+1:end,:);
             end
 
-            if isempty(obj.sourceHyp) && ~obj.get('useBaseNW')
+            if isempty(obj.sourceHyp) && ~obj.get('useBaseNW') && ...
+                    ~obj.get('noTransfer')
                 for idx=1:length(sourceDataSetIDs)
                     nwObj = NWMethod();
                     nwObj.set('sigma',nwSigmas);
