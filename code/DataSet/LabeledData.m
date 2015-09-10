@@ -275,7 +275,7 @@ classdef LabeledData < matlab.mixin.Copyable
             percentageArray = cumsum(percentageArray);
             dataSize = size(Y,1);
             split = zeros(dataSize,1);            
-            if configs.get('regProb',false)
+            if exist('configs','var') && configs.get('regProb',false)
                 
                 labeledInds = find(~isnan(Y(:,1)));
                 perm = randperm(length(labeledInds));

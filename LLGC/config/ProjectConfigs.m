@@ -96,8 +96,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.alpha = 10;
             %c.reg = [0 1 2 5 10];
             c.reg = 0:.2:.8;
-            c.sigma = (2.^(1:5));
-            %c.sigma = 4;
+            %c.sigma = (2.^(1:5));
+            c.sigma = 4;
             c.useOracle=false;
             
             c.labelNoise = 0;
@@ -108,8 +108,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.dataSet = Constants.COIL20_DATA;            
             %c.dataSet = Constants.HOUSING_DATA;
             
-            %c.dataSet = Constants.TOMMASI_DATA;
-            c.dataSet = Constants.NG_DATA;
+            c.dataSet = Constants.TOMMASI_DATA;
+            %c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
