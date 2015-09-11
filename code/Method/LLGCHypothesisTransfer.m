@@ -29,7 +29,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end
-            obj.set('useOrig',true);
+            obj.set('useOrig',0);
         end
         
         function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
@@ -166,19 +166,19 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     %variable c
                     %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
                     %minimize(norm(F(I,:)-Ymat(I,:),1))
-                    minimize(norm(F(I,:)-Ymat(I,:),1))
+                    minimize(norm(F(I,:)-10*Ymat(I,:),1))
                     subject to
                         b >= 0
                         %b <= 1
-                        %norm(b,1) <= reg
-                        sum(b) == reg
+                        norm(b,1) <= reg
+                        %sum(b) == reg
                         bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
                         F == Ftarget + invL*fuCombined*bRep
                 cvx_end  
                 warning on
             end
             %fuCombined(:,10)
-            %b
+            b
             obj.set('beta',b);
             %obj.set('c',c);
         end

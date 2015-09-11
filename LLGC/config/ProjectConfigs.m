@@ -95,8 +95,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.alpha=[1 5 10];
             %c.alpha = 10;
             %c.reg = [0 1 2 5 10];
-            %c.reg = 0:.2:.8;
-            c.reg = 0:.2:.2;
+            c.reg = 0:.2:.8;
+            %c.reg = 0:.2:.2;
             %c.sigma = (2.^(1:5));
             c.sigma = 4;
             c.useOracle=0;
@@ -109,8 +109,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.dataSet = Constants.COIL20_DATA;            
             %c.dataSet = Constants.HOUSING_DATA;
             
-            c.dataSet = Constants.TOMMASI_DATA;
-            %c.dataSet = Constants.NG_DATA;
+            %c.dataSet = Constants.TOMMASI_DATA;
+            c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
@@ -440,7 +440,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                 if ProjectConfigs.vizWeights
                     %methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-newOpt=1.mat'];
                     %legend = {'LLGC: Learn Weights'};
-                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1.mat'];
+                    %methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1.mat'];
+                    s = num2str(pc.sigma);
+
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1.mat'];
+                    legend{end+1} = 'hypothesis transfer (nw,fixed sigma)';    
                     legend = {'NW: Learn Weights'};
                     fields = {'dataSetWeights'};
                 else
@@ -485,12 +489,20 @@ classdef ProjectConfigs < ProjectConfigsBase
                         methodresultsfilenames{end+1} = [d '/s+t_hyptran-notransfer=1-sigma=' s '-usenw=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw, no transfer, fixed sigma)';
                         %}
+                        %{
                         methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-sigma=' s '-useNW=1-newZ=1-useOrig=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw,orig,no transfer,fixed sigma)';                        
                         methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1-oracle=1-useOrig=1.mat'];
-                        legend{end+1} = 'hypothesis transfer (nw,orig,oracle,fixed sigma)';                        
+                        legend{end+1} = 'hypothesis transfer (nw,orig,oracle,fixed sigma)';
                         methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1-useOrig=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw,orig,fixed sigma)';    
+                        %}
+                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1.mat'];
+                        legend{end+1} = 'hypothesis transfer (nw,fixed sigma)';    
+                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-sigma=' s '-useNW=1-newZ=1.mat'];
+                        legend{end+1} = 'hypothesis transfer (nw,no transfer,fixed sigma)';                        
+                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1-oracle=1.mat'];
+                        legend{end+1} = 'hypothesis transfer (nw,oracle,fixed sigma)';
                     end
                 end
                 
