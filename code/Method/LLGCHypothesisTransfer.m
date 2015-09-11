@@ -50,7 +50,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 numSources = length(unique(distMat.instanceIDs))-1;                 
                 if obj.get('oracle')
                     beta = zeros(numSources+1,1);
-                    beta(1:2) = 1;
+                    beta(1:2) = reg;
                     obj.set('beta',beta);
                     return;
                 end                     
@@ -120,7 +120,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 if ~useOrig
                     Ftarget = (1-reg)*M*Ymat(I,:);
                 end
-                targetInds = find(distMat.isLabeled() & distMat.instanceIDs == 0);
+                targetInds = find(distMat.isLabeled() & distMat.instanceIDs == 0 ...
+                    & distMat.isTargetTrain());
                 numTarget = length(targetInds);
                 dataSetOffset = 1;
                 instanceIDs = distMat.instanceIDs;

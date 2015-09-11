@@ -95,10 +95,11 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.alpha=[1 5 10];
             %c.alpha = 10;
             %c.reg = [0 1 2 5 10];
-            c.reg = 0:.2:.8;
+            %c.reg = 0:.2:.8;
+            c.reg = 0:.2:.2;
             %c.sigma = (2.^(1:5));
             c.sigma = 4;
-            c.useOracle=false;
+            c.useOracle=0;
             
             c.labelNoise = 0;
             c.numFolds = 3;
@@ -476,12 +477,20 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'Hypothesis Transfer (Base NW, Oracle)';
                     if length(pc.sigma) == 1
                         s = num2str(pc.sigma);
+                        %{
                         methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw,fixed sigma)';
                         methodresultsfilenames{end+1} = [d '/s+t_hyptran-sigma=' s '-usenw=1-oracle=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw, oracle, fixed sigma)';
                         methodresultsfilenames{end+1} = [d '/s+t_hyptran-notransfer=1-sigma=' s '-usenw=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw, no transfer, fixed sigma)';
+                        %}
+                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-sigma=' s '-useNW=1-newZ=1-useOrig=1.mat'];
+                        legend{end+1} = 'hypothesis transfer (nw,orig,no transfer,fixed sigma)';                        
+                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1-oracle=1-useOrig=1.mat'];
+                        legend{end+1} = 'hypothesis transfer (nw,orig,oracle,fixed sigma)';                        
+                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1-useOrig=1.mat'];
+                        legend{end+1} = 'hypothesis transfer (nw,orig,fixed sigma)';    
                     end
                 end
                 
