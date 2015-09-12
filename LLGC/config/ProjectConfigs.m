@@ -97,8 +97,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.reg = [0 1 2 5 10];
             c.reg = 0:.2:.8;
             %c.reg = 0:.2:.2;
-            %c.sigma = (2.^(1:5));
-            c.sigma = 4;
+            c.sigma = (2.^(2:4));
+            %c.sigma = 4;
             c.useOracle=0;
             
             c.labelNoise = 0;
@@ -109,8 +109,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.dataSet = Constants.COIL20_DATA;            
             %c.dataSet = Constants.HOUSING_DATA;
             
-            %c.dataSet = Constants.TOMMASI_DATA;
-            c.dataSet = Constants.NG_DATA;
+            c.dataSet = Constants.TOMMASI_DATA;
+            %c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
@@ -177,8 +177,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                 %}
                 switch c.dataSet
                     case Constants.TOMMASI_DATA                        
-                        c.numLabeledPerClass=[5 10 15 20];
-                        %c.numLabeledPerClass=[15];
+                        %c.numLabeledPerClass=[5 10 15 20];
+                        c.numLabeledPerClass=[15];
                         c.numOverlap = 30;
                         c.addTargetDomain = true;
                         
@@ -497,10 +497,11 @@ classdef ProjectConfigs < ProjectConfigsBase
                         methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1-useOrig=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw,orig,fixed sigma)';    
                         %}
-                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1.mat'];
-                        legend{end+1} = 'hypothesis transfer (nw,fixed sigma)';    
+                        
                         methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-sigma=' s '-useNW=1-newZ=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw,no transfer,fixed sigma)';                        
+                        methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1.mat'];
+                        legend{end+1} = 'hypothesis transfer (nw,fixed sigma)';    
                         methodResultsFileNames{end+1} = [d '/S+T_HypTran-sigma=' s '-useNW=1-newZ=1-oracle=1.mat'];
                         legend{end+1} = 'hypothesis transfer (nw,oracle,fixed sigma)';
                     end

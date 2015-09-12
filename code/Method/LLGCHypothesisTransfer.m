@@ -26,6 +26,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             %}
             obj.set('newZ',pc.dataSet ~= Constants.NG_DATA);
+            obj.set('hinge',0);
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end
@@ -114,11 +115,16 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 Wrbf = Wrbf - diag(diag(Wrbf));
                 Wrbf = Wrbf(:,I);
                 d = sum(Wrbf,2);
-                d(d < 1e-8) = 1;
+                J = d < 1e-8;
+                d(J) = 1;
                 M = diag(1 ./ d) * Wrbf;
                 invL = eye(size(M,1));
                 if ~useOrig
-                    Ftarget = (1-reg)*M*Ymat(I,:);
+                    Ftarget = M*Ymat(I,:);
+                    pc = ProjectConfigs.Create();
+                    assert(pc.dataSet == Constants.TOMMASI_DATA);
+                    Ftarget(J,[10 15]) = .5;
+                    Ftarget = (1-reg)*Ftarget;
                 end
                 targetInds = find(distMat.isLabeled() & distMat.instanceIDs == 0 ...
                     & distMat.isTargetTrain());
@@ -133,8 +139,10 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 if ~useOrig
                     Ftarget = invL*alpha*Ymat;
                 end
-            end            
+            end    
+            hinge = @(x) sum(sum(max(0,1-x)));
             if useOrig
+                assert(~obj.get('hinge'));
                 warning off
                 cvx_begin quiet
                     variable b(numSources+1)
@@ -166,7 +174,12 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     %variable c
                     %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
                     %minimize(norm(F(I,:)-Ymat(I,:),1))
-                    minimize(norm(F(I,:)-10*Ymat(I,:),1))
+                    if obj.get('hinge')
+                        %minimize(hinge(F(I,:)-Ymat(I,:)))
+                        minimize(norm(F(I,:)-Ymat(I,:),1))
+                    else
+                        minimize(norm(F(I,:)-10*Ymat(I,:),1))                       
+                    end
                     subject to
                         b >= 0
                         %b <= 1
@@ -178,9 +191,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 warning on
             end
             %fuCombined(:,10)
+            %full(F(:,[10 15]))
             b
             obj.set('beta',b);
             %obj.set('c',c);
+
         end
         
         function [y,fu] = getSourcePredictions(obj,X)
@@ -429,6 +444,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('useOrig',0)
                 nameParams{end+1} = 'useOrig';
+            end
+            if obj.get('hinge',0)
+                nameParams{end+1} = 'hinge';
             end
         end 
     end
