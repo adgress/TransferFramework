@@ -465,8 +465,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                     end
                     methodResultsFileNames{end+1} = [d '/S+T_LLGC-Weighted-dataSetWeights=1-unweighted=1.mat'];                                
                     legend{end+1} = 'Uniform Weights';     
+                    
+                    %{
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran.mat'];
-                    legend{end+1} = 'Hypothesis Transfer';     
+                    legend{end+1} = 'Hypothesis Transfer';                         
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (no Transfer)';  
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1.mat'];
@@ -475,10 +477,13 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'Hypothesis Transfer (NW, No Transfer)';
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, new Z)';  
+                    %}
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1.mat'];
-                    legend{end+1} = 'Hypothesis Transfer (NW, New Z)';  
-                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-oracle=1.mat'];
-                    legend{end+1} = 'Hypothesis Transfer (Base NW, Oracle)';
+                    legend{end+1} = 'Hypothesis Transfer (NW)';  
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-useNW=1-newZ=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (NW, No Transfer)';  
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1-oracle=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (NW, Oracle)';
                     if length(pc.sigma) == 1
                         s = num2str(pc.sigma);
                         %{
