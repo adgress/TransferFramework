@@ -177,8 +177,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                 %}
                 switch c.dataSet
                     case Constants.TOMMASI_DATA                        
-                        %c.numLabeledPerClass=[5 10 15 20];
-                        c.numLabeledPerClass=[15];
+                        c.numLabeledPerClass=[5 10 15 20];
+                        %c.numLabeledPerClass=[15];
                         c.numOverlap = 30;
                         c.addTargetDomain = true;
                         
