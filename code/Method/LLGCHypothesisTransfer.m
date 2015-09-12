@@ -27,7 +27,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             %}
             obj.set('newZ',pc.dataSet ~= Constants.NG_DATA);
             obj.set('hinge',0);
-            obj.set('noScale',1);
+            obj.set('noScale',0);
+            obj.set('l2',1);
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end
@@ -178,6 +179,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     if obj.get('hinge')
                         %minimize(hinge(F(I,:)-Ymat(I,:)))
                         minimize(norm(F(I,:)-Ymat(I,:),1))
+                    elseif obj.get('l2')
+                        minimize(norm(F(I,:)-Ymat(I,:),2))
                     elseif obj.get('noScale')
                         minimize(norm(F(I,:)-Ymat(I,:),1))
                     else
@@ -450,6 +453,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('noScale',0)
                 nameParams{end+1} = 'noScale';
+            end
+            if obj.get('l2',0)
+                nameParams{end+1} = 'l2';
             end
             if obj.get('hinge',0)
                 nameParams{end+1} = 'hinge';
