@@ -28,7 +28,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             obj.set('newZ',pc.dataSet ~= Constants.NG_DATA);
             obj.set('hinge',0);
             obj.set('noScale',0);
-            obj.set('l2',1);
+            obj.set('l2',0);
+            obj.set('allSource',1);
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end
@@ -50,13 +51,14 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             useOrig = obj.get('useOrig');
             reg = obj.get('reg');     
             if useOrig
+                error('Update this?');
                 numSources = length(unique(distMat.instanceIDs))-1;                 
                 if obj.get('oracle')
                     beta = zeros(numSources+1,1);
                     beta(1:2) = reg;
                     obj.set('beta',beta);
-                    return;
-                end                     
+                    return;                                                     
+                end
                 if reg == 0
                     beta = zeros(numSources+1,1);
                     beta(1) = 1;
@@ -65,6 +67,13 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 end   
             else
                 numSources = length(obj.sourceHyp);
+                if obj.get('allSource')
+                    numDataSets = numSources+1;
+                    beta = ones(numSources,1) / numDataSets;
+                    obj.set('beta',beta);
+                    obj.set('reg',1 - 1/numDataSets);
+                    return;
+                end
                 if obj.get('oracle')
                     beta = zeros(numSources,1);
                     beta(1) = reg;
@@ -372,6 +381,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     cvParams(1).values = {0};
                 end
             end
+            if obj.get('allSource')
+                cvParams(1).values = {1};
+            end
             cvParams(2).key = 'sigma';
             cvParams(2).values = num2cell(llgcSigma);
             %obj.set('sigma',llgcSigma);  
@@ -461,6 +473,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('hinge',0)
                 nameParams{end+1} = 'hinge';
+            end
+            if obj.get('allSource',0)
+                nameParams{end+1} = 'allSource';
             end
         end 
     end

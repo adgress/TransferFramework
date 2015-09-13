@@ -65,6 +65,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         classNoise   
         useHypothesisTransfer
         noTransfer
+        allSource
     end
     
     methods(Static, Access=private)
@@ -100,6 +101,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.sigma = (2.^(2:4));
             %c.sigma = 4;
             c.useOracle=0;
+            c.allSource = 1;
             
             c.labelNoise = 0;
             c.numFolds = 3;
@@ -492,6 +494,15 @@ classdef ProjectConfigs < ProjectConfigsBase
                     %}
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1-l2=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, l2 loss)';
+                    
+                    
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-useNW=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (NW, No Transfer)';  
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-oracle=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (NW, Oracle)';
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-l2=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (NW, l2 loss)';
+                    
                     if length(pc.sigma) == 1
                         s = num2str(pc.sigma);
                         %{
