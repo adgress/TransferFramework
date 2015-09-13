@@ -109,8 +109,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.dataSet = Constants.COIL20_DATA;            
             %c.dataSet = Constants.HOUSING_DATA;
             
-            %c.dataSet = Constants.TOMMASI_DATA;
-            c.dataSet = Constants.NG_DATA;
+            c.dataSet = Constants.TOMMASI_DATA;
+            %c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                

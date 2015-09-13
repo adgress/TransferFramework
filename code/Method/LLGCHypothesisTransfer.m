@@ -123,9 +123,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 invL = eye(size(M,1));
                 if ~useOrig
                     Ftarget = M*Ymat(I,:);
-                    pc = ProjectConfigs.Create();
-                    assert(pc.dataSet == Constants.TOMMASI_DATA);
-                    Ftarget(J,[10 15]) = .5;
+                    hasLabel = sum(Ymat) > 1;
+                    pc = ProjectConfigs.Create();                    
+                    Ftarget(J,hasLabel) = 1/sum(hasLabel);
+                    diff = sum(Ftarget,2) - 1;
+                    assert(all(abs(diff) < 1e-8));
                     Ftarget = (1-reg)*Ftarget;
                 end
                 targetInds = find(distMat.isLabeled() & distMat.instanceIDs == 0 ...
