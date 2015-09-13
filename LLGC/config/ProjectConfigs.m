@@ -109,8 +109,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             %c.dataSet = Constants.COIL20_DATA;            
             %c.dataSet = Constants.HOUSING_DATA;
             
-            c.dataSet = Constants.TOMMASI_DATA;
-            %c.dataSet = Constants.NG_DATA;
+            %c.dataSet = Constants.TOMMASI_DATA;
+            c.dataSet = Constants.NG_DATA;
             c.cvParams = {'reg','noise'};
             c.maxSourceSize = 300;
             if ProjectConfigs.experimentSetting == ProjectConfigs.NOISY_EXPERIMENT                
@@ -478,16 +478,20 @@ classdef ProjectConfigs < ProjectConfigsBase
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, new Z)';  
                     %}                    
-                    %{
+                    
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-noTransfer=1-useNW=1-newZ=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, No Transfer)';  
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1-oracle=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, Oracle)';
-                    %}
+                    
+                    %{
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW)';
                     methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1-noScale=1.mat'];
                     legend{end+1} = 'Hypothesis Transfer (NW, No Scale)';
+                    %}
+                    methodResultsFileNames{end+1} = [d '/S+T_HypTran-useNW=1-newZ=1-l2=1.mat'];
+                    legend{end+1} = 'Hypothesis Transfer (NW, l2 loss)';
                     if length(pc.sigma) == 1
                         s = num2str(pc.sigma);
                         %{
