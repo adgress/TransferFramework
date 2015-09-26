@@ -21,7 +21,7 @@ function [] = runVisualization()
         if ProjectConfigs.vizWeights
             vizConfigs.set('axisToUse',[0 1 0 1]);
         elseif dataSet == Constants.NG_DATA
-            vizConfigs.set('axisToUse',[0 45 .2 1]);
+            vizConfigs.set('axisToUse',[0 35 .2 1]);
         else
             vizConfigs.set('axisToUse',[0 25 0 1]);
         end
@@ -63,11 +63,12 @@ function [] = runVisualization()
             ProjectConfigs.vizWeights        
         vizConfigs.set('plotConfigs',plotConfigs);        
         if dataSet == Constants.NG_DATA
-            XTickLabels = {'Target','S1','S2'};
-            sizes = [5 10 20 30 40];
+            %XTickLabels = {'Target','S1','S2'};
+            XTickLabels = {'S1','S2'};
+            sizes = [5 10 20 30];
         elseif dataSet == Constants.TOMMASI_DATA
-            XTickLabels = {'T','IS' ,'S1','S2',...
-                'S3','S4','S5','S6','S7'};
+            %XTickLabels = {'T','IS' ,'S1','S2','S3','S4','S5','S6','S7'};
+            XTickLabels = {'IS','S1','S2','S3','S4','S5','S6','S7'};
             sizes = [5 10 15 20];
         end
         figureHandles = tight_subplot(1,length(sizes),margins(1),...

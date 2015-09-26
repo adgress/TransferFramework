@@ -5,7 +5,7 @@ classdef ProjectConfigs < ProjectConfigsBase
     properties(Constant)
         EXPERIMENT_REGRESSION = 1
         EXPERIMENT_ACTIVE = 2
-        experimentSetting = 2
+        experimentSetting = 1
     end
     properties
         dataSetName
@@ -63,10 +63,11 @@ classdef ProjectConfigs < ProjectConfigsBase
             c.labelsToUse = [];
             c.justCorrectNodes = false;
             c.useLLGCRegression = false;
-            useCommonSkills = 1;
-            singleSkill = 1;
+            useCommonSkills = 0;
+            singleSkill = 0;
             
-            c.dataSet = Constants.DS1;
+            %c.dataSet = Constants.DS1;
+            c.dataSet = Constants.DS2;
             %c.dataSet = Constants.DS3;
             %c.dataSet = Constants.PRG;
             
@@ -104,7 +105,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.sourceLabels = 2;
                         c.targetLabels = 3;
                         %}
-                        c.sourceLabels = [1 2];
+                        %c.sourceLabels = [1 2];
+                        c.sourceLabels = 1;
                         c.targetLabels = 3;
                         %c.numLabeledPerClass = [5 10 20 30];
                         c.numLabeledPerClass = [20 50 100 150];
@@ -123,8 +125,9 @@ classdef ProjectConfigs < ProjectConfigsBase
                         c.sourceLabels = 6;
                         c.targetLabels = 14;
                         %}
-                        c.sourceLabels = 3:6;
-                        c.targetLabels = 7;
+                        %c.sourceLabels = 3:6;
+                        c.sourceLabels = 4;
+                        c.targetLabels = 6;
                     case Constants.DS3
                         c.dataSetName = 'DS3-39_reg';
                         c.numLabeledPerClass = [20 50 100 150];
@@ -317,7 +320,8 @@ classdef ProjectConfigs < ProjectConfigsBase
             fields = {};
             if pc.useStudentData
                 title = 'Just Students';
-                sources = [3:6];
+                
+                sources = [4:6];
                 t = pc.targetLabels;
                 for idx=1:length(sources)
                     s = sources(idx);
@@ -325,12 +329,15 @@ classdef ProjectConfigs < ProjectConfigsBase
                         ['NW-source=' num2str(s) '-target=' num2str(t) '.mat'];
                     legend{end+1} = [num2str(s) ' to ' num2str(t)];
                 end
+                
                 %{
-                methodResultsFileNames{end+1} = 'LLGC.mat';
-                methodResultsFileNames{end+1} = 'NW.mat';
-                methodResultsFileNames{end+1} = 'Mean.mat';
-                methodResultsFileNames{end+1} = 'LinReg.mat';
-                methodResultsFileNames{end+1} = 'AddMod.mat';
+                s = ['-source=' num2str(pc.sourceLabels) '-target=' ...
+                    num2str(pc.targetLabels) '.mat'];
+                methodResultsFileNames{end+1} = ['LLGC' s];
+                methodResultsFileNames{end+1} = ['NW' s];
+                methodResultsFileNames{end+1} = ['Mean' s];
+                methodResultsFileNames{end+1} = ['LinReg' s];
+                methodResultsFileNames{end+1} = ['AddMod' s];
                 legend = {...
                     'LLGC', ...
                     'NW',...
