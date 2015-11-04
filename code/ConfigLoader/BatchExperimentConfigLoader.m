@@ -37,7 +37,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
             numRandomFeatures = pc.numRandomFeatures;
             paramsToVary = obj.get('paramsToVary');
             for paramIdx=1:length(paramsToVary)
-                allParamsToVary{end+1} = obj.get(paramsToVary{paramIdx});
+                allParamsToVary{end+1} = obj.get(paramsToVary{paramIdx},{[]});
             end
             paramsToVary{end+1} = 'overrideConfigs';
             allParamsToVary{end+1} = obj.get('overrideConfigs');
@@ -55,8 +55,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigsCopy.set(paramsToVary,params);  
                     mainConfigsCopy.addConfigs(params{end});
                 end
-                [dataAndSplits] = obj.loadData(mainConfigsCopy);
-
+                [dataAndSplits] = obj.loadData(mainConfigsCopy);                
                 if numRandomFeatures > 0
                     %error('Add random features to source data?');
                     display(['Adding ' num2str(numRandomFeatures) ' random features']);
@@ -67,7 +66,22 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 end
                 if isempty(dataAndSplits.allData.instanceIDs)
                     dataAndSplits.allData.instanceIDs = zeros(length(dataAndSplits.allData.Y),1);                        
-                end                                   
+                end  
+                sourceLearner = mainConfigsCopy.get('sourceLearner',[]);
+                if ~isempty(sourceLearner) && ~pc.makeSubDomains
+                    input = struct();                    
+                    for idx=1:length(dataAndSplits.sourceDataSets)
+                        d = dataAndSplits.sourceDataSets{idx};
+                        d.setTargetTrain();
+                        s = sourceLearner.copy();
+                        s.set('measure',mainConfigsCopy.get('measure'));
+                        input.train = d;
+                        input.test = [];
+                        s.runMethod(input);
+                        dataAndSplits.sourceDataSets{idx}.savedFields.learner = ...
+                            s;
+                    end                    
+                end
                 if pc.makeSubDomains
                     assert(numRandomFeatures == 0);
                     assert(ProjectConfigs.useTransfer)
@@ -79,12 +93,30 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         dataAndSplits,labelProduct,pc);
                     [targetLabels,sourceLabels] = mainConfigsCopy.GetTargetSourceLabels();
                     mainConfigsCopy.set('numOverlap',pc.numOverlap);
-                    mainConfigsCopy.set('addTargetDomain',pc.addTargetDomain);                    
-                    mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
+                    mainConfigsCopy.set('addTargetDomain',pc.addTargetDomain);                                        
                     mainConfigsCopy.set('dataSetName',[num2str(sourceLabels) '-to-' num2str(targetLabels)]);             
 
                     mainConfigsCopy.set('targetLabels',targetLabels);
-                    mainConfigsCopy.set('sourceLabels',sourceLabels);   
+                    mainConfigsCopy.set('sourceLabels',sourceLabels);
+                    
+                    if ~isempty(sourceLearner)
+                        input = struct();      
+                        for sIdx=1:length(dataAndSplitsCopy.allSplits)
+                            sources = dataAndSplitsCopy.allSplits{sIdx}.sourceData;
+                            for idx=1:length(sources)
+                                d = sources{idx};
+                                d.setTargetTrain();
+                                s = sourceLearner.copy();
+                                s.set('measure',mainConfigsCopy.get('measure'));
+                                input.train = d;
+                                input.test = [];
+                                s.runMethod(input);
+                                dataAndSplitsCopy.allSplits{sIdx}.sourceData{idx}.savedFields.learner = ...
+                                    s;
+                            end                    
+                        end
+                    end
+                    mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
                 else
                     if isfield(dataAndSplits,'sourceNames') && ProjectConfigs.useTransfer
                         assert(numRandomFeatures == 0);
@@ -263,6 +295,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 if ~pc.addTargetDomain
                     targetOverlap = 0;
                 end
+                assert(~isempty(targetOverlap));
                 isOverlap = targetDataCopy.stratifiedSelection(targetOverlap);
                 
                 targetDataCopy.remove(isOverlap);                
@@ -277,9 +310,11 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                 newSplit.sourceData = {};                
                 
                 for labelProductIdx=1:length(labelProduct)
+                    %{
                     if pc.useJustTargetNoSource
                         break;
                     end
+                    %}
                     currLabels = labelProduct{labelProductIdx};
                     targetLabel_i = currLabels(1);
                     sourceLabel = currLabels(2);

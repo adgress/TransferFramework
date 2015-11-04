@@ -57,15 +57,16 @@ classdef CrossValidation < Saveable
             processedResults = cell(size(paramPowerSet));
             accs = zeros(size(paramPowerSet));
             trainAccs = accs;
-            for paramIdx=1:length(paramPowerSet)
-                splitResults = cell(size(obj.splits));
-                processedSplitResults = cell(size(obj.splits));
-                params = paramPowerSet{paramIdx};
-                obj.methodObj.setParams(params);
-                acc = 0;
-                trainAcc = 0;
-                savedData = struct();
-                for splitIdx=1:length(obj.splits)
+            for splitIdx=1:length(obj.splits)
+                for paramIdx=1:length(paramPowerSet)
+                    %splitResults = cell(size(obj.splits));
+                    %processedSplitResults = cell(size(obj.splits));
+                    params = paramPowerSet{paramIdx};
+                    obj.methodObj.setParams(params);
+                    %acc = 0;
+                    %trainAcc = 0;
+                    %savedData = struct();
+                
                     input = struct();
                     s = obj.splits{splitIdx};
                     [train,test,~] = obj.trainData.splitDataSet(s);
@@ -87,18 +88,25 @@ classdef CrossValidation < Saveable
                         obj.methodObj.runMethod(input,savedData);
                     %}
                     
-                    
+                    %{
                     [splitResults{splitIdx}] = ...
                         obj.methodObj.runMethod(input);
                     processedSplitResults{splitIdx} = ...
                         obj.measure.evaluate(splitResults{splitIdx});
-                    acc = acc + processedSplitResults{splitIdx}.learnerStats.testResults;
-                    trainAcc = acc + processedSplitResults{splitIdx}.learnerStats.trainResults;
+                    %}
+                    %acc = acc + processedSplitResults{splitIdx}.learnerStats.testResults;
+                    %trainAcc = acc + processedSplitResults{splitIdx}.learnerStats.trainResults;
+                    splitResults = obj.methodObj.runMethod(input);
+                    processedSplitResults= obj.measure.evaluate(splitResults);
+                    accs(paramIdx) = accs(paramIdx) + processedSplitResults.learnerStats.testResults;
+                    trainAccs(paramIdx) = trainAccs(paramIdx) + processedSplitResults.learnerStats.trainResults;
+                    paramResults{paramIdx}{end+1} = splitResults;
                 end
-                accs(paramIdx) = acc/length(obj.splits);
-                trainAccs(paramIdx) = trainAcc/length(obj.splits);
-                paramResults{paramIdx} = splitResults;
+                %accs(paramIdx) = acc/length(obj.splits);
+                %trainAccs(paramIdx) = trainAcc/length(obj.splits);                
             end
+            accs = accs./length(obj.splits);
+            trainAccs = trainAccs./length(obj.splits);                
             print = 0;
             if print
                 for idx=1:length(paramPowerSet)                    
@@ -115,7 +123,13 @@ classdef CrossValidation < Saveable
             end
             I = Helpers.isInfOrNan(accs);
             assert(~any(I));
-            [~,bestInd] = max(accs);
+            if obj.methodObj.get('classification')
+                display('Using max accuracy');
+                [~,bestInd] = max(accs);
+            else
+                display('Using min error');
+                [~,bestInd] = min(accs);
+            end            
             bestParams = paramPowerSet{bestInd};
             bestAcc = accs(bestInd);
             if obj.get('print')

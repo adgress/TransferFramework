@@ -13,11 +13,12 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
             inputFilePrefix = obj.get('inputFilePrefix');
             inputDataSets = obj.get('inputDataSets');
             dataSetAcronyms = obj.get('dataSetAcronyms');
+            fieldsToSave = obj.get('fieldsToSave',[]);          
             %outputFilePrefix = obj.get('outputFilePrefix');
             if length(inputDataSets) > 1
                 for i=1:numel(inputDataSets)
                     configCopy = configs.copy();
-                    configCopy.set('inputFile',[inputFilePrefix inputDataSets{i}]);
+                    configCopy.set('inputFile',[inputFilePrefix '/' inputDataSets{i}]);
                     sourceFiles = {};
                     sourceAcronym = '';
                     sourceNames = {};
@@ -26,14 +27,14 @@ classdef BatchDataSplitterConfigLoader < ConfigLoader
                             continue;
                         end
                         sourceNames{end+1} = dataSetAcronyms{j};
-                        sourceFiles{end+1} = [inputFilePrefix inputDataSets{j}];
+                        sourceFiles{end+1} = [inputFilePrefix '/' inputDataSets{j}];
                         sourceAcronym = [sourceAcronym dataSetAcronyms{j}];
                         
                     end
                     configCopy.set('targetName',dataSetAcronyms{i});
                     configCopy.set('sourceFiles', sourceFiles);
                     s = [sourceAcronym '2' dataSetAcronyms{i}];
-                    if obj.get('classNoise') > 0
+                    if obj.get('classNoise',0) > 0
                         s = [s '-classNoise=' num2str(obj.get('classNoise'))];
                     end
                     s = [s '.mat'];

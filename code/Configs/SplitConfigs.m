@@ -15,6 +15,24 @@ classdef SplitConfigs < Configs
             obj.set('normalizeRows',0);
         end
         
+        function [] = setSyntheticTransfer(obj,directory,targetSuffix,sourceSuffix)
+            obj.set('XName','X');
+            obj.set('YName','Y');
+            obj.set('regProb',true);
+            obj.delete('maxTrainNumPerLabel');
+            
+            obj.configsStruct.inputFilePrefix=directory;
+            targetFile = ['target,' targetSuffix '.mat'];
+            sourceFile = ['source,' sourceSuffix '.mat'];
+            obj.configsStruct.inputDataSets=...
+                {targetFile,sourceFile};
+            obj.configsStruct.dataSetAcronyms=...
+                {'T','S'};
+            obj.configsStruct.outputFilePrefix= [directory '/splitData/'];
+            obj.configsStruct.outputFile='';
+            obj.set('fieldsToSave',{'beta','beta0','sigma','degree','trueY'});
+        end
+        
         function [] = setITS(obj,dataSet,useReg,useStudQGraph)
             if ~exist('dataSet','var')
                 dataSet = 'DS1';

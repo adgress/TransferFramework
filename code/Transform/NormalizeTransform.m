@@ -3,8 +3,9 @@ classdef NormalizeTransform < TransformBase
     %   Detailed explanation goes here
     
     properties
-        mean
+        meanX
         stdevs
+        meanY
     end
     
     methods
@@ -16,8 +17,8 @@ classdef NormalizeTransform < TransformBase
         end
         
         function [] = learn(obj,X,Y)
-            [~,obj.mean,obj.stdevs] = zscore(X);
-            I = isnan(obj.mean) | isinf(obj.mean);
+            [~,obj.meanX,obj.stdevs] = zscore(X);
+            I = isnan(obj.meanX) | isinf(obj.meanX);
             assert(~any(I));
             I = isnan(obj.stdevs) | isinf(obj.stdevs);
             assert(~any(I));
@@ -26,13 +27,23 @@ classdef NormalizeTransform < TransformBase
                 display('NormalizeTransform: 0 stdev - replacing with 1');
                 obj.stdevs(I) = 1;
             end
+            if exist('Y','var') && ~isempty(Y)
+                obj.meanY = mean(Y);
+            end
         end
         
-        function [Z] = apply(obj,X,Y)
-            Z = X - repmat(obj.mean,size(X,1),1);
+        function [Z,Y] = apply(obj,X,Y)
+            Z = X - repmat(obj.meanX,size(X,1),1);
             Z = Z ./ repmat(obj.stdevs,size(X,1),1);
             Z(isnan(Z(:))) = 0;
             %diff = Z - obj.Z;
+            if exist('Y','var') && ~isempty(Y)
+                Y = Y - obj.meanY;
+            end
+        end
+        
+        function [Y] = invert(obj,Y)
+            Y = Y + obj.meanY;
         end
         
         function [prefix] = getPrefix(obj)

@@ -16,6 +16,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if ~obj.has('useNW')
                 obj.set('useNW',1);
+                obj.method = HFMethod.NW;
             end
             if ~obj.has('useBaseNW')
                 obj.set('useBaseNW',0);
@@ -25,7 +26,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.set('newZ',1);
             end
             %}
-            obj.set('newZ',pc.dataSet ~= Constants.NG_DATA);
+            %obj.set('newZ',pc.dataSet ~= Constants.NG_DATA);
+            obj.set('newZ',0);
             obj.set('hinge',0);
             obj.set('noScale',0);
             obj.set('l2',0);
@@ -318,6 +320,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             
             
             if pc.dataSet == Constants.NG_DATA
+                error('Also do transformation for source?');
                 C = [train.X ; test.X];
                 C = C';
                 %[W, idf] = tf_idf_weight(C, 'normalize')
@@ -441,7 +444,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if obj.get('noTransfer',false)
                 nameParams{end+1} = 'noTransfer';
             end
-            if length(obj.get('cvAlpha')) == 1 && ~obj.get('useNW')
+            if length(obj.get('cvAlpha',[])) == 1 && ~obj.get('useNW')
                 nameParams{end+1} = 'alpha';
             end
             if length(obj.get('cvSigma')) == 1

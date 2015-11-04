@@ -32,7 +32,10 @@ classdef NWMethod < HFMethod
                 obj.Y = [];
                 return;
             end
-            sig = obj.get('sigma');
+            sig = obj.get('sigma',[]);
+            if isempty(sig)
+                sig = obj.get('cvSigma',[]);
+            end
             assert(~isempty(sig));
             if length(sig) == 1                
                 obj.sigma = sig;
@@ -53,11 +56,12 @@ classdef NWMethod < HFMethod
         end
         
         function [y,fu] = predict(obj,X)
-            if isempty(obj.Y)
+            if isempty(obj.Y)                
                 y = zeros(size(X,1),1);
                 if obj.get('classification')
                     y(:) = nan;
                 end
+                fu = y;
                 return;
             end
             %{

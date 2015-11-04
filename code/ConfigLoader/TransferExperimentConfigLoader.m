@@ -15,17 +15,20 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         
         function [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex)
+            isRegression = obj.dataAndSplits.allSplits{1}.targetData.isRegressionData;
             experiment = obj.allExperiments{experimentIndex};                                    
                                     
             [train,test,validate] = obj.getSplit(splitIndex);            
             [numTrain,numPerClass] = obj.calculateSampling(experiment,test);            
+            assert(numTrain > 0);
             classesToKeep = [];
             if obj.has('classesToKeep')
                 classesToKeep = obj.get('classesToKeep');
             end
             [sampledTrain] = train.stratifiedSampleByLabels(numTrain,classesToKeep);
             assert(sampledTrain.numClasses == train.numClasses);
-            if sum(~isnan(sampledTrain.Y)) ~= sampledTrain.numClasses*numPerClass
+            if sum(~isnan(sampledTrain.Y)) ~= sampledTrain.numClasses*numPerClass && ...
+                    ~isRegression
                 warning('Sample size is weird');
             end
             assert(numPerClass > 1);
@@ -53,10 +56,11 @@ classdef TransferExperimentConfigLoader < ExperimentConfigLoader
         
         function [results] = ...
                 runExperiment(obj,experimentIndex,splitIndex)                                  
-            
+            isRegression = obj.dataAndSplits.allSplits{1}.targetData.isRegressionData;
             [sampledTrain,test,sources,validate,experiment,numPerClass] = ...
                 prepareDataForTransfer(obj,experimentIndex,splitIndex);
-            if sum(~isnan(sampledTrain.Y)) ~= numPerClass*sampledTrain.numClasses
+            if sum(~isnan(sampledTrain.Y)) ~= numPerClass*sampledTrain.numClasses && ...
+                    ~isRegression
                 warning('Possibly wrong number of labels');
             end
             [~,trainTestInput] = ...

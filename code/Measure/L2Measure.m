@@ -32,15 +32,21 @@ classdef L2Measure < Measure
             %measureResults.valTrain = -1;
             ITest = isTest & isLabeled;
             ITrain = isTrain & isLabeled;
-            err = double(split.yPred) - double(split.yActual);
+            err = abs(double(split.yPred) - double(split.yActual));
+            %err = err ./ abs(split.yActual);
             errTrain = abs(err(ITrain));
             errTest = abs(err(ITest));
             
             neTr = mean(errTrain(:));
             neTe = mean(errTest(:));
+            %{
             measureResults.learnerStats.valTest = 1 - neTe;
             measureResults.learnerStats.testResults = 1 - neTe;
             measureResults.learnerStats.trainResults = 1 - neTr;
+            %}
+            measureResults.learnerStats.valTest = neTe;
+            measureResults.learnerStats.testResults = neTe;
+            measureResults.learnerStats.trainResults = neTr;
             if measureResults.learnerStats.valTest > .7
                 %display('');
             end

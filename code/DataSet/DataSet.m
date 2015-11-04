@@ -15,15 +15,18 @@ classdef DataSet < LabeledData
         featureIDs
         Wdim               
         W11
+        
+        savedFields
     end    
     properties(Dependent)
         numInstances
     end
     
     methods
-        function obj = DataSet(dataFile,XName,YName,X,Y,type,trueY,instanceIDs)            
+        function obj = DataSet(dataFile,XName,YName,X,Y,type,trueY,instanceIDs,fieldsToSave)            
             obj.dataFile = '';
             obj.objectType = [];
+            obj.savedFields = struct();
             if ~exist('X','var')
                 X = [];
             end
@@ -34,6 +37,9 @@ classdef DataSet < LabeledData
                 instanceIDs = 1:length(Y);
                 instanceIDs = instanceIDs';
             end
+            if ~exist('fieldsToSave','var')
+                fieldsToSave = [];
+            end
             if exist('dataFile','var') && ~isempty(dataFile)
                 obj.dataFile = dataFile;
                 obj.data = load(dataFile);
@@ -43,6 +49,14 @@ classdef DataSet < LabeledData
                 obj.X = obj.data.(XName);
                 obj.Y = obj.data.(YName);
                 obj.instanceIDs = zeros(size(obj.Y));
+                if ~isempty(fieldsToSave)
+                    for idx=1:length(fieldsToSave)
+                        s = fieldsToSave{idx};
+                        if isfield(obj.data,s)
+                            obj.savedFields.(s) = obj.data.(s);
+                        end
+                    end
+                end
             else
                 obj.X = X;
                 obj.Y = Y;                                
@@ -54,7 +68,7 @@ classdef DataSet < LabeledData
                 trueY = obj.Y;
             end
             obj.trueY = trueY;
-            if exist('type','var')
+            if exist('type','var') && ~isempty(type)
                 obj.type = type;                
             else
                 obj.type = LabeledData.NoType(length(obj.Y));

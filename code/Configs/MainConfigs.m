@@ -141,6 +141,20 @@ classdef MainConfigs < Configs
             obj.set('sourceDataSetToUse',{'ST4'});
         end
         
+        function [] = setSyntheticPolynomial(obj,directory,file)
+            obj.set('dataName',[directory '/splitData']);
+            obj.set('resultsDir','results_synthetic_polynomial');
+            obj.set('dataSet',file);
+            obj.configsStruct.numSourcePerClass=Inf;
+        end
+        
+        function [] = setSynthetic(obj,directory,file)
+            obj.set('dataName',[directory '/splitData']);
+            obj.set('resultsDir','results_synthetic_sparse');
+            obj.set('dataSet',file);
+            obj.configsStruct.numSourcePerClass=Inf;
+        end
+        
         function [] = setTommasiData(obj)
             obj.set('dataName','tommasi_data');
             obj.set('resultsDir','results_tommasi');

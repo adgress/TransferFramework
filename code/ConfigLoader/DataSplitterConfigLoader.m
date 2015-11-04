@@ -21,6 +21,7 @@ classdef DataSplitterConfigLoader < ConfigLoader
             percentTrain = obj.get('percentTrain');
             percentTest = obj.get('percentTest');
             dataSetType = obj.get('dataSetType','DataSet');
+            fieldsToSave = obj.get('fieldsToSave');
             if obj.has('data')
                 dataStruct = obj.get('data');
                 allData = DataSet.MakeDataFromStruct(dataStruct);
@@ -45,7 +46,8 @@ classdef DataSplitterConfigLoader < ConfigLoader
                     dataSetTypeConstructer = str2func(dataSetType);
                     %error('Do we want to use MakeProjectURL?');
                     f = Helpers.MakeProjectURL(inputFile);
-                    allData = dataSetTypeConstructer(f,XName,YName);
+                    allData = dataSetTypeConstructer(f,XName,YName,...
+                        [],[],[],[],[],fieldsToSave);
                     metadata = struct();
                     normalizeRows = obj.get('normalizeRows');  
                     allData.setTargetTrain();
@@ -53,7 +55,6 @@ classdef DataSplitterConfigLoader < ConfigLoader
                         allData.X = Helpers.NormalizeRows(allData.X);
                     end                                
                 end   
-                error('Set Wdim?');
             end    
             if obj.has('maxToUse')
                 maxToUse = obj.get('maxToUse');
@@ -144,7 +145,8 @@ classdef DataSplitterConfigLoader < ConfigLoader
                 for i=1:numel(sourceFiles)
                     %sourceFileName = [d '/' sourceFiles{i}];
                     sourceFileName = sourceFiles{i};
-                    sourceDataSet = DataSet(sourceFileName,XName,YName);                    
+                    sourceDataSet = DataSet(sourceFileName,XName,YName,...
+                        [],[],[],[],[],fieldsToSave);                    
                     if normalizeRows
                         sourceDataSet.X = Helpers.NormalizeRows(sourceDataSet.X);
                     end
@@ -203,7 +205,9 @@ classdef DataSplitterConfigLoader < ConfigLoader
             outputFile = [obj.get('outputFilePrefix') '/' obj.get('outputFile')];
             Helpers.MakeDirectoryForFile(outputFile);
             dataAndSplits = obj.dataAndSplits;
-            dataAndSplits = rmfield(dataAndSplits,'data');
+            if isfield(dataAndSplits,'data')
+                dataAndSplits = rmfield(dataAndSplits,'data');
+            end
             dataAndSplits.configs.delete('data')
             dataAndSplits.configs.delete('originalData')
             display(['Saving splits to:' outputFile]);

@@ -14,6 +14,8 @@ classdef Constants < handle
         USPS_DATA = 5
         HOUSING_DATA = 6
         YEAST_BINARY_DATA = 7
+        SPARSE_SYNTHETIC_DATA = 13
+        POLYNOMIRAL_SYNTHETIC_DATA = 14
         
         ITS_DATA = 8
         DS1 = 9

@@ -40,8 +40,11 @@ classdef Measure < Saveable
                 numel(split.trainPredicted);
             valTest = sum(split.testPredicted==split.testActual)/...
                 numel(split.testPredicted);
-            assert(all(split.testActual > 0));
+            assert(all(~isnan(split.testActual)));
             numLabels = max(split.testActual);
+            if round(numLabels) ~= numLabels
+                numLabels = 1;
+            end
             measureResults.trainPerfPerLabel = ResultsVector(zeros(numLabels,1));
             measureResults.testPerfPerLabel = ResultsVector(zeros(numLabels,1));
             for i=1:numLabels

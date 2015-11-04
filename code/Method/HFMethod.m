@@ -361,27 +361,29 @@ classdef HFMethod < Method
             testResults.labelSets = distMatOrig.labelSets;
             testResults.dataType = distMatOrig.type;
             %testResults.dataFU = sparse([fu(~isYTest,:) ; fu(isYTest,:)]);
-            assert(~isempty(YTest));
-            if ~isempty(YTest)
-                f = obj.get('evaluatePerfFunc',[]);
-                if ~isempty(f)                    
-                    [val,yPred,yActual] = f(distMatOrig,fu,savedData.predicted);
-                else               
-                    %{
-                    yTestPred = predicted(isYTest);
-                    val = sum(yTestPred == YTest)/...
-                            length(YTest);
-                    %}
-                    yPred = predicted;
-                    yActual = distMatOrig.Y;
-                    
-                end                
-                         
-            end
+            %assert(~isempty(YTest));
+                        
+            f = obj.get('evaluatePerfFunc',[]);
+            if ~isempty(f)                    
+                [val,yPred,yActual] = f(distMatOrig,fu,savedData.predicted);
+            else               
+                %{
+                yTestPred = predicted(isYTest);
+                val = sum(yTestPred == YTest)/...
+                        length(YTest);
+                %}
+                yPred = predicted;
+                yActual = distMatOrig.Y;                    
+            end                
+
             testResults.yPred = yPred;
             testResults.yActual = yActual;
             testResults.learnerMetadata.sigma = sigma;
             a = obj.configs.get('measure').evaluate(testResults);
+            if isempty(YTest)
+                display('No test data - skipping')
+                a.learnerStats.valTest = 0;
+            end
             savedData.val = a.learnerStats.valTest;
             assert(~isnan(savedData.val));
         end
