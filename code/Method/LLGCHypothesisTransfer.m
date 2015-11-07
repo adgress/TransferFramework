@@ -19,7 +19,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.method = HFMethod.NW;
             end
             if ~obj.has('useBaseNW')
-                obj.set('useBaseNW',0);
+                obj.set('useBaseNW',obj.get('noTransfer'));
             end
             %{
             if ~obj.has('newZ')
@@ -35,6 +35,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.set('oracle',false);
             end
             obj.set('useOrig',0);
+            obj.set('classification',1);
         end
         
         function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
@@ -228,6 +229,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 Y = distMat.Y;
                 Y(distMat.isTargetTest) = nan;
                 nwMethod.train(distMat.X,Y);
+                nwMethod.set('classification',obj.get('classification'));
                 [y,fu] = nwMethod.predict(distMat.X);
                 return;
             end
@@ -355,7 +357,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     nwObj = NWMethod();
                     nwObj.set('sigma',nwSigmas);
                     nwObj.set('measure',Measure());
-                    nwObj.set('classification',true);
+                    nwObj.set('classification',obj.get('classification'));
                     nwObj.set('newZ',obj.get('newZ'));
                     I = train.instanceIDs == sourceDataSetIDs(idx);
                     X = train.X(I,:);
@@ -425,7 +427,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             cv.trainData = targetTrain.copy();
             cv.methodObj = obj;
             cv.parameters = cvParams;
-            cv.measure = obj.get('measure');
+            cv.measure = obj.get('measure');            
             tic
             [bestParams,acc] = cv.runCV();
             toc

@@ -18,7 +18,7 @@ classdef NWMethod < HFMethod
             if ~obj.has('classification')
                 obj.set('classification',true);
             end
-            display('Not calling zscore');
+            %display('Not calling zscore');
         end
         
         
