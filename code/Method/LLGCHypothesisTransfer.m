@@ -29,9 +29,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             %obj.set('newZ',pc.dataSet ~= Constants.NG_DATA);
             obj.set('newZ',0);
             obj.set('hinge',0);
-            obj.set('noScale',0);
             obj.set('l2',0);
-            obj.set('allSource',1);
+            obj.set('allSource',0);
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end
@@ -139,7 +138,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     Ftarget(J,hasLabel) = 1/sum(hasLabel);
                     diff = sum(Ftarget,2) - 1;
                     assert(all(abs(diff) < 1e-8));
-                    Ftarget = (1-reg)*Ftarget;
+                    %Ftarget = (1-reg)*Ftarget;
                 end
                 targetInds = find(distMat.isLabeled() & distMat.instanceIDs == 0 ...
                     & distMat.isTargetTrain());
@@ -180,6 +179,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 cvx_end  
                 warning on
             else
+                bTarget = 1 - reg;
                 warning off
                 cvx_begin quiet
                     variable F(n,numLabels)             
@@ -194,10 +194,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                         minimize(norm(F(I,:)-Ymat(I,:),1))
                     elseif obj.get('l2')
                         minimize(norm(F(I,:)-Ymat(I,:),2))
-                    elseif obj.get('noScale')
-                        minimize(norm(F(I,:)-Ymat(I,:),1))
                     else
-                        minimize(norm(F(I,:)-10*Ymat(I,:),1))                       
+                        minimize(norm(F(I,:)-Ymat(I,:),1))                       
                     end
                     subject to
                         b >= 0
@@ -205,15 +203,13 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                         norm(b,1) <= reg
                         %sum(b) == reg
                         bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
-                        F == Ftarget + invL*fuCombined*bRep
-                cvx_end  
+                        F == (bTarget)*Ftarget + invL*fuCombined*bRep
+                cvx_end 
+                b = [bTarget ; b];
                 warning on
             end
-            %fuCombined(:,10)
-            %full(F(:,[10 15]))
-            b
+            %b
             obj.set('beta',b);
-            %obj.set('c',c);
 
         end
         
@@ -340,13 +336,19 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             nwSigmas = obj.get('cvSigma');
             %nwSigmas = 4;
             
+            if isfield(input.originalSourceData{1}.savedFields,'learner')
+                for idx=1:length(input.originalSourceData)
+                    s = input.originalSourceData{idx};
+                    obj.sourceHyp{idx} = s.savedFields.learner;
+                end
+            end
             if obj.get('newZ')
                 n = size(train.X,1);
                 Xall = zscore([train.X ; test.X]);
                 train.X = Xall(1:n,:);
                 test.X = Xall(n+1:end,:);
             end
-
+            
             if isempty(obj.sourceHyp) && ~obj.get('useBaseNW') && ...
                     ~obj.get('noTransfer') && ~obj.get('useOrig');
                 for idx=1:length(sourceDataSetIDs)
@@ -467,9 +469,6 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('useOrig',0)
                 nameParams{end+1} = 'useOrig';
-            end
-            if obj.get('noScale',0)
-                nameParams{end+1} = 'noScale';
             end
             if obj.get('l2',0)
                 nameParams{end+1} = 'l2';

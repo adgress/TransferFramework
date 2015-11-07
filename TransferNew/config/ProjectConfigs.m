@@ -77,7 +77,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.cvParams = {'reg','sigma'};
                 case ProjectConfigs.HYPOTHESIS_TRANSFER_EXPERIMENT
                     c.dataSet = Constants.TOMMASI_DATA;
-                    c.reg = fliplr([0 .01 .1 1 10 100]);
+                    %c.reg = fliplr([0 .01 .1 1 10 100]);
+                    c.reg = ([0 .2:.2:.8]);
                     c.sigma = fliplr([.001 .01 .1 1 10]);
                     c.syntheticDir = 'syntheticPolynomial';
                     c.targetSuffix = 'n=100,degree=2,sigma=0.5';
