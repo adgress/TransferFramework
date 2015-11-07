@@ -103,6 +103,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~useOrig
                 [ySource,fuSource] = obj.getSourcePredictions(distMat.X);
                 fuCombined = zeros(n,numLabels*numSources);
+                labelIDs = zeros(1,numLabels*numSources);
                 for j=1:numLabels
                     f = zeros(n,numSources);
                     for idx=1:length(fuSource)
@@ -110,6 +111,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     end                              
                     cols = numSources*(j-1)+1:numSources*j;
                     fuCombined(:,cols) = f;
+                    labelIDs(cols) = j;
                 end
                 betaRowIdx = 1:(numLabels*numSources);
                 betaColIdx = zeros(numLabels*numSources,1);
@@ -181,10 +183,27 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 warning on
             else
                 bTarget = 1 - reg;
-                warning off
+                isClassUsed = find(sum(Ymat));
+                numLabels = length(isClassUsed);
+                Ftarget = Ftarget(I,isClassUsed);
+                fuCombined = fuCombined(I,ismember(labelIDs,isClassUsed));
+                Ymat = Ymat(I,isClassUsed);
+                betaRowIdx = 1:(numLabels*numSources);
+                
+                betaColIdx = zeros(numLabels*numSources,1);
+                betaIdx = zeros(numLabels*numSources,1);
+                for idx=1:numLabels
+                    range = numSources*(idx-1)+1:numSources*idx;
+                    betaColIdx(range) = idx;
+                    betaIdx(range) = (1:numSources)';
+                end
+                
+                
+                warning off                
                 cvx_begin quiet
-                    variable F(n,numLabels)             
-                    variable FbTemp(n,numLabels)
+                    %variable F(n,numLabels)             
+                    variable F(sum(I),numLabels)             
+                    %variable FbTemp(n,numLabels)
                     variable b(numSources,1)
                     variable bRep(numLabels*numSources,numLabels)
                     %variable c
@@ -196,7 +215,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     elseif obj.get('l2')
                         minimize(norm(F(I,:)-Ymat(I,:),2))
                     else
-                        minimize(norm(F(I,:)-Ymat(I,:),1))                       
+                        %minimize(norm(F(I,:)-Ymat(I,:),1))
+                        minimize(norm(F-Ymat,1))
                     end
                     subject to
                         b >= 0
@@ -204,14 +224,16 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                         norm(b,1) <= reg
                         %sum(b) == reg
                         bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
-                        F == (bTarget)*Ftarget + invL*fuCombined*bRep
+                        %F == (bTarget)*Ftarget(I,:) + invL*fuCombined(I,:)*bRep
+                        %F == (bTarget)*Ftarget(I,:) + fuCombined(I,:)*bRep
+                        F == (bTarget)*Ftarget + fuCombined*bRep
                 cvx_end 
                 b = [bTarget ; b];
                 warning on
+                
             end
             %b
             obj.set('beta',b);
-
         end
         
         function [y,fu] = getSourcePredictions(obj,X)

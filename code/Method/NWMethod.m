@@ -92,7 +92,9 @@ classdef NWMethod < HFMethod
                 assert(all(fu(:) >= 0));       
                 I = find(sum(fu,2) == 0);
                 if ~isempty(I)
-                    fu(I,:) = rand(length(I),size(fu,2));
+                    randPredictions = rand(length(I),length(classes));
+                    %fu(I,:) = rand(length(I),size(fu,2));
+                    fu(I,classes) = randPredictions;
                 end
                 fu = Helpers.NormalizeRows(fu);                
                 
