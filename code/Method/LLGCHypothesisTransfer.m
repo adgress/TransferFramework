@@ -4,6 +4,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
     
     properties
         sourceHyp
+        targetHyp      
+        beta
     end
     
     methods
@@ -34,206 +36,104 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~obj.has('oracle')
                 obj.set('oracle',false);
             end
-            obj.set('useOrig',0);
             obj.set('classification',1);
         end
         
-        function [v] = evaluate(obj,L,y,sourceY,alpha,reg,beta)
-            error('Is this used?');
-            invM = inv(L + eye(size(L))*(alpha+sum(beta)));
-            I = ~isnan(y);
-            v = reg*norm(beta,1);
-            for idx=1:size(Y,2)
-                Yi = alpha*y(:,idx) + sourceY{idx}*beta;
-                v = v + norm(Yi(I) - y(I),1);
+        function [] = train(obj,X,Y)
+            reg = obj.get('reg');    
+            numSources = length(obj.sourceHyp);
+            obj.beta = zeros(numSources+1,1);
+            assert(~obj.get('allSource'));
+            assert(~obj.get('oracle'));
+            if reg == 0
+                obj.beta(1) = 1;
+                return;
             end
-        end
-        
-        function [] = train(obj,distMat)
-            useOrig = obj.get('useOrig');
-            reg = obj.get('reg');     
-            if useOrig
-                error('Update this?');
-                numSources = length(unique(distMat.instanceIDs))-1;                 
-                if obj.get('oracle')
-                    beta = zeros(numSources+1,1);
-                    beta(1:2) = reg;
-                    obj.set('beta',beta);
-                    return;                                                     
-                end
-                if reg == 0
-                    beta = zeros(numSources+1,1);
-                    beta(1) = 1;
-                    obj.set('beta',beta);
-                    return;
-                end   
-            else
-                numSources = length(obj.sourceHyp);
-                if obj.get('allSource')
-                    numDataSets = numSources+1;
-                    beta = ones(numSources,1) / numDataSets;
-                    obj.set('beta',beta);
-                    obj.set('reg',1 - 1/numDataSets);
-                    return;
-                end
-                if obj.get('oracle')
-                    beta = zeros(numSources,1);
-                    beta(1) = reg;
-                    obj.set('beta',beta);
-                    return;
-                end                     
-                if reg == 0
-                    obj.set('beta',zeros(numSources,1));
-                    return;
-                end   
-            end
-                      
-                            
-            useNW = obj.get('useNW');
-            makeRBF = false;
-            [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);
-            Y = Y_testCleared;
-            numLabels = max(Y);
-            n = size(Wrbf,1);
-            alpha = obj.get('alpha');
-            if useNW
-                L = LLGC.make_L(Wrbf);
-            end            
             
-            if ~useOrig
-                [ySource,fuSource] = obj.getSourcePredictions(distMat.X);
-                fuCombined = zeros(n,numLabels*numSources);
-                labelIDs = zeros(1,numLabels*numSources);
-                for j=1:numLabels
-                    f = zeros(n,numSources);
-                    for idx=1:length(fuSource)
-                        f(:,idx) = fuSource{idx}(:,j);                    
-                    end                              
-                    cols = numSources*(j-1)+1:numSources*j;
-                    fuCombined(:,cols) = f;
-                    labelIDs(cols) = j;
-                end
-                betaRowIdx = 1:(numLabels*numSources);
-                betaColIdx = zeros(numLabels*numSources,1);
-                betaIdx = zeros(numLabels*numSources,1);
-                for idx=1:numLabels
-                    range = numSources*(idx-1)+1:numSources*idx;
-                    betaColIdx(range) = idx;
-                    betaIdx(range) = (1:numSources)';
-                end                
+            numLabels = max(Y);
+            n = size(X,1);
+            [ySource,fuSource] = obj.getSourcePredictions(X);
+            fuCombined = zeros(n,numLabels*numSources);
+            labelIDs = zeros(1,numLabels*numSources);
+            for j=1:numLabels
+                f = zeros(n,numSources);
+                for idx=1:length(fuSource)
+                    f(:,idx) = fuSource{idx}(:,j);                    
+                end                              
+                cols = numSources*(j-1)+1:numSources*j;
+                fuCombined(:,cols) = f;
+                labelIDs(cols) = j;
             end
+            betaRowIdx = 1:(numLabels*numSources);
+            betaColIdx = zeros(numLabels*numSources,1);
+            betaIdx = zeros(numLabels*numSources,1);
+            for idx=1:numLabels
+                range = numSources*(idx-1)+1:numSources*idx;
+                betaColIdx(range) = idx;
+                betaIdx(range) = (1:numSources)';
+            end                
+
             
             I = ~isnan(Y);
             Ymat = Helpers.createLabelMatrix(Y);            
+            targetInds = I;
+            Ytarget = Ymat(targetInds,:);
             
-            if useNW
-                Wrbf = Wrbf - diag(diag(Wrbf));
-                Wrbf = Wrbf(:,I);
-                d = sum(Wrbf,2);
-                J = d < 1e-8;
-                d(J) = 1;
-                M = diag(1 ./ d) * Wrbf;
-                invL = eye(size(M,1));
-                if ~useOrig
-                    Ftarget = M*Ymat(I,:);
-                    hasLabel = sum(Ymat) > 1;
-                    pc = ProjectConfigs.Create();                    
-                    Ftarget(J,hasLabel) = 1/sum(hasLabel);
-                    diff = sum(Ftarget,2) - 1;
-                    assert(all(abs(diff) < 1e-8));
-                    %Ftarget = (1-reg)*Ftarget;
-                end
-                targetInds = find(distMat.isLabeled() & distMat.instanceIDs == 0 ...
-                    & distMat.isTargetTrain());
-                numTarget = length(targetInds);
-                dataSetOffset = 1;
-                instanceIDs = distMat.instanceIDs;
-                Ytarget = Ymat(targetInds,:);
-            else                
-                %invL = inv(L + (alpha+numSources)*eye(size(L)));
-                invL = inv(L + alpha*eye(size(L)));    
-                invL = invL - diag(diag(invL));
-                if ~useOrig
-                    Ftarget = invL*alpha*Ymat;
-                end
-            end    
-            hinge = @(x) sum(sum(max(0,1-x)));
-            if useOrig
-                assert(~obj.get('hinge'));
-                warning off
-                cvx_begin quiet
-                    variable b(numSources+1)
-                    variable bDup(n)
-                    variable F(numTarget,numLabels)
-                    variable Yb(n,numLabels)
-                    minimize(norm(vec(F-Ytarget),1))
-                    subject to             
-                        b >= 0
-                        b(1) == 1 - reg
-                        b <= 1
-                        norm(b(2:end),1) <= reg                                
+            
+            bTarget = 1 - reg;
+            isClassUsed = find(sum(Ymat));
+            numLabels = length(isClassUsed);
+            %[~,Ftarget2] = obj.targetHyp.getLOOestimates(X,Y);
+            %Ftarget2 = Ftarget2(I,isClassUsed);
+            [~,Ftarget] = obj.targetHyp.getLOOestimates(X(I,:),Y(I));
+            %Ftarget = Ftarget(I,isClassUsed);
+            Ftarget = Ftarget(:,isClassUsed);
+            fuCombined = fuCombined(I,ismember(labelIDs,isClassUsed));
+            Ymat = Ymat(I,isClassUsed);
+            betaRowIdx = 1:(numLabels*numSources);
 
-                        bDup == b(instanceIDs+dataSetOffset)
-                        Yb == Ymat.*repmat(bDup,1,numLabels)                            
-
-                        for idx=1:numTarget                                
-                            F(idx,:) == M(targetInds(idx),:)*Yb(I,:);
-                        end
-                cvx_end  
-                warning on
-            else
-                bTarget = 1 - reg;
-                isClassUsed = find(sum(Ymat));
-                numLabels = length(isClassUsed);
-                Ftarget = Ftarget(I,isClassUsed);
-                fuCombined = fuCombined(I,ismember(labelIDs,isClassUsed));
-                Ymat = Ymat(I,isClassUsed);
-                betaRowIdx = 1:(numLabels*numSources);
-                
-                betaColIdx = zeros(numLabels*numSources,1);
-                betaIdx = zeros(numLabels*numSources,1);
-                for idx=1:numLabels
-                    range = numSources*(idx-1)+1:numSources*idx;
-                    betaColIdx(range) = idx;
-                    betaIdx(range) = (1:numSources)';
-                end
-                
-                
-                warning off                
-                cvx_begin quiet
-                    %variable F(n,numLabels)             
-                    variable F(sum(I),numLabels)             
-                    %variable FbTemp(n,numLabels)
-                    variable b(numSources,1)
-                    variable bRep(numLabels*numSources,numLabels)
-                    %variable c
-                    %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
-                    %minimize(norm(F(I,:)-Ymat(I,:),1))
-                    if obj.get('hinge')
-                        %minimize(hinge(F(I,:)-Ymat(I,:)))
-                        minimize(norm(F(I,:)-Ymat(I,:),1))
-                    elseif obj.get('l2')
-                        minimize(norm(F(I,:)-Ymat(I,:),2))
-                    else
-                        %minimize(norm(F(I,:)-Ymat(I,:),1))
-                        minimize(norm(F-Ymat,1))
-                    end
-                    subject to
-                        b >= 0
-                        %b <= 1
-                        norm(b,1) <= reg
-                        %sum(b) == reg
-                        bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
-                        %F == (bTarget)*Ftarget(I,:) + invL*fuCombined(I,:)*bRep
-                        %F == (bTarget)*Ftarget(I,:) + fuCombined(I,:)*bRep
-                        F == (bTarget)*Ftarget + fuCombined*bRep
-                cvx_end 
-                b = [bTarget ; b];
-                warning on
-                
+            betaColIdx = zeros(numLabels*numSources,1);
+            betaIdx = zeros(numLabels*numSources,1);
+            for idx=1:numLabels
+                range = numSources*(idx-1)+1:numSources*idx;
+                betaColIdx(range) = idx;
+                betaIdx(range) = (1:numSources)';
             end
-            %b
-            obj.set('beta',b);
+
+
+            warning off                
+            cvx_begin quiet
+                %variable F(n,numLabels)             
+                variable F(sum(I),numLabels)             
+                %variable FbTemp(n,numLabels)
+                variable b(numSources,1)
+                variable bRep(numLabels*numSources,numLabels)
+                %variable c
+                %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
+                %minimize(norm(F(I,:)-Ymat(I,:),1))
+                if obj.get('hinge')
+                    %minimize(hinge(F(I,:)-Ymat(I,:)))
+                    minimize(norm(F(I,:)-Ymat(I,:),1))
+                elseif obj.get('l2')
+                    minimize(norm(F(I,:)-Ymat(I,:),2))
+                else
+                    %minimize(norm(F(I,:)-Ymat(I,:),1))
+                    minimize(norm(F-Ymat,1))
+                end
+                subject to
+                    b >= 0
+                    %b <= 1
+                    norm(b,1) <= reg
+                    %sum(b) == reg
+                    bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
+                    %F == (bTarget)*Ftarget(I,:) + invL*fuCombined(I,:)*bRep
+                    %F == (bTarget)*Ftarget(I,:) + fuCombined(I,:)*bRep
+                    F == (bTarget)*Ftarget + fuCombined*bRep
+            cvx_end 
+            b = [bTarget ; b];
+            warning on
+            b
+            obj.beta = b;
         end
         
         function [y,fu] = getSourcePredictions(obj,X)
@@ -244,86 +144,55 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
         end
         
-        function [y,fu] = predict(obj,distMat)
+        function [y,fu] = predict(obj,X)
             if obj.get('useBaseNW')
-                nwMethod = NWMethod(obj.configs);
                 assert(obj.get('noTransfer') ~= 0);
-                Y = distMat.Y;
-                Y(distMat.isTargetTest) = nan;
-                nwMethod.train(distMat.X,Y);
-                nwMethod.set('classification',obj.get('classification'));
-                [y,fu] = nwMethod.predict(distMat.X);
+                [y,fu] = obj.targetHyp.predict(X);
                 return;
             end
-            useOrig = obj.get('useOrig');
-            makeRBF = false;
-            [Wrbf,~,~,Y_testCleared,~] = obj.makeLLGCMatrices(distMat,~makeRBF);
-            beta = obj.get('beta');
-            Y = Helpers.createLabelMatrix(Y_testCleared);
-            numLabels = max(distMat.classes);
-            if useOrig
-                I = ~isnan(Y_testCleared);
-                Wrbf = Wrbf(distMat.instanceIDs==0,I);
-                dinv = 1 ./ sum(Wrbf,2);
-                M = diag(dinv)*Wrbf;
-                instanceIDs = distMat.instanceIDs(I) + 1;
-                Y = Y(I,:);
-                fu = M*(Y .* repmat(beta(instanceIDs),1,numLabels));
-            else
-                if obj.get('useNW')
-                    isLabeled = ~isnan(Y_testCleared);
-                    Wrbf = Wrbf(:,isLabeled);
-                    M = diag(1 ./ sum(Wrbf,2))*Wrbf;
-                    fu = (1-obj.get('reg'))*M * Y(isLabeled,:);
-                else
-                    L = LLGC.make_L(Wrbf);
-                    alpha = obj.get('alpha');
-                    M = L + eye(size(L))*(sum(beta) + alpha);
-                    fu = Y*alpha;
-                end
-                for idx=1:length(obj.sourceHyp)
-                    assert(~isempty(distMat.X));
-                    [Yi,FUi] = obj.sourceHyp{idx}.predict(distMat.X);
-                    %Y = Y + beta(idx)*Helpers.createLabelMatrix(Yi,size(Y,2));
-                    fu = fu + beta(idx)*FUi;
-                end
-                if ~obj.get('useNW')
-                    error('is this the right place for this?');
-                    fu = M\Y;
-                end                
-            end    
+            [~,targetPred] = obj.targetHyp.predict(X);
+            [~,sourcePred] = obj.getSourcePredictions(X);
+            fu = obj.beta(1)*targetPred;
+            for idx=1:length(sourcePred)
+                fu = fu + obj.beta(idx+1)*sourcePred{idx};
+            end
+            fu = Helpers.NormalizeRows(fu);
+            [~,y] = max(fu,[],2);
             I = ~(fu(:) >= 0);
             if any(I)
-                fu(I);
-                fu(I) = rand(sum(I),1);
+                error('Is this okay?');
+                %fu(I);
+                %fu(I) = rand(sum(I),1);
             end
+            %{
             assert(all(fu(:) >= 0));
             I = find(sum(fu,2) == 0);
             if ~isempty(I)
                 fu(I,:) = rand(length(I),size(fu,2));
             end
-            fu = Helpers.NormalizeRows(fu);
-            [~,y] = max(fu,[],2);
+            %}            
         end
         function [testResults,savedData] = runMethod(obj,input,savedData)
             train = input.train;
             test = input.test;
+                     
             
-            makeRBF = false;
-            [distMat] = obj.createDistanceMatrix(train,test,obj.configs,makeRBF);                
-            obj.train(distMat);
-            [y,fu] = obj.predict(distMat);
-            useOrig = obj.get('useOrig');
+            llgcSigma = obj.get('cvSigma');
+            targetCVParams = struct('key','values');
+            targetCVParams(1).key = 'sigma';
+            targetCVParams(1).values = num2cell(llgcSigma);
+            obj.targetHyp.set('cvParameters',targetCVParams);
+            obj.targetHyp.trainAndTest(input);
+            
+            obj.train(train.X,train.Y);
+            [y,fu] = obj.predict([train.X ; test.X]);     
+            toKeep = [train.isLabeled() ; true(size(test.X,1),1)];
             testResults = FoldResults(); 
-            if useOrig
-                I = distMat.instanceIDs == 0;
-                testResults.dataType = distMat.type(I);
-                testResults.yActual = distMat.trueY(I);
-            else
-                testResults.dataType = distMat.type;
-                testResults.yActual = distMat.trueY;
-            end
-            testResults.yPred = y;
+            isLabeledTrain = train.isLabeled();
+            testResults.dataType = [train.type(isLabeledTrain) ; test.type];
+            testResults.yActual = [train.trueY(isLabeledTrain) ; test.trueY];
+            testResults.yPred = y(toKeep);
+            testResults.dataFU = fu(toKeep,:);
             a = obj.configs.get('measure').evaluate(testResults);
             savedData.val = a.learnerStats.valTest;
             assert(~isnan(savedData.val));
@@ -374,7 +243,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             
             if isempty(obj.sourceHyp) && ~obj.get('useBaseNW') && ...
-                    ~obj.get('noTransfer') && ~obj.get('useOrig');
+                    ~obj.get('noTransfer')
                 for idx=1:length(sourceDataSetIDs)
                     nwObj = NWMethod();
                     nwObj.set('sigma',nwSigmas);
@@ -388,17 +257,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     obj.sourceHyp{idx} = nwObj;
                 end
             end
-            targetTrain = train.copy();
-            if ~obj.get('useOrig')
-                targetTrain.remove(targetTrain.instanceIDs ~= 0);
-            end
-            input.train = targetTrain;
-            llgcSigma = obj.get('cvSigma');
-            %llgcSigma = 10;
-            llgcSigmaScale = .01;
-            alpha = .9;
-            reg = 1;
-            cvParams = struct('key','values');
+            %targetTrain = train.copy();
+            %input.train = targetTrain;
+            
+            
+            cvParams = struct('key','values');                        
             cvParams(1).key = 'reg';
             cvParams(1).values = num2cell(obj.get('cvReg'));
             if obj.get('noTransfer')
@@ -413,40 +276,18 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if obj.get('allSource')
                 cvParams(1).values = {1};
             end
+            %{
             cvParams(2).key = 'sigma';
             cvParams(2).values = num2cell(llgcSigma);
-            %obj.set('sigma',llgcSigma);  
             if ~obj.get('useNW')
                 cvParams(3).key = 'alpha';
                 cvParams(3).values = num2cell(obj.get('cvAlpha'));
             end
-            %obj.set('alpha',alpha);
-            %obj.set('reg',reg);
-            %obj.delete('sigma');
+            %}
             obj.delete('sigmaScale');
             
-            
-            %obj.set('sigmaScale',llgcSigmaScale);
-            
-            cv = CrossValidation();
-            if obj.get('useOrig')
-                numSplits = 10;
-                splits = {};
-                percArray = [.8 .2 0];
-                Y = targetTrain.Y;
-                Y(targetTrain.isTargetTest()) = nan;
-                I = targetTrain.instanceIDs == 0;
-                for idx=1:numSplits
-                    s = LabeledData.generateSplit(...
-                        percArray,Y(I));
-                    split = ones(size(Y));
-                    split(I) = s;                    
-                    assert(all(split(~I) == 1));
-                    splits{idx} = split;
-                end
-                cv.splits = splits;
-            end
-            cv.trainData = targetTrain.copy();
+            cv = CrossValidation();            
+            cv.trainData = train.copy();
             cv.methodObj = obj;
             cv.parameters = cvParams;
             cv.measure = obj.get('measure');            
@@ -458,9 +299,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             
             if ~obj.configs.get('quiet')
                 display([ obj.getPrefix() ' Acc: ' num2str(savedData.val)]);                                
-            end
-            beta = obj.get('beta');
-            testResults.learnerStats.dataSetWeights = beta;
+            end            
+            testResults.learnerStats.dataSetWeights = obj.beta;
         end
         function [prefix] = getPrefix(obj)
             prefix = 'HypTran';
@@ -490,9 +330,6 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             if obj.get('oracle',0)
                 nameParams{end+1} = 'oracle';
-            end
-            if obj.get('useOrig',0)
-                nameParams{end+1} = 'useOrig';
             end
             if obj.get('l2',0)
                 nameParams{end+1} = 'l2';

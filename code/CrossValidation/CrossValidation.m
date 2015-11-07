@@ -56,7 +56,7 @@ classdef CrossValidation < Saveable
             paramResults = cell(size(paramPowerSet));
             processedResults = cell(size(paramPowerSet));
             accs = zeros(size(paramPowerSet));
-            trainAccs = accs;
+            trainAccs = accs;            
             for splitIdx=1:length(obj.splits)
                 for paramIdx=1:length(paramPowerSet)
                     %splitResults = cell(size(obj.splits));
@@ -124,19 +124,28 @@ classdef CrossValidation < Saveable
             I = Helpers.isInfOrNan(accs);
             assert(~any(I));
             if obj.methodObj.get('classification')
-                display('Using max accuracy');
+                if ~obj.methodObj.get('quiet',false)
+                    display('Using max accuracy');
+                end
                 [~,bestInd] = max(accs);
             else
-                display('Using min error');
+                if ~obj.methodObj.get('quiet',false)
+                    display('Using min error');
+                end
                 [~,bestInd] = min(accs);
             end            
             bestParams = paramPowerSet{bestInd};
             bestAcc = accs(bestInd);
-            if obj.get('print')
-                display(['Best Acc:' num2str(bestAcc)]);
-                for idx=1:length(bestParams)
-                    display([bestParams(idx).key ': ' num2str(bestParams(idx).value)]);
+            if ~obj.methodObj.get('quiet',false)
+                if obj.get('print')
+                    display(['Best Acc:' num2str(bestAcc)]);
+                    for idx=1:length(bestParams)
+                        display([bestParams(idx).key ': ' num2str(bestParams(idx).value)]);
+                    end
                 end
+            end
+            if length(paramPowerSet) > 1
+                x=5;
             end
         end
         

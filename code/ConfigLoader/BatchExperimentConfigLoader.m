@@ -100,21 +100,25 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                     mainConfigsCopy.set('sourceLabels',sourceLabels);
                     
                     if ~isempty(sourceLearner)
-                        input = struct();      
-                        for sIdx=1:length(dataAndSplitsCopy.allSplits)
-                            sources = dataAndSplitsCopy.allSplits{sIdx}.sourceData;
-                            for idx=1:length(sources)
-                                d = sources{idx};
-                                d.setTargetTrain();
-                                s = sourceLearner.copy();
-                                s.set('measure',mainConfigsCopy.get('measure'));
-                                input.train = d;
-                                input.test = [];
-                                s.runMethod(input);
+                        input = struct();                              
+                        sources = dataAndSplitsCopy.allSplits{1}.sourceData;
+                        for idx=1:length(sources)
+                            d = sources{idx};
+                            d.setTargetTrain();
+                            s = sourceLearner.copy();
+                            s.configs = sourceLearner.configs.copy();
+                            s.set('measure',mainConfigsCopy.get('measure'));
+                            input.train = d;
+                            input.test = [];
+                            s.runMethod(input);
+                            for sIdx=1:length(dataAndSplitsCopy.allSplits)
+                                s2 = s.copy();
+                                s2.configs = s.configs.copy();
                                 dataAndSplitsCopy.allSplits{sIdx}.sourceData{idx}.savedFields.learner = ...
-                                    s;
-                            end                    
-                        end
+                                    s2;
+                            end
+                        end                    
+                        
                     end
                     mainConfigsCopy.set('dataAndSplits',dataAndSplitsCopy);
                 else

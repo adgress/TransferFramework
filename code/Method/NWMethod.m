@@ -52,7 +52,49 @@ classdef NWMethod < HFMethod
             end            
             isLabeled = ~isnan(Y);
             obj.X = X(isLabeled,:);
-            obj.Y = Y(isLabeled,:);
+            obj.Y = Y(isLabeled,:);            
+        end
+        function [y,fu] = getLOOestimates(obj,X,Y)
+            W = Helpers.CreateDistanceMatrix(X);
+            W = Helpers.distance2RBF(W,obj.sigma); 
+            W = W - diag(diag(W));
+            [y,fu] = obj.doPredict(W,Y);
+        end
+        
+        function [y,fu] = doPredict(obj,W,Y)
+            if ~exist('Y','var')
+                Y = obj.Y;
+            end
+            d = sum(W,2);
+            d(d < 1e-8) = 1;
+            D = diag(d);
+            warning off;
+            S = inv(D)*W;
+            warning on;
+            if obj.get('classification')
+                classes = unique(obj.Y);
+                fu = zeros(size(W,1),max(classes));
+                for idx=1:max(classes)
+                    I = Y == idx;
+                    Si = S(:,I);
+                    Yi = ones(sum(I),1);
+                    fu(:,idx) = Si*Yi;
+                end
+                assert(all(fu(:) >= 0));       
+                I = find(sum(fu,2) == 0);
+                if ~isempty(I)
+                    randPredictions = rand(length(I),length(classes));
+                    %fu(I,:) = rand(length(I),size(fu,2));
+                    fu(I,classes) = randPredictions;
+                end
+                fu = Helpers.NormalizeRows(fu);                
+                
+                Helpers.AssertInvalidPercent(fu);
+                [~,y] = max(fu,[],2);
+            else
+                y = S*Y;            
+                fu = y;
+            end
         end
         
         function [y,fu] = predict(obj,X)
@@ -74,84 +116,17 @@ classdef NWMethod < HFMethod
             W = Helpers.CreateDistanceMatrix(Xall);
             W = W(nl+1:end,1:nl);
             W = Helpers.distance2RBF(W,obj.sigma);   
-            d = sum(W,2);
-            d(d < 1e-8) = 1;
-            D = diag(d);
-            warning off;
-            S = inv(D)*W;
-            warning on;
-            if obj.get('classification')
-                classes = unique(obj.Y);
-                fu = zeros(size(X,1),max(classes));
-                for idx=1:max(classes)
-                    I = obj.Y == idx;
-                    Si = S(:,I);
-                    Yi = ones(sum(I),1);
-                    fu(:,idx) = Si*Yi;
-                end
-                assert(all(fu(:) >= 0));       
-                I = find(sum(fu,2) == 0);
-                if ~isempty(I)
-                    randPredictions = rand(length(I),length(classes));
-                    %fu(I,:) = rand(length(I),size(fu,2));
-                    fu(I,classes) = randPredictions;
-                end
-                fu = Helpers.NormalizeRows(fu);                
-                
-                Helpers.AssertInvalidPercent(fu);
-                [~,y] = max(fu,[],2);
-            else
-                y = S*obj.Y;            
-                fu = y;
-            end
+            [y,fu] = obj.doPredict(W);
         end
         
         function [fu,savedData,sigma] = runNW(obj,distMat,makeRBF,savedData)            
             assert(makeRBF);
-            %assert(isequal(obj.configs.c.cvParameters(1).key,'sigma'));
-            %obj.set('sigma',obj.configs.c.cvParameters(1).valu
             I = distMat.isLabeledTargetTrain();
             obj.train(distMat.X(I,:),distMat.Y(I));
-            [y,fu] = obj.predict(distMat.X);
-            %{
-            distMat.W = Helpers.distance2RBF(distMat.W,obj.get('sigma'));
-            I = distMat.isLabeledTargetTrain();            
-
-            if distMat.isRegressionData && ~obj.get('classification')
-                Wlabeled = distMat.W(:,I);
-                D = diag(sum(Wlabeled,2));
-                fu = zeros(size(distMat.Y));
-                assert(size(fu,2) == 1);
-                warning off;
-                fu = inv(D)*Wlabeled*distMat.Y(I);
-                warning on;                
-            else
-                Wlabeled = distMat.W(I,:);
-                fu = zeros(length(I),distMat.numClasses);
-                for labelIdx=1:distMat.numClasses
-                    currY = distMat.classes(labelIdx);
-                    currTrain = distMat.Y == currY & I;
-                    Wsub = distMat.W(currTrain,:);
-                    conf = sum(Wsub);
-                    fu(:,labelIdx) = conf';
-                end
-                Izero = sum(fu,2) == 0;
-                fu(Izero,:) = rand([sum(Izero) 2]);
-                fu = Helpers.NormalizeRows(fu);
-
-                [~,fu] = max(fu,[],2);
-                fu = distMat.classes(fu);
-            end
-            isInvalid = isnan(fu) | isinf(fu);
-            if any(isInvalid(:))
-                %display('LLGC:llgc_ls : inf or nan - randing out');
-                r = rand(size(fu));
-                fu(isInvalid) = r(isInvalid);
-            end
-            %}
+            [y,fu] = obj.predict(distMat.X);   
             savedData.predicted = y;
             savedData.cvAcc = [];
-            sigma = obj.get('sigma');
+            sigma = obj.sigma;
         end
         function [s] = getPrefix(obj)
             s = 'NW';

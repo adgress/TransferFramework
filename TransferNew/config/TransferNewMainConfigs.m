@@ -18,6 +18,7 @@ classdef TransferNewMainConfigs < MainConfigs
             learnerConfigs.set('cvReg',pc.reg);
             learnerConfigs.set('cvRegTransfer',pc.regTransfer);
             learnerConfigs.set('cvSigma',pc.sigma);
+            learnerConfigs.set('zscore',false);
             
             obj.configsStruct.learners=[];
             %obj.setLLGCConfigs(learnerConfigs);          
@@ -35,7 +36,13 @@ classdef TransferNewMainConfigs < MainConfigs
             
             
             sourceLearner = NWMethod(learnerConfigs.copy());
+            targetHyp = NWMethod(learnerConfigs.copy());
+            targetHyp.set('measure',obj.c.measure);
+            targetHyp.set('quiet',true);
             obj.set('sourceLearner',sourceLearner);
+            l = obj.get('learners');
+            l.set('quiet',true);
+            l.targetHyp = targetHyp;
             %obj.set('targetLabels',[10 15]);
             %obj.set('sourceLabels',[23 25 26 30]);
             obj.set('targetLabels',[]);

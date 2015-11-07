@@ -80,6 +80,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                     %c.reg = fliplr([0 .01 .1 1 10 100]);
                     c.reg = ([0 .2:.2:.8]);
                     c.sigma = fliplr([.001 .01 .1 1 10]);
+                    %c.sigma = fliplr([.01]);
                     c.syntheticDir = 'syntheticPolynomial';
                     c.targetSuffix = 'n=100,degree=2,sigma=0.5';
                     c.sourceSuffix = 'n=100,degree=3,sigma=0.5';
@@ -94,6 +95,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.numLabeledPerClass=[5 10 20 40 80];
                 case Constants.TOMMASI_DATA
                     c.numLabeledPerClass=[5 10 20];
+                    %c.numLabeledPerClass=[5 10 20];
+                    %c.numLabeledPerClass=[20];
                     c.makeSubDomains = true;
                     c.addTargetDomain = true;
                     c.maxSourceSize = inf;
