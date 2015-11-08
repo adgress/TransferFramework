@@ -34,9 +34,13 @@ classdef TransferNewMainConfigs < MainConfigs
                     obj.LLGCHypothesisTransferConfigs(learnerConfigs);
             end
             
-            
+            %{
             sourceLearner = NWMethod(learnerConfigs.copy());
             targetHyp = NWMethod(learnerConfigs.copy());
+            %}
+            sourceLearner = LiblinearMethod(learnerConfigs.copy());
+            targetHyp = LiblinearMethod(learnerConfigs.copy());
+            
             targetHyp.set('measure',obj.c.measure);
             targetHyp.set('quiet',true);
             obj.set('sourceLearner',sourceLearner);

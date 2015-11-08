@@ -28,10 +28,10 @@ classdef DataSet < LabeledData
             obj.objectType = [];
             obj.savedFields = struct();
             if ~exist('X','var')
-                X = [];
+                X = zeros(0,1);
             end
             if ~exist('Y','var')
-                Y = [];
+                Y = zeros(0,1);
             end
             if ~exist('instanceIDs','var')
                 instanceIDs = 1:length(Y);

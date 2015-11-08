@@ -170,7 +170,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             end            
             
             c.set('prefix','results');
-            c.set('Measure',L2Measure());
+            c.set('Measure',Measure());
             pc = ProjectConfigs.Create();
             switch pc.dataSet
                 case Constants.SPARSE_SYNTHETIC_DATA
@@ -181,10 +181,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.set('prefix','results_synthetic_polynomial');
                     c.set('dataSet',{'syntheticPolynomial'});
                     c.set('resultsDirectory','results_synthetic_polynomial/syntheticPolynomial');
-                case Constants.POLYNOMIRAL_SYNTHETIC_DATA
-                    c.set('prefix','results_synthetic_polynomial_hypothesis');
-                    c.set('dataSet',{'syntheticPolynomial'});
-                    c.set('resultsDirectory','results_synthetic_polynomial_hypothesis/syntheticPolynomial');
+                case Constants.TOMMASI_DATA
+                    c.set('prefix','results_tommasi');
+                    c.set('dataSet',{'tommasi_data'});
+                    c.set('resultsDirectory','results_tommasi/tommasi_data');
                 otherwise
                     error('unknown data set');
             end
@@ -211,6 +211,14 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'NW No Transfer';
                     methodResultsFileNames{end+1} = 'Prior_InequalityTransfer.mat';
                     legend{end+1} = 'NW Transfer';
+                case Constants.TOMMASI_DATA
+                    title = 'Hypothesis Transfer';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-noTransfer=1-useNW=1-useBaseNW=1.mat';
+                    legend{end+1} = 'NW';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-useNW=1.mat';
+                    legend{end+1} = 'HypTran NW';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear-noTransfer=1.mat';
+                    legend{end+1} = 'l2 LogReg';
             end
             
             plotConfigs = {};

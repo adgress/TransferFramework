@@ -24,9 +24,6 @@ classdef NWMethod < HFMethod
         
         
         function [] = train(obj,X,Y)
-            if ~obj.get('newZ')
-                %X = zscore(X);
-            end
             if all(isnan(Y))
                 obj.X = [];
                 obj.Y = [];

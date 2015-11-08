@@ -569,6 +569,15 @@ classdef Helpers < handle
             [results.train.predicted] = svmpredict(train.Y,XTrain,results.svm,'-q');
             [results.test.predicted] = svmpredict(test.Y,XTest,results.svm,'-q');
         end
+        
+        function [fu] = expandMatrix(X,I)
+            fu = zeros(size(X,1),length(I));
+            for idx=1:length(I)
+                col = I(idx);
+                fu(:,col) = X(:,idx);
+            end
+        end
+        
         function [Ymat] = createLabelMatrix(Y,m)
             if nargin < 2
                 m = max(Y(:));

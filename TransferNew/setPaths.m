@@ -5,3 +5,4 @@ addpath('libraryCode');
 addpath('libraryCode/cvx');
 addpath('libraryCode/libsvm-3.17/matlab');
 addpath(genpath('libraryCode/L1General'));
+addpath('libraryCode/liblinear-weights-1.94/matlab');

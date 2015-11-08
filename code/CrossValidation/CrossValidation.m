@@ -51,7 +51,19 @@ classdef CrossValidation < Saveable
             obj.trainData.setTargetTrain();
             paramPowerSet = obj.makeParamPowerSet(obj.parameters);
             if isempty(paramPowerSet)
-                paramPowerSet{1} = [];
+                if ~obj.methodObj.get('quiet',false)
+                    display('CV Params empty');
+                end
+                bestParams = [];
+                bestAcc = [];
+                return
+            elseif length(paramPowerSet) == 1
+                if ~obj.methodObj.get('quiet',false)
+                    display('Using max accuracy');
+                end
+                bestParams = paramPowerSet{1};
+                bestAcc = [];
+                return
             end
             paramResults = cell(size(paramPowerSet));
             processedResults = cell(size(paramPowerSet));
@@ -143,10 +155,7 @@ classdef CrossValidation < Saveable
                         display([bestParams(idx).key ': ' num2str(bestParams(idx).value)]);
                     end
                 end
-            end
-            if length(paramPowerSet) > 1
-                x=5;
-            end
+            end            
         end
         
         % {a, {a1,a2,...,an}}

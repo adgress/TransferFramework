@@ -110,7 +110,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                             s.set('measure',mainConfigsCopy.get('measure'));
                             input.train = d;
                             input.test = [];
-                            s.runMethod(input);
+                            s.trainAndTest(input);
                             for sIdx=1:length(dataAndSplitsCopy.allSplits)
                                 s2 = s.copy();
                                 s2.configs = s.configs.copy();

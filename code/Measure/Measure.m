@@ -43,6 +43,10 @@ classdef Measure < Saveable
             assert(all(~isnan(split.testActual)));
             valTest = sum(split.testPredicted==split.testActual)/...
                 numel(split.testPredicted);
+            if ~isempty(split.testPredicted)
+                assert(valTest <= 1);
+            end
+            assert(valTrain <= 1);
             assert(all(~isnan(split.testActual)));
             numLabels = max(split.testActual);
             if round(numLabels) ~= numLabels

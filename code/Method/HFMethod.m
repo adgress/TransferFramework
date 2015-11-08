@@ -21,9 +21,6 @@ classdef HFMethod < Method
             if ~obj.has('zscore')
                 obj.set('zscore',false);
             end
-            if ~obj.has('newZ')
-                obj.set('newZ',false);
-            end
         end
         
         function [distMat,savedData,Xall] = createDistanceMatrix(obj,train,test,learnerConfigs,makeRBF,savedData,V)
@@ -95,7 +92,7 @@ classdef HFMethod < Method
             else
                 %warning('Data ordering issue with caching?');
                 Xall = [train.X ; test.X];                  
-                if learnerConfigs.get('zscore') && ~obj.get('newZ');
+                if learnerConfigs.get('zscore')
                     Xall = zscore(Xall);
                 end   
                 %TODO: I turned this off because it was causing bugs elsewhere

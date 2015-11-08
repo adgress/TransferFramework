@@ -16,20 +16,6 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if ~obj.has('noTransfer')
                 obj.set('noTransfer',0);
             end
-            if ~obj.has('useNW')
-                obj.set('useNW',1);
-                obj.method = HFMethod.NW;
-            end
-            if ~obj.has('useBaseNW')
-                obj.set('useBaseNW',obj.get('noTransfer'));
-            end
-            %{
-            if ~obj.has('newZ')
-                obj.set('newZ',1);
-            end
-            %}
-            %obj.set('newZ',pc.dataSet ~= Constants.NG_DATA);
-            obj.set('newZ',0);
             obj.set('hinge',0);
             obj.set('l2',0);
             obj.set('allSource',0);
@@ -63,15 +49,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 cols = numSources*(j-1)+1:numSources*j;
                 fuCombined(:,cols) = f;
                 labelIDs(cols) = j;
-            end
-            betaRowIdx = 1:(numLabels*numSources);
-            betaColIdx = zeros(numLabels*numSources,1);
-            betaIdx = zeros(numLabels*numSources,1);
-            for idx=1:numLabels
-                range = numSources*(idx-1)+1:numSources*idx;
-                betaColIdx(range) = idx;
-                betaIdx(range) = (1:numSources)';
-            end                
+            end             
 
             
             I = ~isnan(Y);
@@ -83,10 +61,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             bTarget = 1 - reg;
             isClassUsed = find(sum(Ymat));
             numLabels = length(isClassUsed);
-            %[~,Ftarget2] = obj.targetHyp.getLOOestimates(X,Y);
-            %Ftarget2 = Ftarget2(I,isClassUsed);
             [~,Ftarget] = obj.targetHyp.getLOOestimates(X(I,:),Y(I));
-            %Ftarget = Ftarget(I,isClassUsed);
             Ftarget = Ftarget(:,isClassUsed);
             fuCombined = fuCombined(I,ismember(labelIDs,isClassUsed));
             Ymat = Ymat(I,isClassUsed);
@@ -103,36 +78,25 @@ classdef LLGCHypothesisTransfer < LLGCMethod
 
             warning off                
             cvx_begin quiet
-                %variable F(n,numLabels)             
                 variable F(sum(I),numLabels)             
-                %variable FbTemp(n,numLabels)
                 variable b(numSources,1)
                 variable bRep(numLabels*numSources,numLabels)
-                %variable c
-                %minimize(norm(F(I,[10 15])-Ymat(I,[10 15]) + c,1))
-                %minimize(norm(F(I,:)-Ymat(I,:),1))
                 if obj.get('hinge')
-                    %minimize(hinge(F(I,:)-Ymat(I,:)))
                     minimize(norm(F(I,:)-Ymat(I,:),1))
                 elseif obj.get('l2')
                     minimize(norm(F(I,:)-Ymat(I,:),2))
                 else
-                    %minimize(norm(F(I,:)-Ymat(I,:),1))
                     minimize(norm(F-Ymat,1))
                 end
                 subject to
                     b >= 0
-                    %b <= 1
                     norm(b,1) <= reg
-                    %sum(b) == reg
                     bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
-                    %F == (bTarget)*Ftarget(I,:) + invL*fuCombined(I,:)*bRep
-                    %F == (bTarget)*Ftarget(I,:) + fuCombined(I,:)*bRep
                     F == (bTarget)*Ftarget + fuCombined*bRep
             cvx_end 
             b = [bTarget ; b];
             warning on
-            b
+            %b
             obj.beta = b;
         end
         
@@ -145,8 +109,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         end
         
         function [y,fu] = predict(obj,X)
-            if obj.get('useBaseNW')
-                assert(obj.get('noTransfer') ~= 0);
+            if obj.get('noTransfer')
                 [y,fu] = obj.targetHyp.predict(X);
                 return;
             end
@@ -203,64 +166,18 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 savedData = struct();
             end
             pc = ProjectConfigs.Create();
-            train = input.train;
-            test = input.test;   
-            testResults = FoldResults();   
-            
-            
-            if pc.dataSet == Constants.NG_DATA
-                error('Also do transformation for source?');
-                C = [train.X ; test.X];
-                C = C';
-                %[W, idf] = tf_idf_weight(C, 'normalize')
-                [W, idf] = tf_idf_weight(double(C));
-                W(isnan(W(:))) = 0;
-                W = W';
-                numTrain = size(train.X,1);
-                train.X = W(1:numTrain,:);
-                test.X = W(numTrain+1:end,:);
-            end
-            dataSetIDs = unique(train.instanceIDs);
-            sourceDataSetIDs = dataSetIDs(dataSetIDs ~= 0);
+            train = input.train;            
             obj.sourceHyp = {};
-            
-            %nwSigmas = 2.^(-5:5);                        
-            %nwSigmas = .03;            
-            nwSigmas = obj.get('cvSigma');
-            %nwSigmas = 4;
             
             if isfield(input.originalSourceData{1}.savedFields,'learner')
                 for idx=1:length(input.originalSourceData)
                     s = input.originalSourceData{idx};
                     obj.sourceHyp{idx} = s.savedFields.learner;
                 end
+            else
+                error('no Source hyps!');
             end
-            if obj.get('newZ')
-                n = size(train.X,1);
-                Xall = zscore([train.X ; test.X]);
-                train.X = Xall(1:n,:);
-                test.X = Xall(n+1:end,:);
-            end
-            
-            if isempty(obj.sourceHyp) && ~obj.get('useBaseNW') && ...
-                    ~obj.get('noTransfer')
-                for idx=1:length(sourceDataSetIDs)
-                    nwObj = NWMethod();
-                    nwObj.set('sigma',nwSigmas);
-                    nwObj.set('measure',Measure());
-                    nwObj.set('classification',obj.get('classification'));
-                    nwObj.set('newZ',obj.get('newZ'));
-                    I = train.instanceIDs == sourceDataSetIDs(idx);
-                    X = train.X(I,:);
-                    Y = train.Y(I,:);
-                    nwObj.train(X,Y);
-                    obj.sourceHyp{idx} = nwObj;
-                end
-            end
-            %targetTrain = train.copy();
-            %input.train = targetTrain;
-            
-            
+
             cvParams = struct('key','values');                        
             cvParams(1).key = 'reg';
             cvParams(1).values = num2cell(obj.get('cvReg'));
@@ -276,14 +193,6 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             if obj.get('allSource')
                 cvParams(1).values = {1};
             end
-            %{
-            cvParams(2).key = 'sigma';
-            cvParams(2).values = num2cell(llgcSigma);
-            if ~obj.get('useNW')
-                cvParams(3).key = 'alpha';
-                cvParams(3).values = num2cell(obj.get('cvAlpha'));
-            end
-            %}
             obj.delete('sigmaScale');
             
             cv = CrossValidation();            
@@ -307,26 +216,10 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         end
         function [nameParams] = getNameParams(obj)
             nameParams = {};
+            nameParams{end+1} = 'targetMethod';
+            obj.set('targetMethod',obj.targetHyp.getPrefix());
             if obj.get('noTransfer',false)
                 nameParams{end+1} = 'noTransfer';
-            end
-            if length(obj.get('cvAlpha',[])) == 1 && ~obj.get('useNW')
-                nameParams{end+1} = 'alpha';
-            end
-            if length(obj.get('cvSigma')) == 1
-                nameParams{end+1} = 'sigma';
-            end
-            if length(obj.get('cvReg')) == 1
-                nameParams{end+1} = 'reg';
-            end
-            if obj.get('useNW',0)
-                nameParams{end+1} = 'useNW';
-            end
-            if obj.get('useBaseNW',0)
-                nameParams{end+1} = 'useBaseNW';
-            end
-            if obj.get('newZ',0)
-                nameParams{end+1} = 'newZ';
             end
             if obj.get('oracle',0)
                 nameParams{end+1} = 'oracle';

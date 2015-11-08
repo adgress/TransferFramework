@@ -107,14 +107,7 @@ classdef HypothesisTransfer < Method
             obj.betaSource = train.savedFields.betaSource;
             obj.beta0 = train.savedFields.beta0;
             testResults = FoldResults();   
-            %{
-            if obj.get('newZ')
-                n = size(train.X,1);
-                Xall = zscore([train.X ; test.X]);
-                train.X = Xall(1:n,:);
-                test.X = Xall(n+1:end,:);
-            end
-            %}
+
             targetTrain = train.copy();
             targetTrain.keep(targetTrain.isLabeled());
             cvParams = struct('key','values');
