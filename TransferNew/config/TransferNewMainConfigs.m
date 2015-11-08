@@ -31,13 +31,15 @@ classdef TransferNewMainConfigs < MainConfigs
                     obj.setInequalityTransferConfigs(learnerConfigs);
                 case ProjectConfigs.HYPOTHESIS_TRANSFER_EXPERIMENT
                     obj.configsStruct.measure=Measure();
-                    obj.LLGCHypothesisTransferConfigs(learnerConfigs);
+                    %obj.LLGCHypothesisTransferConfigs(learnerConfigs);
+                    obj.SepHypothesisTransferConfigs(learnerConfigs);
             end
             
             %{
             sourceLearner = NWMethod(learnerConfigs.copy());
             targetHyp = NWMethod(learnerConfigs.copy());
             %}
+            
             sourceLearner = LiblinearMethod(learnerConfigs.copy());
             targetHyp = LiblinearMethod(learnerConfigs.copy());
             
@@ -45,7 +47,7 @@ classdef TransferNewMainConfigs < MainConfigs
             targetHyp.set('quiet',true);
             obj.set('sourceLearner',sourceLearner);
             l = obj.get('learners');
-            l.set('quiet',true);
+            %l.set('quiet',true);
             l.targetHyp = targetHyp;
             %obj.set('targetLabels',[10 15]);
             %obj.set('sourceLabels',[23 25 26 30]);
@@ -53,6 +55,16 @@ classdef TransferNewMainConfigs < MainConfigs
             obj.set('sourceLabels',[]);
             
         end           
+        function [] = SepHypothesisTransferConfigs(obj,learnerConfigs);
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            c = ProjectConfigs.Create();
+            obj.configsStruct.configLoader=TransferExperimentConfigLoader();
+            m = SepHypothesisTransfer(learnerConfigs);
+            m.set('measure',obj.get('measure'));
+            obj.configsStruct.learners=m;
+        end
         function [] = LLGCHypothesisTransferConfigs(obj,learnerConfigs)
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();

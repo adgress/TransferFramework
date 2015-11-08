@@ -93,9 +93,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     %c.numLabeledPerClass=[100];
                 case Constants.POLYNOMIRAL_SYNTHETIC_DATA
                     c.numLabeledPerClass=[5 10 20 40 80];
-                case Constants.TOMMASI_DATA
+                case Constants.TOMMASI_DATA                    
                     c.numLabeledPerClass=[5 10 20];
-                    %c.numLabeledPerClass=[5 10 20];
                     %c.numLabeledPerClass=[20];
                     c.makeSubDomains = true;
                     c.addTargetDomain = true;
@@ -219,6 +218,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'HypTran NW';
                     methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear-noTransfer=1.mat';
                     legend{end+1} = 'l2 LogReg';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear.mat';
+                    legend{end+1} = 'HypTran l2 LogReg';
             end
             
             plotConfigs = {};
