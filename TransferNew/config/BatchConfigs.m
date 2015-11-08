@@ -72,7 +72,8 @@ classdef BatchConfigs < Configs
         function [configs] = makeNGOverrideConfigs()
             configs = {};      
 
-            if ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+            %if ProjectConfigs.experimentSetting == ProjectConfigs.WEIGHTED_TRANSFER
+            if true
                 
                 dataSets = { ...
                     'CR2CR3CR4ST1ST2ST3ST42CR1',...

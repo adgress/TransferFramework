@@ -76,7 +76,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.sourceSuffix = 'n=100,degree=3,sigma=0.5';
                     c.cvParams = {'reg','sigma'};
                 case ProjectConfigs.HYPOTHESIS_TRANSFER_EXPERIMENT
-                    c.dataSet = Constants.TOMMASI_DATA;
+                    %c.dataSet = Constants.TOMMASI_DATA;
+                    c.dataSet = Constants.NG_DATA;
                     %c.reg = fliplr([0 .01 .1 1 10 100]);
                     c.reg = ([0 .2:.2:.8]);
                     c.sigma = fliplr([.001 .01 .1 1 10]);
@@ -100,6 +101,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.addTargetDomain = true;
                     c.maxSourceSize = inf;
                     c.numOverlap = 30;
+                case Constants.NG_DATA
+                    c.addTargetDomain = false;
+                    c.makeSubDomains = false;
+                    c.numLabeledPerClass=[20 40 60 80 100 120 140];
             end
         end
     end
@@ -184,6 +189,10 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.set('prefix','results_tommasi');
                     c.set('dataSet',{'tommasi_data'});
                     c.set('resultsDirectory','results_tommasi/tommasi_data');
+                case Constants.NG_DATA
+                    c.set('prefix','results_ng');
+                    c.set('dataSet',{'20news-bydate/splitData'});
+                    c.set('resultsDirectory','results_ng/20news-bydate/splitData');
                 otherwise
                     error('unknown data set');
             end
@@ -212,14 +221,32 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'NW Transfer';
                 case Constants.TOMMASI_DATA
                     title = 'Hypothesis Transfer';
+                    %{
                     methodResultsFileNames{end+1} = 'Prior_HypTran-noTransfer=1-useNW=1-useBaseNW=1.mat';
                     legend{end+1} = 'NW';
                     methodResultsFileNames{end+1} = 'Prior_HypTran-useNW=1.mat';
                     legend{end+1} = 'HypTran NW';
+                    %}
                     methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear-noTransfer=1.mat';
                     legend{end+1} = 'l2 LogReg';
                     methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'HypTran l2 LogReg';
+                    methodResultsFileNames{end+1} = 'Prior_SepHypTran-targetMethod=Liblinear.mat';
+                    legend{end+1} = 'SepHypTran';
+                case Constants.NG_DATA
+                    title = 'Hypothesis Transfer';
+                    %{
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-noTransfer=1-useNW=1-useBaseNW=1.mat';
+                    legend{end+1} = 'NW';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-useNW=1.mat';
+                    legend{end+1} = 'HypTran NW';
+                    %}
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear-noTransfer=1.mat';
+                    legend{end+1} = 'l2 LogReg';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear.mat';
+                    legend{end+1} = 'HypTran l2 LogReg';
+                    methodResultsFileNames{end+1} = 'Prior_SepHypTran-targetMethod=Liblinear.mat';
+                    legend{end+1} = 'SepHypTran';
             end
             
             plotConfigs = {};

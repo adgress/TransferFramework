@@ -19,10 +19,18 @@ function [] = runVisualization()
     textAxes = gca;
     set(textAxes,'Position',[0 0 1 1],'Visible','off');                
     itrArray = {[]};
-    itrArray{1} = '23  25  26  30-to-10  15-numOverlap=30';
-    itrArray{2} = '15  25  26  30-to-10  23-numOverlap=30';
-    itrArray{3} = '10  15  26  30-to-23  25-numOverlap=30';
-    
+    pc = ProjectConfigs.Create();
+    switch pc.dataSet
+        case Constants.TOMMASI_DATA            
+            itrArray{1} = '23  25  26  30-to-10  15-numOverlap=30';
+            itrArray{2} = '15  25  26  30-to-10  23-numOverlap=30';
+            itrArray{3} = '10  15  26  30-to-23  25-numOverlap=30';
+        case Constants.NG_DATA
+            itrArray{1} = 'ST2ST32CR1';
+            itrArray{2} = 'ST2ST32CR2';
+            itrArray{3} = 'ST2ST32CR3';
+            itrArray{4} = 'ST2ST32CR4';
+    end
     figureHandles = tight_subplot(1,length(itrArray),margins(1),...
         margins(2),margins(3));
     s = vizConfigs.get('resultsDirectory');

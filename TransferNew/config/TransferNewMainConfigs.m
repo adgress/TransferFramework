@@ -31,8 +31,8 @@ classdef TransferNewMainConfigs < MainConfigs
                     obj.setInequalityTransferConfigs(learnerConfigs);
                 case ProjectConfigs.HYPOTHESIS_TRANSFER_EXPERIMENT
                     obj.configsStruct.measure=Measure();
-                    %obj.LLGCHypothesisTransferConfigs(learnerConfigs);
-                    obj.SepHypothesisTransferConfigs(learnerConfigs);
+                    obj.LLGCHypothesisTransferConfigs(learnerConfigs);
+                    %obj.SepHypothesisTransferConfigs(learnerConfigs);
             end
             
             %{

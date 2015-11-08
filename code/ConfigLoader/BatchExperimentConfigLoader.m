@@ -77,7 +77,7 @@ classdef BatchExperimentConfigLoader < ConfigLoader
                         s.set('measure',mainConfigsCopy.get('measure'));
                         input.train = d;
                         input.test = [];
-                        s.runMethod(input);
+                        s.trainAndTest(input);
                         dataAndSplits.sourceDataSets{idx}.savedFields.learner = ...
                             s;
                     end                    
