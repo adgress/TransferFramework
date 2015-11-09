@@ -89,7 +89,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             targetInds = I;
             Ytarget = Ymat(targetInds,:);
             
-            [Ftarget,fuCombined,labelIDs] = obj.createTransferFeatures(X,Y);
+            [Ftarget,fuCombined,labelIDs] = obj.createTransferFeaturesLOO(X,Y,labels);
             
             bTarget = 1 - reg;                        
             Ymat = Ymat(I,labels);
