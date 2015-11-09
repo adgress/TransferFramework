@@ -156,23 +156,26 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             [~,sourcePred] = obj.getSourcePredictions(X);
             fu = obj.beta(1)*targetPred;
             for idx=1:length(sourcePred)
-                fu = fu + obj.beta(idx+1)*sourcePred{idx};
+                fu = fu + obj.beta(idx+1)*sourcePred{idx};            
             end
-            fu = Helpers.NormalizeRows(fu);
+            normalize = obj.get('nonnegativeConstraint');
             [~,y] = max(fu,[],2);
-            I = ~(fu(:) >= 0);
-            if any(I)
-                error('Is this okay?');
-                %fu(I);
-                %fu(I) = rand(sum(I),1);
+            if normalize
+                fu = Helpers.NormalizeRows(fu);
+                I = ~(fu(:) >= 0);
+                if any(I)
+                    error('Is this okay?');
+                    %fu(I);
+                    %fu(I) = rand(sum(I),1);
+                end
+                %{
+                assert(all(fu(:) >= 0));
+                I = find(sum(fu,2) == 0);
+                if ~isempty(I)
+                    fu(I,:) = rand(length(I),size(fu,2));
+                end
+                %}          
             end
-            %{
-            assert(all(fu(:) >= 0));
-            I = find(sum(fu,2) == 0);
-            if ~isempty(I)
-                fu(I,:) = rand(length(I),size(fu,2));
-            end
-            %}            
         end
         function [testResults,savedData] = runMethod(obj,input,savedData)
             train = input.train;
