@@ -104,7 +104,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                 case Constants.NG_DATA
                     c.addTargetDomain = false;
                     c.makeSubDomains = false;
-                    c.numLabeledPerClass=[20 40 60 80 100 120 140];
+                    %c.numLabeledPerClass=[20 40 60 80 100 120 140];
+                    c.numLabeledPerClass=[3 5 10 15 20];
             end
         end
     end
