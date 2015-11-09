@@ -26,10 +26,16 @@ function [] = runVisualization()
             itrArray{2} = '15  25  26  30-to-10  23-numOverlap=30';
             itrArray{3} = '10  15  26  30-to-23  25-numOverlap=30';
         case Constants.NG_DATA
+            itrArray{1} = 'CR2CR3CR4ST1ST2ST3ST42CR1';
+            itrArray{2} = 'CR1CR3CR4ST1ST2ST3ST42CR2';
+            itrArray{3} = 'CR1CR2CR4ST1ST2ST3ST42CR3';
+            itrArray{4} = 'CR1CR2CR3ST1ST2ST3ST42CR4';
+            %{
             itrArray{1} = 'ST2ST32CR1';
             itrArray{2} = 'ST2ST32CR2';
             itrArray{3} = 'ST2ST32CR3';
             itrArray{4} = 'ST2ST32CR4';
+            %}
     end
     figureHandles = tight_subplot(1,length(itrArray),margins(1),...
         margins(2),margins(3));
