@@ -15,7 +15,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         instance = ProjectConfigs.CreateSingleton()        
         %useTransfer = false
         useTransfer = true
-        vizWeights = 0
+        vizWeights = 1
         vizLayeredWeights = 0
         vizCoefficients = 0
     end
@@ -276,20 +276,12 @@ classdef ProjectConfigs < ProjectConfigsBase
             end
             if ProjectConfigs.vizWeights
                 
-                if pc.dataSet == Constants.TOMMASI_DATA
-                    error('')
-                else
-                    methodResultsFileNames = {'Prior_HypTran-targetMethod=Liblinear.mat'};
-                end
+                methodResultsFileNames = {'Prior_HypTran-targetMethod=Liblinear.mat'};
                 
                 legend = {'HypTran l2 LogReg'};
                 fields = {'dataSetWeights'};
             elseif ProjectConfigs.vizLayeredWeights
-                if pc.dataSet == Constants.TOMMASI_DATA
-                    error('')
-                else
-                    methodResultsFileNames = {'Prior_LayeredHypTran-targetMethod=Liblinear.mat'};
-                end
+                methodResultsFileNames = {'Prior_LayeredHypTran-targetMethod=Liblinear.mat'};
                 
                 legend = {'LayeredHypTran l2 LogReg'};
                 fields = {'dataSetWeights'};

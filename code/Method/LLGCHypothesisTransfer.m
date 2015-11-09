@@ -23,6 +23,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.set('oracle',false);
             end
             obj.set('classification',1);
+            obj.set('sumConstraint',0);
         end
         
         function [XT,XS,labelIDs] = createTransferFeatures(obj,X)
@@ -118,7 +119,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 end
                 subject to
                     b >= 0
-                    norm(b,1) <= reg
+                    if obj.get('sumConstraint')
+                        norm(b,1) <= reg
+                    end
                     bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
                     F == (bTarget)*Ftarget + fuCombined*bRep
             cvx_end 
