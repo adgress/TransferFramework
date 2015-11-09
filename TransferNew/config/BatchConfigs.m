@@ -85,7 +85,8 @@ classdef BatchConfigs < Configs
                 %sourceDataSetToUse = {'CR2'};
                
                 %dataSets = {'CR2CR3CR4ST1ST2ST3ST42CR1'};
-                sourceDataSetToUse = {'ST2', 'ST3'};
+                %sourceDataSetToUse = {'ST2', 'ST3'};
+                sourceDataSetToUse = {'CR2','CR3','CR4','ST1','ST2','ST3','ST4'};
                 for idx=1:length(dataSets)
                     c = Configs();
                     c.set('dataSet',dataSets{idx});
