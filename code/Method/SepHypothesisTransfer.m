@@ -68,18 +68,20 @@ classdef SepHypothesisTransfer < LLGCHypothesisTransfer
                     bS == 0
             cvx_end 
             warning on
-            l = LiblinearMethod(obj.configs.copy());
+            %l = LiblinearMethod(obj.configs.copy());
             %l.set('reg',1/reg);
-            l.train(XL,Y(I));
+            %l.train(XL,Y(I));
             obj.bTarget = bT;
             obj.bSource = bS;
             obj.b0 = b0;
         end
         function [y,fu] = predict(obj,X)
+            %{
             if obj.get('noTransfer')
                 [y,fu] = obj.targetHyp.predict(X);
                 return;
             end
+            %}
             [~,fuSource] = obj.getSourcePredictions(X);
             XS = obj.sourcePred2Mat(fuSource);
             p = X*obj.bTarget + XS*obj.bSource + obj.b0;
@@ -102,8 +104,18 @@ classdef SepHypothesisTransfer < LLGCHypothesisTransfer
             testResults.yPred = y(toKeep);
             testResults.dataFU = fu(toKeep,:);
             a = obj.configs.get('measure').evaluate(testResults);
-            savedData.val = a.learnerStats.valTest;
+            savedData.val = a.learnerStats.valTest;            
             assert(~isnan(savedData.val));
+        end
+        function [testResults,savedData] = ...
+                trainAndTest(obj,input,savedData)
+            if ~exist('savedData','var')
+                savedData = struct();
+            end
+            [testResults,savedData] = trainAndTest@LLGCHypothesisTransfer(obj,input,savedData);
+            testResults.learnerStats.b0 = obj.b0;
+            testResults.learnerStats.bTarget = obj.bTarget;
+            testResults.learnerStats.bSource = obj.bSource;
         end
         function [prefix] = getPrefix(obj)
             prefix = 'SepHypTran';

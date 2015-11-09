@@ -15,6 +15,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         instance = ProjectConfigs.CreateSingleton()        
         %useTransfer = false
         useTransfer = true
+        vizWeights = 0
     end
     
     properties    
@@ -174,6 +175,18 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.set('title',title);
             end            
             
+            if ProjectConfigs.vizWeights
+                c.configsStruct.xAxisField = 'dataSetWeights';
+                c.configsStruct.xAxisDisplay = 'Data Set';
+                c.configsStruct.sizeToUse = 20;
+                c.configsStruct.confidenceInterval = ...
+                    VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
+                c.set('vizBarChartForField',true);
+                %c.set('normalizeField',true);
+                c.set('yAxisDisplay','Weight');
+            end
+            c.configsStruct.vizWeights = ProjectConfigs.vizWeights;
+            
             c.set('prefix','results');
             c.set('Measure',Measure());
             pc = ProjectConfigs.Create();
@@ -191,12 +204,20 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.set('dataSet',{'tommasi_data'});
                     c.set('resultsDirectory','results_tommasi/tommasi_data');
                 case Constants.NG_DATA
+                    
                     c.set('prefix','results_ng');
                     c.set('dataSet',{'20news-bydate/splitData'});
                     c.set('resultsDirectory','results_ng/20news-bydate/splitData');
+                    
+                    %{
+                    c.set('prefix','results_ng (little labeled data, ST1 ST2)');
+                    c.set('dataSet',{'20news-bydate/splitData'});
+                    c.set('resultsDirectory','results_ng (little labeled data, ST1 ST2)/20news-bydate/splitData');
+                    %}
                 otherwise
                     error('unknown data set');
             end
+            
         end
         
         function [plotConfigs,legend,title] = makePlotConfigs()  
@@ -249,7 +270,17 @@ classdef ProjectConfigs < ProjectConfigsBase
                     methodResultsFileNames{end+1} = 'Prior_SepHypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'SepHypTran';
             end
-            
+            if ProjectConfigs.vizWeights
+                
+                if pc.dataSet == Constants.TOMMASI_DATA
+                    error('')
+                else
+                    methodResultsFileNames = {'Prior_HypTran-targetMethod=Liblinear.mat'};
+                end
+                
+                legend = {'HypTran l2 LogReg'};
+                fields = {'dataSetWeights'};
+            end
             plotConfigs = {};
             for fileIdx=1:length(methodResultsFileNames)
                 configs = basePlotConfigs.copy();

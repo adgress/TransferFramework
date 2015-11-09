@@ -14,7 +14,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             obj.sourceHyp = [];
             pc = ProjectConfigs.Create();
             if ~obj.has('noTransfer')
-                obj.set('noTransfer',0);
+                obj.set('noTransfer',1);
             end
             obj.set('hinge',0);
             obj.set('l2',0);
