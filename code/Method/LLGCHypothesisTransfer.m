@@ -14,7 +14,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             obj.sourceHyp = [];
             pc = ProjectConfigs.Create();
             if ~obj.has('noTransfer')
-                obj.set('noTransfer',1);
+                obj.set('noTransfer',~ProjectConfigs.useTransfer);
             end
             obj.set('hinge',0);
             obj.set('l2',0);
@@ -23,6 +23,53 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.set('oracle',false);
             end
             obj.set('classification',1);
+        end
+        
+        function [XT,XS,labelIDs] = createTransferFeatures(obj,X)
+            n = size(X,1);
+            labels = sort(obj.targetHyp.model.Label,'ascend');
+            numLabels = max(labels);
+            numSources = length(obj.sourceHyp);
+            [ySource,fuSource] = obj.getSourcePredictions(X);
+            XS = zeros(n,numLabels*numSources);
+            labelIDs = zeros(1,numLabels*numSources);
+            for j=1:numLabels
+                f = zeros(n,numSources);
+                for idx=1:length(fuSource)
+                    f(:,idx) = fuSource{idx}(:,j);                    
+                end                              
+                cols = numSources*(j-1)+1:numSources*j;
+                XS(:,cols) = f;
+                labelIDs(cols) = j;
+            end             
+            
+            [~,XT] = obj.targetHyp.predict(X);
+            XT = XT(:,labels);
+            XS = XS(:,ismember(labelIDs,labels));
+        end
+        
+        function [XT,XS,labelIDs] = createTransferFeaturesLOO(obj,X,Y,labels)
+            I = ~isnan(Y);
+            labels = unique(Y(I));            
+            n = size(X,1);
+            numLabels = max(labels);
+            numSources = length(obj.sourceHyp);
+            [ySource,fuSource] = obj.getSourcePredictions(X);
+            XS = zeros(n,numLabels*numSources);
+            labelIDs = zeros(1,numLabels*numSources);
+            for j=1:numLabels
+                f = zeros(n,numSources);
+                for idx=1:length(fuSource)
+                    f(:,idx) = fuSource{idx}(:,j);                    
+                end                              
+                cols = numSources*(j-1)+1:numSources*j;
+                XS(:,cols) = f;
+                labelIDs(cols) = j;
+            end             
+            
+            [~,XT] = obj.targetHyp.getLOOestimates(X(I,:),Y(I));
+            XT = XT(:,labels);
+            XS = XS(I,ismember(labelIDs,labels));
         end
         
         function [] = train(obj,X,Y)
@@ -35,36 +82,17 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.beta(1) = 1;
                 return;
             end
-            
-            numLabels = max(Y);
-            n = size(X,1);
-            [ySource,fuSource] = obj.getSourcePredictions(X);
-            fuCombined = zeros(n,numLabels*numSources);
-            labelIDs = zeros(1,numLabels*numSources);
-            for j=1:numLabels
-                f = zeros(n,numSources);
-                for idx=1:length(fuSource)
-                    f(:,idx) = fuSource{idx}(:,j);                    
-                end                              
-                cols = numSources*(j-1)+1:numSources*j;
-                fuCombined(:,cols) = f;
-                labelIDs(cols) = j;
-            end             
-
-            
             I = ~isnan(Y);
+            labels = unique(Y(I));
+            numLabels = length(labels);
             Ymat = Helpers.createLabelMatrix(Y);            
             targetInds = I;
             Ytarget = Ymat(targetInds,:);
             
+            [Ftarget,fuCombined,labelIDs] = obj.createTransferFeatures(X,Y);
             
-            bTarget = 1 - reg;
-            isClassUsed = find(sum(Ymat));
-            numLabels = length(isClassUsed);
-            [~,Ftarget] = obj.targetHyp.getLOOestimates(X(I,:),Y(I));
-            Ftarget = Ftarget(:,isClassUsed);
-            fuCombined = fuCombined(I,ismember(labelIDs,isClassUsed));
-            Ymat = Ymat(I,isClassUsed);
+            bTarget = 1 - reg;                        
+            Ymat = Ymat(I,labels);
             betaRowIdx = 1:(numLabels*numSources);
 
             betaColIdx = zeros(numLabels*numSources,1);
@@ -139,12 +167,6 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             train = input.train;
             test = input.test;
                      
-            
-            llgcSigma = obj.get('cvSigma');
-            targetCVParams = struct('key','values');
-            targetCVParams(1).key = 'sigma';
-            targetCVParams(1).values = num2cell(llgcSigma);
-            obj.targetHyp.set('cvParameters',targetCVParams);
             obj.targetHyp.trainAndTest(input);
             
             obj.train(train.X,train.Y);
@@ -210,6 +232,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 display([ obj.getPrefix() ' Acc: ' num2str(savedData.val)]);                                
             end            
             testResults.learnerStats.dataSetWeights = obj.beta;
+            if isa(obj,'LayeredHypothesisTransfer')
+                testResults.learnerStats.dataSetWeights = obj.finalHyp.model.w;
+            end
         end
         function [prefix] = getPrefix(obj)
             prefix = 'HypTran';

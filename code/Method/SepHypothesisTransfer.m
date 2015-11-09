@@ -12,10 +12,8 @@ classdef SepHypothesisTransfer < LLGCHypothesisTransfer
     methods
         function obj = SepHypothesisTransfer(configs)
             obj = obj@LLGCHypothesisTransfer(configs);
-            if ~obj.has('noTransfer')
-                obj.set('noTransfer',0);
-            end
-            obj.set('cvReg',10.^(-1:8));
+            obj.set('noTransfer',~ProjectConfigs.useTransfer);
+            obj.set('cvReg',10.^(-1:10));
             %obj.set('quiet',false);
         end
         function [XS] = sourcePred2Mat(obj,fuSource)
@@ -24,8 +22,12 @@ classdef SepHypothesisTransfer < LLGCHypothesisTransfer
             XS = zeros(n,numLabels*length(fuSource));
             i = 0;
             for idx=1:length(fuSource)
+                %{
                 XS(:,i+1:i+numLabels) = fuSource{idx}(:,obj.labels);
                 i = i + numLabels;
+                %}
+                XS(:,i+1:i+1) = fuSource{idx}(:,obj.labels(1));
+                i = i + 1;
             end
         end
         function [] = train(obj,X,Y)
@@ -64,8 +66,11 @@ classdef SepHypothesisTransfer < LLGCHypothesisTransfer
                 
                 subject to                  
                     sum_square(bT) <= reg
-                    %sum_square(bS) <= reg
-                    bS == 0
+                    if obj.get('noTransfer')
+                        bS == 0
+                    else
+                        sum_square(bS) <= reg
+                    end
             cvx_end 
             warning on
             %l = LiblinearMethod(obj.configs.copy());

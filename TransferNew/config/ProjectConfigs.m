@@ -16,6 +16,8 @@ classdef ProjectConfigs < ProjectConfigsBase
         %useTransfer = false
         useTransfer = true
         vizWeights = 0
+        vizLayeredWeights = 0
+        vizCoefficients = 0
     end
     
     properties    
@@ -77,10 +79,12 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.sourceSuffix = 'n=100,degree=3,sigma=0.5';
                     c.cvParams = {'reg','sigma'};
                 case ProjectConfigs.HYPOTHESIS_TRANSFER_EXPERIMENT
-                    %c.dataSet = Constants.TOMMASI_DATA;
-                    c.dataSet = Constants.NG_DATA;
+                    c.dataSet = Constants.TOMMASI_DATA;
+                    %c.dataSet = Constants.NG_DATA;
                     %c.reg = fliplr([0 .01 .1 1 10 100]);
                     c.reg = ([0 .2:.2:.8]);
+                    %c.reg = fliplr([10.^(-5:5)]);
+                    %c.reg = 0;
                     c.sigma = fliplr([.001 .01 .1 1 10]);
                     %c.sigma = fliplr([.01]);
                     c.syntheticDir = 'syntheticPolynomial';
@@ -175,7 +179,7 @@ classdef ProjectConfigs < ProjectConfigsBase
                 c.set('title',title);
             end            
             
-            if ProjectConfigs.vizWeights
+            if ProjectConfigs.vizWeights || ProjectConfigs.vizLayeredWeights
                 c.configsStruct.xAxisField = 'dataSetWeights';
                 c.configsStruct.xAxisDisplay = 'Data Set';
                 c.configsStruct.sizeToUse = 20;
@@ -253,8 +257,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'l2 LogReg';
                     methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'HypTran l2 LogReg';
-                    methodResultsFileNames{end+1} = 'Prior_SepHypTran-targetMethod=Liblinear.mat';
-                    legend{end+1} = 'SepHypTran';
+                    methodResultsFileNames{end+1} = 'Prior_LayeredHypTran-targetMethod=Liblinear.mat';
+                    legend{end+1} = 'LayeredHypTran';
                 case Constants.NG_DATA
                     title = 'Hypothesis Transfer';
                     %{
@@ -267,8 +271,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'l2 LogReg';
                     methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'HypTran l2 LogReg';
-                    methodResultsFileNames{end+1} = 'Prior_SepHypTran-targetMethod=Liblinear.mat';
-                    legend{end+1} = 'SepHypTran';
+                    methodResultsFileNames{end+1} = 'Prior_LayeredHypTran-targetMethod=Liblinear.mat';
+                    legend{end+1} = 'LayeredHypTran';
             end
             if ProjectConfigs.vizWeights
                 
@@ -279,6 +283,15 @@ classdef ProjectConfigs < ProjectConfigsBase
                 end
                 
                 legend = {'HypTran l2 LogReg'};
+                fields = {'dataSetWeights'};
+            elseif ProjectConfigs.vizLayeredWeights
+                if pc.dataSet == Constants.TOMMASI_DATA
+                    error('')
+                else
+                    methodResultsFileNames = {'Prior_LayeredHypTran-targetMethod=Liblinear.mat'};
+                end
+                
+                legend = {'LayeredHypTran l2 LogReg'};
                 fields = {'dataSetWeights'};
             end
             plotConfigs = {};

@@ -31,8 +31,9 @@ classdef TransferNewMainConfigs < MainConfigs
                     obj.setInequalityTransferConfigs(learnerConfigs);
                 case ProjectConfigs.HYPOTHESIS_TRANSFER_EXPERIMENT
                     obj.configsStruct.measure=Measure();
-                    %obj.LLGCHypothesisTransferConfigs(learnerConfigs);
-                    obj.SepHypothesisTransferConfigs(learnerConfigs);
+                    obj.LLGCHypothesisTransferConfigs(learnerConfigs);
+                    %obj.SepHypothesisTransferConfigs(learnerConfigs);
+                    %obj.setLayeredHypothesisTransferConfigs(learnerConfigs);
             end
             
             %{
@@ -55,6 +56,16 @@ classdef TransferNewMainConfigs < MainConfigs
             obj.set('sourceLabels',[]);
             
         end           
+        function [] = setLayeredHypothesisTransferConfigs(obj,learnerConfigs)
+            if ~exist('learnerConfigs','var')
+                learnerConfigs = obj.makeDefaultLearnerConfigs();
+            end
+            c = ProjectConfigs.Create();
+            obj.configsStruct.configLoader=TransferExperimentConfigLoader();
+            m = LayeredHypothesisTransfer(learnerConfigs);
+            m.set('measure',obj.get('measure'));
+            obj.configsStruct.learners=m;
+        end
         function [] = SepHypothesisTransferConfigs(obj,learnerConfigs);
             if ~exist('learnerConfigs','var')
                 learnerConfigs = obj.makeDefaultLearnerConfigs();
