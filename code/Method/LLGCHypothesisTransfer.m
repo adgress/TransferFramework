@@ -24,6 +24,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             obj.set('classification',1);
             obj.set('sumConstraint',0);
+            obj.set('nonnegativeConstraint',0)
+            obj.set('equalConstraint',0);
+            obj.set('normConstraint',1);
         end
         
         function [XT,XS,labelIDs] = createTransferFeatures(obj,X)
@@ -109,23 +112,28 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             cvx_begin quiet
                 variable F(sum(I),numLabels)             
                 variable b(numSources,1)
+                variable bT
                 variable bRep(numLabels*numSources,numLabels)
-                if obj.get('hinge')
-                    minimize(norm(F(I,:)-Ymat(I,:),1))
-                elseif obj.get('l2')
-                    minimize(norm(F(I,:)-Ymat(I,:),2))
-                else
-                    minimize(norm(F-Ymat,1))
-                end
+                
+                minimize(norm(F-Ymat,1))                
+                
                 subject to
-                    b >= 0
+                    if obj.get('nonnegativeConstraint')
+                        b >= 0
+                    end
                     if obj.get('sumConstraint')
                         norm(b,1) <= reg
                     end
+                    if obj.get('equalConstraint')
+                        bT == bTarget
+                    end
+                    if obj.get('normConstraint')
+                        sum_square([bT ; b]) <= reg
+                    end
                     bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
-                    F == (bTarget)*Ftarget + fuCombined*bRep
+                    F == Ftarget*bT + fuCombined*bRep
             cvx_end 
-            b = [bTarget ; b];
+            b = [bT ; b];
             warning on
             %b
             obj.beta = b;

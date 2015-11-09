@@ -15,7 +15,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         instance = ProjectConfigs.CreateSingleton()        
         %useTransfer = false
         useTransfer = true
-        vizWeights = 1
+        vizWeights = 0
         vizLayeredWeights = 0
         vizCoefficients = 0
     end
@@ -82,7 +82,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     c.dataSet = Constants.TOMMASI_DATA;
                     %c.dataSet = Constants.NG_DATA;
                     %c.reg = fliplr([0 .01 .1 1 10 100]);
-                    c.reg = ([0 .2:.2:.8]);
+                    %c.reg = ([0 .2:.2:.8]);
+                    c.reg = fliplr([10.^(-1:8)]);
                     %c.reg = fliplr([10.^(-5:5)]);
                     %c.reg = 0;
                     c.sigma = fliplr([.001 .01 .1 1 10]);
