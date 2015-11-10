@@ -30,6 +30,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             obj.set('nonnegativeConstraint',1)
             obj.set('equalConstraint',0);
             obj.set('normConstraint',0);
+            obj.set('intercept',1);
         end
         
         function [XT,XS,labelIDs] = createTransferFeatures(obj,X)
@@ -164,7 +165,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             for idx=1:length(sourcePred)
                 fu = fu + obj.beta(idx+1)*sourcePred{idx};            
             end
-            normalize = obj.get('nonnegativeConstraint');
+            normalize = obj.get('nonnegativeConstraint') & ~obj.get('intercept');
             fu = fu + obj.beta0;
             [~,y] = max(fu,[],2);
             if normalize
