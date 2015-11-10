@@ -16,7 +16,7 @@ classdef ProjectConfigs < ProjectConfigsBase
         %useTransfer = false
         useTransfer = true
         vizWeights = 0
-        vizLayeredWeights = 0
+        vizLayeredWeights = 1
         vizCoefficients = 0
     end
     

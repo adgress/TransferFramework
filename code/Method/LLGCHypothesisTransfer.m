@@ -6,12 +6,14 @@ classdef LLGCHypothesisTransfer < LLGCMethod
         sourceHyp
         targetHyp      
         beta
+        beta0
     end
     
     methods
         function obj = LLGCHypothesisTransfer(configs)
             obj = obj@LLGCMethod(configs);
             obj.sourceHyp = [];
+            obj.beta0 = 0;
             pc = ProjectConfigs.Create();
             if ~obj.has('noTransfer')
                 obj.set('noTransfer',~ProjectConfigs.useTransfer);
@@ -24,9 +26,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             obj.set('classification',1);
             
-            obj.set('sumConstraint',1);
+            obj.set('sumConstraint',0);
             obj.set('nonnegativeConstraint',1)
-            obj.set('equalConstraint',1);
+            obj.set('equalConstraint',0);
             obj.set('normConstraint',0);
         end
         
@@ -114,10 +116,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 variable F(sum(I),numLabels)             
                 variable b(numSources,1)
                 variable bT
+                variable b0
                 variable bRep(numLabels*numSources,numLabels)
                 
                 %minimize(norm(F(:,1)-Ymat(:,1),1))
-                minimize(norm(F(:,1)-Ymat(:,1),2))
+                minimize(norm(F(:,1)-Ymat(:,1) + b0,2))
                 
                 subject to
                     if obj.get('nonnegativeConstraint')
@@ -135,10 +138,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
                     F == Ftarget*bT + fuCombined*bRep
             cvx_end 
-            b = [bT ; b];
+            b = [bT ; b];            
             warning on
             %b
             obj.beta = b;
+            obj.beta0 = b0;
         end
         
         function [y,fu] = getSourcePredictions(obj,X)
@@ -161,6 +165,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 fu = fu + obj.beta(idx+1)*sourcePred{idx};            
             end
             normalize = obj.get('nonnegativeConstraint');
+            fu = fu + obj.beta0;
             [~,y] = max(fu,[],2);
             if normalize
                 fu = Helpers.NormalizeRows(fu);
