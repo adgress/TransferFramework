@@ -116,7 +116,8 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 variable bT
                 variable bRep(numLabels*numSources,numLabels)
                 
-                minimize(norm(F(:,1)-Ymat(:,1),1))                
+                %minimize(norm(F(:,1)-Ymat(:,1),1))
+                minimize(norm(F(:,1)-Ymat(:,1),2))
                 
                 subject to
                     if obj.get('nonnegativeConstraint')
