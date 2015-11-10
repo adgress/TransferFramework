@@ -23,10 +23,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 obj.set('oracle',false);
             end
             obj.set('classification',1);
-            obj.set('sumConstraint',0);
-            obj.set('nonnegativeConstraint',0)
-            obj.set('equalConstraint',0);
-            obj.set('normConstraint',1);
+            
+            obj.set('sumConstraint',1);
+            obj.set('nonnegativeConstraint',1)
+            obj.set('equalConstraint',1);
+            obj.set('normConstraint',0);
         end
         
         function [XT,XS,labelIDs] = createTransferFeatures(obj,X)
@@ -115,7 +116,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                 variable bT
                 variable bRep(numLabels*numSources,numLabels)
                 
-                minimize(norm(F-Ymat,1))                
+                minimize(norm(F(:,1)-Ymat(:,1),1))                
                 
                 subject to
                     if obj.get('nonnegativeConstraint')
