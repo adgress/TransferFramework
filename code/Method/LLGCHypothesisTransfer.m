@@ -170,9 +170,11 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end
             normalize = obj.get('nonnegativeConstraint') & ~obj.get('intercept');
             fu = fu + obj.beta0;
+            %{
             f = fu(:,10);
             f(f > 1) = 1;
             fu(:,15) = 1 - f;
+            %}
             [~,y] = max(fu,[],2);
             if normalize
                 fu = Helpers.NormalizeRows(fu);
