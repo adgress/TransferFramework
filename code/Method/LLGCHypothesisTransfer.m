@@ -27,9 +27,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             obj.set('classification',1);
             
             obj.set('sumConstraint',0);
-            obj.set('nonnegativeConstraint',1)
+            obj.set('nonnegativeConstraint',0)
             obj.set('equalConstraint',0);
-            obj.set('normConstraint',0);
+            obj.set('normConstraint',1);
             obj.set('intercept',1);
         end
         
@@ -135,6 +135,9 @@ classdef LLGCHypothesisTransfer < LLGCMethod
                     end
                     if obj.get('normConstraint')
                         sum_square([bT ; b]) <= reg
+                    end
+                    if ~obj.get('intercept')
+                        b0 == 0
                     end
                     bRep == sparse(betaRowIdx,betaColIdx,b(betaIdx))                    
                     F == Ftarget*bT + fuCombined*bRep
