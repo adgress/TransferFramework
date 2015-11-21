@@ -181,7 +181,7 @@ classdef ProjectConfigs < ProjectConfigsBase
             if ProjectConfigs.vizWeights || ProjectConfigs.vizLayeredWeights
                 c.configsStruct.xAxisField = 'dataSetWeights';
                 c.configsStruct.xAxisDisplay = 'Data Set';
-                c.configsStruct.sizeToUse = 20;
+                c.configsStruct.sizeToUse = 5;
                 c.configsStruct.confidenceInterval = ...
                     VisualizationConfigs.CONF_INTERVAL_BINOMIAL;
                 c.set('vizBarChartForField',true);
@@ -256,6 +256,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'l2 LogReg';
                     methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'HypTran l2 LogReg';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear-oracle=1.mat';
+                    legend{end+1} = 'HypTran l2 LogReg Oracle';
                     methodResultsFileNames{end+1} = 'Prior_LayeredHypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'LayeredHypTran';
                 case Constants.NG_DATA
@@ -270,6 +272,8 @@ classdef ProjectConfigs < ProjectConfigsBase
                     legend{end+1} = 'l2 LogReg';
                     methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'HypTran l2 LogReg';
+                    methodResultsFileNames{end+1} = 'Prior_HypTran-targetMethod=Liblinear-oracle=1.mat';
+                    legend{end+1} = 'HypTran l2 LogReg Oracle';
                     methodResultsFileNames{end+1} = 'Prior_LayeredHypTran-targetMethod=Liblinear.mat';
                     legend{end+1} = 'LayeredHypTran';
             end

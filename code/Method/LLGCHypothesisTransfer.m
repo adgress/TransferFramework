@@ -22,7 +22,7 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             obj.set('l2',0);
             obj.set('allSource',0);
             if ~obj.has('oracle')
-                obj.set('oracle',false);
+                obj.set('oracle',true);
             end
             obj.set('classification',1);
             
@@ -85,9 +85,13 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             numSources = length(obj.sourceHyp);
             obj.beta = zeros(numSources+1,1);
             assert(~obj.get('allSource'));
-            assert(~obj.get('oracle'));
+            %assert(~obj.get('oracle'));
             if reg == 0
-                obj.beta(1) = 1;
+                obj.beta(1) = 1;                
+                return;
+            end
+            if obj.get('oracle')
+                obj.beta(1:2) = .5;
                 return;
             end
             I = ~isnan(Y);
@@ -238,9 +242,6 @@ classdef LLGCHypothesisTransfer < LLGCMethod
             end            
             if obj.get('oracle')
                 cvParams(1).values = {.5};
-                if pc.dataSet == Constants.NG_DATA
-                    cvParams(1).values = {0};
-                end
             end
             if obj.get('allSource')
                 cvParams(1).values = {1};
